@@ -1,0 +1,2 @@
+[alias]
+criterion = "bench --bench=criterion --features=bench,proptest"
