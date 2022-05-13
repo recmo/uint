@@ -20,7 +20,7 @@ where
     limbs: [u64; num_limbs(BITS)],
 }
 
-trait OverflowingAdd: Sized {
+pub trait OverflowingAdd: Sized {
     fn overflowing_add(self, other: Self) -> (Self, bool);
 }
 
@@ -29,6 +29,7 @@ where
     [(); num_limbs(BITS)]:,
 {
     pub const BITS: usize = BITS;
+    pub const LIMBS: usize = num_limbs(BITS);
 
     #[must_use]
     pub const fn zero() -> Self {

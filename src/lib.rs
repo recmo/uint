@@ -9,7 +9,7 @@
 
 mod uint;
 
-pub use uint::*;
+pub use self::uint::{Uint, OverflowingAdd};
 
 #[cfg(feature = "bench")]
 pub mod bench {

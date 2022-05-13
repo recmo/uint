@@ -1,7 +1,12 @@
 # Rust `uint` crate using const-generics
 
 ```rust
+use uint::{Uint, OverflowingAdd};
 
+let a: Uint<256> = Uint::one();
+let b: Uint<256> = Uint::one();
+let c = a.overflowing_add(b);
+dbg!(c);
 ```
 
 ## References
