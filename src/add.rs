@@ -1,66 +1,12 @@
-mod proptest;
-
+use crate::{num_limbs, Uint};
 use core::arch::asm;
-// use itertools::izip;
-
-#[cfg(feature = "proptest")]
-pub use self::proptest::arb_uint;
-
-/// Number of `u64` limbs required to represent the given number of bits.
-pub const fn num_limbs(bits: usize) -> usize {
-    (bits + 63) / 64
-}
-
-/// Binary numbers modulo $2^n$.
-#[derive(Clone, Copy, Debug)]
-pub struct Uint<const BITS: usize>
-where
-    [(); num_limbs(BITS)]:,
-{
-    limbs: [u64; num_limbs(BITS)],
-}
 
 pub trait OverflowingAdd: Sized {
     fn overflowing_add(self, other: Self) -> (Self, bool);
 }
 
-impl<const BITS: usize> Uint<BITS>
-where
-    [(); num_limbs(BITS)]:,
-{
-    pub const BITS: usize = BITS;
-    pub const LIMBS: usize = num_limbs(BITS);
-
-    #[must_use]
-    pub const fn zero() -> Self {
-        Self::from_limbs([0; num_limbs(BITS)])
-    }
-
-    #[must_use]
-    pub const fn one() -> Self {
-        let mut result = Self::zero();
-        result.limbs[0] = 1;
-        result
-    }
-
-    #[must_use]
-    pub const fn from_limbs(limbs: [u64; num_limbs(BITS)]) -> Self {
-        Self { limbs }
-    }
-
-    #[must_use]
-    pub fn from_limbs_slice(slice: &[u64]) -> Self {
-        let mut limbs = [0; num_limbs(BITS)];
-        limbs.copy_from_slice(slice);
-        Self { limbs }
-    }
-}
-
 #[cfg(not(target_arch = "aarch64"))]
-impl<const BITS: usize> OverflowingAdd for Uint<BITS>
-where
-    [(); num_limbs(BITS)]:,
-{
+impl<const BITS: usize> OverflowingAdd for Uint<BITS> {
     #[inline(never)]
     #[must_use]
     default fn overflowing_add(self, other: Self) -> (Self, bool) {
@@ -170,6 +116,7 @@ mod test {
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
+    use crate::proptest::arb_uint;
     use ::proptest::{
         strategy::{Strategy, ValueTree},
         test_runner::TestRunner,
