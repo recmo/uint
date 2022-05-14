@@ -155,7 +155,7 @@ fn transform_stream(stream: TokenStream) -> TokenStream {
     stream.into_iter().map(transform_tree).collect()
 }
 
-/// Replaces all integer literals with a `_U*` suffix with a `Uint<N>` literal.
+/// See the [crate documentation](index.html) for more information.
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
     transform_stream(stream)
