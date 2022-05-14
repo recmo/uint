@@ -15,7 +15,7 @@
 // }
 
 use crate::{nlimbs, Uint};
-use core::convert::TryFrom;
+use core::{fmt::Debug, convert::TryFrom};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
@@ -59,6 +59,8 @@ where
 {
     type Error = UintConversionError;
 
+    #[allow(clippy::cast_lossless)]
+    #[allow(clippy::cast_possible_truncation)]
     fn try_from(value: u128) -> Result<Self, Self::Error> {
         if value <= u64::MAX as u128 {
             return Self::try_from(value as u64);
@@ -145,6 +147,7 @@ where
         if value < 0.0 {
             return Err(UintConversionError::ValueNegative(BITS));
         }
+        #[allow(clippy::cast_precision_loss)] // BITS is small-ish
         if value >= (Self::BITS as f64).exp2() {
             return Err(UintConversionError::ValueTooLarge(BITS));
         }
@@ -165,10 +168,11 @@ where
         let biased_exponent = (bits >> 52) & 0x7ff;
         assert!(biased_exponent >= 1023);
         let exponent = biased_exponent - 1023;
-        let fraction = bits & 0xfffffffffffff;
-        let mantissa = 0x10000000000000 | fraction;
+        let fraction = bits & 0x000f_ffff_ffff_ffff;
+        let mantissa = 0x0010_0000_0000_0000 | fraction;
 
         // Convert mantissa * 2^(exponent - 52) to Uint
+        #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
         if exponent as usize > Self::BITS + 52 {
             return Err(UintConversionError::ValueTooLarge(BITS));
         }
@@ -176,7 +180,7 @@ where
             // Truncate mantissa
             Self::try_from(mantissa >> (52 - exponent))
         } else {
-            let mantissa = Self::try_from(mantissa)?;
+            let _mantissa = Self::try_from(mantissa)?;
             todo!() // mantissa << (exponent - 52)
         }
     }
@@ -189,6 +193,7 @@ where
     type Error = UintConversionError;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
+        #[allow(clippy::cast_lossless)]
         Self::try_from(value as f64)
     }
 }

@@ -9,6 +9,8 @@ where
         Self::from_limbs([0; nlimbs(BITS)])
     }
 
+    /// # Panics
+    /// Panics if the bit size [`BITS`] is zero.
     #[must_use]
     #[track_caller]
     pub const fn one() -> Self {

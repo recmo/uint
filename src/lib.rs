@@ -1,5 +1,6 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![allow(incomplete_features)] // We need these features unfortunately.
 // This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
 #![feature(const_trait_impl)]
@@ -64,6 +65,8 @@ where
         &mut self.limbs
     }
 
+    /// # Panics
+    /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
     pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
         if BITS > 0 {
@@ -79,11 +82,13 @@ where
 
 /// Number of `u64` limbs required to represent the given number of bits.
 /// This needs to be public because it is used in the `Uint` type.
+#[must_use]
 pub const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.
+#[must_use]
 const fn mask(bits: usize) -> u64 {
     if bits == 0 {
         return 0;

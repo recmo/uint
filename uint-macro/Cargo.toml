@@ -1,7 +1,18 @@
 [package]
 name = "uint-macro"
+description = "The `uint!` macro for `Uint` literals"
+authors = ["Remco Bloemen <remco@wicked.ventures>"]
 version = "0.1.0"
 edition = "2021"
+homepage = "https://github.com/recmo/uint"
+repository = "https://github.com/recmo/uint"
+keywords = ["uint", "macro"]
+categories = ["mathematics"]
+readme = "Readme.md"
+license-file = "../mit-license.md"
 
 [lib]
 proc-macro = true
+
+[dev-dependencies]
+uint = { version = "0.1", path = ".." }

@@ -47,8 +47,8 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     // Parse bit length
     let bits = bits
         .parse::<usize>()
-        .map_err(|e| format!("Error in suffix: {}", e.to_string()))?;
-    let nlimbs = (bits + 63) / 64;
+        .map_err(|e| format!("Error in suffix: {}", e))?;
+    let num_limbs = (bits + 63) / 64;
     let mask = if bits == 0 {
         0
     } else {
@@ -64,7 +64,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     let (base, digits) = if value.len() >= 2 {
         let (prefix, remainder) = value.split_at(2);
         match prefix {
-            "0x" => (16, remainder),
+            "0x" => (16_u8, remainder),
             "0o" => (8, remainder),
             "0b" => (2, remainder),
             _ => (10, value),
@@ -87,7 +87,9 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
 
         // Multiply result by base
         let mut carry = 0_u64;
-        for limb in limbs.iter_mut() {
+        #[allow(clippy::cast_lossless)]
+        #[allow(clippy::cast_possible_truncation)]
+        for limb in &mut limbs {
             // TODO: Use `carry_mul` when stable.
             let product = (*limb as u128) * (base as u128) + (carry as u128);
             *limb = product as u64;
@@ -102,15 +104,15 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     }
 
     // Remove trailing zeros, pad with zeros
-    while limbs.len() > nlimbs && limbs.last() == Some(&0) {
+    while limbs.len() > num_limbs && limbs.last() == Some(&0) {
         limbs.pop();
     }
-    while limbs.len() < nlimbs {
+    while limbs.len() < num_limbs {
         limbs.push(0);
     }
 
     // Check value range
-    if limbs.len() > nlimbs || limbs.last().copied().unwrap_or(0) > mask {
+    if limbs.len() > num_limbs || limbs.last().copied().unwrap_or(0) > mask {
         let value = value.trim_end_matches('_');
         return Err(format!("Value too large for Uint<{}>: {}", bits, value));
     }
@@ -118,11 +120,11 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     Ok(construct(bits, &limbs))
 }
 
-/// Transforms a literal and returns the substitute TokenTree
+/// Transforms a [`Literal`] and returns the substitute [`TokenTree`]
 fn transform_literal(literal: Literal) -> TokenTree {
     let source = literal.to_string();
     if let Some((value, bits)) = source.split_once('U') {
-        let stream = parse(&value, bits).unwrap_or_else(|e| error(literal.span(), &e));
+        let stream = parse(value, bits).unwrap_or_else(|e| error(literal.span(), &e));
 
         return TokenTree::Group(Group::new(Delimiter::None, stream));
     }
@@ -150,7 +152,7 @@ fn transform_tree(tree: TokenTree) -> TokenTree {
     }
 }
 
-/// Iterate over a TokenStream and transform all trees.
+/// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
 fn transform_stream(stream: TokenStream) -> TokenStream {
     stream.into_iter().map(transform_tree).collect()
 }
@@ -159,4 +161,30 @@ fn transform_stream(stream: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
     transform_stream(stream)
+}
+
+#[cfg(test)]
+mod tests {
+    use uint::{uint, Uint};
+
+    #[test]
+    fn test_zero_size() {
+        uint! {
+            assert_eq!(0_U0, Uint::zero());
+            assert_eq!(0000_U0, Uint::zero());
+            assert_eq!(0x00_U0, Uint::zero());
+            assert_eq!(0b0000_U0, Uint::zero());
+            assert_eq!(0b0000000_U0, Uint::zero());
+        }
+    }
+
+    #[test]
+    fn test_bases() {
+        uint! {
+            assert_eq!(10_U8, Uint::<8>::try_from(10_u64).unwrap());
+            assert_eq!(0x10_U8, 16_u64.try_into().unwrap());
+            assert_eq!(0b10_U8, 2_u64.try_into().unwrap());
+            assert_eq!(0o10_U8, 8_u64.try_into().unwrap());
+        }
+    }
 }

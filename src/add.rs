@@ -1,6 +1,8 @@
 use crate::{nlimbs, Uint};
 use core::arch::asm;
+use itertools::izip;
 
+#[allow(clippy::module_name_repetitions)]
 pub trait OverflowingAdd: Sized {
     fn overflowing_add(self, other: Self) -> (Self, bool);
 }
@@ -48,16 +50,20 @@ where
                 out(reg) limbs[0],
                 options(pure, nomem, nostack),
             );
-            for i in 1..nlimbs(BITS) {
+            for (res, lhs, rhs) in izip!(
+                limbs.iter_mut(),
+                self.limbs.into_iter(),
+                other.limbs.into_iter()
+            ) {
                 asm!(
                     "adcs {}, {}, {}",
-                    in(reg) self.limbs[i],
-                    in(reg) other.limbs[i],
-                    out(reg) limbs[i],
+                    in(reg) lhs,
+                    in(reg) rhs,
+                    out(reg) *res,
                     options(pure, nomem, nostack),
-                )
+                );
             }
-            let mut carry = 0_u64;
+            let mut carry: u64;
             asm!(
                 "cset {}, cs",
                 out(reg) carry,

@@ -1,8 +1,15 @@
 [package]
 name = "uint"
-version = "0.1.0"
+description = "Unsigned integer type with cont-generic bit length"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
+version = "0.1.0"
 edition = "2021"
+homepage = "https://github.com/recmo/uint"
+repository = "https://github.com/recmo/uint"
+keywords = ["uint"]
+categories = ["mathematics"]
+readme = "Readme.md"
+license-file = "mit-license.md"
 
 [workspace]
 members = ["uint-macro"]
