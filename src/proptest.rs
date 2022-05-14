@@ -1,19 +1,26 @@
 #![cfg(feature = "proptest")]
 use super::{nlimbs, Uint};
 use proptest::{
+    arbitrary::Arbitrary,
     collection::{vec, VecStrategy},
     num::u64::Any,
-    prelude::*,
+    strategy::{BoxedStrategy, Strategy},
 };
 
-impl<const BITS: usize> Uint<BITS>
+impl<const BITS: usize> Arbitrary for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
-    pub fn arb() -> impl Strategy<Value = Self> {
+    // TODO: Would be nice to have a value range as parameter
+    // and/or a choice between uniform and 'exponential' distribution.
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> BoxedStrategy<Self> {
         // TODO: Copy [`UniformArrayStrategy`] to avoid heap allocations
-        let limb: Any = any::<u64>();
-        let limbs: VecStrategy<Any> = vec(limb, nlimbs(BITS));
-        limbs.prop_map(|limbs| Uint::from_limbs_slice(&limbs))
+        let limbs: VecStrategy<Any> = vec(u64::arbitrary(), nlimbs(BITS));
+        limbs
+            .prop_map(|limbs| Uint::from_limbs_slice(&limbs))
+            .boxed()
     }
 }

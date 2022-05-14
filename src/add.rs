@@ -106,6 +106,7 @@ pub mod bench {
     use super::*;
     use crate::repeat;
     use ::proptest::{
+        arbitrary::Arbitrary,
         strategy::{Strategy, ValueTree},
         test_runner::TestRunner,
     };
@@ -128,7 +129,7 @@ pub mod bench {
     where
         [(); nlimbs(BITS)]:,
     {
-        let input = (Uint::<BITS>::arb(), Uint::arb());
+        let input = (Uint::<BITS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("uint_add_{}", BITS), move |bencher| {
             bencher.iter_batched(
