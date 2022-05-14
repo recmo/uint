@@ -1,11 +1,8 @@
-use uint::{OverflowingAdd, Uint};
-use uint_macro::uint;
+use uint::{uint, OverflowingAdd, Uint};
 
 uint! {
 
 fn main() {
-
-    0xFU0;
 
     let a = 0x1231231123123123123123131231232312321_U256;
     let b = 1U125;

@@ -9,6 +9,8 @@ mod constructors;
 mod from;
 mod utils;
 
+pub use uint_macro::uint;
+
 #[cfg(feature = "proptest")]
 pub mod proptest;
 

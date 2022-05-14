@@ -1,10 +1,8 @@
-use proc_macro::{Delimiter, Group, Literal, TokenStream, TokenTree};
-use std::str::FromStr;
-use proc_macro::Punct;
-use proc_macro::Ident;
-use proc_macro::Span;
-use proc_macro::Spacing;
-use std::fmt::Write;
+#![doc = include_str!("../Readme.md")]
+#![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+
+use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::{fmt::Write, str::FromStr};
 
 /// Construct a `Uint<{bits}>` literal from `limbs`.
 fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
@@ -47,7 +45,9 @@ fn error(span: Span, message: &str) -> TokenStream {
 /// Parse a value literal and bits suffix into a Uint literal.
 fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     // Parse bit length
-    let bits = bits.parse::<usize>().map_err(|e| format!("Error in suffix: {}", e.to_string()))?;
+    let bits = bits
+        .parse::<usize>()
+        .map_err(|e| format!("Error in suffix: {}", e.to_string()))?;
     let nlimbs = (bits + 63) / 64;
     let mask = if bits == 0 {
         0
@@ -69,7 +69,9 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
             "0b" => (2, remainder),
             _ => (10, value),
         }
-    } else { (10, value) };
+    } else {
+        (10, value)
+    };
 
     // Parse digits in base
     let mut limbs = vec![0_u64];
@@ -109,6 +111,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
 
     // Check value range
     if limbs.len() > nlimbs || limbs.last().copied().unwrap_or(0) > mask {
+        let value = value.trim_end_matches('_');
         return Err(format!("Value too large for Uint<{}>: {}", bits, value));
     }
 

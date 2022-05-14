@@ -26,7 +26,6 @@ thiserror = "1.0"
 
 uint-macro = { version = "0.1.0", path = "./uint-macro"}
 
-
 [dev-dependencies]
 pretty_assertions = "1.0"
 proptest = { version = "1.0" }
