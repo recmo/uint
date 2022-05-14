@@ -3,13 +3,39 @@
 Implements `Uint<N: usize>` where `N` is the number of bits. That is, it implements the ring of numbers modulo 2ⁿ.
 
 ```rust
+#![feature(generic_const_exprs)]
 use uint::{Uint, OverflowingAdd};
 
-let a: Uint<256> = Uint::one();
-let b: Uint<256> = 42_u64.try_into().unwrap();
-let c = a.overflowing_add(b);
-dbg!(c);
+let a: Uint<256> = Uint::from(0xf00f_u64);
+let b: Uint<256> = Uint::from(42_u64);
+let (c, _carry) = a.overflowing_add(b);
+assert_eq!(c, Uint::from(0xf039_u64));
 ```
+
+Or equivalently using the convenient [`uint!`] macro:
+
+```rust
+# #![feature(generic_const_exprs)]
+use uint::{uint, OverflowingAdd};
+uint!{
+
+let a = 0xf00f_U256;
+let b = 42_U256;
+let (c, _carry) = a.overflowing_add(b);
+assert_eq!(c, 0xf039_U256);
+
+}
+```
+
+It can also be used in a more natural expression form if that is preferred
+
+```rust
+# #![feature(generic_const_exprs)]
+# use uint::uint;
+#
+let cow = uint!(0xf039_U42);
+```
+
 
 ## Benchmarks and tests
 

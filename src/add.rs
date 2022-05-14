@@ -7,7 +7,6 @@ pub trait OverflowingAdd: Sized {
     fn overflowing_add(self, other: Self) -> (Self, bool);
 }
 
-#[cfg(not(target_arch = "aarch64"))]
 impl<const BITS: usize> OverflowingAdd for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
@@ -30,49 +29,49 @@ where
     }
 }
 
-#[cfg(target_arch = "aarch64")]
-impl<const BITS: usize> OverflowingAdd for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
-    #[inline(never)]
-    #[must_use]
-    fn overflowing_add(self, other: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (self, false);
-        }
-        unsafe {
-            let mut limbs = [0; nlimbs(BITS)];
-            asm!(
-                "adds {}, {}, {}",
-                in(reg) self.limbs[0],
-                in(reg) other.limbs[0],
-                out(reg) limbs[0],
-                options(pure, nomem, nostack),
-            );
-            for (res, lhs, rhs) in izip!(
-                limbs.iter_mut(),
-                self.limbs.into_iter(),
-                other.limbs.into_iter()
-            ) {
-                asm!(
-                    "adcs {}, {}, {}",
-                    in(reg) lhs,
-                    in(reg) rhs,
-                    out(reg) *res,
-                    options(pure, nomem, nostack),
-                );
-            }
-            let mut carry: u64;
-            asm!(
-                "cset {}, cs",
-                out(reg) carry,
-                options(pure, nomem, nostack),
-            );
-            (Self { limbs }, carry != 0)
-        }
-    }
-}
+// #[cfg(target_arch = "aarch64")]
+// impl<const BITS: usize> OverflowingAdd for Uint<BITS>
+// where
+//     [(); nlimbs(BITS)]:,
+// {
+//     #[inline(never)]
+//     #[must_use]
+//     fn overflowing_add(self, other: Self) -> (Self, bool) {
+//         if BITS == 0 {
+//             return (self, false);
+//         }
+//         unsafe {
+//             let mut limbs = [0; nlimbs(BITS)];
+//             asm!(
+//                 "adds {}, {}, {}",
+//                 in(reg) self.limbs[0],
+//                 in(reg) other.limbs[0],
+//                 out(reg) limbs[0],
+//                 options(pure, nomem, nostack),
+//             );
+//             for (res, lhs, rhs) in izip!(
+//                 limbs.iter_mut(),
+//                 self.limbs.into_iter(),
+//                 other.limbs.into_iter()
+//             ) {
+//                 asm!(
+//                     "adcs {}, {}, {}",
+//                     in(reg) lhs,
+//                     in(reg) rhs,
+//                     out(reg) *res,
+//                     options(pure, nomem, nostack),
+//                 );
+//             }
+//             let mut carry: u64;
+//             asm!(
+//                 "cset {}, cs",
+//                 out(reg) carry,
+//                 options(pure, nomem, nostack),
+//             );
+//             (Self { limbs }, carry != 0)
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod test {

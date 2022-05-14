@@ -1,6 +1,7 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
-#![allow(incomplete_features)] // We need these features unfortunately.
+#![allow(incomplete_features)]
+// We need these features unfortunately.
 // This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
 #![feature(const_trait_impl)]

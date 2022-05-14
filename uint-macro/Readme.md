@@ -23,7 +23,7 @@ let cow_key = uint!(0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d8024994733
 let bender = uint!(0b1010011010_U10);
 ```
 
-The [`uint`] macro recurses through the parse tree, so the above can equivalently be written
+The [`uint!`] macro recurses through the parse tree, so the above can equivalently be written
 
 ```rust
 # use uint::uint;

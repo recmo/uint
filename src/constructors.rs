@@ -10,7 +10,7 @@ where
     }
 
     /// # Panics
-    /// Panics if the bit size [`BITS`] is zero.
+    /// Panics if the bit size is zero.
     #[must_use]
     #[track_caller]
     pub const fn one() -> Self {

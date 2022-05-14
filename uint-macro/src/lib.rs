@@ -159,7 +159,8 @@ fn transform_stream(stream: TokenStream) -> TokenStream {
     stream.into_iter().map(transform_tree).collect()
 }
 
-/// See the [crate documentation](index.html) for more information.
+// Repeat the crate doc
+#[doc = include_str!("../Readme.md")]
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
     transform_stream(stream)

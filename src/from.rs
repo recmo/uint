@@ -15,7 +15,7 @@
 // }
 
 use crate::{nlimbs, Uint};
-use core::{fmt::Display, convert::TryFrom};
+use core::{convert::TryFrom, fmt::Display};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
@@ -30,7 +30,7 @@ pub enum UintConversionError {
     NotANumber(usize),
 }
 
-impl<const BITS: usize>  Uint<BITS>
+impl<const BITS: usize> Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
@@ -40,7 +40,8 @@ where
     /// call site.
     #[must_use]
     #[track_caller]
-    pub fn from<T>(value: T) -> Self where
+    pub fn from<T>(value: T) -> Self
+    where
         Self: TryFrom<T>,
         <Self as TryFrom<T>>::Error: Display,
     {
@@ -50,7 +51,6 @@ where
         }
     }
 }
-
 
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize> const TryFrom<u64> for Uint<BITS>
