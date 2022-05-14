@@ -20,6 +20,7 @@ cargo criterion
 Goals:
 
 * All the quality of life features one could want.
+* Compatible with std `u64`, etc types.
 * Builds `no-std` and `wasm`.
 * Fast platform agnostic generic algorithms.
 * Target specific assembly optimizations (where available).

@@ -12,7 +12,6 @@ format_strings = true
 format_macro_matchers = true
 format_macro_bodies = true
 normalize_comments = true
-reorder_impl_items = true
 format_code_in_doc_comments = true
 overflow_delimited_expr = true
 normalize_doc_attributes = true
