@@ -31,7 +31,7 @@ pub enum UintConversionError {
 }
 
 // u64 is a single limb, so this is the base case
-impl<const BITS: usize> TryFrom<u64> for Uint<BITS>
+impl<const BITS: usize> const TryFrom<u64> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
@@ -53,7 +53,7 @@ where
 }
 
 // u128 version is handled specially in because it covers two limbs.
-impl<const BITS: usize> TryFrom<u128> for Uint<BITS>
+impl<const BITS: usize> const TryFrom<u128> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
@@ -81,7 +81,7 @@ where
 // Unsigned int version upcast to u64
 macro_rules! impl_from_unsigned_int {
     ($uint:ty) => {
-        impl<const BITS: usize> TryFrom<$uint> for Uint<BITS>
+        impl<const BITS: usize> const TryFrom<$uint> for Uint<BITS>
         where
             [(); nlimbs(BITS)]:,
         {
@@ -103,7 +103,7 @@ impl_from_unsigned_int!(usize);
 // `uint`.
 macro_rules! impl_from_signed_int {
     ($int:ty, $uint:ty) => {
-        impl<const BITS: usize> TryFrom<$int> for Uint<BITS>
+        impl<const BITS: usize> const TryFrom<$int> for Uint<BITS>
         where
             [(); nlimbs(BITS)]:,
         {
@@ -127,6 +127,11 @@ impl_from_signed_int!(i64, u64);
 impl_from_signed_int!(i128, u128);
 impl_from_signed_int!(isize, usize);
 
+// TODO: Make this a const trait using
+// #![feature(const_float_classify)]
+// #![feature(const_fn_floating_point_arithmetic)]
+// #![feature(const_float_bits_conv)]
+// and more.
 impl<const BITS: usize> TryFrom<f64> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,

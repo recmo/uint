@@ -2,6 +2,7 @@
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 // This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
+#![feature(const_trait_impl)]
 
 mod add;
 mod constructors;
