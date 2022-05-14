@@ -1,11 +1,10 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
-// Required
-#![allow(incomplete_features)]
+// This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
-#![feature(const_for)]
-#![feature(const_mut_refs)]
-#![feature(specialization)]
+// This allows architecture specific overrides.
+// TODO: Might use conditional code instead.
+#![feature(min_specialization)]
 
 mod add;
 
@@ -18,21 +17,22 @@ pub use self::add::OverflowingAdd;
 #[derive(Clone, Copy, Debug)]
 pub struct Uint<const BITS: usize>
 where
-    [(); num_limbs(BITS)]:,
+    [(); nlimbs(BITS)]:,
 {
-    limbs: [u64; num_limbs(BITS)],
+    limbs: [u64; nlimbs(BITS)],
 }
 
 impl<const BITS: usize> Uint<BITS>
 where
-    [(); num_limbs(BITS)]:,
+    [(); nlimbs(BITS)]:,
 {
     pub const BITS: usize = BITS;
-    pub const LIMBS: usize = num_limbs(BITS);
+    pub const LIMBS: usize = nlimbs(BITS);
+    const MASK: u64 = mask(BITS);
 
     #[must_use]
     pub const fn zero() -> Self {
-        Self::from_limbs([0; num_limbs(BITS)])
+        Self::from_limbs([0; nlimbs(BITS)])
     }
 
     #[must_use]
@@ -43,21 +43,31 @@ where
     }
 
     #[must_use]
-    pub const fn from_limbs(limbs: [u64; num_limbs(BITS)]) -> Self {
+    pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
         Self { limbs }
     }
 
     #[must_use]
     pub fn from_limbs_slice(slice: &[u64]) -> Self {
-        let mut limbs = [0; num_limbs(BITS)];
+        let mut limbs = [0; nlimbs(BITS)];
         limbs.copy_from_slice(slice);
         Self { limbs }
     }
 }
 
 /// Number of `u64` limbs required to represent the given number of bits.
-pub const fn num_limbs(bits: usize) -> usize {
+const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
+}
+
+/// Mask to apply to the highest limb to get the correct number of bits.
+const fn mask(bits: usize) -> u64 {
+    let bits = bits % 64;
+    if bits == 0 {
+        0
+    } else {
+        (1 << bits) - 1
+    }
 }
 
 #[cfg(feature = "bench")]

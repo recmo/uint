@@ -1,4 +1,4 @@
-use crate::{num_limbs, Uint};
+use crate::{nlimbs, Uint};
 use core::arch::asm;
 
 pub trait OverflowingAdd: Sized {
@@ -28,7 +28,7 @@ impl<const BITS: usize> OverflowingAdd for Uint<BITS> {
 #[cfg(target_arch = "aarch64")]
 impl<const BITS: usize> OverflowingAdd for Uint<BITS>
 where
-    [(); num_limbs(BITS)]:,
+    [(); nlimbs(BITS)]:,
 {
     #[inline(never)]
     #[must_use]
@@ -37,7 +37,7 @@ where
             return (self, false);
         }
         unsafe {
-            let mut limbs = [0; num_limbs(BITS)];
+            let mut limbs = [0; nlimbs(BITS)];
             asm!(
                 "adds {}, {}, {}",
                 in(reg) self.limbs[0],
@@ -45,7 +45,7 @@ where
                 out(reg) limbs[0],
                 options(pure, nomem, nostack),
             );
-            for i in 1..num_limbs(BITS) {
+            for i in 1..nlimbs(BITS) {
                 asm!(
                     "adcs {}, {}, {}",
                     in(reg) self.limbs[i],
@@ -116,7 +116,6 @@ mod test {
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
-    use crate::proptest::arb_uint;
     use ::proptest::{
         strategy::{Strategy, ValueTree},
         test_runner::TestRunner,
@@ -133,9 +132,9 @@ pub mod bench {
 
     fn bench_add<const BITS: usize>(criterion: &mut Criterion)
     where
-        [(); num_limbs(BITS)]:,
+        [(); nlimbs(BITS)]:,
     {
-        let input = (arb_uint::<BITS>(), arb_uint());
+        let input = (Uint::<BITS>::arb(), Uint::arb());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("uint_add_{}", BITS), move |bencher| {
             bencher.iter_batched(

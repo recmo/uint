@@ -44,6 +44,9 @@ Maybe:
 
 Const generics are still pretty unfinished in rust. This is to work around current limitations. Finding a less invasive workaround is high priority.
 
+* Rust issue [#79778](<https://github.com/rust-lang/rust/issues/79778>)
+
+
 ## References
 
 <https://courses.cs.washington.edu/courses/cse469/18wi/Materials/arm64.pdf>
