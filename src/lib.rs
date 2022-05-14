@@ -2,11 +2,11 @@
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 // This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
-// This allows architecture specific overrides.
-// TODO: Might use conditional code instead.
-#![feature(min_specialization)]
 
 mod add;
+mod constructors;
+mod from;
+mod utils;
 
 #[cfg(feature = "proptest")]
 pub mod proptest;
@@ -14,7 +14,7 @@ pub mod proptest;
 pub use self::add::OverflowingAdd;
 
 /// Binary numbers modulo $2^n$.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct Uint<const BITS: usize>
 where
     [(); nlimbs(BITS)]:,
@@ -31,26 +31,18 @@ where
     const MASK: u64 = mask(BITS);
 
     #[must_use]
-    pub const fn zero() -> Self {
-        Self::from_limbs([0; nlimbs(BITS)])
+    pub const fn as_limbs(&self) -> &[u64; nlimbs(BITS)] {
+        &self.limbs
     }
 
+    // TODO: Can be made `const` with `#![feature(const_mut_refs)]`.
     #[must_use]
-    pub const fn one() -> Self {
-        let mut result = Self::zero();
-        result.limbs[0] = 1;
-        result
+    pub fn as_limbs_mut(&mut self) -> &mut [u64; nlimbs(BITS)] {
+        &mut self.limbs
     }
 
     #[must_use]
     pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
-        Self { limbs }
-    }
-
-    #[must_use]
-    pub fn from_limbs_slice(slice: &[u64]) -> Self {
-        let mut limbs = [0; nlimbs(BITS)];
-        limbs.copy_from_slice(slice);
         Self { limbs }
     }
 }
@@ -62,14 +54,30 @@ const fn nlimbs(bits: usize) -> usize {
 
 /// Mask to apply to the highest limb to get the correct number of bits.
 const fn mask(bits: usize) -> u64 {
+    if bits == 0 {
+        return 0;
+    }
     let bits = bits % 64;
     if bits == 0 {
-        0
+        u64::max_value()
     } else {
         (1 << bits) - 1
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_mask() {
+        assert_eq!(mask(0), 0);
+        assert_eq!(mask(1), 1);
+        assert_eq!(mask(5), 0x1f);
+        assert_eq!(mask(63), u64::max_value() >> 1);
+        assert_eq!(mask(64), u64::max_value());
+    }
+}
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;

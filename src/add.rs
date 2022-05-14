@@ -9,7 +9,7 @@ pub trait OverflowingAdd: Sized {
 impl<const BITS: usize> OverflowingAdd for Uint<BITS> {
     #[inline(never)]
     #[must_use]
-    default fn overflowing_add(self, other: Self) -> (Self, bool) {
+    fn overflowing_add(self, other: Self) -> (Self, bool) {
         let mut result = Self::zero();
         let mut carry = 0;
         for (res, lhs, rhs) in izip!(
@@ -32,7 +32,7 @@ where
 {
     #[inline(never)]
     #[must_use]
-    default fn overflowing_add(self, other: Self) -> (Self, bool) {
+    fn overflowing_add(self, other: Self) -> (Self, bool) {
         if BITS == 0 {
             return (self, false);
         }
@@ -65,15 +65,6 @@ where
     }
 }
 
-impl OverflowingAdd for Uint<64> {
-    #[inline(never)]
-    #[must_use]
-    fn overflowing_add(self, other: Self) -> (Self, bool) {
-        let (limb, carry) = self.limbs[0].overflowing_add(other.limbs[0]);
-        (Self { limbs: [limb] }, carry)
-    }
-}
-
 pub fn test() {
     let val = Uint::<256>::one();
     val.overflowing_add(Uint::<256>::one());
@@ -83,19 +74,7 @@ pub fn test() {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    macro_rules! repeat {
-        ( $x:block ) => {
-            repeat!($x, 1, 2, 63, 64, 65, 127,128,129,256,384,512,4096);
-        };
-        ( $x:block, $( $n:literal ),* ) => {
-            $({
-                const N: usize = $n;
-                dbg!(N);
-                $x
-            })*
-        };
-    }
+    use crate::repeat;
 
     #[test]
     fn construct_zeros() {
@@ -107,15 +86,22 @@ mod test {
 
     #[test]
     fn construct_ones() {
-        repeat!({
-            let _ = Uint::<N>::one();
-        });
+        repeat!(
+            {
+                let _ = Uint::<N>::one();
+            },
+            1,
+            2,
+            64,
+            128
+        );
     }
 }
 
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
+    use crate::repeat;
     use ::proptest::{
         strategy::{Strategy, ValueTree},
         test_runner::TestRunner,
@@ -123,11 +109,16 @@ pub mod bench {
     use criterion::{black_box, BatchSize, Criterion};
 
     pub fn group(criterion: &mut Criterion) {
-        bench_add::<64>(criterion);
-        bench_add::<256>(criterion);
-        bench_add::<384>(criterion);
-        bench_add::<512>(criterion);
-        bench_add::<4096>(criterion);
+        repeat!(
+            {
+                bench_add::<N>(criterion);
+            },
+            64,
+            256,
+            384,
+            512,
+            4096
+        );
     }
 
     fn bench_add<const BITS: usize>(criterion: &mut Criterion)
