@@ -738,7 +738,12 @@ dependencies = [
  "proptest",
  "static_assertions",
  "thiserror",
+ "uint-macro",
 ]
+
+[[package]]
+name = "uint-macro"
+version = "0.1.0"
 
 [[package]]
 name = "unicode-width"

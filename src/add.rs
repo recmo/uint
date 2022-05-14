@@ -68,12 +68,6 @@ where
     }
 }
 
-pub fn test() {
-    let val = Uint::<256>::one();
-    val.overflowing_add(Uint::<256>::one());
-    dbg!(val);
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

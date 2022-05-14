@@ -50,5 +50,5 @@ Const generics are still pretty unfinished in rust. This is to work around curre
 
 ## References
 
-<https://courses.cs.washington.edu/courses/cse469/18wi/Materials/arm64.pdf>
+* Rust [integer methods](https://doc.rust-lang.org/stable/std/primitive.u64.html)
 

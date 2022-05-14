@@ -64,12 +64,20 @@ where
 
     #[must_use]
     pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
+        if BITS > 0 {
+            // TODO: Add `<{BITS}>` to the type when Display works in const fn.
+            assert!(
+                limbs[Self::LIMBS - 1] <= Self::MASK,
+                "Value too large for this Uint"
+            );
+        }
         Self { limbs }
     }
 }
 
 /// Number of `u64` limbs required to represent the given number of bits.
-const fn nlimbs(bits: usize) -> usize {
+/// This needs to be public because it is used in the `Uint` type.
+pub const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
 }
 
@@ -80,7 +88,7 @@ const fn mask(bits: usize) -> u64 {
     }
     let bits = bits % 64;
     if bits == 0 {
-        u64::max_value()
+        u64::MAX
     } else {
         (1 << bits) - 1
     }
@@ -111,6 +119,7 @@ mod test {
         );
     }
 }
+
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
