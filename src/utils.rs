@@ -8,9 +8,12 @@ macro_rules! repeat {
         repeat!($x, 0, 1, 2, 63, 64, 65, 127,128,129,256,384,512,4096);
     };
     ( $x:block, $( $n:literal ),* ) => {
-        $({
-            const N: usize = $n;
-            $x
-        })*
+        {
+            #![allow(clippy::cognitive_complexity)] // False positives.
+            $({
+                const N: usize = $n;
+                $x
+            })*
+        }
     };
 }

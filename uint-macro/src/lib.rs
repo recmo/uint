@@ -1,5 +1,7 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![allow(incomplete_features)] // We need these features unfortunately.
+#![cfg_attr(test, feature(generic_const_exprs))]
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 use std::{fmt::Write, str::FromStr};
@@ -181,7 +183,7 @@ mod tests {
     #[test]
     fn test_bases() {
         uint! {
-            assert_eq!(10_U8, Uint::<8>::try_from(10_u64).unwrap());
+            assert_eq!(10_U8, Uint::from(10));
             assert_eq!(0x10_U8, 16_u64.try_into().unwrap());
             assert_eq!(0b10_U8, 2_u64.try_into().unwrap());
             assert_eq!(0o10_U8, 8_u64.try_into().unwrap());

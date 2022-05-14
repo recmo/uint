@@ -80,7 +80,7 @@ mod test {
     use crate::repeat;
 
     #[test]
-    fn construct_zeros() {
+    const fn construct_zeros() {
         let _ = Uint::<0>::zero();
         repeat!({
             let _ = Uint::<N>::zero();
@@ -88,7 +88,7 @@ mod test {
     }
 
     #[test]
-    fn construct_ones() {
+    const fn construct_ones() {
         repeat!(
             {
                 let _ = Uint::<N>::one();
@@ -103,6 +103,7 @@ mod test {
 
 #[cfg(feature = "bench")]
 pub mod bench {
+    #[allow(clippy::wildcard_imports)]
     use super::*;
     use crate::repeat;
     use ::proptest::{

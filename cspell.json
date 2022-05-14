@@ -1,0 +1,22 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "aarch",
+        "adcs",
+        "conv",
+        "cset",
+        "itertools",
+        "izip",
+        "mathtt",
+        "nlimbs",
+        "nomem",
+        "nostack",
+        "proptest",
+        "thiserror"
+    ],
+    "ignoreWords": [],
+    "import": []
+}

@@ -20,7 +20,7 @@ where
         // TODO: Copy [`UniformArrayStrategy`] to avoid heap allocations
         let limbs: VecStrategy<Any> = vec(u64::arbitrary(), nlimbs(BITS));
         limbs
-            .prop_map(|limbs| Uint::from_limbs_slice(&limbs))
+            .prop_map(|limbs| Self::from_limbs_slice(&limbs))
             .boxed()
     }
 }

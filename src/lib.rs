@@ -129,6 +129,7 @@ mod test {
 
 #[cfg(feature = "bench")]
 pub mod bench {
+    #[allow(clippy::wildcard_imports)]
     use super::*;
     use criterion::Criterion;
 

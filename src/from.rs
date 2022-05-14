@@ -15,7 +15,7 @@
 // }
 
 use crate::{nlimbs, Uint};
-use core::{fmt::Debug, convert::TryFrom};
+use core::{fmt::Display, convert::TryFrom};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
@@ -29,6 +29,28 @@ pub enum UintConversionError {
     #[error("'Not a number' (NaN) not be represented as Uint<{0}>")]
     NotANumber(usize),
 }
+
+impl<const BITS: usize>  Uint<BITS>
+where
+    [(); nlimbs(BITS)]:,
+{
+    /// # Panics
+    /// Panics if the conversion fails, for example if the value is too large
+    /// for the bit-size of the [`Uint`]. The panic will be attributed to the
+    /// call site.
+    #[must_use]
+    #[track_caller]
+    pub fn from<T>(value: T) -> Self where
+        Self: TryFrom<T>,
+        <Self as TryFrom<T>>::Error: Display,
+    {
+        match Self::try_from(value) {
+            Ok(uint) => uint,
+            Err(e) => panic!("Uint conversion error: {}", e),
+        }
+    }
+}
+
 
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize> const TryFrom<u64> for Uint<BITS>
