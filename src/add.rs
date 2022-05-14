@@ -1,5 +1,4 @@
 use crate::{nlimbs, Uint};
-use core::arch::asm;
 use itertools::izip;
 
 #[allow(clippy::module_name_repetitions)]
@@ -11,8 +10,9 @@ impl<const BITS: usize> OverflowingAdd for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
-    #[inline(never)]
     #[must_use]
+    #[allow(clippy::cast_lossless)]
+    #[allow(clippy::cast_possible_truncation)]
     fn overflowing_add(self, other: Self) -> (Self, bool) {
         let mut result = Self::zero();
         let mut carry = 0;

@@ -1,5 +1,6 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![cfg_attr(test, allow(clippy::cognitive_complexity))]
 #![allow(incomplete_features)]
 // We need these features unfortunately.
 // This allows us to compute the number of limbs required from the bits.
@@ -9,7 +10,8 @@
 mod add;
 mod constructors;
 mod from;
-mod utils;
+#[cfg(any(test, feature = "bench"))]
+mod test_utils;
 
 pub use uint_macro::uint;
 

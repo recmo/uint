@@ -15,6 +15,7 @@
         "nomem",
         "nostack",
         "proptest",
+        "punct",
         "thiserror"
     ],
     "ignoreWords": [],
