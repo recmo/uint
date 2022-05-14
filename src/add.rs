@@ -6,7 +6,10 @@ pub trait OverflowingAdd: Sized {
 }
 
 #[cfg(not(target_arch = "aarch64"))]
-impl<const BITS: usize> OverflowingAdd for Uint<BITS> {
+impl<const BITS: usize> OverflowingAdd for Uint<BITS>
+where
+    [(); nlimbs(BITS)]:,
+{
     #[inline(never)]
     #[must_use]
     fn overflowing_add(self, other: Self) -> (Self, bool) {
