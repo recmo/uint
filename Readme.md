@@ -1,9 +1,11 @@
 # Rust `uint` crate using const-generics
 
-![lines of code](https://img.shields.io/tokei/lines/github/recmo/uint)
+![crates.io](https://img.shields.io/crates/l/ruint)
 [![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/ruint)](https://crates.io/crates/ruint)
+[![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint)
 
 Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
@@ -112,3 +114,13 @@ Const generics are still pretty unfinished in rust. This is to work around curre
 code generic over the value of `BITS`. But this only affects you if you write code generic over the bit size. If you use a specific size like `Uint<256>` you do not need these bounds.
 
 * Rust issue [#79778](<https://github.com/rust-lang/rust/issues/79778>)
+
+---
+
+![lines of code](https://img.shields.io/tokei/lines/github/recmo/uint)
+![GitHub contributors](https://img.shields.io/github/contributors/recmo/uint)
+![GitHub issues](https://img.shields.io/github/issues/recmo/uint)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/recmo/uint?label=PRs)
+![GitHub contributors](https://img.shields.io/github/contributors/recmo/uint)
+![GitHub Repo stars](https://img.shields.io/github/stars/recmo/uint)
+![crates.io](https://img.shields.io/crates/d/ruint)
