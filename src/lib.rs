@@ -14,9 +14,10 @@ mod bytes;
 mod const_for;
 mod from;
 mod support;
+mod uint_dyn;
 
 pub use self::{add::OverflowingAdd, bytes::nbytes};
-pub use uint_macro::uint;
+pub use ruint_macro::uint;
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

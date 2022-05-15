@@ -5,7 +5,7 @@
 /// ```rust
 /// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
-/// # use uint::{const_for, Uint};
+/// # use ruint::{const_for, Uint};
 /// const_for!(BITS in [0, 10, 100] {
 ///     println!("{:?}", Uint::<BITS>::MAX);
 /// });
@@ -16,7 +16,7 @@
 /// ```rust
 /// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
-/// # use uint::{const_for, Uint};
+/// # use ruint::{const_for, Uint};
 /// println!("{:?}", Uint::<0>::MAX);
 /// println!("{:?}", Uint::<10>::MAX);
 /// println!("{:?}", Uint::<100>::MAX);
@@ -37,7 +37,7 @@
 /// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
 /// # use proptest::prelude::*;
-/// # use uint::{const_for, Uint};
+/// # use ruint::{const_for, Uint};
 /// const_for!(BITS in SIZES {
 ///    proptest!(|(value: Uint<BITS>)| {
 ///         // ... test code

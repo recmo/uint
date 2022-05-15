@@ -14,7 +14,7 @@ fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
     }
     let limbs_str = limbs_str.trim_end_matches(',');
 
-    let source = format!("uint::Uint::<{}>::from_limbs([{}])", bits, limbs_str);
+    let source = format!("::ruint::Uint::<{}>::from_limbs([{}])", bits, limbs_str);
     TokenStream::from_str(&source).unwrap()
 }
 
@@ -168,7 +168,7 @@ pub fn uint(stream: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use uint::{uint, Uint};
+    use ruint::{uint, Uint};
 
     #[test]
     fn test_zero_size() {

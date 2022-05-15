@@ -1,5 +1,5 @@
 [package]
-name = "uint-macro"
+name = "ruint-macro"
 description = "The `uint!` macro for `Uint` literals"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
 version = "0.1.0"
@@ -15,4 +15,4 @@ license-file = "../mit-license.md"
 proc-macro = true
 
 [dev-dependencies]
-uint = { version = "0.1", path = ".." }
+ruint = { version = "0.1", path = ".." }

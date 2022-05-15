@@ -556,9 +556,9 @@ dependencies = [
 
 [[package]]
 name = "rayon"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd249e82c21598a9a426a4e00dd7adc1d640b22445ec8545feef801d1a74c221"
+checksum = "bd99e5772ead8baa5215278c9b15bf92087709e9c1b2d1f97cdb5a183c933a7d"
 dependencies = [
  "autocfg",
  "crossbeam-deque",
@@ -617,6 +617,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "ruint"
+version = "0.1.0"
+dependencies = [
+ "arbitrary",
+ "bincode",
+ "criterion",
+ "itertools",
+ "pretty_assertions",
+ "proptest",
+ "quickcheck",
+ "rand",
+ "ruint-macro",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "ruint-macro"
+version = "0.1.0"
+dependencies = [
+ "ruint",
 ]
 
 [[package]]
@@ -767,31 +792,6 @@ checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
 dependencies = [
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "uint"
-version = "0.1.0"
-dependencies = [
- "arbitrary",
- "bincode",
- "criterion",
- "itertools",
- "pretty_assertions",
- "proptest",
- "quickcheck",
- "rand",
- "serde",
- "serde_json",
- "thiserror",
- "uint-macro",
-]
-
-[[package]]
-name = "uint-macro"
-version = "0.1.0"
-dependencies = [
- "uint",
 ]
 
 [[package]]

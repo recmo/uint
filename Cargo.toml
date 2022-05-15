@@ -1,5 +1,5 @@
 [package]
-name = "uint"
+name = "ruint"
 description = "Unsigned integer type with cont-generic bit length"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
 version = "0.1.0"
@@ -12,7 +12,7 @@ readme = "Readme.md"
 license-file = "mit-license.md"
 
 [workspace]
-members = ["uint-macro"]
+members = ["ruint-macro"]
 
 [features]
 default = []
@@ -27,7 +27,7 @@ required-features = [ "bench", "proptest" ]
 [dependencies]
 itertools = "0.10"
 thiserror = "1.0"
-uint-macro = { version = "0.1.0", path = "./uint-macro" }
+ruint-macro = { version = "0.1.0", path = "./ruint-macro" }
 
 # Optional
 rand = { version = "0.8", optional = true }

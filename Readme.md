@@ -5,7 +5,7 @@ Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 ```rust
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
-use uint::{Uint, OverflowingAdd};
+use ruint::{Uint, OverflowingAdd};
 
 let a: Uint<256> = Uint::from(0xf00f_u64);
 let b: Uint<256> = Uint::from(42_u64);
@@ -18,7 +18,7 @@ Or equivalently using the convenient [`uint!`] macro:
 ```rust
 # #![allow(incomplete_features)]
 # #![feature(generic_const_exprs)]
-use uint::{uint, OverflowingAdd};
+use ruint::{uint, OverflowingAdd};
 uint!{
 
 let a = 0xf00f_U256;
@@ -34,7 +34,7 @@ It can also be used in a more natural expression form if that is preferred
 ```rust
 # #![allow(incomplete_features)]
 # #![feature(generic_const_exprs)]
-# use uint::uint;
+# use ruint::uint;
 #
 let cow = uint!(0xf039_U42);
 ```
