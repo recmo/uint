@@ -166,28 +166,28 @@ pub fn uint(stream: TokenStream) -> TokenStream {
     transform_stream(stream)
 }
 
-#[cfg(test)]
-mod tests {
-    use ruint::{uint, Uint};
+// #[cfg(test)]
+// mod tests {
+//     use ruint::{uint, Uint};
 
-    #[test]
-    fn test_zero_size() {
-        uint! {
-            assert_eq!(0_U0, Uint::zero());
-            assert_eq!(0000_U0, Uint::zero());
-            assert_eq!(0x00_U0, Uint::zero());
-            assert_eq!(0b0000_U0, Uint::zero());
-            assert_eq!(0b0000000_U0, Uint::zero());
-        }
-    }
+//     #[test]
+//     fn test_zero_size() {
+//         uint! {
+//             assert_eq!(0_U0, Uint::zero());
+//             assert_eq!(0000_U0, Uint::zero());
+//             assert_eq!(0x00_U0, Uint::zero());
+//             assert_eq!(0b0000_U0, Uint::zero());
+//             assert_eq!(0b0000000_U0, Uint::zero());
+//         }
+//     }
 
-    #[test]
-    fn test_bases() {
-        uint! {
-            assert_eq!(10_U8, Uint::from(10));
-            assert_eq!(0x10_U8, 16_u64.try_into().unwrap());
-            assert_eq!(0b10_U8, 2_u64.try_into().unwrap());
-            assert_eq!(0o10_U8, 8_u64.try_into().unwrap());
-        }
-    }
-}
+//     #[test]
+//     fn test_bases() {
+//         uint! {
+//             assert_eq!(10_U8, Uint::from(10));
+//             assert_eq!(0x10_U8, 16_u64.try_into().unwrap());
+//             assert_eq!(0b10_U8, 2_u64.try_into().unwrap());
+//             assert_eq!(0o10_U8, 8_u64.try_into().unwrap());
+//         }
+//     }
+// }
