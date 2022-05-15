@@ -6,16 +6,17 @@ on:
 
 jobs:
   issue-tracker:
-    name: Dependency Security Audit
+    name: Issue Tracker
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up python
-        uses: actions/setup-python@v3
+      - name: Cache multiple paths
+        uses: actions/cache@v3
         with:
-          python-version: '3.9'
-          cache: 'pip'
+          path: ~/.cache/pip
+          key: issue_tracker-${{ hashFiles('.github/workflows/issue_tracker.yml') }}
+          restore-keys: issue_tracker-
       - name: Install Python dependencies
         run: pip install PyGithub
       - name: Update issues
