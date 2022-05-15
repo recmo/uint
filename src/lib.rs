@@ -11,8 +11,7 @@
 
 mod add;
 mod from;
-mod proptest;
-mod rand;
+mod support;
 mod test_utils;
 
 pub use self::add::OverflowingAdd;
