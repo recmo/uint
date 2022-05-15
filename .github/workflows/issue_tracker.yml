@@ -11,6 +11,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Set up python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      - name: Install Python dependencies
+        run: pip install PyGithub
       - name: Update issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
