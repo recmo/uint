@@ -22,7 +22,7 @@ with os.popen('git rev-parse HEAD') as process:
 print('Commit hash:', commit_hash)
 
 # Connect to the GitHub repo
-gh = Github(os.environ['GITHUB_SECRET'])
+gh = Github(os.environ['GITHUB_TOKEN'])
 repo = gh.get_repo(re
                    .compile('git@github\.com:(\w+/\w+)\.git')
                    .match(os.environ['CIRCLE_REPOSITORY_URL'])
