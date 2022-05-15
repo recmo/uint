@@ -23,11 +23,7 @@ print('Commit hash:', commit_hash)
 
 # Connect to the GitHub repo
 gh = Github(os.environ['GITHUB_TOKEN'])
-repo = gh.get_repo(re
-                   .compile('git@github\.com:(\w+/\w+)\.git')
-                   .match(os.environ['CIRCLE_REPOSITORY_URL'])
-                   .groups(1)[0]
-                   )
+repo = gh.get_repo(os.environ['REPO_NAME'])
 print('Connected to', repo)
 
 # GitHub labels for issues
