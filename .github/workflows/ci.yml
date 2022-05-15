@@ -4,8 +4,8 @@ on:
   push
 
 env:
-  RUST_VERSION: "1.61"
-  NIGHTLY_VERSION: nightly-2022-04-18
+  RUST_VERSION: "1.60"
+  NIGHTLY_VERSION: nightly-2022-05-12
   CARGO_TERM_COLOR: always
   # Skip incremental build and debug info generation in CI
   CARGO_INCREMENTAL: 0
