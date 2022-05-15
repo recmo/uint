@@ -3,6 +3,7 @@
 Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
 ```rust
+#![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use uint::{Uint, OverflowingAdd};
 
@@ -15,6 +16,7 @@ assert_eq!(c, Uint::from(0xf039_u64));
 Or equivalently using the convenient [`uint!`] macro:
 
 ```rust
+# #![allow(incomplete_features)]
 # #![feature(generic_const_exprs)]
 use uint::{uint, OverflowingAdd};
 uint!{
@@ -30,6 +32,7 @@ assert_eq!(c, 0xf039_U256);
 It can also be used in a more natural expression form if that is preferred
 
 ```rust
+# #![allow(incomplete_features)]
 # #![feature(generic_const_exprs)]
 # use uint::uint;
 #
@@ -64,13 +67,13 @@ cargo criterion
 To build documentation you need the `--no-deps` flag because of KaTeX header injection.
 
 ```sh
-cargo doc --all-features --no-deps
+cargo doc --workspace --all-features --no-deps
 ```
 
 Check documentation coverage
 
 ```sh
-RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --all-features --no-deps
+RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --workspace --all-features --no-deps
 ```
 
 ## To do

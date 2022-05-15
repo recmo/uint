@@ -3,6 +3,7 @@
 /// Repeats a block of code with different values assigned to a constant.
 ///
 /// ```rust
+/// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
 /// # use uint::{const_for, Uint};
 /// const_for!(BITS in [0, 10, 100] {
@@ -13,6 +14,7 @@
 /// is equivalent to
 ///
 /// ```rust
+/// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
 /// # use uint::{const_for, Uint};
 /// println!("{:?}", Uint::<0>::MAX);
@@ -32,6 +34,7 @@
 /// testing over a large range of [`Uint`][crate::Uint] types and values:
 ///
 /// ```rust
+/// # #![allow(incomplete_features)]
 /// # #![feature(generic_const_exprs)]
 /// # use proptest::prelude::*;
 /// # use uint::{const_for, Uint};
