@@ -55,7 +55,7 @@ named feature flag, or simply including the crate in your project (Cargo will th
 Format, lint, build and test everything (I recommend creating a shell alias for this):
 
 ```sh
-cargo fmt && cargo clippy --all-features --all-targets && cargo test --doc --workspace --all-features -- --nocapture && cargo test --all-features --all-targets -- --nocapture
+cargo fmt && cargo clippy --all-features --all-targets && cargo test --doc --workspace --all-features -- --nocapture && cargo test --workspace --all-features --all-targets -- --nocapture
 ```
 
 Run benchmarks with the provided `.cargo/config.toml` alias

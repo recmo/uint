@@ -640,6 +640,9 @@ dependencies = [
 [[package]]
 name = "ruint-macro"
 version = "0.1.0"
+dependencies = [
+ "ruint",
+]
 
 [[package]]
 name = "rustc_version"
