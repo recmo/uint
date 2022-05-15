@@ -22,6 +22,6 @@ jobs:
       - name: Update issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_NAME: ${{ github.repository }}
           DRY_RUN: true
         run: .github/scripts/issue_tracker.py
