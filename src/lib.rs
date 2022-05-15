@@ -15,7 +15,7 @@ mod from;
 mod support;
 mod test_utils;
 
-pub use self::add::OverflowingAdd;
+pub use self::{add::OverflowingAdd, bytes::nbytes};
 pub use uint_macro::uint;
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
