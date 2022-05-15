@@ -38,7 +38,12 @@ let cow = uint!(0xf039_U42);
 
 ## Feature flags
 
-* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary), [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest). For all these optional dependencies support for generating values is build in. Support is automatically activated when the crate is in the dependency tree.
+* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary),
+  [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest). For all
+  these optional dependencies support for generating values is build in. Support is automatically
+  activated when the crate is in the dependency tree.
+* [`serde`](https://docs.rs/serde) enables serde serialize/deserialize support. Uses big-endian hex
+  in human readable formats and big-endian byte strings in machine readable ones.
 
 ## Benchmarks and tests
 
