@@ -36,6 +36,9 @@ It can also be used in a more natural expression form if that is preferred
 let cow = uint!(0xf039_U42);
 ```
 
+## Feature flags
+
+* `rand`, `arbitrary`, `quickcheck`, `proptest`: support generating values when enabled.
 
 ## Benchmarks and tests
 

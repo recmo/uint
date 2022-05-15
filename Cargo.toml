@@ -30,9 +30,11 @@ thiserror = "1.0"
 uint-macro = { version = "0.1.0", path = "./uint-macro"}
 
 # Optional
-proptest = { version = "1.0", optional = true }
 rand = { version = "0.8", optional = true }
 quickcheck = { version = "1.0", optional = true }
+proptest = { version = "1.0", optional = true }
+arbitrary = { version = "1.1", optional = true }
+
 
 # Secretly dev-dependencies
 criterion = { version = "0.3", optional = true }
