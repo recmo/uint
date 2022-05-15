@@ -5,6 +5,7 @@ use serde::{
     de::{Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use std::str;
 
 /// Serialize a [`Uint`] value.
 ///
@@ -26,7 +27,6 @@ where
             }
             serializer.serialize_str(&result)
         } else {
-            dbg!(bytes);
             // Write as bytes directly
             serializer.serialize_bytes(&bytes[..])
         }
@@ -34,8 +34,9 @@ where
 }
 
 /// Deserialize human readable hex strings or byte arrays into hashes.
-/// Hex strings can be upper/lower/mixed case and have an optional `0x` prefix
-/// but they must always be exactly 32 bytes.
+/// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
+/// can be any length. They are interpreted big-endian.
+// TODO: Document and test the range of valid inputs.
 impl<'de, const BITS: usize> Deserialize<'de> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
@@ -72,10 +73,24 @@ where
         E: Error,
     {
         let value = trim_hex_prefix(value);
-        dbg!(value);
-
-        todo!() // bytes_from_hex(value).map_err(|e|
-                // E::custom(format!("Error in hex: {}", e)))
+        let mut limbs = [0; nlimbs(BITS)];
+        for (i, chunk) in value.as_bytes().rchunks(16).enumerate() {
+            let chunk = str::from_utf8(chunk)
+                .map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))?;
+            let limb = u64::from_str_radix(chunk, 16)
+                .map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))?;
+            if limb == 0 {
+                continue;
+            }
+            if i >= nlimbs(BITS) {
+                return Err(Error::invalid_value(Unexpected::Str(value), &self));
+            }
+            limbs[i] = limb;
+        }
+        if BITS > 0 && limbs[nlimbs(BITS) - 1] > Self::Value::MASK {
+            return Err(Error::invalid_value(Unexpected::Str(value), &self));
+        }
+        Ok(Uint::from_limbs(limbs))
     }
 }
 
@@ -103,7 +118,6 @@ where
         if value.len() != nbytes(BITS) {
             return Err(E::invalid_length(value.len(), &self));
         }
-        dbg!(value);
         Uint::try_from_be_bytes(value).ok_or_else(|| {
             E::invalid_value(
                 Unexpected::Other(&format!("Value to large for Uint<{}", BITS)),
