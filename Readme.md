@@ -10,7 +10,7 @@
 Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
 ```rust
-#![allow(incomplete_features)]
+# #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use ruint::{Uint, OverflowingAdd};
 
@@ -62,19 +62,17 @@ named feature flag, or simply including the crate in your project (Cargo will th
 Format, lint, build and test everything (I recommend creating a shell alias for this):
 
 ```sh
-cargo fmt && cargo clippy --all-features --all-targets && cargo test --doc --workspace --all-features -- --nocapture && cargo test --workspace --all-features --all-targets -- --nocapture
+cargo fmt &&\
+cargo clippy --all-features --all-targets &&\
+cargo test --workspace --all-features --doc -- --nocapture &&\
+cargo test --workspace --all-features --all-targets -- --nocapture &&\
+cargo doc --workspace --all-features --no-deps
 ```
 
 Run benchmarks with the provided `.cargo/config.toml` alias
 
 ```sh
 cargo criterion
-```
-
-To build documentation you need the `--no-deps` flag because of KaTeX header injection.
-
-```sh
-cargo doc --workspace --all-features --no-deps
 ```
 
 Check documentation coverage

@@ -4,8 +4,7 @@ on:
   push
 
 env:
-  RUST_VERSION: "1.61"
-  NIGHTLY_VERSION: nightly-2022-04-18
+  RUST_VERSION: "nightly-2022-05-12"
   CARGO_TERM_COLOR: always
   # Skip incremental build and debug info generation in CI
   CARGO_INCREMENTAL: 0
@@ -30,7 +29,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
           components: rustfmt, clippy
       - name: Cache build
@@ -45,7 +44,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --all-features --all-targets
+          args: --locked --workspace --all-features --all-targets
       - name: Check docs
         uses: actions-rs/cargo@v1
         with:
@@ -62,7 +61,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
       - name: Cache build
         uses: Swatinem/rust-cache@v1
@@ -97,7 +96,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
           components: llvm-tools-preview
       - name: Cache build
@@ -106,7 +105,6 @@ jobs:
           key: cache-v1
       - name: Install cargo-binutils
         run: cargo install cargo-binutils
-      - run:  npm install ganache-cli@latest --global
       - name: Build tests with coverage
         run: |
           cargo test --workspace --locked --all-features --all-targets --no-fail-fast --no-run
