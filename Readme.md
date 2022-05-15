@@ -65,7 +65,7 @@ Maybe:
 
 ## FAQ
 
-> What's up with all the 
+> What's up with all the
 > 
 > ```rust,ignore
 > where
@@ -75,7 +75,7 @@ Maybe:
 > trait bounds everywhere?
 
 Const generics are still pretty unfinished in rust. This is to work around current limitations. Finding a less invasive workaround is high priority. Fortunately, this is only needed when writing
-code generic over the value of `BITS`. Users 
+code generic over the value of `BITS`. But this only affects you if you write code generic over the bit size. If you use a specific size like `Uint<256>` you do not need these bounds.
 
 * Rust issue [#79778](<https://github.com/rust-lang/rust/issues/79778>)
 

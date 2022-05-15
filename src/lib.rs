@@ -10,6 +10,7 @@
 #![feature(generic_const_exprs)]
 
 mod add;
+mod bytes;
 mod from;
 mod support;
 mod test_utils;
