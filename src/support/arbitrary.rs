@@ -35,8 +35,7 @@ mod tests {
             let (num_bytes, _) = Uint::<N>::size_hint(0);
             let bytes = repeat(0x55u8).take(num_bytes).collect::<Vec<_>>();
             let mut u = arbitrary::Unstructured::new(&bytes);
-            let x = Uint::<N>::arbitrary(&mut u).unwrap();
-            dbg!(x);
+            Uint::<N>::arbitrary(&mut u).unwrap();
         });
     }
 }

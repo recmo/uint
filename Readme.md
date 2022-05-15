@@ -38,7 +38,7 @@ let cow = uint!(0xf039_U42);
 
 ## Feature flags
 
-* `rand`, `arbitrary`, `quickcheck`, `proptest`: support generating values when enabled.
+* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary), [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest): support generating values when enabled.
 
 ## Benchmarks and tests
 
