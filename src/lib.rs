@@ -18,7 +18,7 @@ mod test_utils;
 pub use self::add::OverflowingAdd;
 pub use uint_macro::uint;
 
-/// Binary numbers modulo $2^n$.
+/// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct Uint<const BITS: usize>
 where
@@ -92,6 +92,15 @@ where
         let mut limbs = [0; nlimbs(BITS)];
         limbs.copy_from_slice(slice);
         Self::from_limbs(limbs)
+    }
+}
+
+impl<const BITS: usize> Default for Uint<BITS>
+where
+    [(); nlimbs(BITS)]:,
+{
+    fn default() -> Self {
+        Self::ZERO
     }
 }
 

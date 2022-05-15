@@ -11,11 +11,23 @@ where
     /// forced zero if BITS is not cleanly divisible by eight.
     pub const BYTES: usize = (BITS + 7) / 8;
 
+    /// Creates a new integer from a big endian slice of bytes.
+    /// 
+    /// The slice is interpreted as a big endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    /// 
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     pub fn try_from_be_bytes(bytes: &[u8]) -> Option<Self> {
         Self::try_from_le_bytes_impl(bytes.iter().copied().rev())
     }
 
+    /// Creates a new integer from a little endian slice of bytes.
+    /// 
+    /// The slice is interpreted as a little endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    /// 
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     pub fn try_from_le_bytes(bytes: &[u8]) -> Option<Self> {
         Self::try_from_le_bytes_impl(bytes.iter().copied())

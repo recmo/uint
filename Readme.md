@@ -1,6 +1,6 @@
 # Rust `uint` crate using const-generics
 
-Implements `Uint<N: usize>` where `N` is the number of bits. That is, it implements the ring of numbers modulo 2ⁿ.
+Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
 ```rust
 #![feature(generic_const_exprs)]
@@ -38,7 +38,7 @@ let cow = uint!(0xf039_U42);
 
 ## Feature flags
 
-* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary), [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest): support generating values when enabled.
+* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary), [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest). For all these optional dependencies support for generating values is build in. Support is automatically activated when the crate is in the dependency tree.
 
 ## Benchmarks and tests
 
