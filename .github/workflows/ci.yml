@@ -4,8 +4,7 @@ on:
   push
 
 env:
-  RUST_VERSION: "1.60"
-  NIGHTLY_VERSION: nightly-2022-05-12
+  RUST_VERSION: "nightly-2022-05-12"
   CARGO_TERM_COLOR: always
   # Skip incremental build and debug info generation in CI
   CARGO_INCREMENTAL: 0
@@ -30,7 +29,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
           components: rustfmt, clippy
       - name: Cache build
@@ -62,7 +61,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
       - name: Cache build
         uses: Swatinem/rust-cache@v1
@@ -97,7 +96,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.NIGHTLY_VERSION }}
+          toolchain: ${{ env.RUST_VERSION }}
           override: true
           components: llvm-tools-preview
       - name: Cache build
