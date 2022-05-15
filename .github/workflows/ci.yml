@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push
+
+env:
+  RUST_VERSION: "1.61"
+  NIGHTLY_VERSION: nightly-2022-04-18
+  CARGO_TERM_COLOR: always
+  # Skip incremental build and debug info generation in CI
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+
+jobs:
+  accept:
+    name: Accept
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Accept
+        run: true
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_VERSION }}
+          override: true
+          components: rustfmt, clippy
+      - name: Cache build
+        uses: Swatinem/rust-cache@v1
+        with:
+          key: cache-v1
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --locked --workspace --all-features --all-targets
+      - name: Check docs
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --locked --workspace --all-features --no-deps --document-private-items
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_VERSION }}
+          override: true
+      - name: Cache build
+        uses: Swatinem/rust-cache@v1
+        with:
+          key: cache-v1
+      - run:  npm install ganache-cli@latest --global
+      # Cargo doc test is not included in `--all-targets`
+      # See <https://github.com/rust-lang/cargo/issues/6669>
+      # Cargo doc test also doesn't support `--no-run`, so we run it but
+      # have it just print `--help`.
+      - name: Build tests
+        run: |
+          cargo test --locked --workspace --all-features --all-targets --no-run
+          cargo test --locked --workspace --all-features --doc -- --help
+      - name: Run tests
+        run: |
+          cargo test --locked --workspace --all-features --all-targets -- --nocapture
+          cargo test --locked --workspace --all-features --doc -- --nocapture
+
+  codecov:
+    # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
+    name: Coverage
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
+      RUSTDOCFLAGS: -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins
+      LLVM_PROFILE_FILE: profile-%m.profraw
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_VERSION }}
+          override: true
+          components: llvm-tools-preview
+      - name: Cache build
+        uses: Swatinem/rust-cache@v1
+        with:
+          key: cache-v1
+      - name: Install cargo-binutils
+        run: cargo install cargo-binutils
+      - run:  npm install ganache-cli@latest --global
+      - name: Build tests with coverage
+        run: |
+          cargo test --workspace --locked --all-features --all-targets --no-fail-fast --no-run
+          cargo test --workspace --locked --all-features --doc --no-fail-fast -- --help
+      - name: Run tests with coverage
+        run: |
+          cargo test --workspace --locked --all-features --all-targets --no-fail-fast -- --nocapture
+          cargo test --workspace --locked --all-features --doc --no-fail-fast
+      - name: Merge execution traces
+        run: cargo profdata -- merge -sparse $(find . -iname "profile-*.profraw") -o profile.profdata
+      - name: Export to lcov format for codecov
+        # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/instrument-coverage.html#including-doc-tests>
+        run:
+          cargo cov -- export
+            --format=lcov > profile.lcov
+            --instr-profile=profile.profdata
+            $(
+              for file in
+                $(
+                  cargo test --locked --all-features --all-targets
+                    --no-fail-fast --no-run --message-format=json
+                    | jq -r "select(.profile.test == true) | .filenames[]"
+                    | grep -v dSYM -
+                )
+                target/debug/doctestbins/*/rust_out;
+              do
+                [[ -x $file ]] && printf "%s %s " -object $file ;
+              done
+            )
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v3.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          flags: test
+          fail_ci_if_error: true
+          verbose: true
+
+  security_audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.RUST_VERSION }}
+          default: true
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

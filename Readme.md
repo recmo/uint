@@ -1,5 +1,10 @@
 # Rust `uint` crate using const-generics
 
+![lines of code](https://img.shields.io/tokei/lines/github/recmo/uint)
+[![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
+[![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
+[![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
+
 Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
 ```rust
