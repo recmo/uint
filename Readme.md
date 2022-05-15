@@ -10,7 +10,7 @@
 Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
 
 ```rust
-#![allow(incomplete_features)]
+# #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use ruint::{Uint, OverflowingAdd};
 

@@ -45,7 +45,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --all-features --all-targets
+          args: --locked --workspace --all-features --all-targets
       - name: Check docs
         uses: actions-rs/cargo@v1
         with:
