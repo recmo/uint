@@ -53,7 +53,7 @@ where
 }
 
 // u64 is a single limb, so this is the base case
-impl<const BITS: usize> const TryFrom<u64> for Uint<BITS>
+impl<const BITS: usize> TryFrom<u64> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
@@ -65,7 +65,7 @@ where
                 return Err(UintConversionError::ValueTooLarge(BITS));
             }
             if Self::LIMBS == 0 {
-                return Ok(Self::zero());
+                return Ok(Self::MIN);
             }
         }
         let mut limbs = [0; nlimbs(BITS)];
@@ -75,7 +75,7 @@ where
 }
 
 // u128 version is handled specially in because it covers two limbs.
-impl<const BITS: usize> const TryFrom<u128> for Uint<BITS>
+impl<const BITS: usize> TryFrom<u128> for Uint<BITS>
 where
     [(); nlimbs(BITS)]:,
 {
@@ -105,7 +105,7 @@ where
 // Unsigned int version upcast to u64
 macro_rules! impl_from_unsigned_int {
     ($uint:ty) => {
-        impl<const BITS: usize> const TryFrom<$uint> for Uint<BITS>
+        impl<const BITS: usize> TryFrom<$uint> for Uint<BITS>
         where
             [(); nlimbs(BITS)]:,
         {
@@ -127,7 +127,7 @@ impl_from_unsigned_int!(usize);
 // `uint`.
 macro_rules! impl_from_signed_int {
     ($int:ty, $uint:ty) => {
-        impl<const BITS: usize> const TryFrom<$int> for Uint<BITS>
+        impl<const BITS: usize> TryFrom<$int> for Uint<BITS>
         where
             [(); nlimbs(BITS)]:,
         {
@@ -174,7 +174,7 @@ where
             return Err(UintConversionError::ValueTooLarge(BITS));
         }
         if value < 0.5 {
-            return Ok(Self::zero());
+            return Ok(Self::ZERO);
         }
         // All non-normal cases should have been handled above
         assert!(value.is_normal());
@@ -227,25 +227,31 @@ mod test {
 
     #[test]
     fn test_u64() {
-        assert_eq!(Uint::<0>::try_from(0_u64), Ok(Uint::zero()));
+        assert_eq!(Uint::<0>::try_from(0_u64), Ok(Uint::ZERO));
         assert_eq!(
             Uint::<0>::try_from(1_u64),
             Err(UintConversionError::ValueTooLarge(0))
         );
         repeat!(non_zero, {
-            assert_eq!(Uint::<N>::try_from(0_u64), Ok(Uint::zero()));
-            assert_eq!(Uint::<N>::try_from(1_u64), Ok(Uint::one()));
+            assert_eq!(Uint::<N>::try_from(0_u64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<N>::try_from(1_u64).unwrap().as_limbs()[0], 1);
         });
     }
 
     #[test]
     fn test_f64() {
-        assert_eq!(Uint::<0>::try_from(0.0), Ok(Uint::zero()));
+        assert_eq!(Uint::<0>::try_from(0.0_f64), Ok(Uint::ZERO));
         repeat!(non_zero, {
-            assert_eq!(Uint::<N>::try_from(0.0), Ok(Uint::zero()));
-            assert_eq!(Uint::<N>::try_from(1.0), Ok(Uint::one()));
+            assert_eq!(Uint::<N>::try_from(0.0_f64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<N>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
         });
-        assert_eq!(Uint::<7>::try_from(123.499), Ok(Uint::from_limbs([123])));
-        assert_eq!(Uint::<7>::try_from(123.500), Ok(Uint::from_limbs([124])));
+        assert_eq!(
+            Uint::<7>::try_from(123.499_f64),
+            Ok(Uint::from_limbs([123]))
+        );
+        assert_eq!(
+            Uint::<7>::try_from(123.500_f64),
+            Ok(Uint::from_limbs([124]))
+        );
     }
 }

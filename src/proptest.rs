@@ -20,7 +20,33 @@ where
         // TODO: Copy [`UniformArrayStrategy`] to avoid heap allocations
         let limbs: VecStrategy<Any> = vec(u64::arbitrary(), nlimbs(BITS));
         limbs
-            .prop_map(|limbs| Self::from_limbs_slice(&limbs))
+            .prop_map(|mut limbs| {
+                if Self::LIMBS > 0 {
+                    limbs[Self::LIMBS - 1] &= Self::MASK;
+                }
+                Self::from_limbs_slice(&limbs)
+            })
             .boxed()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repeat;
+    use proptest::proptest;
+
+    #[test]
+    fn test_arbitrary() {
+        repeat!(
+            {
+                proptest!(|(n in Uint::<N>::arbitrary())| {
+                let _ = n;
+            });
+            },
+            0,
+            1,
+            2
+        );
     }
 }

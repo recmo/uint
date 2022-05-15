@@ -1,14 +1,15 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
-#![cfg_attr(test, allow(clippy::cognitive_complexity))]
+#![cfg_attr(
+    any(test, feature = "bench"),
+    allow(clippy::wildcard_imports, clippy::cognitive_complexity)
+)]
 #![allow(incomplete_features)]
 // We need these features unfortunately.
 // This allows us to compute the number of limbs required from the bits.
 #![feature(generic_const_exprs)]
-#![feature(const_trait_impl)]
 
 mod add;
-mod constructors;
 mod from;
 #[cfg(any(test, feature = "bench"))]
 mod test_utils;
@@ -43,7 +44,12 @@ where
     pub const BITS: usize = BITS;
 
     /// The smallest value that can be represented by this integer type.
-    pub const MIN: Self = Self {
+    /// Synonym for [`Self::ZERO`].
+    pub const MIN: Self = Self::ZERO;
+
+    /// The value zero. This is the only value that exists in all [`Uint`]
+    /// types.
+    pub const ZERO: Self = Self {
         limbs: [0; nlimbs(BITS)],
     };
 
@@ -71,6 +77,7 @@ where
     /// # Panics
     /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
+    #[track_caller]
     pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
         if BITS > 0 {
             // TODO: Add `<{BITS}>` to the type when Display works in const fn.
@@ -80,6 +87,14 @@ where
             );
         }
         Self { limbs }
+    }
+
+    #[must_use]
+    #[track_caller]
+    pub fn from_limbs_slice(slice: &[u64]) -> Self {
+        let mut limbs = [0; nlimbs(BITS)];
+        limbs.copy_from_slice(slice);
+        Self::from_limbs(limbs)
     }
 }
 
@@ -119,7 +134,7 @@ mod test {
 
     #[test]
     fn test_max() {
-        assert_eq!(Uint::<0>::MAX, Uint::zero());
+        assert_eq!(Uint::<0>::MAX, Uint::ZERO);
         assert_eq!(Uint::<1>::MAX, Uint::from_limbs([1]));
         assert_eq!(Uint::<7>::MAX, Uint::from_limbs([127]));
         assert_eq!(Uint::<64>::MAX, Uint::from_limbs([u64::MAX]));
@@ -128,11 +143,18 @@ mod test {
             Uint::from_limbs([u64::MAX, u64::MAX >> 28])
         );
     }
+
+    #[test]
+    fn test_constants() {
+        repeat!({
+            assert_eq!(Uint::<N>::MIN, Uint::<N>::ZERO);
+            let _ = Uint::<N>::MAX;
+        });
+    }
 }
 
 #[cfg(feature = "bench")]
 pub mod bench {
-    #[allow(clippy::wildcard_imports)]
     use super::*;
     use criterion::Criterion;
 

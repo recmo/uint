@@ -14,13 +14,9 @@ where
     #[allow(clippy::cast_lossless)]
     #[allow(clippy::cast_possible_truncation)]
     fn overflowing_add(self, other: Self) -> (Self, bool) {
-        let mut result = Self::zero();
+        let mut result = Self::MIN;
         let mut carry = 0;
-        for (res, lhs, rhs) in izip!(
-            result.limbs.iter_mut(),
-            self.limbs.into_iter(),
-            other.limbs.into_iter()
-        ) {
+        for (res, &lhs, &rhs) in izip!(result.as_limbs_mut(), self.as_limbs(), other.as_limbs()) {
             let sum = (lhs as u128) + (rhs as u128) + (carry as u128);
             *res = sum as u64;
             carry = (sum >> 64) as u64;
@@ -73,36 +69,8 @@ where
 //     }
 // }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::repeat;
-
-    #[test]
-    const fn construct_zeros() {
-        let _ = Uint::<0>::zero();
-        repeat!({
-            let _ = Uint::<N>::zero();
-        });
-    }
-
-    #[test]
-    const fn construct_ones() {
-        repeat!(
-            {
-                let _ = Uint::<N>::one();
-            },
-            1,
-            2,
-            64,
-            128
-        );
-    }
-}
-
 #[cfg(feature = "bench")]
 pub mod bench {
-    #[allow(clippy::wildcard_imports)]
     use super::*;
     use crate::repeat;
     use ::proptest::{
