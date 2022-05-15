@@ -11,15 +11,12 @@
 
 mod add;
 mod from;
-#[cfg(any(test, feature = "bench"))]
+mod proptest;
+mod rand;
 mod test_utils;
 
-pub use uint_macro::uint;
-
-#[cfg(feature = "proptest")]
-pub mod proptest;
-
 pub use self::add::OverflowingAdd;
+pub use uint_macro::uint;
 
 /// Binary numbers modulo $2^n$.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

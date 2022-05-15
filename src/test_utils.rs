@@ -1,3 +1,5 @@
+#![cfg(any(test, feature = "bench"))]
+
 // Repeat a block with different values substituted for `N`.
 #[macro_export]
 macro_rules! repeat {

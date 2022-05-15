@@ -26,12 +26,16 @@ required-features = [ "bench", "proptest" ]
 
 [dependencies]
 itertools = "0.10"
-criterion = { version = "0.3", optional = true }
-proptest = { version = "1.0", optional = true }
-static_assertions = "1.1"
 thiserror = "1.0"
-
 uint-macro = { version = "0.1.0", path = "./uint-macro"}
+
+# Optional
+proptest = { version = "1.0", optional = true }
+rand = { version = "0.8", optional = true }
+
+# Secretly dev-dependencies
+criterion = { version = "0.3", optional = true }
+
 
 [dev-dependencies]
 pretty_assertions = "1.0"

@@ -1,5 +1,5 @@
 #![cfg(feature = "proptest")]
-use super::{nlimbs, Uint};
+use crate::{nlimbs, Uint};
 use proptest::{
     arbitrary::Arbitrary,
     collection::{vec, VecStrategy},
