@@ -105,7 +105,6 @@ jobs:
           key: cache-v1
       - name: Install cargo-binutils
         run: cargo install cargo-binutils
-      - run:  npm install ganache-cli@latest --global
       - name: Build tests with coverage
         run: |
           cargo test --workspace --locked --all-features --all-targets --no-fail-fast --no-run
