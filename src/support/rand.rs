@@ -1,3 +1,5 @@
+// TODO: Implement the Uniform distribution.
+
 #![cfg(feature = "rand")]
 use crate::{nlimbs, Uint};
 use rand::{

@@ -11,9 +11,9 @@
 
 mod add;
 mod bytes;
+mod const_for;
 mod from;
 mod support;
-mod test_utils;
 
 pub use self::{add::OverflowingAdd, bytes::nbytes};
 pub use uint_macro::uint;

@@ -101,7 +101,8 @@ where
 /// Number of bytes required to represent the given number of bits.
 ///
 /// This needs to be public because it is used in the `Uint` type,
-/// specicically in the [`to_be_bytes()`] and related functions.
+/// specifically in the [`to_be_bytes()`][Uint::to_be_bytes] and related
+/// functions.
 #[must_use]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8

@@ -38,30 +38,51 @@ let cow = uint!(0xf039_U42);
 
 ## Feature flags
 
-* [`rand`](https://docs.rs/rand), [`arbitrary`](https://docs.rs/arbitrary),
-  [`quickcheck`](https://docs.rs/quickcheck), [`proptest`](https://docs.rs/proptest). For all
-  these optional dependencies support for generating values is build in. Support is automatically
-  activated when the crate is in the dependency tree.
-* [`serde`](https://docs.rs/serde) enables serde serialize/deserialize support. Uses big-endian hex
-  in human readable formats and big-endian byte strings in machine readable ones.
+There is support for a number of extenral crates. These are enabled by setting the identically
+named feature flag, or simply including the crate in your project (Cargo will then enable the dependency globally).
 
-## Benchmarks and tests
+* [`rand`](https://docs.rs/rand): Implements sampling from the [`Standard`](https://docs.rs/rand/latest/rand/distributions/struct.Standard.html) distribution, i.e. [`rng.gen()`](https://docs.rs/rand/latest/rand/trait.Rng.html#method.gen).
+* [`arbitrary`](https://docs.rs/arbitrary): Implements the [`Arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for fuzz testing. 
+* [`quickcheck`](https://docs.rs/quickcheck): Implements the [`Arbitrary`](https://docs.rs/quickcheck/latest/quickcheck/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing.
+* [`proptest`](https://docs.rs/proptest): Implements the [`Arbitrary`](https://docs.rs/proptest/latest/proptest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing. Proptest is used for the `uint`s own test suite.
+* [`serde`](https://docs.rs/serde): Implements the [`Seralize`](https://docs.rs/serde/latest/serde/trait.Serialize.html) and [`Deserialize`](https://docs.rs/serde/latest/serde/trait.Deserialize.html) traits for [`Uint`] using big-endian hex in human readable formats and big-endian byte strings in machine readable formats.
 
-Run benchmarks with
+## Building and testing
+
+Format, lint, build and test everything (I recommend creating a shell alias for this):
+
+```sh
+cargo fmt && cargo clippy --all-features --all-targets && cargo test --doc --workspace --all-features -- --nocapture && cargo test --all-features --all-targets -- --nocapture
+```
+
+Run benchmarks with the provided `.cargo/config.toml` alias
 
 ```sh
 cargo criterion
 ```
 
+To build documentation you need the `--no-deps` flag because of KaTeX header injection.
+
+```sh
+cargo doc --all-features --no-deps
+```
+
+Check documentation coverage
+
+```sh
+RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --all-features --no-deps
+```
+
+## To do
+
 Goals:
 
 * All the quality of life features one could want.
-* Compatible with std `u64`, etc types.
+* Compatible with std `u64`, etc types. See Rust's [integer methods](https://doc.rust-lang.org/stable/std/primitive.u64.html).
 * Builds `no-std` and `wasm`.
 * Fast platform agnostic generic algorithms.
 * Target specific assembly optimizations (where available).
-* Macro to create constants from long literals.
-* Optional rand, proptest, serde, num-traits, etc, support.
+* Optional num-traits, etc, support.
 
 Maybe:
 
@@ -83,9 +104,3 @@ Const generics are still pretty unfinished in rust. This is to work around curre
 code generic over the value of `BITS`. But this only affects you if you write code generic over the bit size. If you use a specific size like `Uint<256>` you do not need these bounds.
 
 * Rust issue [#79778](<https://github.com/rust-lang/rust/issues/79778>)
-
-
-## References
-
-* Rust [integer methods](https://doc.rust-lang.org/stable/std/primitive.u64.html)
-
