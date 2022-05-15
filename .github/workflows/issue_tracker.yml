@@ -11,14 +11,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Cache multiple paths
+      - name: Cache Python dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: issue_tracker-${{ hashFiles('.github/workflows/issue_tracker.yml') }}
           restore-keys: issue_tracker-
       - name: Install Python dependencies
-        run: pip install PyGithub
+        run: pip install PyGithub numpy
       - name: Update issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

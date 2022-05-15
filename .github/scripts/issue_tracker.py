@@ -6,10 +6,8 @@ from datetime import date
 import json
 import sys
 
-# pip3 install PyGithub
+# pip3 install PyGithub numpy
 from github import Github
-
-# pip3 install numpy
 import numpy as np
 
 # Only actually change things on master
