@@ -110,7 +110,7 @@ pub const fn nbytes(bits: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use proptest::proptest;
 
     const N: Uint<128> =
@@ -156,11 +156,11 @@ mod tests {
 
     #[test]
     fn test_bytes_roundtrip() {
-        repeat!({
-            proptest!(|(value: Uint<N>)| {
+        const_for!(BITS in SIZES {
+            proptest!(|(value: Uint<BITS>)| {
                 assert_eq!(value, Uint::from_be_bytes(value.to_be_bytes()));
                 assert_eq!(value, Uint::from_le_bytes(value.to_le_bytes()));
             });
-        })
+        });
     }
 }

@@ -26,16 +26,16 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use std::iter::repeat;
 
     #[test]
     fn test_arbitrary() {
-        repeat!({
-            let (num_bytes, _) = Uint::<N>::size_hint(0);
+        const_for!(BITS in NON_ZERO {
+            let (num_bytes, _) = Uint::<BITS>::size_hint(0);
             let bytes = repeat(0x55u8).take(num_bytes).collect::<Vec<_>>();
             let mut u = arbitrary::Unstructured::new(&bytes);
-            Uint::<N>::arbitrary(&mut u).unwrap();
+            Uint::<BITS>::arbitrary(&mut u).unwrap();
         });
     }
 }

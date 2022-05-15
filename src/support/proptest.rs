@@ -33,20 +33,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use proptest::proptest;
 
     #[test]
     fn test_arbitrary() {
-        repeat!(
-            {
-                proptest!(|(n in Uint::<N>::arbitrary())| {
+        const_for!(BITS in SIZES {
+            proptest!(|(n in Uint::<BITS>::arbitrary())| {
                 let _ = n;
             });
-            },
-            0,
-            1,
-            2
-        );
+        });
     }
 }

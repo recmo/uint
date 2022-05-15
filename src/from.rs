@@ -223,7 +223,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
 
     #[test]
     fn test_u64() {
@@ -232,18 +232,18 @@ mod test {
             Uint::<0>::try_from(1_u64),
             Err(UintConversionError::ValueTooLarge(0))
         );
-        repeat!(non_zero, {
-            assert_eq!(Uint::<N>::try_from(0_u64), Ok(Uint::ZERO));
-            assert_eq!(Uint::<N>::try_from(1_u64).unwrap().as_limbs()[0], 1);
+        const_for!(BITS in NON_ZERO {
+            assert_eq!(Uint::<BITS>::try_from(0_u64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<BITS>::try_from(1_u64).unwrap().as_limbs()[0], 1);
         });
     }
 
     #[test]
     fn test_f64() {
         assert_eq!(Uint::<0>::try_from(0.0_f64), Ok(Uint::ZERO));
-        repeat!(non_zero, {
-            assert_eq!(Uint::<N>::try_from(0.0_f64), Ok(Uint::ZERO));
-            assert_eq!(Uint::<N>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
+        const_for!(BITS in NON_ZERO {
+            assert_eq!(Uint::<BITS>::try_from(0.0_f64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<BITS>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
         });
         assert_eq!(
             Uint::<7>::try_from(123.499_f64),

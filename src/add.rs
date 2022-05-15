@@ -72,7 +72,7 @@ where
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use ::proptest::{
         arbitrary::Arbitrary,
         strategy::{Strategy, ValueTree},
@@ -81,16 +81,9 @@ pub mod bench {
     use criterion::{black_box, BatchSize, Criterion};
 
     pub fn group(criterion: &mut Criterion) {
-        repeat!(
-            {
-                bench_add::<N>(criterion);
-            },
-            64,
-            256,
-            384,
-            512,
-            4096
-        );
+        const_for!(N in [64, 256, 384, 512, 4096] {
+            bench_add::<N>(criterion);
+        });
     }
 
     fn bench_add<const BITS: usize>(criterion: &mut Criterion)

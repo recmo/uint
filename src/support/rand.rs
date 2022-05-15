@@ -24,14 +24,14 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
 
     #[test]
     fn test_rand() {
         let mut rng = rand::thread_rng();
-        repeat!({
+        const_for!(BITS in SIZES {
             for _ in 0..1000 {
-                let _: Uint<N> = rng.gen();
+                let _: Uint<BITS> = rng.gen();
             }
         });
     }

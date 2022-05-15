@@ -152,9 +152,9 @@ mod test {
 
     #[test]
     fn test_constants() {
-        repeat!({
-            assert_eq!(Uint::<N>::MIN, Uint::<N>::ZERO);
-            let _ = Uint::<N>::MAX;
+        const_for!(BITS in SIZES {
+            assert_eq!(Uint::<BITS>::MIN, Uint::<BITS>::ZERO);
+            let _ = Uint::<BITS>::MAX;
         });
     }
 }

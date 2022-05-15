@@ -125,13 +125,13 @@ fn trim_hex_prefix(str: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use proptest::proptest;
 
     #[test]
     fn test_serde_human_readable() {
-        repeat!({
-            proptest!(|(value: Uint<N>)| {
+        const_for!(BITS in SIZES {
+            proptest!(|(value: Uint<BITS>)| {
                 let serialized = serde_json::to_string(&value).unwrap();
                 let deserialized = serde_json::from_str(&serialized).unwrap();
                 assert_eq!(value, deserialized);
@@ -141,8 +141,8 @@ mod tests {
 
     #[test]
     fn test_serde_machine_readable() {
-        repeat!({
-            proptest!(|(value: Uint<N>)| {
+        const_for!(BITS in SIZES {
+            proptest!(|(value: Uint<BITS>)| {
                 let serialized = bincode::serialize(&value).unwrap();
                 let deserialized = bincode::deserialize(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);

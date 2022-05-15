@@ -21,7 +21,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repeat;
+    use crate::const_for;
     use quickcheck::quickcheck;
 
     fn test_quickcheck_inner<const BITS: usize>(_n: Uint<BITS>) -> bool
@@ -33,8 +33,8 @@ mod tests {
 
     #[test]
     fn test_quickcheck() {
-        repeat!({
-            quickcheck(test_quickcheck_inner::<N> as fn(Uint<N>) -> bool);
+        const_for!(BITS in SIZES {
+            quickcheck(test_quickcheck_inner::<BITS> as fn(Uint<BITS>) -> bool);
         });
     }
 }

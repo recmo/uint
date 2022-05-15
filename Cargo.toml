@@ -27,7 +27,7 @@ required-features = [ "bench", "proptest" ]
 [dependencies]
 itertools = "0.10"
 thiserror = "1.0"
-uint-macro = { version = "0.1.0", path = "./uint-macro"}
+uint-macro = { version = "0.1.0", path = "./uint-macro" }
 
 # Optional
 rand = { version = "0.8", optional = true }
