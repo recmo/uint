@@ -10,9 +10,6 @@ on:
   schedule:
   - cron: '0 2 * * *' # run at 2 AM UTC
 
-env:
-  RUST_VERSION: "nightly-2022-05-12"
-
 jobs:
   security-audit:
     name: Dependency Security Audit
@@ -23,7 +20,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly
           default: true
       - uses: actions-rs/audit-check@v1
         with:
