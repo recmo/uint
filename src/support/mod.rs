@@ -1,5 +1,5 @@
-// mod arbitrary;
+mod arbitrary;
 mod proptest;
-// mod quickcheck;
-// mod rand;
-// mod serde;
+mod quickcheck;
+mod rand;
+mod serde;

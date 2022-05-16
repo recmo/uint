@@ -39,6 +39,15 @@ use ruint::aliases::*;
 let answer: U256 = Uint::from(42);
 ```
 
+You can of course also create your own type alias if you need a funny size:
+
+```rust
+# use ruint::Uint;
+type U1337 = Uint<1337, 21>;
+
+let answer: U1337 = Uint::from(42);
+```
+
 ## Rust nightly
 
 If you are on nightly, you can use [`Uint<BITS>`][nightly::Uint] which will
@@ -48,9 +57,11 @@ without `generic_const_exprs` support (Rust issue [#76560][r76560]).
 [r76560]: https://github.com/rust-lang/rust/issues/76560
 
 ```rust
+# #[cfg(has_generic_const_exprs)] {
 use ruint::nightly::Uint;
 
 let answer: Uint<256> = Uint::<256>::from(42);
+# }
 ```
 
 Even on nightly, the ergonomics of Rust are limited. In the example above Rust

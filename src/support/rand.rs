@@ -1,39 +1,37 @@
 // TODO: Implement the Uniform distribution.
 
 #![cfg(feature = "rand")]
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use rand::{
     distributions::{Distribution, Standard, Uniform},
     Rng,
 };
 
-impl<const BITS: usize> Distribution<Uint<BITS>> for Standard
-where
-    [(); nlimbs(BITS)]:,
-{
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Uint<BITS> {
-        let mut limbs = [0; nlimbs(BITS)];
+impl<const BITS: usize, const LIMBS: usize> Distribution<Uint<BITS, LIMBS>> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Uint<BITS, LIMBS> {
+        let mut limbs = [0; LIMBS];
         if let Some((last, rest)) = limbs.split_last_mut() {
             for limb in rest.iter_mut() {
                 *limb = rng.gen();
             }
-            *last = Uniform::new_inclusive(0, Uint::<BITS>::MASK).sample(rng);
+            *last = Uniform::new_inclusive(0, Uint::<BITS, LIMBS>::MASK).sample(rng);
         }
-        Uint::<BITS>::from_limbs(limbs)
+        Uint::<BITS, LIMBS>::from_limbs(limbs)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
 
     #[test]
     fn test_rand() {
         let mut rng = rand::thread_rng();
         const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
             for _ in 0..1000 {
-                let _: Uint<BITS> = rng.gen();
+                let _: Uint<BITS, LIMBS> = rng.gen();
             }
         });
     }

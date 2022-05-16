@@ -57,11 +57,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::try_from_le_byte_iter(bytes.iter().copied())
     }
 
+    /// Converts a big-endian byte array of size exactly
+    /// [`Self::BYTES`] to [`Uint`].
+    ///
     /// # Panics
     ///
-    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue
-    /// [#60551].
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     ///
@@ -76,11 +79,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Converts a little-endian byte array of size exactly
+    /// [`Self::BYTES`] to [`Uint`].
+    ///
     /// # Panics
     ///
-    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue
-    /// [#60551].
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     ///
@@ -95,11 +101,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Converts the [`Uint`] to a big-endian byte array of size exactly
+    /// [`Self::BYTES`].
+    ///
     /// # Panics
     ///
-    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue
-    /// [#60551].
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
@@ -112,11 +121,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         bytes
     }
 
+    /// Converts the [`Uint`] to a little-endian byte array of size exactly
+    /// [`Self::BYTES`].
+    ///
     /// # Panics
     ///
-    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue
-    /// [#60551].
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
@@ -125,6 +137,34 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut bytes = [0; BYTES];
         for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
             chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
+        }
+        bytes
+    }
+
+    /// Converts the [`Uint`] to a big-endian byte vector of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// This method is useful when [`Self::to_be_bytes`] can not be used because
+    /// byte size is not known compile time.
+    #[must_use]
+    pub fn to_be_bytes_vec(&self) -> Vec<u8> {
+        let mut bytes = vec![0_u8; nbytes(BITS)];
+        for (chunk, limb) in bytes.rchunks_mut(8).zip(self.as_limbs().iter().copied()) {
+            chunk.copy_from_slice(&limb.to_be_bytes()[(8 - chunk.len())..]);
+        }
+        bytes
+    }
+
+    /// Converts the [`Uint`] to a little-endian byte vector of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// This method is useful when [`Self::to_le_bytes`] can not be used because
+    /// byte size is not known compile time.
+    #[must_use]
+    pub fn to_le_bytes_vec(&self) -> Vec<u8> {
+        let mut bytes = vec![0_u8; nbytes(BITS)];
+        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
+            chunk.copy_from_slice(&limb.to_le_bytes()[(8 - chunk.len())..]);
         }
         bytes
     }

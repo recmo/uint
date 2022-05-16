@@ -1,13 +1,10 @@
 #![cfg(feature = "quickcheck")]
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use quickcheck::{Arbitrary, Gen};
 
-impl<const BITS: usize> Arbitrary for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> Arbitrary for Uint<BITS, LIMBS> {
     fn arbitrary(g: &mut Gen) -> Self {
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         if let Some((last, rest)) = limbs.split_last_mut() {
             for limb in rest.iter_mut() {
                 *limb = u64::arbitrary(g);
@@ -21,20 +18,18 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
     use quickcheck::quickcheck;
 
-    fn test_quickcheck_inner<const BITS: usize>(_n: Uint<BITS>) -> bool
-    where
-        [(); nlimbs(BITS)]:,
-    {
+    fn test_quickcheck_inner<const BITS: usize, const LIMBS: usize>(_n: Uint<BITS, LIMBS>) -> bool {
         true
     }
 
     #[test]
     fn test_quickcheck() {
         const_for!(BITS in SIZES {
-            quickcheck(test_quickcheck_inner::<BITS> as fn(Uint<BITS>) -> bool);
+            const LIMBS: usize = nlimbs(BITS);
+            quickcheck(test_quickcheck_inner::<BITS, LIMBS> as fn(Uint<BITS, LIMBS>) -> bool);
         });
     }
 }

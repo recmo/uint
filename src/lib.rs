@@ -100,10 +100,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// # Panics
+    ///
+    /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
+    ///
     /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
+        Self::assert_valid();
         if BITS > 0 {
             // TODO: Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
@@ -120,6 +124,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut limbs = [0; LIMBS];
         limbs.copy_from_slice(slice);
         Self::from_limbs(limbs)
+    }
+
+    const fn assert_valid() {
+        // TODO: Replace with `assert_eq!` when it is made `const`.
+        // Blocked on Rust, not issue known.
+        #[allow(clippy::manual_assert)]
+        if LIMBS != Self::LIMBS {
+            panic!("Can not construct Uint<BITS, LIMBS> with incorrect LIMBS");
+        }
     }
 }
 
