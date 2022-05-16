@@ -19,6 +19,7 @@ members = ["ruint-macro"]
 default = []
 bench = [ "criterion", "proptest" ]
 dyn = [ "smallvec"]
+generic_const_exprs = []
 
 [[bench]]
 name = "criterion"

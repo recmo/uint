@@ -220,6 +220,17 @@ where
     }
 }
 
+impl<const BITS: usize> TryFrom<Uint<BITS>> for f64
+where
+    [(); nlimbs(BITS)]:,
+{
+    type Error = UintConversionError;
+
+    fn try_from(value: Uint<BITS>) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

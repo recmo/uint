@@ -10,7 +10,7 @@ pub struct UintDyn {
 mod tests {
     use super::*;
     use crate::Uint;
-    
+
     #[test]
     fn test_sizes() {
         dbg!(std::mem::size_of::<Uint<64>>());

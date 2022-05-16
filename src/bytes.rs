@@ -1,85 +1,24 @@
 // TODO: Use u64::from_{be/le}_bytes().
 // TODO: Make `const fn`s when `const_for` is stable.
 
-use crate::{nlimbs, Uint};
+use crate::{Uint};
 
-impl<const BITS: usize> Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+// TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
+// Blocked by Rust issue [#60551](https://github.com/rust-lang/rust/issues/60551).
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.
     pub const BYTES: usize = (BITS + 7) / 8;
 
-    /// Creates a new integer from a big endian slice of bytes.
+    /// Creates a new integer from a little endian stream of bytes.
     ///
-    /// The slice is interpreted as a big endian number. Leading zeros
-    /// are ignored. The slice can be any length.
-    ///
-    /// Returns [`None`] if the value is larger than fits the [`Uint`].
-    #[must_use]
-    pub fn try_from_be_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_bytes_impl(bytes.iter().copied().rev())
-    }
-
-    /// Creates a new integer from a little endian slice of bytes.
-    ///
-    /// The slice is interpreted as a little endian number. Leading zeros
-    /// are ignored. The slice can be any length.
-    ///
-    /// Returns [`None`] if the value is larger than fits the [`Uint`].
-    #[must_use]
-    pub fn try_from_le_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_bytes_impl(bytes.iter().copied())
-    }
-
-    /// # Panics
-    /// Panics if the value is too large for the bit-size of the Uint.
-    #[must_use]
-    #[track_caller]
-    pub fn from_be_bytes(bytes: [u8; nbytes(BITS)]) -> Self {
-        match Self::try_from_be_bytes(&bytes) {
-            Some(uint) => uint,
-            None => panic!("Value too large for Uint<{}>", BITS),
-        }
-    }
-
-    /// # Panics
-    /// Panics if the value is too large for the bit-size of the Uint.
-    #[must_use]
-    #[track_caller]
-    pub fn from_le_bytes(bytes: [u8; nbytes(BITS)]) -> Self {
-        match Self::try_from_le_bytes(&bytes) {
-            Some(uint) => uint,
-            None => panic!("Value too large for Uint<{}>", BITS),
-        }
-    }
-
-    #[must_use]
-    pub fn to_be_bytes(&self) -> [u8; nbytes(BITS)] {
-        let mut bytes = [0; nbytes(BITS)];
-        for (chunk, limb) in bytes.rchunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_be_bytes()[(8 - chunk.len())..]);
-        }
-        bytes
-    }
-
-    #[must_use]
-    pub fn to_le_bytes(&self) -> [u8; nbytes(BITS)] {
-        let mut bytes = [0; nbytes(BITS)];
-        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
-        }
-        bytes
-    }
-
     #[must_use]
     #[allow(clippy::cast_lossless)]
-    fn try_from_le_bytes_impl<I>(iter: I) -> Option<Self>
+    fn try_from_le_byte_iter<I>(iter: I) -> Option<Self>
     where
         I: Iterator<Item = u8>,
     {
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         for (i, byte) in iter.enumerate() {
             if byte == 0 {
                 continue;
@@ -95,6 +34,96 @@ where
             return None;
         }
         Some(Self::from_limbs(limbs))
+    }
+
+    /// Creates a new integer from a big endian slice of bytes.
+    ///
+    /// The slice is interpreted as a big endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
+    #[must_use]
+    pub fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
+        Self::try_from_le_byte_iter(bytes.iter().copied().rev())
+    }
+
+    /// Creates a new integer from a little endian slice of bytes.
+    ///
+    /// The slice is interpreted as a little endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
+    #[must_use]
+    pub fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
+        Self::try_from_le_byte_iter(bytes.iter().copied())
+    }
+
+    /// # Panics
+    /// 
+    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
+    /// would be a compile time error, but this is blocked by Rust issue [#60551].
+    /// 
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    /// 
+    /// Panics if the value is too large for the bit-size of the Uint.
+    #[must_use]
+    #[track_caller]
+    pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+        assert_eq!(BYTES, Self::BYTES);
+        match Self::try_from_be_slice(&bytes) {
+            Some(uint) => uint,
+            None => panic!("Value too large for Uint<{}>", BITS),
+        }
+    }
+
+    /// # Panics
+    /// 
+    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
+    /// would be a compile time error, but this is blocked by Rust issue [#60551].
+    /// 
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    /// 
+    /// Panics if the value is too large for the bit-size of the Uint.
+    #[must_use]
+    #[track_caller]
+    pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+        assert_eq!(BYTES, Self::BYTES);
+        match Self::try_from_le_slice(&bytes) {
+            Some(uint) => uint,
+            None => panic!("Value too large for Uint<{}>", BITS),
+        }
+    }
+
+    /// # Panics
+    /// 
+    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
+    /// would be a compile time error, but this is blocked by Rust issue [#60551].
+    /// 
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    #[must_use]
+    pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        assert_eq!(BYTES, Self::BYTES);
+        let mut bytes = [0; BYTES];
+        for (chunk, limb) in bytes.rchunks_mut(8).zip(self.as_limbs().iter().copied()) {
+            chunk.copy_from_slice(&limb.to_be_bytes()[(8 - chunk.len())..]);
+        }
+        bytes
+    }
+
+    /// # Panics
+    /// 
+    /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
+    /// would be a compile time error, but this is blocked by Rust issue [#60551].
+    /// 
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    #[must_use]
+    pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        assert_eq!(BYTES, Self::BYTES);
+        let mut bytes = [0; BYTES];
+        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
+            chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
+        }
+        bytes
     }
 }
 
