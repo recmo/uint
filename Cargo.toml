@@ -18,6 +18,7 @@ members = ["ruint-macro"]
 [features]
 default = []
 bench = [ "criterion", "proptest" ]
+dyn = [ "smallvec"]
 
 [[bench]]
 name = "criterion"
@@ -29,6 +30,9 @@ required-features = [ "bench", "proptest" ]
 itertools = "0.10"
 thiserror = "1.0"
 ruint-macro = { version = "0.1.0", path = "./ruint-macro" }
+
+# UintDyn
+smallvec = { version = "1.8.0", optional = true, features = [ "union" ] }
 
 # Optional
 rand = { version = "0.8", optional = true }

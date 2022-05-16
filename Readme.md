@@ -48,8 +48,8 @@ let cow = uint!(0xf039_U42);
 
 ## Feature flags
 
-There is support for a number of extenral crates. These are enabled by setting the identically
-named feature flag, or simply including the crate in your project (Cargo will then enable the dependency globally).
+There is support for a number of crates. These are enabled by setting the identically
+named feature flag.
 
 * [`rand`](https://docs.rs/rand): Implements sampling from the [`Standard`](https://docs.rs/rand/latest/rand/distributions/struct.Standard.html) distribution, i.e. [`rng.gen()`](https://docs.rs/rand/latest/rand/trait.Rng.html#method.gen).
 * [`arbitrary`](https://docs.rs/arbitrary): Implements the [`Arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for fuzz testing. 

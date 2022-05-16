@@ -16,6 +16,9 @@ mod from;
 mod support;
 mod uint_dyn;
 
+#[cfg(feature = "dyn")]
+pub use uint_dyn::UintDyn;
+
 pub use self::{add::OverflowingAdd, bytes::nbytes};
 pub use ruint_macro::uint;
 
