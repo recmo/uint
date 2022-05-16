@@ -14,7 +14,7 @@
 //     }
 // }
 
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use core::{convert::TryFrom, fmt::Display};
 use thiserror::Error;
 
@@ -30,10 +30,7 @@ pub enum UintConversionError {
     NotANumber(usize),
 }
 
-impl<const BITS: usize> Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     /// Panics if the conversion fails, for example if the value is too large
     /// for the bit-size of the [`Uint`]. The panic will be attributed to the
@@ -53,10 +50,7 @@ where
 }
 
 // u64 is a single limb, so this is the base case
-impl<const BITS: usize> TryFrom<u64> for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
     type Error = UintConversionError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
@@ -68,17 +62,14 @@ where
                 return Ok(Self::MIN);
             }
         }
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         limbs[0] = value;
         Ok(Self::from_limbs(limbs))
     }
 }
 
 // u128 version is handled specially in because it covers two limbs.
-impl<const BITS: usize> TryFrom<u128> for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> {
     type Error = UintConversionError;
 
     #[allow(clippy::cast_lossless)]
@@ -95,7 +86,7 @@ where
         if Self::LIMBS == 2 && hi > Self::MASK {
             return Err(UintConversionError::ValueTooLarge(BITS));
         }
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         limbs[0] = lo;
         limbs[1] = hi;
         Ok(Self::from_limbs(limbs))
@@ -105,10 +96,7 @@ where
 // Unsigned int version upcast to u64
 macro_rules! impl_from_unsigned_int {
     ($uint:ty) => {
-        impl<const BITS: usize> TryFrom<$uint> for Uint<BITS>
-        where
-            [(); nlimbs(BITS)]:,
-        {
+        impl<const BITS: usize, const LIMBS: usize> TryFrom<$uint> for Uint<BITS, LIMBS> {
             type Error = UintConversionError;
 
             fn try_from(value: $uint) -> Result<Self, Self::Error> {
@@ -127,10 +115,7 @@ impl_from_unsigned_int!(usize);
 // `uint`.
 macro_rules! impl_from_signed_int {
     ($int:ty, $uint:ty) => {
-        impl<const BITS: usize> TryFrom<$int> for Uint<BITS>
-        where
-            [(); nlimbs(BITS)]:,
-        {
+        impl<const BITS: usize, const LIMBS: usize> TryFrom<$int> for Uint<BITS, LIMBS> {
             type Error = UintConversionError;
 
             fn try_from(value: $int) -> Result<Self, Self::Error> {
@@ -156,10 +141,7 @@ impl_from_signed_int!(isize, usize);
 // #![feature(const_fn_floating_point_arithmetic)]
 // #![feature(const_float_bits_conv)]
 // and more.
-impl<const BITS: usize> TryFrom<f64> for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = UintConversionError;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
@@ -208,10 +190,7 @@ where
     }
 }
 
-impl<const BITS: usize> TryFrom<f32> for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
     type Error = UintConversionError;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
@@ -220,37 +199,47 @@ where
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for f64 {
+    type Error = UintConversionError;
+
+    fn try_from(_value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
 
     #[test]
     fn test_u64() {
-        assert_eq!(Uint::<0>::try_from(0_u64), Ok(Uint::ZERO));
+        assert_eq!(Uint::<0, 0>::try_from(0_u64), Ok(Uint::ZERO));
         assert_eq!(
-            Uint::<0>::try_from(1_u64),
+            Uint::<0, 0>::try_from(1_u64),
             Err(UintConversionError::ValueTooLarge(0))
         );
         const_for!(BITS in NON_ZERO {
-            assert_eq!(Uint::<BITS>::try_from(0_u64), Ok(Uint::ZERO));
-            assert_eq!(Uint::<BITS>::try_from(1_u64).unwrap().as_limbs()[0], 1);
+            const LIMBS: usize = nlimbs(BITS);
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(0_u64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(1_u64).unwrap().as_limbs()[0], 1);
         });
     }
 
     #[test]
     fn test_f64() {
-        assert_eq!(Uint::<0>::try_from(0.0_f64), Ok(Uint::ZERO));
+        assert_eq!(Uint::<0, 0>::try_from(0.0_f64), Ok(Uint::ZERO));
         const_for!(BITS in NON_ZERO {
-            assert_eq!(Uint::<BITS>::try_from(0.0_f64), Ok(Uint::ZERO));
-            assert_eq!(Uint::<BITS>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
+            const LIMBS: usize = nlimbs(BITS);
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(0.0_f64), Ok(Uint::ZERO));
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
         });
         assert_eq!(
-            Uint::<7>::try_from(123.499_f64),
+            Uint::<7, 1>::try_from(123.499_f64),
             Ok(Uint::from_limbs([123]))
         );
         assert_eq!(
-            Uint::<7>::try_from(123.500_f64),
+            Uint::<7, 1>::try_from(123.500_f64),
             Ok(Uint::from_limbs([124]))
         );
     }

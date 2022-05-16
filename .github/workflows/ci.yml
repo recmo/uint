@@ -4,7 +4,6 @@ on:
   push
 
 env:
-  RUST_VERSION: "nightly-2022-05-12"
   CARGO_TERM_COLOR: always
   # Skip incremental build and debug info generation in CI
   CARGO_INCREMENTAL: 0
@@ -29,7 +28,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly
           override: true
           components: rustfmt, clippy
       - name: Cache build
@@ -54,6 +53,11 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - nightly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -61,14 +65,14 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: ${{ matrix.rust }}
           override: true
       - name: Cache build
         uses: Swatinem/rust-cache@v1
         with:
           key: cache-v1
       - run:  npm install ganache-cli@latest --global
-      # Cargo doc test is not included in `--all-targets`
+      # Cargo doc test is not included in `--all-targets` so we call it separately.
       # See <https://github.com/rust-lang/cargo/issues/6669>
       # Cargo doc test also doesn't support `--no-run`, so we run it but
       # have it just print `--help`.
@@ -96,7 +100,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly
           override: true
           components: llvm-tools-preview
       - name: Cache build
@@ -151,7 +155,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly
           default: true
       - uses: actions-rs/audit-check@v1
         with:

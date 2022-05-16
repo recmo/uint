@@ -4,12 +4,17 @@
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
 )]
-#![allow(incomplete_features)]
-// We need these features unfortunately.
-// This allows us to compute the number of limbs required from the bits.
-#![feature(generic_const_exprs)]
+#![cfg_attr(
+    all(has_generic_const_exprs, feature = "generic_const_exprs"),
+    allow(incomplete_features)
+)]
+#![cfg_attr(
+    all(has_generic_const_exprs, feature = "generic_const_exprs"),
+    feature(generic_const_exprs)
+)]
 
 mod add;
+pub mod aliases;
 mod bytes;
 mod const_for;
 mod from;
@@ -22,19 +27,40 @@ pub use uint_dyn::UintDyn;
 pub use self::{add::OverflowingAdd, bytes::nbytes};
 pub use ruint_macro::uint;
 
-/// The ring of numbers modulo $2^{\mathtt{BITS}}$.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub struct Uint<const BITS: usize>
-where
-    [(); nlimbs(BITS)]:,
-{
-    limbs: [u64; nlimbs(BITS)],
+#[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
+pub mod nightly {
+    //! Extra features that are nightly only.
+
+    /// Alias for `Uint` specified only by bit size.
+    ///
+    /// Compared to [`crate::Uint`] it compile-time computes the required number
+    /// of limbs. Unfortunately this requires the nightly feature
+    /// `generic_const_exprs`.
+    ///
+    /// # References
+    /// * [Working group](https://rust-lang.github.io/project-const-generics/)
+    ///   const generics working group.
+    /// * [RFC2000](https://rust-lang.github.io/rfcs/2000-const-generics.html)
+    ///   const generics.
+    /// * [#60551](https://github.com/rust-lang/rust/issues/60551) associated
+    ///   constants in const generics.
+    /// * [#76560](https://github.com/rust-lang/rust/issues/76560) tracking
+    ///   issue for `generic_const_exprs`.
+    /// * [Rust blog](https://blog.rust-lang.org/inside-rust/2021/09/06/Splitting-const-generics.html)
+    ///   2021-09-06 Splitting const generics.
+
+    pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
 }
 
-impl<const BITS: usize> Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+/// The ring of numbers modulo $2^{\mathtt{BITS}}$.
+// TODO: Get rid of the `LIMBS` argument when  `generic_const_exprs` stabilizes.
+// Blocked by Rust [#76560](https://github.com/rust-lang/rust/issues/76560).
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub struct Uint<const BITS: usize, const LIMBS: usize> {
+    limbs: [u64; LIMBS],
+}
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
     pub const LIMBS: usize = nlimbs(BITS);
 
@@ -50,36 +76,38 @@ where
 
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
-    pub const ZERO: Self = Self {
-        limbs: [0; nlimbs(BITS)],
-    };
+    pub const ZERO: Self = Self { limbs: [0; LIMBS] };
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
     pub const MAX: Self = {
-        let mut limbs = [u64::MAX; nlimbs(BITS)];
+        let mut limbs = [u64::MAX; LIMBS];
         if BITS > 0 {
-            limbs[Self::LIMBS - 1] &= Self::MASK;
+            limbs[LIMBS - 1] &= Self::MASK;
         }
         Self { limbs }
     };
 
     #[must_use]
-    pub const fn as_limbs(&self) -> &[u64; nlimbs(BITS)] {
+    pub const fn as_limbs(&self) -> &[u64; LIMBS] {
         &self.limbs
     }
 
     // TODO: Can be made `const` with `#![feature(const_mut_refs)]`.
     #[must_use]
-    pub fn as_limbs_mut(&mut self) -> &mut [u64; nlimbs(BITS)] {
+    pub fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
     /// # Panics
+    ///
+    /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
+    ///
     /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
-    pub const fn from_limbs(limbs: [u64; nlimbs(BITS)]) -> Self {
+    pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
+        Self::assert_valid();
         if BITS > 0 {
             // TODO: Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
@@ -93,16 +121,22 @@ where
     #[must_use]
     #[track_caller]
     pub fn from_limbs_slice(slice: &[u64]) -> Self {
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         limbs.copy_from_slice(slice);
         Self::from_limbs(limbs)
     }
+
+    const fn assert_valid() {
+        // TODO: Replace with `assert_eq!` when it is made `const`.
+        // Blocked on Rust, not issue known.
+        #[allow(clippy::manual_assert)]
+        if LIMBS != Self::LIMBS {
+            panic!("Can not construct Uint<BITS, LIMBS> with incorrect LIMBS");
+        }
+    }
 }
 
-impl<const BITS: usize> Default for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
     fn default() -> Self {
         Self::ZERO
     }
@@ -144,12 +178,12 @@ mod test {
 
     #[test]
     fn test_max() {
-        assert_eq!(Uint::<0>::MAX, Uint::ZERO);
-        assert_eq!(Uint::<1>::MAX, Uint::from_limbs([1]));
-        assert_eq!(Uint::<7>::MAX, Uint::from_limbs([127]));
-        assert_eq!(Uint::<64>::MAX, Uint::from_limbs([u64::MAX]));
+        assert_eq!(Uint::<0, 0>::MAX, Uint::ZERO);
+        assert_eq!(Uint::<1, 1>::MAX, Uint::from_limbs([1]));
+        assert_eq!(Uint::<7, 1>::MAX, Uint::from_limbs([127]));
+        assert_eq!(Uint::<64, 1>::MAX, Uint::from_limbs([u64::MAX]));
         assert_eq!(
-            Uint::<100>::MAX,
+            Uint::<100, 2>::MAX,
             Uint::from_limbs([u64::MAX, u64::MAX >> 28])
         );
     }
@@ -157,8 +191,9 @@ mod test {
     #[test]
     fn test_constants() {
         const_for!(BITS in SIZES {
-            assert_eq!(Uint::<BITS>::MIN, Uint::<BITS>::ZERO);
-            let _ = Uint::<BITS>::MAX;
+            const LIMBS: usize = nlimbs(BITS);
+            assert_eq!(Uint::<BITS, LIMBS>::MIN, Uint::<BITS, LIMBS>::ZERO);
+            let _ = Uint::<BITS, LIMBS>::MAX;
         });
     }
 }

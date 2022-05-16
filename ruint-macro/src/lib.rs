@@ -1,7 +1,5 @@
 #![doc = include_str!("../Readme.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
-#![allow(incomplete_features)] // We need these features unfortunately.
-#![cfg_attr(test, feature(generic_const_exprs))]
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 use std::{fmt::Write, str::FromStr};
@@ -13,8 +11,12 @@ fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
         write!(&mut limbs_str, "{}u64,", limb).unwrap();
     }
     let limbs_str = limbs_str.trim_end_matches(',');
+    let limbs = (bits + 63) / 64;
 
-    let source = format!("::ruint::Uint::<{}>::from_limbs([{}])", bits, limbs_str);
+    let source = format!(
+        "::ruint::Uint::<{}, {}>::from_limbs([{}])",
+        bits, limbs, limbs_str
+    );
     TokenStream::from_str(&source).unwrap()
 }
 

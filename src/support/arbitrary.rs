@@ -1,13 +1,10 @@
 #![cfg(feature = "arbitrary")]
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use arbitrary::{Arbitrary, Result, Unstructured};
 
-impl<'a, const BITS: usize> Arbitrary<'a> for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIMBS> {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
-        let mut limbs = [0; nlimbs(BITS)];
+        let mut limbs = [0; LIMBS];
         if let Some((last, rest)) = limbs.split_last_mut() {
             for limb in rest.iter_mut() {
                 *limb = u64::arbitrary(u)?;
@@ -26,16 +23,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
     use std::iter::repeat;
 
     #[test]
     fn test_arbitrary() {
         const_for!(BITS in NON_ZERO {
-            let (num_bytes, _) = Uint::<BITS>::size_hint(0);
+            const LIMBS: usize = nlimbs(BITS);
+            let (num_bytes, _) = Uint::<BITS, LIMBS>::size_hint(0);
             let bytes = repeat(0x55u8).take(num_bytes).collect::<Vec<_>>();
             let mut u = arbitrary::Unstructured::new(&bytes);
-            Uint::<BITS>::arbitrary(&mut u).unwrap();
+            Uint::<BITS, LIMBS>::arbitrary(&mut u).unwrap();
         });
     }
 }

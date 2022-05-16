@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Changelog
+- CI test on stable Rust.
+- Common bit-size aliases and nightly-only `Uint<BITS>` alias.
+- Added `to_{be/le}_bytes_vec`.
+- Made `try_from_le_byte_iter` public.
+
+### Changed
+
+- Changed to `Uint<BITS, LIMBS>` to get stable compatibility!
+- Added generic `BYTES` parameter to `to_{be/le}_bytes`.
+- Renamed `try_from_{be/le}_slice`.
 
 ## [0.1.0] — 2022-05-15
 

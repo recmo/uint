@@ -1,3 +1,5 @@
+# TODO: The git blame is wrong. It seems to take the last commit instead.
+
 #!/usr/bin/env python3
 import glob
 import re
@@ -60,6 +62,7 @@ CONTEXT_LINES = 5
 # Rust like todos. For *.{rs}
 rust_todo = re.compile(r'//\W*(TODO|HACK|OPT)\W*(.*)$')
 rust_continuation = re.compile(r'//\W*(?!(TODO|HACK|OPT))(.*)$')
+# TODO: `todo!(..)` macros.
 
 # Shell like todos. For *.{sh, yml, toml, py, Dockerfile, editorconfig, gitignore}
 # TODO: `# TODO: {message}`

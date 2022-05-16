@@ -7,10 +7,7 @@ use proptest::{
     strategy::{BoxedStrategy, Strategy},
 };
 
-impl<const BITS: usize> Arbitrary for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> Arbitrary for Uint<BITS, LIMBS> {
     // TODO: Would be nice to have a value range as parameter
     // and/or a choice between uniform and 'exponential' distribution.
     type Parameters = ();
@@ -39,7 +36,8 @@ mod tests {
     #[test]
     fn test_arbitrary() {
         const_for!(BITS in SIZES {
-            proptest!(|(n in Uint::<BITS>::arbitrary())| {
+            const LIMBS: usize = nlimbs(BITS);
+            proptest!(|(n in Uint::<BITS, LIMBS>::arbitrary())| {
                 let _ = n;
             });
         });

@@ -1,4 +1,4 @@
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use itertools::izip;
 
 #[allow(clippy::module_name_repetitions)]
@@ -6,10 +6,7 @@ pub trait OverflowingAdd: Sized {
     fn overflowing_add(self, other: Self) -> (Self, bool);
 }
 
-impl<const BITS: usize> OverflowingAdd for Uint<BITS>
-where
-    [(); nlimbs(BITS)]:,
-{
+impl<const BITS: usize, const LIMBS: usize> OverflowingAdd for Uint<BITS, LIMBS> {
     #[must_use]
     #[allow(clippy::cast_lossless)]
     #[allow(clippy::cast_possible_truncation)]
@@ -72,7 +69,7 @@ where
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
     use ::proptest::{
         arbitrary::Arbitrary,
         strategy::{Strategy, ValueTree},
@@ -81,16 +78,14 @@ pub mod bench {
     use criterion::{black_box, BatchSize, Criterion};
 
     pub fn group(criterion: &mut Criterion) {
-        const_for!(N in [64, 256, 384, 512, 4096] {
-            bench_add::<N>(criterion);
+        const_for!(BITS in [64, 256, 384, 512, 4096] {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_add::<BITS, LIMBS>(criterion);
         });
     }
 
-    fn bench_add<const BITS: usize>(criterion: &mut Criterion)
-    where
-        [(); nlimbs(BITS)]:,
-    {
-        let input = (Uint::<BITS>::arbitrary(), Uint::arbitrary());
+    fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("uint_add_{}", BITS), move |bencher| {
             bencher.iter_batched(
