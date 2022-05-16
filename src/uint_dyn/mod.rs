@@ -3,7 +3,7 @@ use smallvec::SmallVec;
 
 /// Dynamically sized unsigned integer type.
 pub struct UintDyn {
-    limbs: SmallVec<[u64; 2]>,
+    _limbs: SmallVec<[u64; 2]>,
 }
 
 #[cfg(test)]

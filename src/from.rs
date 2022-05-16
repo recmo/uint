@@ -14,7 +14,7 @@
 //     }
 // }
 
-use crate::{nlimbs, Uint};
+use crate::Uint;
 use core::{convert::TryFrom, fmt::Display};
 use thiserror::Error;
 
@@ -202,7 +202,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for f64 {
     type Error = UintConversionError;
 
-    fn try_from(value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+    fn try_from(_value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         todo!()
     }
 }

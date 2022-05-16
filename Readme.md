@@ -7,43 +7,40 @@
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
 
-Implements [`Uint<BITS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$.
+Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$. It requires two generic arguments: the number of bits and the number of 64-bit *limbs* required to store those bits.
+
+If you are on nightly, you can use [`nightly::Uint<BITS>`] which will compute the number of limbs for you. Unfortunately this can not be made stable without [`generic_const_exprs`](https://github.com/rust-lang/rust/issues/76560) support.
 
 ```rust
-# #![allow(incomplete_features)]
-#![feature(generic_const_exprs)]
 use ruint::{Uint, OverflowingAdd};
 
-let a: Uint<256> = Uint::from(0xf00f_u64);
-let b: Uint<256> = Uint::from(42_u64);
+let a: Uint<256, 4> = Uint::from(0xf00f_u64);
+let b: Uint<256, 4> = Uint::from(42_u64);
 let (c, _carry) = a.overflowing_add(b);
 assert_eq!(c, Uint::from(0xf039_u64));
 ```
 
-Or equivalently using the convenient [`uint!`] macro:
+There is a convenient macro, [`uint!`], to create constants for you. It allows
+for arbitrary length constants using standard Rust integer syntax:
 
 ```rust
-# #![allow(incomplete_features)]
-# #![feature(generic_const_exprs)]
-use ruint::{uint, OverflowingAdd};
-uint!{
+use ruint::uint;
 
-let a = 0xf00f_U256;
-let b = 42_U256;
-let (c, _carry) = a.overflowing_add(b);
-assert_eq!(c, 0xf039_U256);
-
-}
+let cow = uint!(0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4_U256);
 ```
 
-It can also be used in a more natural expression form if that is preferred
+In fact, this macro recurses down the parse tree, so you can apply it to blocks of code:
 
 ```rust
-# #![allow(incomplete_features)]
-# #![feature(generic_const_exprs)]
-# use ruint::uint;
-#
-let cow = uint!(0xf039_U42);
+# use ruint::{uint, OverflowingAdd};
+uint!{
+
+let a = 42_U256;
+let b = 0xf00f_1337_c0d3_U256;
+let (c, _carry) = a.overflowing_add(b);
+assert_eq!(c, 263947537596669_U256);
+
+}
 ```
 
 ## Feature flags

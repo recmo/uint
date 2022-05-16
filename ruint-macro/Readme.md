@@ -38,7 +38,7 @@ This latter form is particularly useful for lookup tables:
 
 ```rust
 # use ruint::{Uint, uint};
-const PRIMES: [Uint<128>; 3] = uint!([
+const PRIMES: [Uint<128, 2>; 3] = uint!([
     170141183460469231731687303715884105757_U128,
     170141183460469231731687303715884105773_U128,
     170141183460469231731687303715884105793_U128,

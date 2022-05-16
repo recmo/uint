@@ -3,9 +3,7 @@
 /// Repeats a block of code with different values assigned to a constant.
 ///
 /// ```rust
-/// # #![allow(incomplete_features)]
-/// # #![feature(generic_const_exprs)]
-/// # use ruint::{const_for, Uint};
+/// # use ruint::{const_for, nlimbs, Uint};
 /// const_for!(BITS in [0, 10, 100] {
 ///     const LIMBS: usize = nlimbs(BITS);
 ///     println!("{:?}", Uint::<BITS, LIMBS>::MAX);
@@ -15,12 +13,10 @@
 /// is equivalent to
 ///
 /// ```rust
-/// # #![allow(incomplete_features)]
-/// # #![feature(generic_const_exprs)]
 /// # use ruint::{const_for, Uint};
-/// println!("{:?}", Uint::<0>::MAX);
-/// println!("{:?}", Uint::<10>::MAX);
-/// println!("{:?}", Uint::<100>::MAX);
+/// println!("{:?}", Uint::<0, 0>::MAX);
+/// println!("{:?}", Uint::<10, 1>::MAX);
+/// println!("{:?}", Uint::<100, 2>::MAX);
 /// ```
 ///
 /// It comes with two build-in lists: `NON_ZERO` which is equivalent to
@@ -35,12 +31,11 @@
 /// testing over a large range of [`Uint`][crate::Uint] types and values:
 ///
 /// ```rust
-/// # #![allow(incomplete_features)]
-/// # #![feature(generic_const_exprs)]
 /// # use proptest::prelude::*;
-/// # use ruint::{const_for, Uint};
+/// # use ruint::{const_for, nlimbs, Uint};
 /// const_for!(BITS in SIZES {
-///    proptest!(|(value: Uint<BITS>)| {
+///    const LIMBS: usize = nlimbs(BITS);
+///    proptest!(|(value: Uint<BITS, LIMBS>)| {
 ///         // ... test code
 ///     });
 /// });

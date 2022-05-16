@@ -4,8 +4,14 @@
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
 )]
-#![cfg_attr(all(has_generic_const_exprs, feature = "generic_const_exprs"), allow(incomplete_features))]
-#![cfg_attr(all(has_generic_const_exprs, feature = "generic_const_exprs"), feature(generic_const_exprs))]
+#![cfg_attr(
+    all(has_generic_const_exprs, feature = "generic_const_exprs"),
+    allow(incomplete_features)
+)]
+#![cfg_attr(
+    all(has_generic_const_exprs, feature = "generic_const_exprs"),
+    feature(generic_const_exprs)
+)]
 
 mod add;
 mod bytes;
@@ -27,7 +33,6 @@ pub mod nightly {
     /// Compared to [`crate::Uint`] it compile-time computes the required number
     /// of limbs. Unfortunately this requires the nightly feature
     /// `generic_const_exprs`.
-    /// 
     pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
 }
 
