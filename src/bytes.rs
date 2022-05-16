@@ -1,7 +1,7 @@
 // TODO: Use u64::from_{be/le}_bytes().
 // TODO: Make `const fn`s when `const_for` is stable.
 
-use crate::{Uint};
+use crate::Uint;
 
 // TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
 // Blocked by Rust issue [#60551](https://github.com/rust-lang/rust/issues/60551).
@@ -11,7 +11,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const BYTES: usize = (BITS + 7) / 8;
 
     /// Creates a new integer from a little endian stream of bytes.
-    ///
     #[must_use]
     #[allow(clippy::cast_lossless)]
     fn try_from_le_byte_iter<I>(iter: I) -> Option<Self>
@@ -59,12 +58,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// # Panics
-    /// 
+    ///
     /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue [#60551].
-    /// 
+    /// would be a compile time error, but this is blocked by Rust issue
+    /// [#60551].
+    ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    /// 
+    ///
     /// Panics if the value is too large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
@@ -77,12 +77,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// # Panics
-    /// 
+    ///
     /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue [#60551].
-    /// 
+    /// would be a compile time error, but this is blocked by Rust issue
+    /// [#60551].
+    ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    /// 
+    ///
     /// Panics if the value is too large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
@@ -95,10 +96,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// # Panics
-    /// 
+    ///
     /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue [#60551].
-    /// 
+    /// would be a compile time error, but this is blocked by Rust issue
+    /// [#60551].
+    ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
     pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
@@ -111,10 +113,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// # Panics
-    /// 
+    ///
     /// Panics if the array is not exactly [`Self::BYTES`] long. Ideally this
-    /// would be a compile time error, but this is blocked by Rust issue [#60551].
-    /// 
+    /// would be a compile time error, but this is blocked by Rust issue
+    /// [#60551].
+    ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
     pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
@@ -140,11 +143,11 @@ pub const fn nbytes(bits: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
     use proptest::proptest;
 
-    const N: Uint<128> =
-        Uint::<128>::from_limbs([0x7890_1234_5678_9012_u64, 0x1234_5678_9012_3456_u64]);
+    const N: Uint<128, 2> =
+        Uint::from_limbs([0x7890_1234_5678_9012_u64, 0x1234_5678_9012_3456_u64]);
     const BE: [u8; 16] = [
         0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90,
         0x12,
@@ -154,18 +157,30 @@ mod tests {
         0x12,
     ];
 
-    const K: Uint<72> = Uint::from_limbs([0x3456_7890_1234_5678_u64, 0x12_u64]);
+    const K: Uint<72, 2> = Uint::from_limbs([0x3456_7890_1234_5678_u64, 0x12_u64]);
     const KBE: [u8; 9] = [0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78];
     const KLE: [u8; 9] = [0x78, 0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12];
 
     #[test]
     fn test_from_bytes() {
-        assert_eq!(Uint::<0>::from_be_bytes([]), Uint::ZERO);
-        assert_eq!(Uint::<0>::from_le_bytes([]), Uint::ZERO);
-        assert_eq!(Uint::<12>::from_be_bytes([0x01, 0x23]), Uint::from(0x0123));
-        assert_eq!(Uint::<12>::from_le_bytes([0x23, 0x01]), Uint::from(0x0123));
-        assert_eq!(Uint::<16>::from_be_bytes([0x12, 0x34]), Uint::from(0x1234));
-        assert_eq!(Uint::<16>::from_le_bytes([0x34, 0x12]), Uint::from(0x1234));
+        assert_eq!(Uint::<0, 0>::from_be_bytes([]), Uint::ZERO);
+        assert_eq!(Uint::<0, 0>::from_le_bytes([]), Uint::ZERO);
+        assert_eq!(
+            Uint::<12, 1>::from_be_bytes([0x01, 0x23]),
+            Uint::from(0x0123)
+        );
+        assert_eq!(
+            Uint::<12, 1>::from_le_bytes([0x23, 0x01]),
+            Uint::from(0x0123)
+        );
+        assert_eq!(
+            Uint::<16, 1>::from_be_bytes([0x12, 0x34]),
+            Uint::from(0x1234)
+        );
+        assert_eq!(
+            Uint::<16, 1>::from_le_bytes([0x34, 0x12]),
+            Uint::from(0x1234)
+        );
         assert_eq!(Uint::from_be_bytes(BE), N);
         assert_eq!(Uint::from_le_bytes(LE), N);
         assert_eq!(Uint::from_be_bytes(KBE), K);
@@ -174,12 +189,12 @@ mod tests {
 
     #[test]
     fn test_to_bytes() {
-        assert_eq!(Uint::<0>::ZERO.to_le_bytes(), [0_u8; 0]);
-        assert_eq!(Uint::<0>::ZERO.to_be_bytes(), [0_u8; 0]);
-        assert_eq!(Uint::<12>::from(0x0123_u64).to_le_bytes(), [0x23, 0x01]);
-        assert_eq!(Uint::<12>::from(0x0123_u64).to_be_bytes(), [0x01, 0x23]);
-        assert_eq!(Uint::<16>::from(0x1234_u64).to_le_bytes(), [0x34, 0x12]);
-        assert_eq!(Uint::<16>::from(0x1234_u64).to_be_bytes(), [0x12, 0x34]);
+        assert_eq!(Uint::<0, 0>::ZERO.to_le_bytes(), [0_u8; 0]);
+        assert_eq!(Uint::<0, 0>::ZERO.to_be_bytes(), [0_u8; 0]);
+        assert_eq!(Uint::<12, 1>::from(0x0123_u64).to_le_bytes(), [0x23, 0x01]);
+        assert_eq!(Uint::<12, 1>::from(0x0123_u64).to_be_bytes(), [0x01, 0x23]);
+        assert_eq!(Uint::<16, 1>::from(0x1234_u64).to_le_bytes(), [0x34, 0x12]);
+        assert_eq!(Uint::<16, 1>::from(0x1234_u64).to_be_bytes(), [0x12, 0x34]);
         assert_eq!(K.to_be_bytes(), KBE);
         assert_eq!(K.to_le_bytes(), KLE);
     }
@@ -187,9 +202,11 @@ mod tests {
     #[test]
     fn test_bytes_roundtrip() {
         const_for!(BITS in SIZES {
-            proptest!(|(value: Uint<BITS>)| {
-                assert_eq!(value, Uint::from_be_bytes(value.to_be_bytes()));
-                assert_eq!(value, Uint::from_le_bytes(value.to_le_bytes()));
+            const LIMBS: usize = nlimbs(BITS);
+            const BYTES: usize = nbytes(BITS);
+            proptest!(|(value: Uint<BITS, LIMBS>)| {
+                assert_eq!(value, Uint::from_be_bytes(value.to_be_bytes::<BYTES>()));
+                assert_eq!(value, Uint::from_le_bytes(value.to_le_bytes::<BYTES>()));
             });
         });
     }

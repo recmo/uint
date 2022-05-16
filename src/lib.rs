@@ -4,14 +4,14 @@
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
 )]
-#![cfg_attr(feature = "generic_const_exprs", allow(incomplete_features))]
-#![cfg_attr(feature = "generic_const_exprs", feature(generic_const_exprs))]
+#![cfg_attr(all(has_generic_const_exprs, feature = "generic_const_exprs"), allow(incomplete_features))]
+#![cfg_attr(all(has_generic_const_exprs, feature = "generic_const_exprs"), feature(generic_const_exprs))]
 
 mod add;
 mod bytes;
 mod const_for;
-// mod from;
-// mod support;
+mod from;
+mod support;
 mod uint_dyn;
 
 #[cfg(feature = "dyn")]
@@ -20,17 +20,18 @@ pub use uint_dyn::UintDyn;
 pub use self::{add::OverflowingAdd, bytes::nbytes};
 pub use ruint_macro::uint;
 
-#[cfg(feature = "generic_const_exprs")]
+#[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
     /// Alias for `Uint` specified only by bit size.
-    /// 
+    ///
     /// Compared to [`crate::Uint`] it compile-time computes the required number
-    /// of limbs. Unfortunately this requires the nightly feature `generic_const_exprs`.
+    /// of limbs. Unfortunately this requires the nightly feature
+    /// `generic_const_exprs`.
+    /// 
     pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
 }
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
-/// 
 // TODO: Get rid of the `LIMBS` argument when  `generic_const_exprs` stabilizes.
 // Blocked by Rust [#76560](https://github.com/rust-lang/rust/issues/76560).
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
@@ -54,9 +55,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
-    pub const ZERO: Self = Self {
-        limbs: [0; LIMBS],
-    };
+    pub const ZERO: Self = Self { limbs: [0; LIMBS] };
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
@@ -145,12 +144,12 @@ mod test {
 
     #[test]
     fn test_max() {
-        assert_eq!(Uint::<0>::MAX, Uint::ZERO);
-        assert_eq!(Uint::<1>::MAX, Uint::from_limbs([1]));
-        assert_eq!(Uint::<7>::MAX, Uint::from_limbs([127]));
-        assert_eq!(Uint::<64>::MAX, Uint::from_limbs([u64::MAX]));
+        assert_eq!(Uint::<0, 0>::MAX, Uint::ZERO);
+        assert_eq!(Uint::<1, 1>::MAX, Uint::from_limbs([1]));
+        assert_eq!(Uint::<7, 1>::MAX, Uint::from_limbs([127]));
+        assert_eq!(Uint::<64, 1>::MAX, Uint::from_limbs([u64::MAX]));
         assert_eq!(
-            Uint::<100>::MAX,
+            Uint::<100, 2>::MAX,
             Uint::from_limbs([u64::MAX, u64::MAX >> 28])
         );
     }
@@ -158,8 +157,9 @@ mod test {
     #[test]
     fn test_constants() {
         const_for!(BITS in SIZES {
-            assert_eq!(Uint::<BITS>::MIN, Uint::<BITS>::ZERO);
-            let _ = Uint::<BITS>::MAX;
+            const LIMBS: usize = nlimbs(BITS);
+            assert_eq!(Uint::<BITS, LIMBS>::MIN, Uint::<BITS, LIMBS>::ZERO);
+            let _ = Uint::<BITS, LIMBS>::MAX;
         });
     }
 }

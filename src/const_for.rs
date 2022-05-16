@@ -7,7 +7,8 @@
 /// # #![feature(generic_const_exprs)]
 /// # use ruint::{const_for, Uint};
 /// const_for!(BITS in [0, 10, 100] {
-///     println!("{:?}", Uint::<BITS>::MAX);
+///     const LIMBS: usize = nlimbs(BITS);
+///     println!("{:?}", Uint::<BITS, LIMBS>::MAX);
 /// });
 /// ```
 ///

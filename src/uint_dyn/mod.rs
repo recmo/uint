@@ -13,7 +13,7 @@ mod tests {
 
     #[test]
     fn test_sizes() {
-        dbg!(std::mem::size_of::<Uint<64>>());
+        dbg!(std::mem::size_of::<Uint<64, 1>>());
         dbg!(std::mem::size_of::<Vec<u64>>());
         dbg!(std::mem::size_of::<UintDyn>());
     }
