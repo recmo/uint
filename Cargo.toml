@@ -9,6 +9,7 @@ repository = "https://github.com/recmo/uint"
 keywords = ["uint"]
 categories = ["mathematics"]
 readme = "Readme.md"
+license = "MIT"
 license-file = "mit-license.md"
 
 [workspace]
@@ -40,7 +41,6 @@ serde = { version = "1.0", optional = true }
 criterion = { version = "0.3", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "1.0"
 proptest = { version = "1.0" }
 serde_json = "1.0"
 bincode = "1.3"
