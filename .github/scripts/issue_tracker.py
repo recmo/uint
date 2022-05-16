@@ -28,8 +28,8 @@ print('Connected to', repo)
 
 # GitHub labels for issues
 labels = {
-    'TODO': ['tracker', 'refactor'],
-    'OPT': ['tracker', 'performance'],
+    'TODO': ['tracker', 'to do'],
+    'OPT': ['tracker', 'optimize'],
     'HACK': ['tracker', 'hack']
 }
 
@@ -86,8 +86,9 @@ def git_blame(filename, line):
         result['commit-hash'] = lines[0].split(' ')[0]
         for line in lines[1:-1]:
             line = line.replace('\n', '')
-            [key, value] = line.split(' ', 1)
-            result[key] = value
+            if ' ' in line:
+                [key, value] = line.split(' ', 1)
+                result[key] = value
         result['author-time'] = int(result['author-time'])
         result['committer-time'] = int(result['committer-time'])
         return result
