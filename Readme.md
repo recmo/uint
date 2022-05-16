@@ -119,6 +119,7 @@ named feature flag.
 * [`proptest`](https://docs.rs/proptest): Implements the [`Arbitrary`](https://docs.rs/proptest/latest/proptest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing. Proptest is used for the `uint`s own test suite.
 * [`serde`](https://docs.rs/serde): Implements the [`Seralize`](https://docs.rs/serde/latest/serde/trait.Serialize.html) and [`Deserialize`](https://docs.rs/serde/latest/serde/trait.Deserialize.html) traits for [`Uint`] using big-endian hex in human readable formats and big-endian byte strings in machine readable formats.
 * [`rlp`](https://docs.rs/rlp): Implements the [`Encodable`](https://docs.rs/rlp/latest/rlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/rlp/latest/rlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
+* [`fastrlp`](https://docs.rs/fastrlp): Implements the [`Encodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 
 ## Building and testing
 

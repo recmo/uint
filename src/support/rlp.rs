@@ -12,11 +12,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
         let bytes = self.to_be_bytes_vec();
         // Strip most-significant zeros.
         let bytes = trim_leading_zeros(&bytes);
-        if bytes.is_empty() {
-            b"\x00".as_slice().rlp_append(s);
-        } else {
-            bytes.rlp_append(s);
-        }
+        bytes.rlp_append(s);
     }
 }
 
@@ -48,8 +44,9 @@ mod test {
 
     #[test]
     fn test_rlp() {
-        assert_eq!(U0::from(0).rlp_bytes()[..], hex!("00"));
-        assert_eq!(U256::from(0).rlp_bytes()[..], hex!("00"));
+        // See <https://github.com/paritytech/parity-common/blob/436cb0827f0e3238ccb80d7d453f756d126c0615/rlp/tests/tests.rs#L214>
+        assert_eq!(U0::from(0).rlp_bytes()[..], hex!("80"));
+        assert_eq!(U256::from(0).rlp_bytes()[..], hex!("80"));
         assert_eq!(U256::from(15).rlp_bytes()[..], hex!("0f"));
         assert_eq!(U256::from(1024).rlp_bytes()[..], hex!("820400"));
         assert_eq!(U256::from(0x1234_5678).rlp_bytes()[..], hex!("8412345678"));

@@ -1,4 +1,5 @@
 mod arbitrary;
+mod fastrlp;
 mod proptest;
 mod quickcheck;
 mod rand;
