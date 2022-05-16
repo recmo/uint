@@ -7,9 +7,59 @@
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
 
-Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$. It requires two generic arguments: the number of bits and the number of 64-bit *limbs* required to store those bits.
+Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$. It requires two
+generic arguments: the number of bits and the number of 64-bit 'limbs' required to store those bits.
 
-If you are on nightly, you can use [`nightly::Uint<BITS>`] which will compute the number of limbs for you. Unfortunately this can not be made stable without [`generic_const_exprs`](https://github.com/rust-lang/rust/issues/76560) support.
+```rust
+# use ruint::Uint;
+let answer: Uint<256, 4> = Uint::from(42);
+```
+
+You can compute `LIMBS` yourself using $\mathtt{LIMBS} = \ceil{\mathtt{BITS} / 64}$,
+i.e.`LIMBS` equals `BITS` divided by $64$ rounded up. [`Uint`] will `panic!` if you try to
+construct it with incorrect arguments. Ideally this would be a compile time error, but
+that is blocked by Rust issue [#60551][r60551].
+
+[r60551]: https://github.com/rust-lang/rust/issues/60551
+
+A more convenient method on stable is to use the [`uint!`] macro, which constructs the right
+[`Uint`] for you.
+
+```rust
+# use ruint::{Uint, uint};
+let answer = uint!(42_U256);
+```
+
+You can also use one of the pre-computed type [`aliases`]:
+
+```rust
+# use ruint::Uint;
+use ruint::aliases::*;
+
+let answer: U256 = Uint::from(42);
+```
+
+## Rust nightly
+
+If you are on nightly, you can use [`Uint<BITS>`][nightly::Uint] which will
+compute the number of limbs for you. Unfortunately this can not be made stable
+without `generic_const_exprs` support (Rust issue [#76560][r76560]).
+
+[r76560]: https://github.com/rust-lang/rust/issues/76560
+
+```rust
+use ruint::nightly::Uint;
+
+let answer: Uint<256> = Uint::<256>::from(42);
+```
+
+Even on nightly, the ergonomics of Rust are limited. In the example above Rust
+requires explicit type annotation for [`Uint::from`], where it did not require
+it in the stable version. There are a few more subtle issues that make this
+less ideal than it appears. It also looks like it may take some time before
+these nightly features are stabilized.
+
+## Examples
 
 ```rust
 use ruint::{Uint, OverflowingAdd};
@@ -20,16 +70,20 @@ let (c, _carry) = a.overflowing_add(b);
 assert_eq!(c, Uint::from(0xf039_u64));
 ```
 
-There is a convenient macro, [`uint!`], to create constants for you. It allows
-for arbitrary length constants using standard Rust integer syntax:
+There is a convenient macro [`uint!`] to create constants for you. It allows
+for arbitrary length constants using standard Rust integer syntax. The size of
+the [`Uint`] is specified with a `U` suffix followed by the number of bits.
+The standard Rust syntax of decimal, hexadecimal and even binary and octal is
+supported using their prefixes `0x`, `0b` and `0o`. Literals can have
+underscores `_` added for readability.
 
 ```rust
-use ruint::uint;
-
+# use ruint::uint;
 let cow = uint!(0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4_U256);
 ```
 
-In fact, this macro recurses down the parse tree, so you can apply it to blocks of code:
+In fact, this macro recurses down the parse tree, so you can apply it to entire
+source files:
 
 ```rust
 # use ruint::{uint, OverflowingAdd};
@@ -93,43 +147,6 @@ Maybe:
 
 * Run-time sized type with compatible interface.
 * Montgomery REDC and other algo's for implementing prime fields.
-
-## FAQ
-
-> Why does it need nightly Rust>
-
-
-It makes critical use of the `generic_const_exprs` feature to compute the number
-of limbs required for a given bit size.
-
-* Rust issues [#60551](https://github.com/rust-lang/rust/issues/60551) and [#76560](https://github.com/rust-lang/rust/issues/76560).
-
-
-> What's up with all the
-> 
-> ```rust,ignore
-> where
->     [(); num_limbs(BITS)]:,
-> ```
-> 
-> trait bounds everywhere?
-
-Const generics are still pretty unfinished in rust. This is to work around current limitations. Finding a less invasive workaround is high priority. Fortunately, this is only needed when writing
-code generic over the value of `BITS`. But this only affects you if you write code generic over the bit size. If you use a specific size like `Uint<256>` you do not need these bounds.
-
-<>
-
-More information:
-
-* [Working group](https://rust-lang.github.io/project-const-generics/) const generics working group.
-* [RFC2000](https://rust-lang.github.io/rfcs/2000-const-generics.html) const generics.
-* [#60551](https://github.com/rust-lang/rust/issues/60551) associated constants in const generics.
-* [#76560](https://github.com/rust-lang/rust/issues/76560) tracking issue for `generic_const_exprs`.
-* [Rust blog](https://blog.rust-lang.org/inside-rust/2021/09/06/Splitting-const-generics.html) 2021-09-06 Splitting const generics.
-
-<https://github.com/RustCrypto/traits/issues/970>
-
-<https://docs.rs/crypto-bigint/latest/crypto_bigint/struct.UInt.html>
 
 ---
 

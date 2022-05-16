@@ -14,6 +14,7 @@
 )]
 
 mod add;
+pub mod aliases;
 mod bytes;
 mod const_for;
 mod from;
@@ -28,11 +29,26 @@ pub use ruint_macro::uint;
 
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
+    //! Extra features that are nightly only.
+
     /// Alias for `Uint` specified only by bit size.
     ///
     /// Compared to [`crate::Uint`] it compile-time computes the required number
     /// of limbs. Unfortunately this requires the nightly feature
     /// `generic_const_exprs`.
+    ///
+    /// # References
+    /// * [Working group](https://rust-lang.github.io/project-const-generics/)
+    ///   const generics working group.
+    /// * [RFC2000](https://rust-lang.github.io/rfcs/2000-const-generics.html)
+    ///   const generics.
+    /// * [#60551](https://github.com/rust-lang/rust/issues/60551) associated
+    ///   constants in const generics.
+    /// * [#76560](https://github.com/rust-lang/rust/issues/76560) tracking
+    ///   issue for `generic_const_exprs`.
+    /// * [Rust blog](https://blog.rust-lang.org/inside-rust/2021/09/06/Splitting-const-generics.html)
+    ///   2021-09-06 Splitting const generics.
+
     pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
 }
 
