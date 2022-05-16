@@ -23,5 +23,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_NAME: ${{ github.repository }}
-          DRY_RUN: true
+          DRY_RUN: false
         run: .github/scripts/issue_tracker.py
