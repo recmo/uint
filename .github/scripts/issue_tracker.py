@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
+
 # TODO: The git blame is wrong. It seems to take the last commit instead.
 
-#!/usr/bin/env python3
 import glob
 import re
 import os
