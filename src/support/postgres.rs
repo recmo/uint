@@ -24,8 +24,9 @@ pub enum ToSqlError {
 /// * `SMALLSERIAL`, `SERIAL`, `BIGSERIAL` which are 16, 32 and 64 bit signed
 ///   integers respectively.
 /// * `OID` which is a 32 bit unsigned integer.
+/// * `FLOAT`, `DOUBLE PRECISION` which are 32 and 64 bit floating point.
 /// * `DECIMAL` and `NUMERIC`, which are variable length.
-/// * `MONEY` which is a 64 bit integer.
+/// * `MONEY` which is a 64 bit integer with two decimals.
 /// * `BYTEA`, `BIT`, `VARBIT` interpreted as a big-endian binary number.
 /// * `CHAR`, `VARCHAR` as `0x`-prefixed big-endian hex strings.
 /// * `JSON`, `JSONB` as a Serde compatible JSON value (requires `serde`
@@ -56,8 +57,10 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             | Type::INT4
             | Type::INT8
             | Type::OID
-            | Type::NUMERIC
+            | Type::FLOAT4
+            | Type::FLOAT8
             | Type::MONEY
+            | Type::NUMERIC
             | Type::BYTEA
             | Type::TEXT
             | Type::VARCHAR
@@ -78,6 +81,8 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::INT4 => out.put_i32(self.try_into()?),
             Type::INT8 => out.put_i64(self.try_into()?),
             Type::OID => out.put_u64(self.try_into()?),
+            Type::FLOAT4 => out.put_f32(self.try_into()?),
+            Type::FLOAT8 => out.put_f64(self.try_into()?),
             Type::MONEY => {
                 // Like i64, but with two decimals.
                 out.put_i64(
@@ -86,7 +91,6 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
                         .ok_or_else(|| ToSqlError::Overflow(BITS, ty.clone()))?,
                 );
             }
-            // TODO: Potentially lossy f32 and f64?
 
             // Binary strings
             Type::BIT => todo!(),
