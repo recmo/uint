@@ -49,8 +49,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// If `self` is $<≥> 2^{63}$, then `exponent` will be zero and `bits` will
     /// have leading zeros.
+    #[must_use]
     pub fn most_significant_bits(&self) -> (u64, usize) {
-        todo!()
+        let first_set_limb = self
+            .as_limbs()
+            .iter()
+            .rposition(|&limb| limb != 0)
+            .unwrap_or(0);
+        if first_set_limb == 0 {
+            (self.as_limbs().first().copied().unwrap_or(0), 0)
+        } else {
+            let hi = self.as_limbs()[first_set_limb];
+            let lo = self.as_limbs()[first_set_limb - 1];
+            let leading_zeros = hi.leading_zeros();
+            let bits = if leading_zeros > 0 {
+                (hi << leading_zeros) | (lo >> (64 - leading_zeros))
+            } else {
+                hi
+            };
+            let exponent = first_set_limb * 64 - leading_zeros as usize;
+            (bits, exponent)
+        }
     }
 }
 
@@ -79,6 +98,27 @@ mod tests {
         proptest!(|(value: u128)| {
             let uint = U128::from(value);
             assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
+        });
+    }
+
+    #[test]
+    fn test_most_significant_bits() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: u64)| {
+                let value = if U::LIMBS <= 1 { value & U::MASK } else { value };
+                assert_eq!(U::from(value).most_significant_bits(), (value, 0));
+            });
+        });
+        proptest!(|(mut limbs: [u64; 2])| {
+            if limbs[1] == 0 {
+                limbs[1] = 1;
+            }
+            let (bits, exponent) = U128::from_limbs(limbs).most_significant_bits();
+            dbg!(bits, exponent);
+            assert!(bits >= 1_u64 << 63);
+            assert_eq!(exponent, 64 - limbs[1].leading_zeros() as usize);
         });
     }
 

@@ -205,13 +205,8 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for f64 {
-    type Error = ToUintError;
-
-    fn try_from(_value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-        todo!()
-    }
-}
+// Convert Uint to integer types
+//
 
 // Required because a generic rule violates the orphan rule
 macro_rules! to_value_to_ref {
@@ -304,6 +299,41 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
         let mut result: u128 = value.as_limbs()[0] as u128;
         result |= (value.as_limbs()[1] as u128) << 64;
         Ok(result)
+    }
+}
+
+// Convert Uint to floating point
+//
+
+impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
+    fn from(value: Uint<BITS, LIMBS>) -> Self {
+        Self::from(&value)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
+    /// Convert to IEEE-754 single-precision floating point number.
+    ///
+    /// Returns `f32::INFINITY` if the value is too large to represent.
+    fn from(value: &Uint<BITS, LIMBS>) -> Self {
+        let (bits, exponent) = value.most_significant_bits();
+        (bits as Self) * (exponent as Self).exp2()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
+    fn from(value: Uint<BITS, LIMBS>) -> Self {
+        Self::from(&value)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
+    /// Convert to IEEE-754 double-precision floating point number.
+    ///
+    /// Returns `f64::INFINITY` if the value is too large to represent.
+    fn from(value: &Uint<BITS, LIMBS>) -> Self {
+        let (bits, exponent) = value.most_significant_bits();
+        (bits as Self) * (exponent as Self).exp2()
     }
 }
 
