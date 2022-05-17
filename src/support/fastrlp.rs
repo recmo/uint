@@ -2,27 +2,41 @@
 //! Support for [`fastrlp`](https://crates.io/crates/fastrlp).
 
 use crate::Uint;
+use core::mem::size_of;
 use fastrlp::{BufMut, Decodable, DecodeError, Encodable, Header};
 
 /// Allows a [`Uint`] to be serialized as RLP.
 ///
 /// See <https://eth.wiki/en/fundamentals/rlp>
-// OPT: Implement `length()` using `leading_zeros()`.
 impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
+    fn length(&self) -> usize {
+        let bits = self.bit_len();
+        match bits {
+            n if n <= 7 => 1,
+            n if n <= 55 * 8 => 1 + (n + 7) / 8,
+            n => {
+                let bytes = (n + 7) / 8;
+                let len_bytes = size_of::<usize>() - bytes.leading_zeros() as usize / 8;
+                1 + len_bytes + bytes
+            }
+        }
+    }
+
     fn encode(&self, out: &mut dyn BufMut) {
-        let bytes = self.to_be_bytes_vec();
-        // Strip most-significant zeros.
-        let bytes = trim_leading_zeros(&bytes);
-        match bytes.len() {
+        match self.bit_len() {
             0 => out.put_u8(0x80),
-            1 if bytes[0] <= 0x7f => out.put_u8(bytes[0]),
-            n if n <= 55 => {
-                #[allow(clippy::cast_possible_truncation)] // n < 56 < 256
-                out.put_u8(0x80 + n as u8);
+            n if n <= 7 => out.put_u8(self.as_limbs()[0] as u8),
+            n if n <= 55 * 8 => {
+                let bytes = self.to_be_bytes_vec();
+                let bytes = trim_leading_zeros(&bytes);
+                #[allow(clippy::cast_possible_truncation)] // bytes.len() < 56 < 256
+                out.put_u8(0x80 + bytes.len() as u8);
                 out.put_slice(bytes);
             }
-            n => {
-                let length_bytes = n.to_be_bytes();
+            _ => {
+                let bytes = self.to_be_bytes_vec();
+                let bytes = trim_leading_zeros(&bytes);
+                let length_bytes = bytes.len().to_be_bytes();
                 let length_bytes = trim_leading_zeros(&length_bytes);
                 #[allow(clippy::cast_possible_truncation)] // length_bytes.len() <= 8
                 out.put_u8(0xb7 + length_bytes.len() as u8);
@@ -85,6 +99,7 @@ mod test {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let serialized = encode(value);
+                assert_eq!(serialized.len(), value.length());
                 let mut reader = &serialized[..];
                 let deserialized = Uint::decode(&mut reader).unwrap();
                 assert_eq!(reader.len(), 0);
