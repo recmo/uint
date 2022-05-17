@@ -9,6 +9,8 @@ use core::{
 };
 use std::borrow::Cow;
 
+// OPT: *_to_smallvec to avoid allocation.
+
 // TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
 // Blocked by Rust issue [#60551](https://github.com/rust-lang/rust/issues/60551).
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -57,8 +59,101 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         return Cow::Borrowed(self.as_le_slice());
 
         // In others it's a bit more complicated.
-        #[cfg(target_endian = "big")]
+        #[cfg(not(target_endian = "little"))]
         return Cow::Owned(self.to_le_bytes_vec());
+    }
+
+    /// Access the underlying store as a little-endian bytes with trailing zeros
+    /// removed.
+    ///
+    /// Uses an optimized implementation on little-endian targets.
+    #[must_use]
+    pub fn as_le_bytes_trimmed(&self) -> Cow<'_, [u8]> {
+        match self.as_le_bytes() {
+            Cow::Borrowed(slice) => Cow::Borrowed(trim_trailing_zeros(slice)),
+            Cow::Owned(vec) => Cow::Owned(trim_trailing_zeros_vec(vec)),
+        }
+    }
+
+    /// Converts the [`Uint`] to a little-endian byte array of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
+    ///
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    #[must_use]
+    pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        assert_eq!(BYTES, Self::BYTES);
+        let mut bytes = [0; BYTES];
+
+        #[cfg(target_endian = "little")]
+        bytes.copy_from_slice(self.as_le_slice());
+
+        #[cfg(not(target_endian = "little"))]
+        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter()) {
+            chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
+        }
+
+        bytes
+    }
+
+    /// Converts the [`Uint`] to a little-endian byte vector of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// This method is useful when [`Self::to_le_bytes`] can not be used because
+    /// byte size is not known compile time.
+    #[must_use]
+    pub fn to_le_bytes_vec(&self) -> Vec<u8> {
+        self.as_le_bytes().into_owned()
+    }
+
+    /// Converts the [`Uint`] to a little-endian byte vector with trailing zeros
+    /// bytes removed.
+    #[must_use]
+    pub fn to_le_bytes_trimmed_vec(&self) -> Vec<u8> {
+        self.as_le_bytes_trimmed().into_owned()
+    }
+
+    /// Converts the [`Uint`] to a big-endian byte array of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
+    ///
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    #[must_use]
+    pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        let mut bytes = self.to_le_bytes();
+        bytes.reverse();
+        bytes
+    }
+
+    /// Converts the [`Uint`] to a big-endian byte vector of size exactly
+    /// [`Self::BYTES`].
+    ///
+    /// This method is useful when [`Self::to_be_bytes`] can not be used because
+    /// byte size is not known compile time.
+    #[must_use]
+    pub fn to_be_bytes_vec(&self) -> Vec<u8> {
+        let mut bytes = self.to_le_bytes_vec();
+        bytes.reverse();
+        bytes
+    }
+
+    /// Converts the [`Uint`] to a big-endian byte vector with leading zeros
+    /// bytes removed.
+    #[must_use]
+    pub fn to_be_bytes_trimmed_vec(&self) -> Vec<u8> {
+        let mut bytes = self.to_le_bytes_trimmed_vec();
+        bytes.reverse();
+        bytes
     }
 
     /// Creates a new integer from a little endian stream of bytes.
@@ -151,74 +246,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             None => panic!("Value too large for Uint<{}>", BITS),
         }
     }
-
-    /// Converts the [`Uint`] to a big-endian byte array of size exactly
-    /// [`Self::BYTES`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
-    /// Ideally this would be a compile time error, but this is blocked by
-    /// Rust issue [#60551].
-    ///
-    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    #[must_use]
-    pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
-        assert_eq!(BYTES, Self::BYTES);
-        let mut bytes = [0; BYTES];
-        for (chunk, limb) in bytes.rchunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_be_bytes()[(8 - chunk.len())..]);
-        }
-        bytes
-    }
-
-    /// Converts the [`Uint`] to a little-endian byte array of size exactly
-    /// [`Self::BYTES`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
-    /// Ideally this would be a compile time error, but this is blocked by
-    /// Rust issue [#60551].
-    ///
-    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    #[must_use]
-    pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
-        assert_eq!(BYTES, Self::BYTES);
-        let mut bytes = [0; BYTES];
-        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
-        }
-        bytes
-    }
-
-    /// Converts the [`Uint`] to a big-endian byte vector of size exactly
-    /// [`Self::BYTES`].
-    ///
-    /// This method is useful when [`Self::to_be_bytes`] can not be used because
-    /// byte size is not known compile time.
-    #[must_use]
-    pub fn to_be_bytes_vec(&self) -> Vec<u8> {
-        let mut bytes = vec![0_u8; nbytes(BITS)];
-        for (chunk, limb) in bytes.rchunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_be_bytes()[(8 - chunk.len())..]);
-        }
-        bytes
-    }
-
-    /// Converts the [`Uint`] to a little-endian byte vector of size exactly
-    /// [`Self::BYTES`].
-    ///
-    /// This method is useful when [`Self::to_le_bytes`] can not be used because
-    /// byte size is not known compile time.
-    #[must_use]
-    pub fn to_le_bytes_vec(&self) -> Vec<u8> {
-        let mut bytes = vec![0_u8; nbytes(BITS)];
-        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter().copied()) {
-            chunk.copy_from_slice(&limb.to_le_bytes()[(8 - chunk.len())..]);
-        }
-        bytes
-    }
 }
 
 /// Number of bytes required to represent the given number of bits.
@@ -229,6 +256,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 #[must_use]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8
+}
+
+fn trim_trailing_zeros(bytes: &[u8]) -> &[u8] {
+    bytes
+        .iter()
+        .rposition(|&b| b != 0)
+        .map_or_else(|| &bytes[..0], |len| &bytes[..=len])
+}
+
+fn trim_trailing_zeros_vec(mut bytes: Vec<u8>) -> Vec<u8> {
+    let len = bytes.iter().rposition(|&b| b != 0).unwrap_or(0);
+    bytes.truncate(len);
+    bytes
 }
 
 #[cfg(test)]
@@ -296,6 +336,10 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             const BYTES: usize = nbytes(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
+                assert_eq!(value, Uint::try_from_le_slice(&value.as_le_bytes()).unwrap());
+                assert_eq!(value, Uint::try_from_le_slice(&value.as_le_bytes_trimmed()).unwrap());
+                assert_eq!(value, Uint::try_from_be_slice(&value.to_be_bytes_trimmed_vec()).unwrap());
+                assert_eq!(value, Uint::try_from_le_slice(&value.to_le_bytes_trimmed_vec()).unwrap());
                 assert_eq!(value, Uint::from_be_bytes(value.to_be_bytes::<BYTES>()));
                 assert_eq!(value, Uint::from_le_bytes(value.to_le_bytes::<BYTES>()));
             });

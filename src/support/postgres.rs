@@ -95,7 +95,10 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             // Binary strings
             Type::BIT => todo!(),
             Type::VARBIT => todo!(),
-            Type::BYTEA => todo!(),
+            Type::BYTEA => {
+                let be_bytes = self.to_be_bytes_trimmed_vec();
+                out.put_slice(&be_bytes);
+            }
 
             // Hex strings
             Type::TEXT => todo!(),

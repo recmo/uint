@@ -31,6 +31,7 @@ pub enum ToUintError {
 }
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
+#[allow(clippy::module_name_repetitions)]
 pub enum FromUintError<const BITS: usize, T> {
     #[error("Uint<{}> value is too large for {}", BITS, type_name::<T>())]
     Overflow(PhantomData<T>),
@@ -251,7 +252,7 @@ macro_rules! to_int {
                 if value.bit_len() > $bits {
                     return Err(Self::Error::Overflow(PhantomData));
                 }
-                Ok(value.as_limbs()[0] as $int)
+                Ok(value.as_limbs()[0] as Self)
             }
         }
     };
@@ -271,6 +272,8 @@ to_value_to_ref!(i128);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128 {
     type Error = FromUintError<BITS, Self>;
 
+    #[allow(clippy::cast_lossless)] // Safe casts
+    #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         if BITS == 0 {
             return Ok(0);
@@ -278,7 +281,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128
         if value.bit_len() > 127 {
             return Err(Self::Error::Overflow(PhantomData));
         }
-        let mut result: i128 = value.as_limbs()[0] as i128;
+        let mut result = value.as_limbs()[0] as i128;
         result |= (value.as_limbs()[1] as i128) << 64;
         Ok(result)
     }
@@ -289,6 +292,8 @@ to_value_to_ref!(u128);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128 {
     type Error = FromUintError<BITS, Self>;
 
+    #[allow(clippy::cast_lossless)] // Safe casts
+    #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         if BITS == 0 {
             return Ok(0);
@@ -312,9 +317,10 @@ impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
 }
 
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
-    /// Convert to IEEE-754 single-precision floating point number.
+    /// Approximate single precision float.
     ///
     /// Returns `f32::INFINITY` if the value is too large to represent.
+    #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
         let (bits, exponent) = value.most_significant_bits();
         (bits as Self) * (exponent as Self).exp2()
@@ -328,9 +334,10 @@ impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
 }
 
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
-    /// Convert to IEEE-754 double-precision floating point number.
+    /// Approximate double precision float.
     ///
     /// Returns `f64::INFINITY` if the value is too large to represent.
+    #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
         let (bits, exponent) = value.most_significant_bits();
         (bits as Self) * (exponent as Self).exp2()
