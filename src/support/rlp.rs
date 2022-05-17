@@ -1,5 +1,5 @@
+//! Support for the [`rlp`](https://crates.io/crates/rlp) crate.
 #![cfg(feature = "rlp")]
-//! Support for [`rlp`](https://crates.io/crates/rlp).
 
 use crate::Uint;
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};

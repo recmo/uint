@@ -8,6 +8,7 @@
         "adcs",
         "conv",
         "cset",
+        "froms",
         "itertools",
         "izip",
         "mathtt",

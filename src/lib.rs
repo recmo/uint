@@ -100,6 +100,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         &mut self.limbs
     }
 
+    pub fn into_limbs(self) -> [u64; LIMBS] {
+        self.limbs
+    }
+
     /// # Panics
     ///
     /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.

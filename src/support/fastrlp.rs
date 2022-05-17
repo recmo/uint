@@ -1,5 +1,5 @@
+//! Support for the [`fastrlp`](https://crates.io/crates/fastrlp) crate.
 #![cfg(feature = "fastrlp")]
-//! Support for [`fastrlp`](https://crates.io/crates/fastrlp).
 
 use crate::Uint;
 use core::mem::size_of;
