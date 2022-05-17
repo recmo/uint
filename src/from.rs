@@ -15,11 +15,11 @@
 // }
 
 use crate::Uint;
-use core::{convert::TryFrom, fmt::Display};
+use core::{any::type_name, convert::TryFrom, fmt::Display, marker::PhantomData};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
-pub enum UintConversionError {
+pub enum ToUintError {
     #[error("Value is too large for Uint<{0}>")]
     ValueTooLarge(usize),
 
@@ -28,6 +28,12 @@ pub enum UintConversionError {
 
     #[error("'Not a number' (NaN) not be represented as Uint<{0}>")]
     NotANumber(usize),
+}
+
+#[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
+pub enum FromUintError<const BITS: usize, T> {
+    #[error("Uint<{}> value is too large for {}", BITS, type_name::<T>())]
+    Overflow(PhantomData<T>),
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -51,12 +57,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
-    type Error = UintConversionError;
+    type Error = ToUintError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         if Self::LIMBS <= 1 {
             if value > Self::MASK {
-                return Err(UintConversionError::ValueTooLarge(BITS));
+                return Err(ToUintError::ValueTooLarge(BITS));
             }
             if Self::LIMBS == 0 {
                 return Ok(Self::MIN);
@@ -70,7 +76,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
 
 // u128 version is handled specially in because it covers two limbs.
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> {
-    type Error = UintConversionError;
+    type Error = ToUintError;
 
     #[allow(clippy::cast_lossless)]
     #[allow(clippy::cast_possible_truncation)]
@@ -79,12 +85,12 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> 
             return Self::try_from(value as u64);
         }
         if Self::LIMBS < 2 {
-            return Err(UintConversionError::ValueTooLarge(BITS));
+            return Err(ToUintError::ValueTooLarge(BITS));
         }
         let lo = value as u64;
         let hi = (value >> 64) as u64;
         if Self::LIMBS == 2 && hi > Self::MASK {
-            return Err(UintConversionError::ValueTooLarge(BITS));
+            return Err(ToUintError::ValueTooLarge(BITS));
         }
         let mut limbs = [0; LIMBS];
         limbs[0] = lo;
@@ -97,7 +103,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> 
 macro_rules! impl_from_unsigned_int {
     ($uint:ty) => {
         impl<const BITS: usize, const LIMBS: usize> TryFrom<$uint> for Uint<BITS, LIMBS> {
-            type Error = UintConversionError;
+            type Error = ToUintError;
 
             fn try_from(value: $uint) -> Result<Self, Self::Error> {
                 Self::try_from(value as u64)
@@ -116,11 +122,11 @@ impl_from_unsigned_int!(usize);
 macro_rules! impl_from_signed_int {
     ($int:ty, $uint:ty) => {
         impl<const BITS: usize, const LIMBS: usize> TryFrom<$int> for Uint<BITS, LIMBS> {
-            type Error = UintConversionError;
+            type Error = ToUintError;
 
             fn try_from(value: $int) -> Result<Self, Self::Error> {
                 if value < 0 {
-                    Err(UintConversionError::ValueNegative(BITS))
+                    Err(Self::Error::ValueNegative(BITS))
                 } else {
                     Self::try_from(value as $uint)
                 }
@@ -142,18 +148,18 @@ impl_from_signed_int!(isize, usize);
 // #![feature(const_float_bits_conv)]
 // and more.
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
-    type Error = UintConversionError;
+    type Error = ToUintError;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
         if value.is_nan() {
-            return Err(UintConversionError::NotANumber(BITS));
+            return Err(ToUintError::NotANumber(BITS));
         }
         if value < 0.0 {
-            return Err(UintConversionError::ValueNegative(BITS));
+            return Err(ToUintError::ValueNegative(BITS));
         }
         #[allow(clippy::cast_precision_loss)] // BITS is small-ish
         if value >= (Self::BITS as f64).exp2() {
-            return Err(UintConversionError::ValueTooLarge(BITS));
+            return Err(ToUintError::ValueTooLarge(BITS));
         }
         if value < 0.5 {
             return Ok(Self::ZERO);
@@ -178,7 +184,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         // Convert mantissa * 2^(exponent - 52) to Uint
         #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
         if exponent as usize > Self::BITS + 52 {
-            return Err(UintConversionError::ValueTooLarge(BITS));
+            return Err(ToUintError::ValueTooLarge(BITS));
         }
         if exponent <= 52 {
             // Truncate mantissa
@@ -191,7 +197,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
-    type Error = UintConversionError;
+    type Error = ToUintError;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
         #[allow(clippy::cast_lossless)]
@@ -200,10 +206,104 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for f64 {
-    type Error = UintConversionError;
+    type Error = ToUintError;
 
     fn try_from(_value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         todo!()
+    }
+}
+
+// Required because a generic rule violates the orphan rule
+macro_rules! to_value_to_ref {
+    ($t:ty) => {
+        impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for $t {
+            type Error = FromUintError<BITS, Self>;
+
+            fn try_from(value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+                Self::try_from(&value)
+            }
+        }
+    };
+}
+
+to_value_to_ref!(bool);
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool {
+    type Error = FromUintError<BITS, Self>;
+
+    fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+        if BITS == 0 {
+            return Ok(false);
+        }
+        if value.bit_len() > 1 {
+            return Err(Self::Error::Overflow(PhantomData));
+        }
+        Ok(value.as_limbs()[0] != 0)
+    }
+}
+
+macro_rules! to_int {
+    ($int:ty, $bits:expr) => {
+        to_value_to_ref!($int);
+
+        impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for $int {
+            type Error = FromUintError<BITS, Self>;
+
+            fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+                if BITS == 0 {
+                    return Ok(0);
+                }
+                if value.bit_len() > $bits {
+                    return Err(Self::Error::Overflow(PhantomData));
+                }
+                Ok(value.as_limbs()[0] as $int)
+            }
+        }
+    };
+}
+
+to_int!(i8, 7);
+to_int!(u8, 8);
+to_int!(i16, 15);
+to_int!(u16, 16);
+to_int!(i32, 31);
+to_int!(u32, 32);
+to_int!(i64, 63);
+to_int!(u64, 64);
+
+to_value_to_ref!(i128);
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128 {
+    type Error = FromUintError<BITS, Self>;
+
+    fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+        if BITS == 0 {
+            return Ok(0);
+        }
+        if value.bit_len() > 127 {
+            return Err(Self::Error::Overflow(PhantomData));
+        }
+        let mut result: i128 = value.as_limbs()[0] as i128;
+        result |= (value.as_limbs()[1] as i128) << 64;
+        Ok(result)
+    }
+}
+
+to_value_to_ref!(u128);
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128 {
+    type Error = FromUintError<BITS, Self>;
+
+    fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+        if BITS == 0 {
+            return Ok(0);
+        }
+        if value.bit_len() > 128 {
+            return Err(Self::Error::Overflow(PhantomData));
+        }
+        let mut result: u128 = value.as_limbs()[0] as u128;
+        result |= (value.as_limbs()[1] as u128) << 64;
+        Ok(result)
     }
 }
 
@@ -217,7 +317,7 @@ mod test {
         assert_eq!(Uint::<0, 0>::try_from(0_u64), Ok(Uint::ZERO));
         assert_eq!(
             Uint::<0, 0>::try_from(1_u64),
-            Err(UintConversionError::ValueTooLarge(0))
+            Err(ToUintError::ValueTooLarge(0))
         );
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
