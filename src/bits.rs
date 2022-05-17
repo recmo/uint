@@ -37,6 +37,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn checked_log2(&self) -> Option<usize> {
         self.bit_len().checked_sub(1)
     }
+
+    /// Returns the most significant 64 bits of the number and the exponent.
+    ///
+    /// Given return value $(\mathtt{bits}, \mathtt{exponent})$, the `self` can
+    /// be approximated as
+    ///
+    /// $$
+    /// \mathtt{self} ≈ \mathtt{bits} ⋅ 2^\mathtt{exponent}
+    /// $$
+    ///
+    /// If `self` is $<≥> 2^{63}$, then `exponent` will be zero and `bits` will
+    /// have leading zeros.
+    pub fn most_significant_bits(&self) -> (u64, usize) {
+        todo!()
+    }
 }
 
 #[cfg(test)]
