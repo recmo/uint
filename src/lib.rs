@@ -15,6 +15,7 @@
 
 mod add;
 pub mod aliases;
+mod bits;
 mod bytes;
 mod const_for;
 mod from;
