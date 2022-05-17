@@ -25,7 +25,10 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
     fn encode(&self, out: &mut dyn BufMut) {
         match self.bit_len() {
             0 => out.put_u8(0x80),
-            n if n <= 7 => out.put_u8(self.as_limbs()[0] as u8),
+            n if n <= 7 => {
+                #[allow(clippy::cast_possible_truncation)] // self < 128
+                out.put_u8(self.as_limbs()[0] as u8);
+            }
             n if n <= 55 * 8 => {
                 let bytes = self.to_be_bytes_vec();
                 let bytes = trim_leading_zeros(&bytes);

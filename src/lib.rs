@@ -89,18 +89,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self { limbs }
     };
 
+    /// View the array of limbs.
     #[must_use]
     pub const fn as_limbs(&self) -> &[u64; LIMBS] {
         &self.limbs
     }
 
+    /// Access the array of limbs.
     // TODO: Can be made `const` with `#![feature(const_mut_refs)]`.
     #[must_use]
     pub fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
-    pub fn into_limbs(self) -> [u64; LIMBS] {
+    /// Convert to a array of limbs.
+    ///
+    /// Limbs are least significant first.
+    #[must_use]
+    pub const fn into_limbs(self) -> [u64; LIMBS] {
         self.limbs
     }
 
