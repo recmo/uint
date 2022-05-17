@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Common bit-size aliases and nightly-only `Uint<BITS>` alias.
 - Added `to_{be/le}_bytes_vec` and made `try_from_le_byte_iter` public.
 - Added `rlp` and `fastrlp` support.
-- Added `leading_zeros`.
+- Added `leading_zeros`, `bit_len`, `byte_len`, `checked_log2`.
 
 ### Changed
 
