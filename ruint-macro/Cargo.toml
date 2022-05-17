@@ -15,4 +15,4 @@ license-file = "../mit-license.md"
 proc-macro = true
 
 [dev-dependencies]
-ruint = { version = "0.2", path = ".." }
+ruint = { path = ".." }
