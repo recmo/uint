@@ -16,3 +16,6 @@ proc-macro = true
 
 [dev-dependencies]
 ruint = { path = ".." }
+
+[package.metadata.release]
+tag = false
