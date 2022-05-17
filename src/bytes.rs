@@ -2,6 +2,7 @@
 // TODO: Make `const fn`s when `const_for` is stable.
 
 use crate::Uint;
+use std::borrow::Cow;
 
 // TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
 // Blocked by Rust issue [#60551](https://github.com/rust-lang/rust/issues/60551).
@@ -9,6 +10,48 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.
     pub const BYTES: usize = (BITS + 7) / 8;
+
+    /// Access the underlying store as a little-endian slice of bytes.
+    ///
+    /// Only available on litte-endian targets.
+    #[cfg(target_endian = "little")]
+    #[must_use]
+    pub fn as_le_slice(&self) -> &[u8] {
+        unsafe {
+            core::slice::from_raw_parts(
+                &self.limbs as *const u64 as *const u8,
+                core::mem::size_of::<[u64; LIMBS]>(),
+            )
+        }
+    }
+
+    /// Access the underlying store as a mutable little-endian slice of bytes.
+    ///
+    /// Only available on litte-endian targets.
+    #[cfg(target_endian = "little")]
+    #[must_use]
+    pub fn as_le_slice_mut(&mut self) -> &mut [u8] {
+        unsafe {
+            core::slice::from_raw_parts_mut(
+                &mut self.limbs as *mut u64 as *mut u8,
+                core::mem::size_of::<[u64; LIMBS]>(),
+            )
+        }
+    }
+
+    /// Access the underlying store as a little-endian bytes.
+    ///
+    /// Uses an optimized implementation on little-endian targets.
+    #[must_use]
+    pub fn as_le_bytes(&self) -> Cow<'_, [u8]> {
+        // On little endian platforms this is a no-op.
+        #[cfg(target_endian = "little")]
+        return Cow::Borrowed(self.as_le_slice());
+
+        // In others it's a bit more complicated.
+        #[cfg(target_endian = "big")]
+        return Cow::Owned(self.to_le_bytes_vec());
+    }
 
     /// Creates a new integer from a little endian stream of bytes.
     #[must_use]

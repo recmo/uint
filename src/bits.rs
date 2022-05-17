@@ -116,7 +116,6 @@ mod tests {
                 limbs[1] = 1;
             }
             let (bits, exponent) = U128::from_limbs(limbs).most_significant_bits();
-            dbg!(bits, exponent);
             assert!(bits >= 1_u64 << 63);
             assert_eq!(exponent, 64 - limbs[1].leading_zeros() as usize);
         });
