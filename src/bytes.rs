@@ -2,6 +2,11 @@
 // TODO: Make `const fn`s when `const_for` is stable.
 
 use crate::Uint;
+use core::{
+    mem::size_of_val,
+    ptr::{addr_of, addr_of_mut},
+    slice,
+};
 use std::borrow::Cow;
 
 // TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
@@ -14,29 +19,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Access the underlying store as a little-endian slice of bytes.
     ///
     /// Only available on litte-endian targets.
+    ///
+    /// If `BITS` does not evenly divide 8, it is padded with zero bits in the
+    /// most significant position.
     #[cfg(target_endian = "little")]
     #[must_use]
     pub fn as_le_slice(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                &self.limbs as *const u64 as *const u8,
-                core::mem::size_of::<[u64; LIMBS]>(),
-            )
-        }
+        debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
+        let data = addr_of!(self.limbs).cast();
+        unsafe { slice::from_raw_parts(data, Self::BYTES) }
     }
 
     /// Access the underlying store as a mutable little-endian slice of bytes.
     ///
     /// Only available on litte-endian targets.
+    ///
+    /// # Safety
+    ///
+    /// If `BITS` does not evenly divide 8, it is padded with zero bits in the
+    /// most significant position. Setting those bits puts the [`Uint`] in an
+    /// invalid state.
     #[cfg(target_endian = "little")]
     #[must_use]
-    pub fn as_le_slice_mut(&mut self) -> &mut [u8] {
-        unsafe {
-            core::slice::from_raw_parts_mut(
-                &mut self.limbs as *mut u64 as *mut u8,
-                core::mem::size_of::<[u64; LIMBS]>(),
-            )
-        }
+    pub unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
+        debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
+        let data = addr_of_mut!(self.limbs).cast();
+        slice::from_raw_parts_mut(data, Self::BYTES)
     }
 
     /// Access the underlying store as a little-endian bytes.
