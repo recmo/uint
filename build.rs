@@ -1,12 +1,7 @@
-//! Feature detection for `generic_const_exprs`. This exists mainly to avoid
-//! compilation failures when using `--all-features` on stable.
-
-use autocfg::AutoCfg;
+use rustc_version::{version_meta, Channel};
 
 fn main() {
-    let has_generic_const_exprs = AutoCfg::new()
-        .unwrap()
-        .probe_features(&["generic_const_exprs"], "");
+    let has_generic_const_exprs = version_meta().unwrap().channel == Channel::Nightly;
     if has_generic_const_exprs {
         println!("cargo:rustc-cfg=has_generic_const_exprs");
     }

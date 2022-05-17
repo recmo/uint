@@ -50,8 +50,9 @@ criterion = { version = "0.3", optional = true }
 [build-dependencies]
 # Rust currently has no way to conditionally compile based on compiler features.
 # `autocfg` is a workaround, but doesn't support probing for `#[features(...)]`
-# yet. Luckily a PR adds this support.
-autocfg = { version = "1.1", git = "https://github.com/CAD97/autocfg", rev = "a1d7429b90a6a306626d759d8cc6c8558c8f79cd" }
+# yet (there's a PR though, but crates.io doesn't allow us to use it).
+# So instead, we do the dumb thing and just check for nightly.
+rustc_version = "0.4.0"
 
 [dev-dependencies]
 proptest = { version = "1.0" }
