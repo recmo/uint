@@ -1,6 +1,18 @@
 use crate::Uint;
 
+use core::ops::ShrAssign;
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    pub fn reverse_bits(&mut self) {
+        self.limbs.reverse();
+        for limb in &mut self.limbs {
+            *limb = limb.reverse_bits();
+        }
+        if BITS % 64 != 0 {
+            *self >>= 64 - BITS % 64;
+        }
+    }
+
     // Returns the number of leading zeros in the binary representation of `self`.
     #[must_use]
     pub fn leading_zeros(&self) -> usize {
@@ -69,6 +81,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             };
             let exponent = first_set_limb * 64 - leading_zeros as usize;
             (bits, exponent)
+        }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShrAssign<usize> for Uint<BITS, LIMBS> {
+    fn shr_assign(&mut self, rhs: usize) {
+        let (limbs, bits) = (rhs / 64, rhs % 64);
+        if bits == 0 {
+            for i in 0..LIMBS - limbs {
+                self.limbs[i] = self.limbs[i + limbs];
+            }
+        } else {
+            for i in 0..LIMBS - limbs {
+                self.limbs[i] =
+                    self.limbs[i + limbs] >> bits | self.limbs[i + limbs + 1] << (64 - bits);
+            }
+        }
+        for i in LIMBS - limbs..LIMBS {
+            self.limbs[i] = 0;
         }
     }
 }
