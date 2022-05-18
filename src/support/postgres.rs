@@ -79,8 +79,8 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::CHAR => out.put_i8(self.try_into()?),
             Type::INT2 => out.put_i16(self.try_into()?),
             Type::INT4 => out.put_i32(self.try_into()?),
+            Type::OID => out.put_u32(self.try_into()?),
             Type::INT8 => out.put_i64(self.try_into()?),
-            Type::OID => out.put_u64(self.try_into()?),
             Type::FLOAT4 => out.put_f32(self.try_into()?),
             Type::FLOAT8 => out.put_f64(self.try_into()?),
             Type::MONEY => {
@@ -94,9 +94,15 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 
             // Binary strings
             Type::BIT | Type::VARBIT => {
-                // Bit in littl-endian so the the first bit is the least significant.
-                out.put_i32(Self::BITS.try_into()?);
-                out.put_slice(&self.as_le_bytes());
+                // Bit in little-endian so the the first bit is the least significant.
+                // Length must be at least one bit.
+                if BITS == 0 {
+                    out.put_i32(1);
+                    out.put_u8(0);
+                } else {
+                    out.put_i32(Self::BITS.try_into()?);
+                    out.put_slice(&self.as_le_bytes());
+                }
             }
             Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
 
@@ -132,4 +138,126 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::const_for;
+    use super::*;
+    use postgres::{Client, NoTls};
+    use std::fmt::{Debug, Display};
+    use std::io::Read;
+    use crate::nlimbs;
+    use proptest::proptest;
+    use std::sync::Mutex;
+
+    // Query the binary encoding of an SQL expression
+    fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
+        let query = format!("COPY (SELECT {}) TO STDOUT WITH BINARY;", expr);
+
+        // See <https://www.postgresql.org/docs/current/sql-copy.html>
+        let mut reader = client.copy_out(&query).unwrap();
+        let mut buf = Vec::new();
+        reader.read_to_end(&mut buf).unwrap();
+
+        // Parse header
+        const HEADER: &[u8] = b"PGCOPY\n\xff\r\n\0";
+        assert_eq!(&buf[..11], HEADER);
+        let buf = &buf[11 + 4..];
+
+         // Skip extension headers (must be zero length)
+        assert_eq!(&buf[..4], &0_u32.to_be_bytes());
+        let buf = &buf[4..];
+
+        // Tuple field count must be one
+        assert_eq!(&buf[..2], &1_i16.to_be_bytes());
+        let buf = &buf[2..];
+
+        // Field length
+        let len = u32::from_be_bytes(buf[..4].try_into().unwrap()) as usize;
+        let buf = &buf[4..];
+
+        // Field data
+        let data = &buf[..len];
+        let buf = &buf[len..];
+
+        // Trailer must be -1_i16
+        assert_eq!(&buf, &(-1_i16).to_be_bytes());
+
+        data.to_owned()
+    }
+
+    fn test_to<const BITS: usize, const LIMBS: usize>(client: &Mutex<Client>, value: Uint<BITS, LIMBS>, ty: &Type) {
+        dbg!(ty, &value);
+
+        // Encode value locally
+        let mut serialized = BytesMut::new();
+        let result = value.to_sql(&ty, &mut serialized);
+        if !result.is_ok() {
+            // Skip values that are out of range for the type
+            return;
+        }
+        dbg!(hex::encode(&serialized));
+
+        // Fetch ground truth value from Postgres
+        let expr = match ty {
+            &Type::BIT => format!("{}::bit({})", value, if BITS == 0 { 1 } else { BITS }),
+            &Type::VARBIT => format!("{}::bit({})::varbit", value, if BITS == 0 { 1 } else { BITS }),
+            &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
+            &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
+            _ => format!("{}::{}", value, ty.name()),
+        };
+        dbg!(&expr);
+        let ground_truth = {
+            let mut client = client.lock().unwrap();
+            get_binary(&mut client, &expr)
+        };
+        dbg!(hex::encode(&ground_truth));
+
+        assert_eq!(serialized, ground_truth);
+    }
+
+    #[test]
+    fn test_postgres() {
+        // docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+        let client = Client::connect("postgresql://postgres:postgres@localhost", NoTls).unwrap();
+        let client = Mutex::new(client);
+
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            proptest!(|(value: Uint<BITS, LIMBS>)| {
+
+                // Test based on which types value will fit
+                let bits = value.bit_len();
+                if bits <= 1 {
+                    test_to(&client, value, &Type::BOOL);
+                }
+                // TODO: `0::char` encodes as ascii '0'
+                // if bits <= 7 {
+                //     test_to(&client, value, &Type::CHAR);
+                // }
+                if bits <= 15 {
+                    test_to(&client, value, &Type::INT2);
+                }
+                if bits <= 31 {
+                    test_to(&client, value, &Type::INT4);
+                }
+                if bits <= 32 {
+                    test_to(&client, value, &Type::OID);
+                }
+                if bits <= 50 {
+                    test_to(&client, value, &Type::MONEY);
+                }
+                if bits <= 63 {
+                    test_to(&client, value, &Type::INT8);
+                }
+
+                // Types that work for any size
+                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::TEXT, Type::VARCHAR] {
+                    test_to(&client, value, ty);
+                }
+
+                // For these types, we need to test a few sizes
+
+                // TODO: Type::FLOAT4, Type::FLOAT8
+            });
+        });
+    }
+}
