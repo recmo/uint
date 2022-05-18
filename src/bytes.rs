@@ -11,8 +11,6 @@ use std::borrow::Cow;
 
 // OPT: *_to_smallvec to avoid allocation.
 
-// TODO: Use `Self::BYTES` instead of a generic argument and runtime assertion.
-// Blocked by Rust issue [#60551](https://github.com/rust-lang/rust/issues/60551).
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.

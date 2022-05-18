@@ -6,6 +6,7 @@
     "words": [
         "aarch",
         "adcs",
+        "BYTEA",
         "conv",
         "cset",
         "froms",

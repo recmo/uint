@@ -20,6 +20,7 @@ mod bits;
 mod bytes;
 mod const_for;
 mod from;
+mod string;
 mod support;
 mod uint_dyn;
 
@@ -61,7 +62,7 @@ pub mod nightly {
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 // TODO: Get rid of the `LIMBS` argument when  `generic_const_exprs` stabilizes.
 // Blocked by Rust [#76560](https://github.com/rust-lang/rust/issues/76560).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {
     limbs: [u64; LIMBS],
 }

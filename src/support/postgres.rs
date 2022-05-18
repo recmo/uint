@@ -93,18 +93,15 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             }
 
             // Binary strings
-            Type::BIT => todo!(),
-            Type::VARBIT => todo!(),
-            Type::BYTEA => {
-                let be_bytes = self.to_be_bytes_trimmed_vec();
-                out.put_slice(&be_bytes);
+            Type::BIT | Type::VARBIT => {
+                // Bit in littl-endian so the the first bit is the least significant.
+                out.put_i32(Self::BITS.try_into()?);
+                out.put_slice(&self.as_le_bytes());
             }
+            Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
 
             // Hex strings
-            Type::TEXT => todo!(),
-            Type::VARCHAR => todo!(),
-            Type::JSON => todo!(),
-            Type::JSONB => todo!(),
+            Type::TEXT | Type::VARCHAR => out.put_slice(format!("{:#x}", self).as_bytes()),
 
             // Binary coded decimal types
             Type::NUMERIC => todo!(),
