@@ -76,7 +76,6 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             // Big-endian simple types
             // Note `BufMut::put_*` methods write big-endian by default.
             Type::BOOL => out.put_u8(if bool::try_from(*self)? { 1 } else { 0 }),
-            Type::CHAR => out.put_i8(self.try_into()?),
             Type::INT2 => out.put_i16(self.try_into()?),
             Type::INT4 => out.put_i32(self.try_into()?),
             Type::OID => out.put_u32(self.try_into()?),
@@ -125,7 +124,9 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             }
 
             // Hex strings
-            Type::TEXT | Type::VARCHAR => out.put_slice(format!("{:#x}", self).as_bytes()),
+            Type::CHAR | Type::TEXT | Type::VARCHAR => {
+                out.put_slice(format!("{:#x}", self).as_bytes())
+            }
 
             // Binary coded decimal types
             // See <https://github.com/postgres/postgres/blob/05a5a1775c89f6beb326725282e7eea1373cbec8/src/backend/utils/adt/numeric.c#L253>
@@ -163,10 +164,11 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{const_for, nlimbs};
+    use crate::{const_for, nbytes, nlimbs};
     use postgres::{Client, NoTls};
     use proptest::{proptest, test_runner::Config as ProptestConfig};
     use std::{io::Read, sync::Mutex};
+    use approx::assert_ulps_eq;
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
@@ -236,6 +238,7 @@ mod tests {
             ),
             &Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
             &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
+            &Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
             &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
             _ => format!("{}::{}", value, ty.name()),
         };
@@ -246,7 +249,19 @@ mod tests {
         };
         // dbg!(hex::encode(&ground_truth));
 
-        assert_eq!(serialized, ground_truth);
+        // Compare with ground truth, for float we allow tiny rounding error
+        if ty == &Type::FLOAT4 {
+            let serialized = f32::from_be_bytes(serialized.as_ref().try_into().unwrap());
+            let ground_truth = f32::from_be_bytes(ground_truth.try_into().unwrap());
+            assert_ulps_eq!(serialized, ground_truth, max_ulps = 4);
+         } else if ty == &Type::FLOAT8 {
+            let serialized = f64::from_be_bytes(serialized.as_ref().try_into().unwrap());
+            let ground_truth = f64::from_be_bytes(ground_truth.try_into().unwrap());
+            assert_ulps_eq!(serialized, ground_truth, max_ulps = 4);
+        } else {
+            // Check that the value is exactly the same as the ground truth
+            assert_eq!(serialized, ground_truth);
+        }
     }
 
     // This test requires a live postgresql server.
@@ -282,10 +297,6 @@ mod tests {
                 if bits <= 1 {
                     test_to(&client, value, &Type::BOOL);
                 }
-                // TODO: `0::char` encodes as ascii '0'
-                // if bits <= 7 {
-                //     test_to(&client, value, &Type::CHAR);
-                // }
                 if bits <= 15 {
                     test_to(&client, value, &Type::INT2);
                 }
@@ -309,7 +320,7 @@ mod tests {
                 test_to(&client, value, &Type::FLOAT8);
 
                 // Types that work for any size
-                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::TEXT, Type::VARCHAR] {
+                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR] {
                     test_to(&client, value, ty);
                 }
 
