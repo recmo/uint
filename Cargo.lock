@@ -1089,7 +1089,7 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "approx",
  "arbitrary",
@@ -1117,7 +1117,7 @@ dependencies = [
 
 [[package]]
 name = "ruint-macro"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "ruint",
 ]
