@@ -1,4 +1,5 @@
 #![doc = include_str!("../Readme.md")]
+#![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 #![cfg_attr(
     any(test, feature = "bench"),
@@ -15,17 +16,24 @@
 
 mod add;
 pub mod aliases;
+mod base_convert;
 mod bits;
 mod bytes;
 mod const_for;
 mod from;
+mod string;
 mod support;
 mod uint_dyn;
+mod utils;
 
 #[cfg(feature = "dyn")]
+#[doc(inline)]
 pub use uint_dyn::UintDyn;
 
+#[doc(inline)]
 pub use self::{add::OverflowingAdd, bytes::nbytes};
+
+#[doc(inline)]
 pub use ruint_macro::uint;
 
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
@@ -56,7 +64,7 @@ pub mod nightly {
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 // TODO: Get rid of the `LIMBS` argument when  `generic_const_exprs` stabilizes.
 // Blocked by Rust [#76560](https://github.com/rust-lang/rust/issues/76560).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {
     limbs: [u64; LIMBS],
 }

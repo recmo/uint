@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Extensive Postgres ToSql support supporting many column types.
+- `TryFrom<Uint>` for primitive integer types.
+- Added `From` conversions to `f32` and `f64`.
+- Implement all rust formatting: `Debug`, `Display`, decimal, hex, etc.
+- `>>=` operator.
+- `to_base_le` and `to_base_le` base conversion spigots
+- `reverse_bits`, `most_sigificant_bits` bit methods.
+- Optimized `as_le_{slice,bytes)_*` accessors.
+
+### Changed
+
+- Rewrote `to_{be,le}_bytes_*` to use optimized methods. This has trickle-down
+  effects for a lot of conversions and formatting.
+
 ## [0.2.0] — 2022-05-16
 
 ### Added

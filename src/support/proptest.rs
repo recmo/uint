@@ -37,7 +37,7 @@ mod tests {
     fn test_arbitrary() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
-            proptest!(|(n in Uint::<BITS, LIMBS>::arbitrary())| {
+            proptest!(|(n: Uint::<BITS, LIMBS>)| {
                 let _ = n;
             });
         });

@@ -4,6 +4,8 @@
 use crate::aliases as ours;
 use primitive_types::{U128, U256, U512};
 
+// TODO: H160, H256..
+
 macro_rules! impl_froms {
     ($ours:ty, $theirs:ident) => {
         impl From<$theirs> for $ours {

@@ -1,6 +1,18 @@
 use crate::Uint;
 
+use core::ops::ShrAssign;
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    pub fn reverse_bits(&mut self) {
+        self.limbs.reverse();
+        for limb in &mut self.limbs {
+            *limb = limb.reverse_bits();
+        }
+        if BITS % 64 != 0 {
+            *self >>= 64 - BITS % 64;
+        }
+    }
+
     // Returns the number of leading zeros in the binary representation of `self`.
     #[must_use]
     pub fn leading_zeros(&self) -> usize {
@@ -37,6 +49,59 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn checked_log2(&self) -> Option<usize> {
         self.bit_len().checked_sub(1)
     }
+
+    /// Returns the most significant 64 bits of the number and the exponent.
+    ///
+    /// Given return value $(\mathtt{bits}, \mathtt{exponent})$, the `self` can
+    /// be approximated as
+    ///
+    /// $$
+    /// \mathtt{self} ≈ \mathtt{bits} ⋅ 2^\mathtt{exponent}
+    /// $$
+    ///
+    /// If `self` is $<≥> 2^{63}$, then `exponent` will be zero and `bits` will
+    /// have leading zeros.
+    #[must_use]
+    pub fn most_significant_bits(&self) -> (u64, usize) {
+        let first_set_limb = self
+            .as_limbs()
+            .iter()
+            .rposition(|&limb| limb != 0)
+            .unwrap_or(0);
+        if first_set_limb == 0 {
+            (self.as_limbs().first().copied().unwrap_or(0), 0)
+        } else {
+            let hi = self.as_limbs()[first_set_limb];
+            let lo = self.as_limbs()[first_set_limb - 1];
+            let leading_zeros = hi.leading_zeros();
+            let bits = if leading_zeros > 0 {
+                (hi << leading_zeros) | (lo >> (64 - leading_zeros))
+            } else {
+                hi
+            };
+            let exponent = first_set_limb * 64 - leading_zeros as usize;
+            (bits, exponent)
+        }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShrAssign<usize> for Uint<BITS, LIMBS> {
+    fn shr_assign(&mut self, rhs: usize) {
+        let (limbs, bits) = (rhs / 64, rhs % 64);
+        if bits == 0 {
+            for i in 0..LIMBS - limbs {
+                self.limbs[i] = self.limbs[i + limbs];
+            }
+        } else {
+            for i in 0..LIMBS - limbs {
+                self.limbs[i] =
+                    self.limbs[i + limbs] >> bits | self.limbs[i + limbs + 1] << (64 - bits);
+            }
+        }
+        for i in LIMBS - limbs..LIMBS {
+            self.limbs[i] = 0;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -64,6 +129,26 @@ mod tests {
         proptest!(|(value: u128)| {
             let uint = U128::from(value);
             assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
+        });
+    }
+
+    #[test]
+    fn test_most_significant_bits() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: u64)| {
+                let value = if U::LIMBS <= 1 { value & U::MASK } else { value };
+                assert_eq!(U::from(value).most_significant_bits(), (value, 0));
+            });
+        });
+        proptest!(|(mut limbs: [u64; 2])| {
+            if limbs[1] == 0 {
+                limbs[1] = 1;
+            }
+            let (bits, exponent) = U128::from_limbs(limbs).most_significant_bits();
+            assert!(bits >= 1_u64 << 63);
+            assert_eq!(exponent, 64 - limbs[1].leading_zeros() as usize);
         });
     }
 
