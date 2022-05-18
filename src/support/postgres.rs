@@ -15,21 +15,19 @@ pub enum ToSqlError {
     Overflow(usize, Type),
 }
 
-/// Convert to PostgreSQL types.
+/// Convert to Postgres types.
 ///
-/// Compatible [PostgreSQL data types][dt] are:
+/// Compatible [Postgres data types][dt] are:
 ///
-/// * `BOOL`, `CHAR`, `SMALLINT`, `INTEGER`, `BIGINT` which are 1, 8, 16, 32 and
-///   64 bit signed integers respectively.
-/// * `SMALLSERIAL`, `SERIAL`, `BIGSERIAL` which are 16, 32 and 64 bit signed
-///   integers respectively.
+/// * `BOOL`, `SMALLINT`, `INTEGER`, `BIGINT` which are 1, 16, 32 and 64 bit
+///   signed integers respectively.
 /// * `OID` which is a 32 bit unsigned integer.
 /// * `FLOAT`, `DOUBLE PRECISION` which are 32 and 64 bit floating point.
 /// * `DECIMAL` and `NUMERIC`, which are variable length.
 /// * `MONEY` which is a 64 bit integer with two decimals.
 /// * `BYTEA`, `BIT`, `VARBIT` interpreted as a big-endian binary number.
-/// * `CHAR`, `VARCHAR` as `0x`-prefixed big-endian hex strings.
-/// * `JSON`, `JSONB` as a Serde compatible JSON value (requires `serde`
+/// * `CHAR`, `VARCHAR`, `TEXT` as `0x`-prefixed big-endian hex strings.
+/// * TODO: `JSON`, `JSONB` as a Serde compatible JSON value (requires `serde`
 ///   feature).
 ///
 /// Note: [`Uint`]s are never null, use [`Option<Uint>`] instead.
@@ -125,7 +123,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 
             // Hex strings
             Type::CHAR | Type::TEXT | Type::VARCHAR => {
-                out.put_slice(format!("{:#x}", self).as_bytes())
+                out.put_slice(format!("{:#x}", self).as_bytes());
             }
 
             // Binary coded decimal types
@@ -137,7 +135,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
                 let exponent = digits.len().saturating_sub(1).try_into()?;
 
                 // Trailing zeros are removed.
-                trim_end_vec(&mut digits, 0);
+                trim_end_vec(&mut digits, &0);
 
                 out.put_i16(digits.len().try_into()?); // Number of digits.
                 out.put_i16(exponent); // Exponent of first digit.
@@ -165,10 +163,10 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nbytes, nlimbs};
+    use approx::assert_ulps_eq;
     use postgres::{Client, NoTls};
     use proptest::{proptest, test_runner::Config as ProptestConfig};
     use std::{io::Read, sync::Mutex};
-    use approx::assert_ulps_eq;
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
@@ -180,9 +178,11 @@ mod tests {
         reader.read_to_end(&mut buf).unwrap();
 
         // Parse header
-        const HEADER: &[u8] = b"PGCOPY\n\xff\r\n\0";
-        assert_eq!(&buf[..11], HEADER);
-        let buf = &buf[11 + 4..];
+        let buf = {
+            const HEADER: &[u8] = b"PGCOPY\n\xff\r\n\0";
+            assert_eq!(&buf[..11], HEADER);
+            &buf[11 + 4..]
+        };
 
         // Skip extension headers (must be zero length)
         assert_eq!(&buf[..4], &0_u32.to_be_bytes());
@@ -215,8 +215,8 @@ mod tests {
 
         // Encode value locally
         let mut serialized = BytesMut::new();
-        let result = value.to_sql(&ty, &mut serialized);
-        if !result.is_ok() {
+        let result = value.to_sql(ty, &mut serialized);
+        if result.is_err() {
             // Skip values that are out of range for the type
             return;
         }
@@ -254,7 +254,7 @@ mod tests {
             let serialized = f32::from_be_bytes(serialized.as_ref().try_into().unwrap());
             let ground_truth = f32::from_be_bytes(ground_truth.try_into().unwrap());
             assert_ulps_eq!(serialized, ground_truth, max_ulps = 4);
-         } else if ty == &Type::FLOAT8 {
+        } else if ty == &Type::FLOAT8 {
             let serialized = f64::from_be_bytes(serialized.as_ref().try_into().unwrap());
             let ground_truth = f64::from_be_bytes(ground_truth.try_into().unwrap());
             assert_ulps_eq!(serialized, ground_truth, max_ulps = 4);

@@ -71,9 +71,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn as_le_bytes_trimmed(&self) -> Cow<'_, [u8]> {
         match self.as_le_bytes() {
-            Cow::Borrowed(slice) => Cow::Borrowed(trim_end_slice(slice, 0)),
+            Cow::Borrowed(slice) => Cow::Borrowed(trim_end_slice(slice, &0)),
             Cow::Owned(mut vec) => {
-                trim_end_vec(&mut vec, 0);
+                trim_end_vec(&mut vec, &0);
                 Cow::Owned(vec)
             }
         }

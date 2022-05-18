@@ -8,6 +8,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// power of `10` that still fits `u64`. This way much fewer iterations
     /// are required to extract all the digits.
     // TODO: Internalize this trick so the user won't have to worry about it.
+    /// # Panics
+    ///
+    /// Panics if the base is less than 2.
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
         assert!(base > 1);
         SpigotLittle {
@@ -23,6 +26,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// power of `10` that still fits `u64`. This way much fewer iterations
     /// are required to extract all the digits.
     // TODO: Internalize this trick so the user won't have to worry about it.
+    /// # Panics
+    ///
+    /// Panics if the base is less than 2.
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
         assert!(base > 1);
         // OPT: Find an allocation free method. Maybe extract from the top?
