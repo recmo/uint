@@ -93,6 +93,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             }
 
             // Binary strings
+            Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
             Type::BIT | Type::VARBIT => {
                 // Bit in little-endian so the the first bit is the least significant.
                 // Length must be at least one bit.
@@ -100,11 +101,25 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
                     out.put_i32(1);
                     out.put_u8(0);
                 } else {
+                    // Bits are output in little-endian order, but padded at the
+                    // least significant end.
+                    let padding = if (BITS % 8) == 0 { 0 } else { 8 - BITS % 8 };
                     out.put_i32(Self::BITS.try_into()?);
-                    out.put_slice(&self.as_le_bytes());
+                    let bytes = self.as_le_bytes();
+                    let mut bytes = bytes.iter().rev();
+                    let mut shifted = bytes.next().unwrap() << padding;
+                    for byte in bytes {
+                        shifted |= if padding > 0 {
+                            byte >> (8 - padding)
+                        } else {
+                            0
+                        };
+                        out.put_u8(shifted);
+                        shifted = byte << padding;
+                    }
+                    out.put_u8(shifted);
                 }
             }
-            Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
 
             // Hex strings
             Type::TEXT | Type::VARCHAR => out.put_slice(format!("{:#x}", self).as_bytes()),
@@ -139,14 +154,15 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 
 #[cfg(test)]
 mod tests {
-    use crate::const_for;
     use super::*;
+    use crate::{const_for, nlimbs};
     use postgres::{Client, NoTls};
-    use std::fmt::{Debug, Display};
-    use std::io::Read;
-    use crate::nlimbs;
     use proptest::proptest;
-    use std::sync::Mutex;
+    use std::{
+        fmt::{Debug, Display},
+        io::Read,
+        sync::Mutex,
+    };
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
@@ -162,7 +178,7 @@ mod tests {
         assert_eq!(&buf[..11], HEADER);
         let buf = &buf[11 + 4..];
 
-         // Skip extension headers (must be zero length)
+        // Skip extension headers (must be zero length)
         assert_eq!(&buf[..4], &0_u32.to_be_bytes());
         let buf = &buf[4..];
 
@@ -184,7 +200,11 @@ mod tests {
         data.to_owned()
     }
 
-    fn test_to<const BITS: usize, const LIMBS: usize>(client: &Mutex<Client>, value: Uint<BITS, LIMBS>, ty: &Type) {
+    fn test_to<const BITS: usize, const LIMBS: usize>(
+        client: &Mutex<Client>,
+        value: Uint<BITS, LIMBS>,
+        ty: &Type,
+    ) {
         dbg!(ty, &value);
 
         // Encode value locally
@@ -198,8 +218,16 @@ mod tests {
 
         // Fetch ground truth value from Postgres
         let expr = match ty {
-            &Type::BIT => format!("{}::bit({})", value, if BITS == 0 { 1 } else { BITS }),
-            &Type::VARBIT => format!("{}::bit({})::varbit", value, if BITS == 0 { 1 } else { BITS }),
+            &Type::BIT => format!(
+                "B'{value:b}'::bit({bits})",
+                value = value,
+                bits = if BITS == 0 { 1 } else { BITS },
+            ),
+            &Type::VARBIT => format!(
+                "B'{value:b}'::bit({bits})::varbit",
+                value = value,
+                bits = if BITS == 0 { 1 } else { BITS },
+            ),
             &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
             &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
             _ => format!("{}::{}", value, ty.name()),

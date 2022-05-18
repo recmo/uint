@@ -27,7 +27,16 @@ impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
         if f.alternate() {
             write!(f, "0x")?;
         }
-        for limb in self.limbs.iter().rev() {
+        let mut limbs = self.as_limbs().iter().rev();
+        if let Some(first) = limbs.next() {
+            let width = 2 * if Self::BYTES % 8 == 0 {
+                8
+            } else {
+                Self::BYTES % 8
+            };
+            write!(f, "{:0width$x}", first, width = width)?;
+        }
+        for limb in limbs {
             write!(f, "{:016x}", limb)?;
         }
         Ok(())
@@ -39,7 +48,16 @@ impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
         if f.alternate() {
             write!(f, "0x")?;
         }
-        for limb in self.limbs.iter().rev() {
+        let mut limbs = self.as_limbs().iter().rev();
+        if let Some(first) = limbs.next() {
+            let width = 2 * if Self::BYTES % 8 == 0 {
+                8
+            } else {
+                Self::BYTES % 8
+            };
+            write!(f, "{:0width$X}", first, width = width)?;
+        }
+        for limb in limbs {
             write!(f, "{:016X}", limb)?;
         }
         Ok(())
@@ -51,7 +69,16 @@ impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
         if f.alternate() {
             write!(f, "0b")?;
         }
-        for limb in self.limbs.iter().rev() {
+        let mut limbs = self.as_limbs().iter().rev();
+        if let Some(first) = limbs.next() {
+            let width = if Self::BITS % 64 == 0 {
+                64
+            } else {
+                Self::BITS % 64
+            };
+            write!(f, "{:0width$b}", first, width = width)?;
+        }
+        for limb in limbs {
             write!(f, "{:064b}", limb)?;
         }
         Ok(())
