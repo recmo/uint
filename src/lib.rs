@@ -16,6 +16,7 @@
 
 mod add;
 pub mod aliases;
+mod base_convert;
 mod bits;
 mod bytes;
 mod const_for;
