@@ -1,7 +1,7 @@
 //! Support for the [`postgres`](https://crates.io/crates/postgres) crate.
 #![cfg(feature = "postgres")]
 
-use crate::Uint;
+use crate::{utils::trim_end_vec, Uint};
 use bytes::{BufMut, BytesMut};
 use postgres_types::{to_sql_checked, IsNull, ToSql, Type, WrongType};
 use std::error::Error;
@@ -98,8 +98,11 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
                 // Bit in little-endian so the the first bit is the least significant.
                 // Length must be at least one bit.
                 if BITS == 0 {
-                    out.put_i32(1);
-                    out.put_u8(0);
+                    if *ty == Type::BIT {
+                        // `bit(0)` is not a valid type, but varbit can be empty.
+                        return Err(Box::new(WrongType::new::<Self>(ty.clone())));
+                    }
+                    out.put_i32(0);
                 } else {
                     // Bits are output in little-endian order, but padded at the
                     // least significant end.
@@ -128,14 +131,19 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             // See <https://github.com/postgres/postgres/blob/05a5a1775c89f6beb326725282e7eea1373cbec8/src/backend/utils/adt/numeric.c#L253>
             Type::NUMERIC => {
                 // Everything is done in big-endian base 1000 digits.
-                let digits = self.to_base_be(10000).collect::<Vec<_>>();
+                const BASE: u64 = 10000;
+                let mut digits: Vec<_> = self.to_base_be(BASE).collect();
+                let exponent = digits.len().saturating_sub(1).try_into()?;
+
+                // Trailing zeros are removed.
+                trim_end_vec(&mut digits, 0);
+
                 out.put_i16(digits.len().try_into()?); // Number of digits.
-                #[allow(clippy::cast_possible_wrap)] // Succeeds if previous did
-                #[allow(clippy::cast_possible_truncation)]
-                out.put_i16(digits.len().saturating_sub(1) as i16); // Exponent of first digit.
+                out.put_i16(exponent); // Exponent of first digit.
                 out.put_i16(0); // sign: 0x0000 = positive, 0x4000 = negative.
                 out.put_i16(0); // dscale: Number of digits to the right of the decimal point.
                 for digit in digits {
+                    debug_assert!(digit < BASE);
                     #[allow(clippy::cast_possible_truncation)] // 10000 < i16::MAX
                     out.put_i16(digit as i16);
                 }
@@ -157,12 +165,8 @@ mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
     use postgres::{Client, NoTls};
-    use proptest::proptest;
-    use std::{
-        fmt::{Debug, Display},
-        io::Read,
-        sync::Mutex,
-    };
+    use proptest::{proptest, test_runner::Config as ProptestConfig};
+    use std::{io::Read, sync::Mutex};
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
@@ -205,7 +209,7 @@ mod tests {
         value: Uint<BITS, LIMBS>,
         ty: &Type,
     ) {
-        dbg!(ty, &value);
+        println!("testing {:?} {}", value, ty);
 
         // Encode value locally
         let mut serialized = BytesMut::new();
@@ -214,7 +218,7 @@ mod tests {
             // Skip values that are out of range for the type
             return;
         }
-        dbg!(hex::encode(&serialized));
+        // dbg!(hex::encode(&serialized));
 
         // Fetch ground truth value from Postgres
         let expr = match ty {
@@ -223,26 +227,33 @@ mod tests {
                 value = value,
                 bits = if BITS == 0 { 1 } else { BITS },
             ),
-            &Type::VARBIT => format!(
-                "B'{value:b}'::bit({bits})::varbit",
-                value = value,
-                bits = if BITS == 0 { 1 } else { BITS },
-            ),
+            &Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
             &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
             &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
             _ => format!("{}::{}", value, ty.name()),
         };
-        dbg!(&expr);
+        // dbg!(&expr);
         let ground_truth = {
             let mut client = client.lock().unwrap();
             get_binary(&mut client, &expr)
         };
-        dbg!(hex::encode(&ground_truth));
+        // dbg!(hex::encode(&ground_truth));
 
         assert_eq!(serialized, ground_truth);
     }
 
+    // This test requires a live postgresql server.
+    // To start a server, run:
+    //
+    //     docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+    //
+    // Then run the test using:
+    //
+    //    PROPTEST_CASES=1000 cargo test --all-features -- --include-ignored
+    // --nocapture postgres
+    //
     #[test]
+    #[ignore]
     fn test_postgres() {
         // docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
         let client = Client::connect("postgresql://postgres:postgres@localhost", NoTls).unwrap();
@@ -250,7 +261,14 @@ mod tests {
 
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
-            proptest!(|(value: Uint<BITS, LIMBS>)| {
+
+            // By default generates 256 random values per bit size. Configurable
+            // with the `PROPTEST_CASES` env variable.
+            let mut config = ProptestConfig::default();
+            // No point in running many values for small sizes
+            if BITS < 4 { config.cases = 16; };
+
+            proptest!(config, |(value: Uint<BITS, LIMBS>)| {
 
                 // Test based on which types value will fit
                 let bits = value.bit_len();

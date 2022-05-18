@@ -1,7 +1,10 @@
 // TODO: Use u64::from_{be/le}_bytes().
 // TODO: Make `const fn`s when `const_for` is stable.
 
-use crate::Uint;
+use crate::{
+    utils::{trim_end_slice, trim_end_vec},
+    Uint,
+};
 use core::{
     mem::size_of_val,
     ptr::{addr_of, addr_of_mut},
@@ -68,8 +71,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn as_le_bytes_trimmed(&self) -> Cow<'_, [u8]> {
         match self.as_le_bytes() {
-            Cow::Borrowed(slice) => Cow::Borrowed(trim_trailing_zeros(slice)),
-            Cow::Owned(vec) => Cow::Owned(trim_trailing_zeros_vec(vec)),
+            Cow::Borrowed(slice) => Cow::Borrowed(trim_end_slice(slice, 0)),
+            Cow::Owned(mut vec) => {
+                trim_end_vec(&mut vec, 0);
+                Cow::Owned(vec)
+            }
         }
     }
 
@@ -254,19 +260,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 #[must_use]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8
-}
-
-fn trim_trailing_zeros(bytes: &[u8]) -> &[u8] {
-    bytes
-        .iter()
-        .rposition(|&b| b != 0)
-        .map_or_else(|| &bytes[..0], |len| &bytes[..=len])
-}
-
-fn trim_trailing_zeros_vec(mut bytes: Vec<u8>) -> Vec<u8> {
-    let len = bytes.iter().rposition(|&b| b != 0).unwrap_or(0);
-    bytes.truncate(len);
-    bytes
 }
 
 #[cfg(test)]
