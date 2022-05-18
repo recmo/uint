@@ -184,7 +184,6 @@ mod tests {
             N.to_sql(&ty, &mut out).unwrap();
             out.to_vec()
         }
-        dbg!(hex::encode(bytes(Type::VARCHAR)));
         assert_eq!(bytes(Type::FLOAT4), hex!("7f800000")); // +inf
         assert_eq!(bytes(Type::FLOAT8), hex!("4fe90bdefaf2d240"));
         assert_eq!(bytes(Type::NUMERIC), hex!("0014001300000000000902760e3620f115a21c3b029709bc11e60b3e10d10d6900d123400def1c45091a147900f012f4"));
