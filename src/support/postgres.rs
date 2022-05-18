@@ -104,7 +104,21 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::TEXT | Type::VARCHAR => out.put_slice(format!("{:#x}", self).as_bytes()),
 
             // Binary coded decimal types
-            Type::NUMERIC => todo!(),
+            // See <https://github.com/postgres/postgres/blob/05a5a1775c89f6beb326725282e7eea1373cbec8/src/backend/utils/adt/numeric.c#L253>
+            Type::NUMERIC => {
+                // Everything is done in big-endian base 1000 digits.
+                let digits = self.to_base_be(10000).collect::<Vec<_>>();
+                out.put_i16(digits.len().try_into()?); // Number of digits.
+                #[allow(clippy::cast_possible_wrap)] // Succeeds if previous did
+                #[allow(clippy::cast_possible_truncation)]
+                out.put_i16(digits.len().saturating_sub(1) as i16); // Exponent of first digit.
+                out.put_i16(0); // sign: 0x0000 = positive, 0x4000 = negative.
+                out.put_i16(0); // dscale: Number of digits to the right of the decimal point.
+                for digit in digits {
+                    #[allow(clippy::cast_possible_truncation)] // 10000 < i16::MAX
+                    out.put_i16(digit as i16);
+                }
+            }
 
             // Unsupported types
             _ => {
