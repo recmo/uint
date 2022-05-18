@@ -1,4 +1,4 @@
-use crate::Uint;
+use crate::{utils::rem_up, Uint};
 use core::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result, UpperHex};
 
 // TODO: Respect width parameter in formatters.
@@ -29,11 +29,7 @@ impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
         }
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
-            let width = 2 * if Self::BYTES % 8 == 0 {
-                8
-            } else {
-                Self::BYTES % 8
-            };
+            let width = 2 * rem_up(Self::BYTES, 8);
             write!(f, "{:0width$x}", first, width = width)?;
         }
         for limb in limbs {
@@ -50,11 +46,7 @@ impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
         }
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
-            let width = 2 * if Self::BYTES % 8 == 0 {
-                8
-            } else {
-                Self::BYTES % 8
-            };
+            let width = 2 * rem_up(Self::BYTES, 8);
             write!(f, "{:0width$X}", first, width = width)?;
         }
         for limb in limbs {
@@ -71,11 +63,7 @@ impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
         }
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
-            let width = if Self::BITS % 64 == 0 {
-                64
-            } else {
-                Self::BITS % 64
-            };
+            let width = rem_up(Self::BITS, 64);
             write!(f, "{:0width$b}", first, width = width)?;
         }
         for limb in limbs {

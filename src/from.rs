@@ -56,6 +56,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
+// TODO: Make this work somehow.
+// impl<
+//     const SBITS: usize,
+//     const SLIMBS: usize,
+//     const TBITS: usize,
+//     const TLIMBS: usize,
+// > TryFrom<Uint<SBITS, SLIMBS>> for Uint<TBITS, TLIMBS> { type Error =
+// > ToUintError;
+
+//     fn try_from(value: Uint<SBITS, SLIMBS>) -> Result<Self, Self::Error> {
+//         todo!()
+//     }
+// }
+
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
     type Error = ToUintError;

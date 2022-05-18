@@ -24,6 +24,7 @@ mod from;
 mod string;
 mod support;
 mod uint_dyn;
+mod utils;
 
 #[cfg(feature = "dyn")]
 #[doc(inline)]

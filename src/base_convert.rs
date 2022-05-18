@@ -9,6 +9,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// are required to extract all the digits.
     // TODO: Internalize this trick so the user won't have to worry about it.
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
+        assert!(base > 1);
         SpigotLittle {
             base,
             limbs: self.limbs,
@@ -23,6 +24,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// are required to extract all the digits.
     // TODO: Internalize this trick so the user won't have to worry about it.
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
+        assert!(base > 1);
         // OPT: Find an allocation free method. Maybe extract from the top?
         OwnedVecIterator {
             vec: self.to_base_le(base).collect(),
