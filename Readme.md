@@ -121,6 +121,7 @@ named feature flag.
 * [`rlp`](https://docs.rs/rlp): Implements the [`Encodable`](https://docs.rs/rlp/latest/rlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/rlp/latest/rlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 * [`fastrlp`](https://docs.rs/fastrlp): Implements the [`Encodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 * [`primitive-types`](https://docs.rs/primitive-types): Implements the [`From<_>`] conversions between corresponding types.
+* [`postgres`](https://docs.rs/postgres): Implements the [`ToSql`](https://docs.rs/postgres/latest/postgres/types/trait.ToSql.html) trait supporting many column types.
 
 ## Building and testing
 
