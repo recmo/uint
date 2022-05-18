@@ -164,9 +164,46 @@ mod tests {
     use super::*;
     use crate::{const_for, nbytes, nlimbs};
     use approx::assert_ulps_eq;
+    use hex_literal::hex;
     use postgres::{Client, NoTls};
     use proptest::{proptest, test_runner::Config as ProptestConfig};
     use std::{io::Read, sync::Mutex};
+
+    #[test]
+    fn test_basic() {
+        #[allow(clippy::unreadable_literal)]
+        const N: Uint<256, 4> = Uint::from_limbs([
+            0xa8ec92344438aaf4_u64,
+            0x9819ebdbd1faaab1_u64,
+            0x573b1a7064c19c1a_u64,
+            0xc85ef7d79691fe79_u64,
+        ]);
+        #[allow(clippy::needless_pass_by_value)]
+        fn bytes(ty: Type) -> Vec<u8> {
+            let mut out = BytesMut::new();
+            N.to_sql(&ty, &mut out).unwrap();
+            out.to_vec()
+        }
+        dbg!(hex::encode(bytes(Type::VARCHAR)));
+        assert_eq!(bytes(Type::FLOAT4), hex!("7f800000")); // +inf
+        assert_eq!(bytes(Type::FLOAT8), hex!("4fe90bdefaf2d240"));
+        assert_eq!(bytes(Type::NUMERIC), hex!("0014001300000000000902760e3620f115a21c3b029709bc11e60b3e10d10d6900d123400def1c45091a147900f012f4"));
+        assert_eq!(
+            bytes(Type::BYTEA),
+            hex!("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
+        );
+        assert_eq!(
+            bytes(Type::BIT),
+            hex!("00000100c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
+        );
+        assert_eq!(
+            bytes(Type::VARBIT),
+            hex!("00000100c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
+        );
+        assert_eq!(bytes(Type::CHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
+        assert_eq!(bytes(Type::TEXT), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
+        assert_eq!(bytes(Type::VARCHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
+    }
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
