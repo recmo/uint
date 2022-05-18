@@ -3,6 +3,11 @@ use crate::Uint;
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns an iterator over the base `base` digits of the number in
     /// little-endian order.
+    ///
+    /// Pro tip: instead of setting `base = 10`, set it to the highest
+    /// power of `10` that still fits `u64`. This way much fewer iterations
+    /// are required to extract all the digits.
+    // TODO: Internalize this trick so the user won't have to worry about it.
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
         SpigotLittle {
             base,
@@ -10,8 +15,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Returns an iterator over the base `base` digits of the number in
+    /// big-endian order.
+    ///
+    /// Pro tip: instead of setting `base = 10`, set it to the highest
+    /// power of `10` that still fits `u64`. This way much fewer iterations
+    /// are required to extract all the digits.
+    // TODO: Internalize this trick so the user won't have to worry about it.
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
-        // TODO: Alloc free method?
+        // OPT: Find an allocation free method. Maybe extract from the top?
         OwnedVecIterator {
             vec: self.to_base_le(base).collect(),
         }
@@ -26,21 +38,23 @@ struct SpigotLittle<const LIMBS: usize> {
 impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     type Item = u64;
 
+    #[allow(clippy::cast_possible_truncation)] // Doesn't truncate
     fn next(&mut self) -> Option<Self::Item> {
         // Knuth Algorithm S.
         let mut zero: u64 = 0_u64;
         let mut remainder = 0_u128;
+        // OPT: If we keep track of leading zero limbs we can half iterations.
         for limb in self.limbs.iter_mut().rev() {
             zero |= *limb;
             remainder <<= 64;
-            remainder |= *limb as u128;
-            *limb = (remainder / (self.base as u128)) as u64;
-            remainder %= self.base as u128;
+            remainder |= u128::from(*limb);
+            *limb = (remainder / u128::from(self.base)) as u64;
+            remainder %= u128::from(self.base);
         }
-        if zero != 0 {
-            Some(remainder as u64)
-        } else {
+        if zero == 0 {
             None
+        } else {
+            Some(remainder as u64)
         }
     }
 }
