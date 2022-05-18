@@ -218,6 +218,13 @@ mod tests {
             // Skip values that are out of range for the type
             return;
         }
+        // Skip floating point infinities
+        if ty == &Type::FLOAT4 && f32::from(value).is_infinite() {
+            return;
+        }
+        if ty == &Type::FLOAT8 && f64::from(value).is_infinite() {
+            return;
+        }
         // dbg!(hex::encode(&serialized));
 
         // Fetch ground truth value from Postgres
@@ -295,14 +302,17 @@ mod tests {
                     test_to(&client, value, &Type::INT8);
                 }
 
+                // Floating points always work, except when the exponent
+                // overflows. We map that to +∞, mut SQL rejects it. This
+                // is handled in the `test_to` function.
+                test_to(&client, value, &Type::FLOAT4);
+                test_to(&client, value, &Type::FLOAT8);
+
                 // Types that work for any size
                 for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::TEXT, Type::VARCHAR] {
                     test_to(&client, value, ty);
                 }
 
-                // For these types, we need to test a few sizes
-
-                // TODO: Type::FLOAT4, Type::FLOAT8
             });
         });
     }
