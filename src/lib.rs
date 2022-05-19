@@ -31,7 +31,9 @@ mod utils;
 pub use uint_dyn::UintDyn;
 
 #[doc(inline)]
-pub use self::{add::OverflowingAdd, bytes::nbytes};
+pub use self::{
+    add::OverflowingAdd, base_convert::BaseConvertError, bytes::nbytes, string::ParseError,
+};
 
 #[doc(inline)]
 pub use ruint_macro::uint;

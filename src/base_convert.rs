@@ -1,4 +1,12 @@
 use crate::Uint;
+use thiserror::Error;
+
+#[allow(clippy::module_name_repetitions)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
+pub enum BaseConvertError {
+    #[error("The value is too large to fit the target type")]
+    Overflow,
+}
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns an iterator over the base `base` digits of the number in
@@ -35,6 +43,50 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         OwnedVecIterator {
             vec: self.to_base_le(base).collect(),
         }
+    }
+
+    /// Constructs the [`Uint`] from digits in the base `base` in little-endian.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// fit.
+    pub fn from_base_le<I: IntoIterator<Item = u64>>(
+        base: u64,
+        digits: I,
+    ) -> Result<Self, BaseConvertError> {
+        let digits: Vec<_> = digits.into_iter().collect();
+        Self::from_base_be(base, digits)
+    }
+
+    /// Constructs the [`Uint`] from digits in the base `base` in big-endian.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// fit.
+    pub fn from_base_be<I: IntoIterator<Item = u64>>(
+        base: u64,
+        digits: I,
+    ) -> Result<Self, BaseConvertError> {
+        // OPT: Same trick as with `to_base_le`, find the largest power of base
+        // that fits `u64` and accumulate there first.
+
+        let mut result = Self::ZERO;
+        for digit in digits {
+            // Multiply by base.
+            let mut carry: u128 = u128::from(digit);
+            #[allow(clippy::cast_possible_truncation)]
+            for limb in result.limbs.iter_mut() {
+                carry += u128::from(*limb) * u128::from(base);
+                *limb = carry as u64;
+                carry >>= 64;
+            }
+            if carry > 0 {
+                return Err(BaseConvertError::Overflow);
+            }
+        }
+        Ok(result)
     }
 }
 

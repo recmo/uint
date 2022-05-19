@@ -3,8 +3,12 @@
 
 use crate::{utils::trim_end_vec, Uint};
 use bytes::{BufMut, BytesMut};
-use postgres_types::{to_sql_checked, IsNull, ToSql, Type, WrongType};
-use std::error::Error;
+use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
+use std::{
+    error::Error,
+    iter,
+    str::{from_utf8, FromStr},
+};
 use thiserror::Error;
 
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;
@@ -27,8 +31,7 @@ pub enum ToSqlError {
 /// * `MONEY` which is a 64 bit integer with two decimals.
 /// * `BYTEA`, `BIT`, `VARBIT` interpreted as a big-endian binary number.
 /// * `CHAR`, `VARCHAR`, `TEXT` as `0x`-prefixed big-endian hex strings.
-/// * TODO: `JSON`, `JSONB` as a Serde compatible JSON value (requires `serde`
-///   feature).
+/// * `JSON`, `JSONB` as a hex string compatible with the Serde serialization.
 ///
 /// Note: [`Uint`]s are never null, use [`Option<Uint>`] instead.
 ///
@@ -125,6 +128,13 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::CHAR | Type::TEXT | Type::VARCHAR => {
                 out.put_slice(format!("{:#x}", self).as_bytes());
             }
+            Type::JSON | Type::JSONB => {
+                if *ty == Type::JSONB {
+                    // Version 1 of JSONB is just plain text JSON.
+                    out.put_u8(1);
+                }
+                out.put_slice(format!("\"{:#x}\"", self).as_bytes());
+            }
 
             // Binary coded decimal types
             // See <https://github.com/postgres/postgres/blob/05a5a1775c89f6beb326725282e7eea1373cbec8/src/backend/utils/adt/numeric.c#L253>
@@ -157,6 +167,118 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
     }
 
     to_sql_checked!();
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Error)]
+pub enum FromSqlError {
+    #[error("The value is too large for the Uint type")]
+    Overflow,
+
+    #[error("Unexpected data for type {0}")]
+    ParseError(Type),
+}
+
+/// Convert from Postgres types.
+///
+/// See [`ToSql`][Self::to_sql] for details.
+impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS> {
+    fn accepts(ty: &Type) -> bool {
+        <Self as ToSql>::accepts(ty)
+    }
+
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
+        Ok(match *ty {
+            Type::BOOL => match raw {
+                [0] => Self::ZERO,
+                [1] => Self::try_from(1)?,
+                _ => return Err(Box::new(FromSqlError::ParseError(ty.clone()))),
+            },
+            Type::INT2 => i16::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::INT4 => i32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::OID => u32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::INT8 => i64::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::FLOAT4 => f32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::FLOAT8 => f64::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::MONEY => (i64::from_be_bytes(raw.try_into()?) / 100).try_into()?,
+
+            // Binary strings
+            Type::BYTEA => Self::try_from_be_slice(raw).ok_or(FromSqlError::Overflow)?,
+            // TODO: BITS, VARBIT
+
+            // Hex strings
+            Type::CHAR | Type::TEXT | Type::VARCHAR => Self::from_str(from_utf8(raw)?)?,
+
+            // Hex strings
+            Type::JSON | Type::JSONB => {
+                let raw = if *ty == Type::JSONB {
+                    if raw[0] == 1 {
+                        &raw[1..]
+                    } else {
+                        // Unsupported version
+                        return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                    }
+                } else {
+                    raw
+                };
+                let str = from_utf8(raw)?;
+                let str = if str.starts_with('"') && str.ends_with('"') {
+                    // Stringified number
+                    &str[1..str.len() - 1]
+                } else {
+                    str
+                };
+                Self::from_str(str)?
+            }
+
+            // Numeric types
+            Type::NUMERIC => {
+                // Parse header
+                if raw.len() < 8 {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                let digits = i16::from_be_bytes(raw[0..2].try_into()?);
+                let exponent = i16::from_be_bytes(raw[2..4].try_into()?);
+                let sign = i16::from_be_bytes(raw[4..6].try_into()?);
+                let dscale = i16::from_be_bytes(raw[6..8].try_into()?);
+                let raw = &raw[8..];
+                #[allow(clippy::cast_sign_loss)] // Signs are checked
+                if digits < 0
+                    || exponent < 0
+                    || sign != 0x0000
+                    || dscale != 0
+                    || digits > exponent + 1
+                    || raw.len() != digits as usize * 2
+                {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                let mut error = false;
+                let iter = raw.chunks_exact(2).filter_map(|raw| {
+                    if error {
+                        return None;
+                    }
+                    let digit = i16::from_be_bytes(raw.try_into().unwrap());
+                    if !(0..10000).contains(&digit) {
+                        error = true;
+                        return None;
+                    }
+                    #[allow(clippy::cast_sign_loss)] // Signs are checked
+                    Some(digit as u64)
+                });
+                #[allow(clippy::cast_sign_loss)]
+                // Expression can not be negative due to checks above
+                let iter = iter.chain(iter::repeat(0).take((exponent + 1 - digits) as usize));
+
+                let value = Self::from_base_be(10000, iter)?;
+                if error {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                value
+            }
+
+            // Unsupported types
+            _ => return Err(Box::new(WrongType::new::<Self>(ty.clone()))),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -202,6 +324,42 @@ mod tests {
         assert_eq!(bytes(Type::CHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
         assert_eq!(bytes(Type::TEXT), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
         assert_eq!(bytes(Type::VARCHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
+    }
+
+    #[test]
+    fn test_roundtrip() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                let mut serialized = BytesMut::new();
+
+                if f32::from(value).is_finite() {
+                    serialized.clear();
+                    if value.to_sql(&Type::FLOAT4, &mut serialized).is_ok() {
+                        // println!("testing {:?} {}", value, Type::FLOAT4);
+                        let deserialized = U::from_sql(&Type::FLOAT4, &serialized).unwrap();
+                        assert_ulps_eq!(f32::from(value), f32::from(deserialized), max_ulps = 4);
+                    }
+                }
+                if f64::from(value).is_finite() {
+                    serialized.clear();
+                    if value.to_sql(&Type::FLOAT8, &mut serialized).is_ok() {
+                        // println!("testing {:?} {}", value, Type::FLOAT8);
+                        let deserialized = U::from_sql(&Type::FLOAT8, &serialized).unwrap();
+                        assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
+                    }
+                }
+                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC] {
+                    serialized.clear();
+                    if value.to_sql(ty, &mut serialized).is_ok() {
+                        // println!("testing {:?} {}", value, ty);
+                        let deserialized = U::from_sql(ty, &serialized).unwrap();
+                        assert_eq!(deserialized, value);
+                    }
+                }
+            });
+        });
     }
 
     // Query the binary encoding of an SQL expression
@@ -266,16 +424,17 @@ mod tests {
         // dbg!(hex::encode(&serialized));
 
         // Fetch ground truth value from Postgres
-        let expr = match ty {
-            &Type::BIT => format!(
+        let expr = match *ty {
+            Type::BIT => format!(
                 "B'{value:b}'::bit({bits})",
                 value = value,
                 bits = if BITS == 0 { 1 } else { BITS },
             ),
-            &Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
-            &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
-            &Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
-            &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
+            Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
+            Type::BYTEA => format!("'\\x{:x}'::bytea", value),
+            Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
+            Type::TEXT | Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
+            Type::JSON | Type::JSONB => format!("'\"{:#x}\"'::{}", value, ty.name()),
             _ => format!("{}::{}", value, ty.name()),
         };
         // dbg!(&expr);
@@ -356,7 +515,7 @@ mod tests {
                 test_to(&client, value, &Type::FLOAT8);
 
                 // Types that work for any size
-                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR] {
+                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB] {
                     test_to(&client, value, ty);
                 }
 
