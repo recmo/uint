@@ -207,6 +207,28 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
             // Hex strings
             Type::CHAR | Type::TEXT | Type::VARCHAR => Self::from_str(from_utf8(raw)?)?,
 
+            // Hex strings
+            Type::JSON | Type::JSONB => {
+                let raw = if *ty == Type::JSONB {
+                    if raw[0] == 1 {
+                        &raw[1..]
+                    } else {
+                        // Unsupported version
+                        return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                    }
+                } else {
+                    raw
+                };
+                let str = from_utf8(raw)?;
+                let str = if str.starts_with('"') && str.ends_with('"') {
+                    // Stringified number
+                    &str[1..str.len() - 1]
+                } else {
+                    str
+                };
+                Self::from_str(str)?
+            }
+
             // Unsupported types
             _ => return Err(Box::new(WrongType::new::<Self>(ty.clone()))),
         })
@@ -282,7 +304,7 @@ mod tests {
                         assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
                     }
                 }
-                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR] {
+                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
                         println!("testing {:?} {}", value, ty);
