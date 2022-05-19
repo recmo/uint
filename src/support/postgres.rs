@@ -6,6 +6,7 @@ use bytes::{BufMut, BytesMut};
 use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
 use std::{
     error::Error,
+    iter,
     str::{from_utf8, FromStr},
 };
 use thiserror::Error;
@@ -229,6 +230,49 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                 Self::from_str(str)?
             }
 
+            // Numeric types
+            Type::NUMERIC => {
+                // Parse header
+                if raw.len() < 8 {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                let digits = i16::from_be_bytes(raw[0..2].try_into()?);
+                let exponent = i16::from_be_bytes(raw[2..4].try_into()?);
+                let sign = i16::from_be_bytes(raw[4..6].try_into()?);
+                let dscale = i16::from_be_bytes(raw[6..8].try_into()?);
+                let raw = &raw[8..];
+                if digits < 0
+                    || exponent < 0
+                    || sign != 0x0000
+                    || dscale != 0
+                    || digits > exponent + 1
+                    || raw.len() != digits as usize * 2
+                {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                let mut error = false;
+                let iter = raw
+                    .chunks_exact(2)
+                    .filter_map(|raw| {
+                        if error {
+                            return None;
+                        }
+                        let digit = i16::from_be_bytes(raw.try_into().unwrap());
+                        if digit < 0 || digit > 10000 {
+                            error = true;
+                            return None;
+                        }
+                        Some(digit as u64)
+                    })
+                    .chain(std::iter::repeat(0).take((exponent + 1 - digits) as usize));
+
+                let value = Self::from_base_be(10000, iter)?;
+                if error {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                value
+            }
+
             // Unsupported types
             _ => return Err(Box::new(WrongType::new::<Self>(ty.clone()))),
         })
@@ -304,7 +348,7 @@ mod tests {
                         assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
                     }
                 }
-                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB] {
+                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
                         println!("testing {:?} {}", value, ty);
