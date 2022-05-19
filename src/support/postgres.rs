@@ -4,7 +4,10 @@
 use crate::{from::ToUintError, utils::trim_end_vec, Uint};
 use bytes::{BufMut, BytesMut};
 use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
-use std::error::Error;
+use std::{
+    error::Error,
+    str::{from_utf8, FromStr},
+};
 use thiserror::Error;
 
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;
@@ -167,6 +170,9 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 
 #[derive(Clone, PartialEq, Eq, Debug, Error)]
 pub enum FromSqlError {
+    #[error("The value is too large for the Uint type")]
+    Overflow,
+
     #[error("Unexpected data for type {0}")]
     ParseError(Type),
 }
@@ -192,6 +198,14 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
             Type::INT8 => i64::from_be_bytes(raw.try_into()?).try_into()?,
             Type::FLOAT4 => dbg!(f32::from_be_bytes(raw.try_into()?)).try_into()?,
             Type::FLOAT8 => f64::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::MONEY => (i64::from_be_bytes(raw.try_into()?) / 100).try_into()?,
+
+            // Binary strings
+            Type::BYTEA => Self::try_from_be_slice(raw).ok_or(FromSqlError::Overflow)?,
+            // TODO: BITS, VARBIT
+
+            // Hex strings
+            Type::CHAR | Type::TEXT | Type::VARCHAR => Self::from_str(from_utf8(raw)?)?,
 
             // Unsupported types
             _ => return Err(Box::new(WrongType::new::<Self>(ty.clone()))),
@@ -261,7 +275,6 @@ mod tests {
                     }
                 }
                 if f64::from(value).is_finite() {
-                    println!("testing {:?} {}", value, Type::FLOAT8);
                     serialized.clear();
                     if value.to_sql(&Type::FLOAT8, &mut serialized).is_ok() {
                         println!("testing {:?} {}", value, Type::FLOAT8);
@@ -269,7 +282,7 @@ mod tests {
                         assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
                     }
                 }
-                for ty in &[Type::BOOL] {
+                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
                         println!("testing {:?} {}", value, ty);
