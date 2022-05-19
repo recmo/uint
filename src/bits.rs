@@ -233,8 +233,8 @@ mod tests {
             Some(Uint::<65, 2>::from_limbs([0x0020_0000_0000_0000, 0]))
         );
         assert_eq!(
-            Uint::<127, 2>::from_limbs([0x10000000000000, 0]).checked_shl(64),
-            Some(Uint::<127, 2>::from_limbs([0, 0x10000000000000]))
+            Uint::<127, 2>::from_limbs([0x0010_0000_0000_0000, 0]).checked_shl(64),
+            Some(Uint::<127, 2>::from_limbs([0, 0x0010_0000_0000_0000]))
         );
     }
 }

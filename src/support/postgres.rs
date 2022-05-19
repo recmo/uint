@@ -1,7 +1,7 @@
 //! Support for the [`postgres`](https://crates.io/crates/postgres) crate.
 #![cfg(feature = "postgres")]
 
-use crate::{from::ToUintError, utils::trim_end_vec, Uint};
+use crate::{utils::trim_end_vec, Uint};
 use bytes::{BufMut, BytesMut};
 use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
 use std::{
@@ -197,7 +197,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
             Type::INT4 => i32::from_be_bytes(raw.try_into()?).try_into()?,
             Type::OID => u32::from_be_bytes(raw.try_into()?).try_into()?,
             Type::INT8 => i64::from_be_bytes(raw.try_into()?).try_into()?,
-            Type::FLOAT4 => dbg!(f32::from_be_bytes(raw.try_into()?)).try_into()?,
+            Type::FLOAT4 => f32::from_be_bytes(raw.try_into()?).try_into()?,
             Type::FLOAT8 => f64::from_be_bytes(raw.try_into()?).try_into()?,
             Type::MONEY => (i64::from_be_bytes(raw.try_into()?) / 100).try_into()?,
 
@@ -241,6 +241,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                 let sign = i16::from_be_bytes(raw[4..6].try_into()?);
                 let dscale = i16::from_be_bytes(raw[6..8].try_into()?);
                 let raw = &raw[8..];
+                #[allow(clippy::cast_sign_loss)] // Signs are checked
                 if digits < 0
                     || exponent < 0
                     || sign != 0x0000
@@ -251,20 +252,21 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                     return Err(Box::new(FromSqlError::ParseError(ty.clone())));
                 }
                 let mut error = false;
-                let iter = raw
-                    .chunks_exact(2)
-                    .filter_map(|raw| {
-                        if error {
-                            return None;
-                        }
-                        let digit = i16::from_be_bytes(raw.try_into().unwrap());
-                        if digit < 0 || digit > 10000 {
-                            error = true;
-                            return None;
-                        }
-                        Some(digit as u64)
-                    })
-                    .chain(std::iter::repeat(0).take((exponent + 1 - digits) as usize));
+                let iter = raw.chunks_exact(2).filter_map(|raw| {
+                    if error {
+                        return None;
+                    }
+                    let digit = i16::from_be_bytes(raw.try_into().unwrap());
+                    if !(0..10000).contains(&digit) {
+                        error = true;
+                        return None;
+                    }
+                    #[allow(clippy::cast_sign_loss)] // Signs are checked
+                    Some(digit as u64)
+                });
+                #[allow(clippy::cast_sign_loss)]
+                // Expression can not be negative due to checks above
+                let iter = iter.chain(iter::repeat(0).take((exponent + 1 - digits) as usize));
 
                 let value = Self::from_base_be(10000, iter)?;
                 if error {
@@ -286,7 +288,7 @@ mod tests {
     use approx::assert_ulps_eq;
     use hex_literal::hex;
     use postgres::{Client, NoTls};
-    use proptest::{prop_assume, proptest, test_runner::Config as ProptestConfig};
+    use proptest::{proptest, test_runner::Config as ProptestConfig};
     use std::{io::Read, sync::Mutex};
 
     #[test]
@@ -335,7 +337,7 @@ mod tests {
                 if f32::from(value).is_finite() {
                     serialized.clear();
                     if value.to_sql(&Type::FLOAT4, &mut serialized).is_ok() {
-                        println!("testing {:?} {}", value, Type::FLOAT4);
+                        // println!("testing {:?} {}", value, Type::FLOAT4);
                         let deserialized = U::from_sql(&Type::FLOAT4, &serialized).unwrap();
                         assert_ulps_eq!(f32::from(value), f32::from(deserialized), max_ulps = 4);
                     }
@@ -343,7 +345,7 @@ mod tests {
                 if f64::from(value).is_finite() {
                     serialized.clear();
                     if value.to_sql(&Type::FLOAT8, &mut serialized).is_ok() {
-                        println!("testing {:?} {}", value, Type::FLOAT8);
+                        // println!("testing {:?} {}", value, Type::FLOAT8);
                         let deserialized = U::from_sql(&Type::FLOAT8, &serialized).unwrap();
                         assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
                     }
@@ -351,7 +353,7 @@ mod tests {
                 for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
-                        println!("testing {:?} {}", value, ty);
+                        // println!("testing {:?} {}", value, ty);
                         let deserialized = U::from_sql(ty, &serialized).unwrap();
                         assert_eq!(deserialized, value);
                     }

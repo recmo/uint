@@ -95,12 +95,25 @@ pub enum ParseError {
     #[error("invalid digit")]
     InvalidDigit(char),
 
+    #[error("invalid radix, up to 36 is supported")]
+    InvalidRadix(u64),
+
     #[error(transparent)]
     BaseConvertError(#[from] BaseConvertError),
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Parse a string into a [`Uint`].
+    ///
+    /// # Errors
+    ///
+    /// * [`ParseError::InvalidDigit`] if the string contains a non-digit.
+    /// * [`ParseError::InvalidRadix`] if the radix is larger than 36.
+    /// * [`ParseError::BaseConvertError`] if [`Uint::from_base_be`] fails.
     pub fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError> {
+        if radix > 36 {
+            return Err(ParseError::InvalidRadix(radix));
+        }
         let mut err = None;
         let digits = src.chars().filter_map(|c| {
             if err.is_some() {
@@ -118,11 +131,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             }
         });
         let value = Self::from_base_be(radix, digits)?;
-        if let Some(err) = err {
-            Err(err)
-        } else {
-            Ok(value)
-        }
+        err.map_or(Ok(value), Err)
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::Uint;
 use thiserror::Error;
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
 pub enum BaseConvertError {
     #[error("The value is too large to fit the target type")]
@@ -44,6 +45,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Constructs the [`Uint`] from digits in the base `base` in little-endian.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// fit.
     pub fn from_base_le<I: IntoIterator<Item = u64>>(
         base: u64,
         digits: I,
@@ -52,6 +59,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::from_base_be(base, digits)
     }
 
+    /// Constructs the [`Uint`] from digits in the base `base` in big-endian.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// fit.
     pub fn from_base_be<I: IntoIterator<Item = u64>>(
         base: u64,
         digits: I,
@@ -62,9 +75,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut result = Self::ZERO;
         for digit in digits {
             // Multiply by base.
-            let mut carry: u128 = digit as u128;
+            let mut carry: u128 = u128::from(digit);
+            #[allow(clippy::cast_possible_truncation)]
             for limb in result.limbs.iter_mut() {
-                carry += *limb as u128 * base as u128;
+                carry += u128::from(*limb) * u128::from(base);
                 *limb = carry as u64;
                 carry >>= 64;
             }
