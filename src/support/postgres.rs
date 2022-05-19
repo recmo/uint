@@ -190,7 +190,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
             Type::INT4 => i32::from_be_bytes(raw.try_into()?).try_into()?,
             Type::OID => u32::from_be_bytes(raw.try_into()?).try_into()?,
             Type::INT8 => i64::from_be_bytes(raw.try_into()?).try_into()?,
-            Type::FLOAT4 => f32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::FLOAT4 => dbg!(f32::from_be_bytes(raw.try_into()?)).try_into()?,
             Type::FLOAT8 => f64::from_be_bytes(raw.try_into()?).try_into()?,
 
             // Unsupported types
@@ -251,24 +251,30 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U)| {
                 let mut serialized = BytesMut::new();
-                for ty in &[Type::BOOL, Type::FLOAT4, Type::FLOAT8] {
+
+                if f32::from(value).is_finite() {
+                    serialized.clear();
+                    if value.to_sql(&Type::FLOAT4, &mut serialized).is_ok() {
+                        println!("testing {:?} {}", value, Type::FLOAT4);
+                        let deserialized = U::from_sql(&Type::FLOAT4, &serialized).unwrap();
+                        assert_ulps_eq!(f32::from(value), f32::from(deserialized), max_ulps = 4);
+                    }
+                }
+                if f64::from(value).is_finite() {
+                    println!("testing {:?} {}", value, Type::FLOAT8);
+                    serialized.clear();
+                    if value.to_sql(&Type::FLOAT8, &mut serialized).is_ok() {
+                        println!("testing {:?} {}", value, Type::FLOAT8);
+                        let deserialized = U::from_sql(&Type::FLOAT8, &serialized).unwrap();
+                        assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
+                    }
+                }
+                for ty in &[Type::BOOL] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
                         println!("testing {:?} {}", value, ty);
-
                         let deserialized = U::from_sql(ty, &serialized).unwrap();
-
-                        if *ty == Type::FLOAT4 {
-                            let value:f32 = value.into();
-                            let deserialized: f32 = deserialized.into();
-                            assert_ulps_eq!(value, deserialized, max_ulps = 4);
-                        } else if *ty == Type::FLOAT8 {
-                            let value:f64 = value.into();
-                            let deserialized: f64 = deserialized.into();
-                            assert_ulps_eq!(value, deserialized, max_ulps = 4);
-                       }else {
-                            assert_eq!(deserialized, value);
-                        }
+                        assert_eq!(deserialized, value);
                     }
                 }
             });
