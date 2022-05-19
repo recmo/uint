@@ -205,7 +205,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             // Truncate mantissa
             Self::try_from(mantissa >> (52 - exponent))
         } else {
-            dbg!(mantissa, exponent, exponent as usize - 52);
             Self::try_from(mantissa)?
                 .checked_shl(exponent as usize - 52)
                 .ok_or(ToUintError::ValueTooLarge(BITS))

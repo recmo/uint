@@ -1,10 +1,14 @@
-use crate::{utils::rem_up, Uint};
-use core::fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result, UpperHex};
+use crate::{base_convert::BaseConvertError, utils::rem_up, Uint};
+use core::fmt::{
+    Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
+};
+use std::str::FromStr;
+use thiserror::Error;
 
 // TODO: Respect width parameter in formatters.
 
 impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         // Base convert 19 digits at a time
         const BASE: u64 = 10_000_000_000_000_000_000_u64;
         let mut spigot = self.to_base_be(BASE);
@@ -17,13 +21,13 @@ impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Debug for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{:#x}_U{}", self, BITS)
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         if f.alternate() {
             write!(f, "0x")?;
         }
@@ -40,7 +44,7 @@ impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         if f.alternate() {
             write!(f, "0x")?;
         }
@@ -57,7 +61,7 @@ impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         if f.alternate() {
             write!(f, "0b")?;
         }
@@ -74,7 +78,7 @@ impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         // Base convert 21 digits at a time
         const BASE: u64 = 0x8000_0000_0000_0000_u64;
         let mut spigot = self.to_base_be(BASE);
@@ -83,6 +87,58 @@ impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
             write!(f, "{:021o}", digits)?;
         }
         Ok(())
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
+pub enum ParseError {
+    #[error("invalid digit")]
+    InvalidDigit(char),
+
+    #[error(transparent)]
+    BaseConvertError(#[from] BaseConvertError),
+}
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    pub fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError> {
+        let mut err = None;
+        let digits = src.chars().filter_map(|c| {
+            if err.is_some() {
+                None
+            } else {
+                match c {
+                    '0'..='9' => Some(c as u64 - '0' as u64),
+                    'a'..='f' => Some(c as u64 - 'a' as u64 + 10),
+                    'A'..='F' => Some(c as u64 - 'A' as u64 + 10),
+                    _ => {
+                        err = Some(ParseError::InvalidDigit(c));
+                        None
+                    }
+                }
+            }
+        });
+        let value = Self::from_base_be(radix, digits)?;
+        if let Some(err) = err {
+            Err(err)
+        } else {
+            Ok(value)
+        }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> FromStr for Uint<BITS, LIMBS> {
+    type Err = ParseError;
+
+    fn from_str(src: &str) -> Result<Self, Self::Err> {
+        if src.len() >= 2 {
+            match &src[..2] {
+                "0x" | "0X" => return Self::from_str_radix(&src[2..], 16),
+                "0o" | "0O" => return Self::from_str_radix(&src[2..], 8),
+                "0b" | "0B" => return Self::from_str_radix(&src[2..], 2),
+                _ => {}
+            }
+        }
+        Self::from_str_radix(src, 10)
     }
 }
 
