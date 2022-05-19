@@ -8,16 +8,18 @@ pub trait OverflowingAdd: Sized {
 
 impl<const BITS: usize, const LIMBS: usize> OverflowingAdd for Uint<BITS, LIMBS> {
     #[must_use]
-    #[allow(clippy::cast_lossless)]
-    #[allow(clippy::cast_possible_truncation)]
     fn overflowing_add(self, other: Self) -> (Self, bool) {
         let mut result = Self::MIN;
-        let mut carry = 0;
+
+        let mut carry: u128 = 0;
+        #[allow(clippy::cast_possible_truncation)]
         for (res, &lhs, &rhs) in izip!(result.as_limbs_mut(), self.as_limbs(), other.as_limbs()) {
-            let sum = (lhs as u128) + (rhs as u128) + (carry as u128);
-            *res = sum as u64;
-            carry = (sum >> 64) as u64;
+            carry += u128::from(lhs) + u128::from(rhs);
+            *res = carry as u64;
+            carry >>= 64;
         }
+        carry |= u128::from(result.as_limbs()[LIMBS - 1] & !Self::MASK);
+        result.as_limbs_mut()[LIMBS - 1] &= Self::MASK;
         (result, carry != 0)
     }
 }

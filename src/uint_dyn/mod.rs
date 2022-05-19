@@ -13,7 +13,9 @@ mod tests {
 
     #[test]
     fn test_sizes() {
-        dbg!(std::mem::size_of::<Uint<64, 1>>());
+        // UintDyn has one word overhead, but two words free compared to plain Vec.
+        dbg!(std::mem::size_of::<Uint<64, 2>>());
+        dbg!(std::mem::size_of::<Uint<64, 3>>());
         dbg!(std::mem::size_of::<Vec<u64>>());
         dbg!(std::mem::size_of::<UintDyn>());
     }

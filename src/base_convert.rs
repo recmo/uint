@@ -6,6 +6,10 @@ use thiserror::Error;
 pub enum BaseConvertError {
     #[error("The value is too large to fit the target type")]
     Overflow,
+    #[error("The requested number base {0} is less than two")]
+    InvalidBase(u64),
+    #[error("digit {0} is out of range for base {1}")]
+    InvalidDigit(u64, u64),
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -49,7 +53,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Errors
     ///
-    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// * [`BaseConvertError::InvalidBase`] if the base is less than 2.
+    /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
+    /// * [`BaseConvertError::Overflow`] if the number is too large to
     /// fit.
     pub fn from_base_le<I: IntoIterator<Item = u64>>(
         base: u64,
@@ -63,18 +69,28 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Errors
     ///
-    /// Returns [`BaseConvertError::Overflow`] if the number is too large to
+    /// * [`BaseConvertError::InvalidBase`] if the base is less than 2.
+    /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
+    /// * [`BaseConvertError::Overflow`] if the number is too large to
     /// fit.
     pub fn from_base_be<I: IntoIterator<Item = u64>>(
         base: u64,
         digits: I,
     ) -> Result<Self, BaseConvertError> {
+        // OPT: Special handling of bases that divide 2^64, and bases that are
+        // powers of 2.
         // OPT: Same trick as with `to_base_le`, find the largest power of base
         // that fits `u64` and accumulate there first.
-
+        if base < 2 {
+            return Err(BaseConvertError::InvalidBase(base));
+        }
         let mut result = Self::ZERO;
         for digit in digits {
+            if digit >= base {
+                return Err(BaseConvertError::InvalidDigit(digit, base));
+            }
             // Multiply by base.
+            // OPT: keep track of non-zero limbs and mul the minimum.
             let mut carry: u128 = u128::from(digit);
             #[allow(clippy::cast_possible_truncation)]
             for limb in result.limbs.iter_mut() {

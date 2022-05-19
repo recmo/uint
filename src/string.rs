@@ -105,30 +105,55 @@ pub enum ParseError {
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Parse a string into a [`Uint`].
     ///
+    /// For bases 2 to 36, the case-agnostic alphabet 0—1, a—b is used and `_`
+    /// are ignored. For bases 37 to 64, the case-sensitive alphabet a—z, A—Z,
+    /// 0—9, {+-}, {/,_} is used. That is, for base 64 it is compatible with
+    /// all the common base64 variants.
+    ///
     /// # Errors
     ///
     /// * [`ParseError::InvalidDigit`] if the string contains a non-digit.
-    /// * [`ParseError::InvalidRadix`] if the radix is larger than 36.
+    /// * [`ParseError::InvalidRadix`] if the radix is larger than 64.
     /// * [`ParseError::BaseConvertError`] if [`Uint::from_base_be`] fails.
+    // TODO: Do proper unicode. Ignore zero-width spaces, joiners, etc. Recognize
+    // digits from other alphabets.
     pub fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError> {
-        if radix > 36 {
+        if radix > 64 {
             return Err(ParseError::InvalidRadix(radix));
         }
         let mut err = None;
         let digits = src.chars().filter_map(|c| {
             if err.is_some() {
-                None
-            } else {
+                return None;
+            }
+            let digit = if radix <= 36 {
+                // Case insensitive 0—9, a—z.
                 match c {
-                    '0'..='9' => Some(c as u64 - '0' as u64),
-                    'a'..='f' => Some(c as u64 - 'a' as u64 + 10),
-                    'A'..='F' => Some(c as u64 - 'A' as u64 + 10),
+                    '0'..='9' => u64::from(c) - u64::from('0'),
+                    'a'..='z' => u64::from(c) - u64::from('a') + 10,
+                    'A'..='Z' => u64::from(c) - u64::from('A') + 10,
+                    '_' => return None, // Ignored character.
                     _ => {
                         err = Some(ParseError::InvalidDigit(c));
-                        None
+                        return None;
                     }
                 }
-            }
+            } else {
+                // The Base-64 alphabets
+                match c {
+                    'A'..='Z' => u64::from(c) - u64::from('A'),
+                    'a'..='f' => u64::from(c) - u64::from('a') + 26,
+                    '0'..='9' => u64::from(c) - u64::from('0') + 52,
+                    '+' | '-' => 62,
+                    '/' | ',' | '_' => 63,
+                    '=' | '\r' | '\n' => return None, // Ignored characters.
+                    _ => {
+                        err = Some(ParseError::InvalidDigit(c));
+                        return None;
+                    }
+                }
+            };
+            Some(digit)
         });
         let value = Self::from_base_be(radix, digits)?;
         err.map_or(Ok(value), Err)
