@@ -27,8 +27,7 @@ pub enum ToSqlError {
 /// * `MONEY` which is a 64 bit integer with two decimals.
 /// * `BYTEA`, `BIT`, `VARBIT` interpreted as a big-endian binary number.
 /// * `CHAR`, `VARCHAR`, `TEXT` as `0x`-prefixed big-endian hex strings.
-/// * TODO: `JSON`, `JSONB` as a Serde compatible JSON value (requires `serde`
-///   feature).
+/// * `JSON`, `JSONB` as a hex string compatible with the Serde serialization.
 ///
 /// Note: [`Uint`]s are never null, use [`Option<Uint>`] instead.
 ///
@@ -124,6 +123,13 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             // Hex strings
             Type::CHAR | Type::TEXT | Type::VARCHAR => {
                 out.put_slice(format!("{:#x}", self).as_bytes());
+            }
+            Type::JSON | Type::JSONB => {
+                if *ty == Type::JSONB {
+                    // Version 1 of JSONB is just plain text JSON.
+                    out.put_u8(1);
+                }
+                out.put_slice(format!("\"{:#x}\"", self).as_bytes());
             }
 
             // Binary coded decimal types
@@ -266,16 +272,17 @@ mod tests {
         // dbg!(hex::encode(&serialized));
 
         // Fetch ground truth value from Postgres
-        let expr = match ty {
-            &Type::BIT => format!(
+        let expr = match *ty {
+            Type::BIT => format!(
                 "B'{value:b}'::bit({bits})",
                 value = value,
                 bits = if BITS == 0 { 1 } else { BITS },
             ),
-            &Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
-            &Type::BYTEA => format!("'\\x{:x}'::bytea", value),
-            &Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
-            &Type::TEXT | &Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
+            Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
+            Type::BYTEA => format!("'\\x{:x}'::bytea", value),
+            Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
+            Type::TEXT | Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
+            Type::JSON | Type::JSONB => format!("'\"{:#x}\"'::{}", value, ty.name()),
             _ => format!("{}::{}", value, ty.name()),
         };
         // dbg!(&expr);
@@ -356,7 +363,7 @@ mod tests {
                 test_to(&client, value, &Type::FLOAT8);
 
                 // Types that work for any size
-                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR] {
+                for ty in &[Type::NUMERIC, Type::BIT, Type::VARBIT, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB] {
                     test_to(&client, value, ty);
                 }
 
