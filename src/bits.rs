@@ -83,6 +83,69 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (bits, exponent)
         }
     }
+
+    /// Check left shift by `rhs` bits.
+    ///
+    /// Returns $\mathtt{value} ⋅ 2^{\mathtt{rhs}}$ or [`None`] if the result
+    /// would be too large. That is, it returns `None` if the bits shifted out
+    /// would be non-zero.
+    ///
+    /// Note: This differs from [`u64::checked_shl`] which returns `None` if the
+    /// shift is larger than BITS (which is IMHO not very useful).
+    #[must_use]
+    pub fn checked_shl(mut self, rhs: usize) -> Option<Self> {
+        let (limbs, bits) = (rhs / 64, rhs % 64);
+        if limbs >= LIMBS {
+            if self == Self::ZERO {
+                return Some(Self::ZERO);
+            }
+            return None;
+        }
+        if bits == 0 {
+            // Check for overflow
+            for i in (LIMBS - limbs)..LIMBS {
+                if self.limbs[i] != 0 {
+                    return None;
+                }
+            }
+            if self.limbs[LIMBS - limbs - 1] > Self::MASK {
+                return None;
+            }
+
+            // Shift
+            for i in (limbs..LIMBS).rev() {
+                self.limbs[i] = self.limbs[i - limbs];
+            }
+            for i in 0..limbs {
+                self.limbs[i] = 0;
+            }
+        }
+
+        // Check for overflow
+        for i in (LIMBS - limbs)..LIMBS {
+            if self.limbs[i] != 0 {
+                return None;
+            }
+        }
+        if self.limbs[LIMBS - limbs - 1] >> (64 - bits) != 0 {
+            return None;
+        }
+        if self.limbs[LIMBS - limbs - 1] << bits > Self::MASK {
+            return None;
+        }
+
+        // Shift
+        for i in (limbs + 1..LIMBS).rev() {
+            self.limbs[i] = self.limbs[i - limbs] << bits;
+            self.limbs[i] |= self.limbs[i - limbs - 1] >> (64 - bits);
+        }
+        self.limbs[limbs] = self.limbs[0] << bits;
+        for i in 0..limbs {
+            self.limbs[i] = 0;
+        }
+
+        Some(self)
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> ShrAssign<usize> for Uint<BITS, LIMBS> {
@@ -160,5 +223,13 @@ mod tests {
         assert_eq!(U128::from(3).checked_log2(), Some(1));
         assert_eq!(U128::from(127).checked_log2(), Some(6));
         assert_eq!(U128::from(128).checked_log2(), Some(7));
+    }
+
+    #[test]
+    fn test_checked_shl() {
+        assert_eq!(
+            Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).checked_shl(1),
+            Some(Uint::<65, 2>::from_limbs([0x0020_0000_0000_0000, 0]))
+        );
     }
 }

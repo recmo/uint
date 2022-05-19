@@ -1,9 +1,9 @@
 //! Support for the [`postgres`](https://crates.io/crates/postgres) crate.
 #![cfg(feature = "postgres")]
 
-use crate::{utils::trim_end_vec, Uint};
+use crate::{from::ToUintError, utils::trim_end_vec, Uint};
 use bytes::{BufMut, BytesMut};
-use postgres_types::{to_sql_checked, IsNull, ToSql, Type, WrongType};
+use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
 use std::error::Error;
 use thiserror::Error;
 
@@ -165,6 +165,40 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
     to_sql_checked!();
 }
 
+#[derive(Clone, PartialEq, Eq, Debug, Error)]
+pub enum FromSqlError {
+    #[error("Unexpected data for type {0}")]
+    ParseError(Type),
+}
+
+/// Convert from Postgres types.
+///
+/// See [`ToSql`][Self::to_sql] for details.
+impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS> {
+    fn accepts(ty: &Type) -> bool {
+        <Self as ToSql>::accepts(ty)
+    }
+
+    fn from_sql(ty: &Type, raw: &'a [u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
+        Ok(match *ty {
+            Type::BOOL => match raw {
+                [0] => Self::ZERO,
+                [1] => Self::try_from(1)?,
+                _ => return Err(Box::new(FromSqlError::ParseError(ty.clone()))),
+            },
+            Type::INT2 => i16::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::INT4 => i32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::OID => u32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::INT8 => i64::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::FLOAT4 => f32::from_be_bytes(raw.try_into()?).try_into()?,
+            Type::FLOAT8 => f64::from_be_bytes(raw.try_into()?).try_into()?,
+
+            // Unsupported types
+            _ => return Err(Box::new(WrongType::new::<Self>(ty.clone()))),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -172,7 +206,7 @@ mod tests {
     use approx::assert_ulps_eq;
     use hex_literal::hex;
     use postgres::{Client, NoTls};
-    use proptest::{proptest, test_runner::Config as ProptestConfig};
+    use proptest::{prop_assume, proptest, test_runner::Config as ProptestConfig};
     use std::{io::Read, sync::Mutex};
 
     #[test]
@@ -208,6 +242,37 @@ mod tests {
         assert_eq!(bytes(Type::CHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
         assert_eq!(bytes(Type::TEXT), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
         assert_eq!(bytes(Type::VARCHAR), hex!("307863383565663764373936393166653739353733623161373036346331396331613938313965626462643166616161623161386563393233343434333861616634"));
+    }
+
+    #[test]
+    fn test_roundtrip() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                let mut serialized = BytesMut::new();
+                for ty in &[Type::BOOL, Type::FLOAT4, Type::FLOAT8] {
+                    serialized.clear();
+                    if value.to_sql(ty, &mut serialized).is_ok() {
+                        println!("testing {:?} {}", value, ty);
+
+                        let deserialized = U::from_sql(ty, &serialized).unwrap();
+
+                        if *ty == Type::FLOAT4 {
+                            let value:f32 = value.into();
+                            let deserialized: f32 = deserialized.into();
+                            assert_ulps_eq!(value, deserialized, max_ulps = 4);
+                        } else if *ty == Type::FLOAT8 {
+                            let value:f64 = value.into();
+                            let deserialized: f64 = deserialized.into();
+                            assert_ulps_eq!(value, deserialized, max_ulps = 4);
+                       }else {
+                            assert_eq!(deserialized, value);
+                        }
+                    }
+                }
+            });
+        });
     }
 
     // Query the binary encoding of an SQL expression
