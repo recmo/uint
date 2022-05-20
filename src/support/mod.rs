@@ -9,7 +9,6 @@ mod rlp;
 mod serde;
 
 // TODO:
-// * https://docs.rs/sqlx/latest/sqlx/trait.Type.html
 // * https://docs.rs/tracing/latest/tracing/trait.Value.html
 // * https://crates.io/crates/der
 // * https://crates.io/crates/zeroize
@@ -23,3 +22,7 @@ mod serde;
 // * https://crates.io/crates/rug
 // * https://crates.io/crates/bigdecimal
 // * https://crates.io/crates/rust_decimal
+//
+// More databases:
+// * https://crates.io/crates/diesel
+// * https://crates.io/crates/sqlx

@@ -169,5 +169,5 @@ Maybe:
 [![GitHub contributors](https://img.shields.io/github/contributors/recmo/uint)](https://github.com/recmo/uint/graphs/contributors)
 [![GitHub issues](https://img.shields.io/github/issues/recmo/uint)](https://github.com/recmo/uint/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/recmo/uint?label=PRs)](https://github.com/recmo/uint/pulls)
-[![GitHub Repo stars](https://img.shields.io/github/stars/recmo/uint)](https://github.com/recmo/uint/stargazers)
+[![GitHub Repo stars](https://img.shields.io/github/stars/recmo/uint)](https://star-history.com/#recmo/uint&Date)
 [![crates.io](https://img.shields.io/crates/d/ruint)](https://crates.io/crates/ruint)
