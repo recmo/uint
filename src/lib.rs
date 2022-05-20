@@ -38,6 +38,9 @@ pub use self::{
 #[doc(inline)]
 pub use ruint_macro::uint;
 
+// TODO: Have a `struct OverflowError` and use `Result<Self, OverflowError>`
+// instead of `Option<Self>`.
+
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
     //! Extra features that are nightly only.

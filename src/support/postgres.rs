@@ -10,6 +10,7 @@ use std::{
     str::{from_utf8, FromStr},
 };
 use thiserror::Error;
+use crate::utils::rem_up;
 
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;
 
@@ -106,7 +107,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
                 } else {
                     // Bits are output in little-endian order, but padded at the
                     // least significant end.
-                    let padding = if (BITS % 8) == 0 { 0 } else { 8 - BITS % 8 };
+                    let padding = 8 - rem_up(BITS, 8);
                     out.put_i32(Self::BITS.try_into()?);
                     let bytes = self.as_le_bytes();
                     let mut bytes = bytes.iter().rev();
@@ -203,7 +204,26 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
 
             // Binary strings
             Type::BYTEA => Self::try_from_be_slice(raw).ok_or(FromSqlError::Overflow)?,
-            // TODO: BITS, VARBIT
+            Type::BIT | Type::VARBIT => {
+                // Parse header
+                if raw.len() < 4 {
+                    return Err(Box::new(FromSqlError::ParseError(ty.clone())));
+                }
+                let len: usize = i32::from_be_bytes(raw[..4].try_into()?).try_into()?;
+                let mut raw = &raw[4..];
+
+                // Shift padding to the other end
+                let padding = 8 - rem_up(len, 8);
+                let mut raw = raw.to_owned();
+                if padding > 0 {
+                    for i in 0..len - 1 {
+                        raw[i] = raw[i] >> padding | raw[i+1] << (8 - padding);
+                    }
+                    raw[len-1] >>= padding;
+                }
+                // Construct from bits
+                Self::try_from_le_slice(&raw).ok_or(FromSqlError::Overflow)?
+            }
 
             // Hex strings
             Type::CHAR | Type::TEXT | Type::VARCHAR => Self::from_str(from_utf8(raw)?)?,
@@ -350,10 +370,11 @@ mod tests {
                         assert_ulps_eq!(f64::from(value), f64::from(deserialized), max_ulps = 4);
                     }
                 }
-                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC] {
+                for ty in &[Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC, Type::BIT, Type::VARBIT] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
-                        // println!("testing {:?} {}", value, ty);
+                        println!("testing {:?} {}", value, ty);
+                        dbg!(hex::encode(&serialized));
                         let deserialized = U::from_sql(ty, &serialized).unwrap();
                         assert_eq!(deserialized, value);
                     }
