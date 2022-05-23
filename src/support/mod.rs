@@ -15,6 +15,7 @@ mod serde;
 // * https://crates.io/crates/ff
 // * https://crates.io/crates/ff_ce
 // * https://crates.io/crates/ark-ff
+// * https://crates.io/crates/bitvec
 //
 // Big int types:
 // * https://crates.io/crates/num-bigint

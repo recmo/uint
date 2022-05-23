@@ -182,13 +182,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn checked_shl(mut self, rhs: usize) -> Option<Self> {
+    pub fn checked_shl(self, rhs: usize) -> Option<Self> {
         match self.overflowing_shl(rhs) {
             (value, false) => Some(value),
             _ => None,
         }
     }
 
+    #[allow(clippy::doc_markdown)]
     /// Left shift by `rhs` bits with overflow detection.
     ///
     /// Returns $\mod{\mathtt{value} ⋅ 2^{\mathtt{rhs}}}_{2^{\mathtt{BITS}}}$.
@@ -249,6 +250,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         (self, overflow)
     }
 
+    #[allow(clippy::doc_markdown)]
     /// Left shift by `rhs` bits.
     ///
     /// Returns $\mod{\mathtt{value} ⋅ 2^{\mathtt{rhs}}}_{2^{\mathtt{BITS}}}$.
@@ -258,7 +260,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_shl(mut self, rhs: usize) -> Self {
+    pub fn wrapping_shl(self, rhs: usize) -> Self {
         self.overflowing_shl(rhs).0
     }
 
@@ -276,7 +278,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn checked_shr(mut self, rhs: usize) -> Option<Self> {
+    pub fn checked_shr(self, rhs: usize) -> Option<Self> {
         match self.overflowing_shr(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -349,7 +351,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_shr(mut self, rhs: usize) -> Self {
+    pub fn wrapping_shr(self, rhs: usize) -> Self {
         self.overflowing_shr(rhs).0
     }
 
@@ -490,7 +492,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<usize> for Uint<BITS, LIMBS> {
 
     #[allow(clippy::inline_always)]
     #[inline(always)]
-    fn shl(mut self, rhs: usize) -> Self {
+    fn shl(self, rhs: usize) -> Self {
         self.wrapping_shl(rhs)
     }
 }
@@ -510,7 +512,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<&usize> for Uint<BITS, LIMBS> {
 
     #[allow(clippy::inline_always)]
     #[inline(always)]
-    fn shl(mut self, rhs: &usize) -> Self {
+    fn shl(self, rhs: &usize) -> Self {
         self.wrapping_shl(*rhs)
     }
 }
@@ -652,6 +654,8 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cast_lossless)]
+    #[allow(clippy::cast_possible_truncation)]
     fn test_small() {
         const_for!(BITS in [1, 2, 8, 16, 32, 63, 64] {
             type U = Uint::<BITS, 1>;

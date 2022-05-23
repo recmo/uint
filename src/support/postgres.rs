@@ -212,7 +212,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                     return Err(Box::new(FromSqlError::ParseError(ty.clone())));
                 }
                 let len: usize = i32::from_be_bytes(raw[..4].try_into()?).try_into()?;
-                let mut raw = &raw[4..];
+                let raw = &raw[4..];
 
                 // Shift padding to the other end
                 let padding = 8 - rem_up(len, 8);
@@ -221,7 +221,6 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                     for i in (1..raw.len()).rev() {
                         raw[i] = raw[i] >> padding | raw[i - 1] << (8 - padding);
                     }
-                    let n = raw.len();
                     raw[0] >>= padding;
                 }
                 // Construct from bits

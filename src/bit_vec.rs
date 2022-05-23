@@ -1,7 +1,7 @@
 use crate::Uint;
 use core::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, IndexMut, Not, Shl,
-    ShlAssign, Shr, ShrAssign,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
+    Shr, ShrAssign,
 };
 use std::borrow::Cow;
 
@@ -14,9 +14,6 @@ pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
     pub const LIMBS: usize = Uint::<BITS, LIMBS>::LIMBS;
-
-    /// Bit mask for the last limb.
-    const MASK: u64 = Uint::<BITS, LIMBS>::MASK;
 
     /// The size of this integer type in bits.
     pub const BITS: usize = Uint::<BITS, LIMBS>::BITS;
@@ -236,7 +233,7 @@ macro_rules! impl_bit_op {
             #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: &Bits<BITS, LIMBS>) -> Self::Output {
-                self.clone().$fn(rhs)
+                self.0.clone().$fn(rhs.0).into()
             }
         }
     };
@@ -269,7 +266,7 @@ macro_rules! impl_shift {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
-            fn $fn(mut self, rhs: usize) -> Self {
+            fn $fn(self, rhs: usize) -> Self {
                 self.0.$fn(rhs).into()
             }
         }
@@ -289,7 +286,7 @@ macro_rules! impl_shift {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
-            fn $fn(mut self, rhs: &usize) -> Self {
+            fn $fn(self, rhs: &usize) -> Self {
                 self.0.$fn(rhs).into()
             }
         }
