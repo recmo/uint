@@ -99,12 +99,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS == 0 {
             return (Self::ZERO, false);
         }
-        let mut carry = 0_u128;
+        let mut carry = 0_i128;
         #[allow(clippy::cast_possible_truncation)] // Intentional
+        #[allow(clippy::cast_sign_loss)] // Intentional
         for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
-            carry = carry.wrapping_add(u128::from(*lhs).wrapping_sub(u128::from(rhs)));
+            carry += i128::from(*lhs) - i128::from(rhs);
             *lhs = carry as u64;
-            carry >>= 64;
+            carry >>= 64; // Sign extending shift
         }
         let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
         self.limbs[LIMBS - 1] &= Self::MASK;
