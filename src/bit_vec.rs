@@ -1,5 +1,7 @@
 use crate::Uint;
-use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
+use core::ops::{
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, IndexMut, Not,
+};
 use std::borrow::Cow;
 
 /// Bit vector
@@ -104,11 +106,7 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     }
     forward! {
         fn as_le_bytes(&self) -> Cow<'_, [u8]>;
-        fn as_le_bytes_trimmed(&self) -> Cow<'_, [u8]>;
         fn as_limbs(&self) -> &[u64; LIMBS];
-        fn bit_len(&self) -> usize;
-        fn byte_len(&self) -> usize;
-        fn checked_log2(&self) -> Option<usize>;
         fn leading_zeros(&self) -> usize;
         fn leading_ones(&self) -> usize;
         fn trailing_zeros(&self) -> usize;
@@ -132,3 +130,17 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         fn rotate_right(self, usize) -> Self;
     }
 }
+
+impl<const BITS: usize, const LIMBS: usize> Index<usize> for Bits<BITS, LIMBS> {
+    type Output = bool;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if self.0.bit(index) {
+            &true
+        } else {
+            &false
+        }
+    }
+}
+
+// TODO: IndexMut

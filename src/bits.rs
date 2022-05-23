@@ -6,6 +6,26 @@ use core::ops::{
 };
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    pub fn bit(&self, index: usize) -> bool {
+        if index >= BITS {
+            panic!("index out of bounds");
+        }
+        let (limbs, bits) = (index / 64, index % 64);
+        self.limbs[limbs] & (1 << bits) != 0
+    }
+
+    pub fn set_bit(&mut self, index: usize, value: bool) {
+        if index >= BITS {
+            panic!("index out of bounds");
+        }
+        let (limbs, bits) = (index / 64, index % 64);
+        if value {
+            self.limbs[limbs] |= 1 << bits;
+        } else {
+            self.limbs[limbs] &= !(1 << bits);
+        }
+    }
+
     /// Reverses the order of bits in the integer. The least significant bit
     /// becomes the most significant bit, second least-significant bit becomes
     /// second most-significant bit, etc.
