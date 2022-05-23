@@ -59,13 +59,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// then the wrapped value is returned.
     #[must_use]
     pub fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (Self::ZERO, false);
+        }
         let mut carry = 0_u128;
         for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
             carry += u128::from(*lhs) + u128::from(rhs);
             *lhs = carry as u64;
             carry >>= 64;
         }
-        (self, carry > 0)
+        let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
+        self.limbs[LIMBS - 1] &= Self::MASK;
+        (self, overflow)
     }
 
     /// Calculates $\mod{-\mathtt{self}}_{2^{BITS}}$.
@@ -88,13 +93,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// occurred then the wrapped value is returned.
     #[must_use]
     pub fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (Self::ZERO, false);
+        }
         let mut carry = 0_u128;
         for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
             carry = carry.wrapping_add(u128::from(*lhs).wrapping_sub(u128::from(rhs)));
             *lhs = carry as u64;
             carry >>= 64;
         }
-        (self, carry > 0)
+        let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
+        self.limbs[LIMBS - 1] &= Self::MASK;
+        (self, overflow)
     }
 
     /// Computes `self + rhs`, saturating at the numeric bounds instead of
@@ -274,19 +284,45 @@ pub mod bench {
     use criterion::{black_box, BatchSize, Criterion};
 
     pub fn group(criterion: &mut Criterion) {
-        const_for!(BITS in [64, 256, 384, 512, 4096] {
+        const_for!(BITS in BENCH {
             const LIMBS: usize = nlimbs(BITS);
+            bench_neg::<BITS, LIMBS>(criterion);
             bench_add::<BITS, LIMBS>(criterion);
+            bench_sub::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_neg<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = Uint::<BITS, LIMBS>::arbitrary();
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("neg/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a)| black_box(-black_box(a)),
+                BatchSize::SmallInput,
+            );
         });
     }
 
     fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("add_{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("add/{}", BITS), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b)| black_box(black_box(a) + black_box(b)),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_sub<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("sub/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, b)| black_box(black_box(a) - black_box(b)),
                 BatchSize::SmallInput,
             );
         });
