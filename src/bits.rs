@@ -1,7 +1,8 @@
 use crate::Uint;
 
 use core::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl, ShlAssign, Shr, ShrAssign,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
+    ShrAssign,
 };
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -350,6 +351,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         let rhs = rhs % BITS;
         self.rotate_left(BITS - rhs)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    fn not(mut self) -> Self::Output {
+        for limb in self.as_limbs_mut().iter_mut() {
+            *limb = u64::not(*limb);
+        }
+        self
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Not for &Uint<BITS, LIMBS> {
+    type Output = Uint<BITS, LIMBS>;
+
+    fn not(self) -> Self::Output {
+        (*self).not()
     }
 }
 

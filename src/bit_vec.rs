@@ -1,4 +1,5 @@
 use crate::Uint;
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 use std::borrow::Cow;
 
 /// Bit vector
