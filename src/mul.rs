@@ -125,6 +125,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> {
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let mut result = Self::ZERO;
+        for item in iter {
+            result *= item;
+        }
+        result
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS, LIMBS> {
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let mut result = Self::ZERO;
+        for item in iter {
+            result *= item;
+        }
+        result
+    }
+}
+
 impl_bin_op!(Mul, mul, MulAssign, mul_assign, wrapping_mul);
 
 #[cfg(test)]
@@ -172,6 +198,7 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U)| {
+                assert_eq!(value * U::from(0), U::ZERO);
                 assert_eq!(value * U::from(1), value);
             });
         });
@@ -185,6 +212,7 @@ mod tests {
             proptest!(|(mut a: U)| {
                 a |= U::from(1); // Make sure a is invertible
                 assert_eq!(a * a.ring_inverse().unwrap(), U::from(1));
+                assert_eq!(a.ring_inverse().unwrap().ring_inverse().unwrap(), a);
             });
         });
     }
