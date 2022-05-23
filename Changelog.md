@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2022-05-23
+
 ### Added
 
-- `FromSql`, `from_str`, `from_str_radix`, `from_base_be`, `from_base_le`.
-- All the binary operations.
+- All the binary operations (not, and, or, xor, shifts, rotate, etc)
 - `Bits`, a newtype wrapped `Uint` restricted to non-numeric operations.
+- Postgres `FromSql` support and JSON column support.
+- `from_base_le` and `from_base_be` base conversion.
+- `from_str_radix` string base conversion up to base64.
+- `FromStr` trait with decimal, hex, octal and binary support.
+
+### Changed
+
+- `reverse_bits` is now by value instead of `&mut self`.
 
 ## [0.2.1] — 2022-05-18
 
@@ -66,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/recmo/uint/releases/tag/v0.3.0
 [0.2.1]: https://github.com/recmo/uint/releases/tag/v0.2.1
 [0.2.0]: https://github.com/recmo/uint/releases/tag/v0.2.0
 [0.1.0]: https://github.com/recmo/uint/releases/tag/v0.1.0

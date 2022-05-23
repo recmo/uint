@@ -2,6 +2,6 @@
 # See <https://github.com/crate-ci/cargo-release/blob/master/docs/reference.md>
 # Release using `cargo release --workspace`
 allow-branch = [ "main" ]
-shared-version = true
+shared-version = false
 consolidate-commits = true
 consolidate-pushes = true
