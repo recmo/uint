@@ -1,6 +1,7 @@
 use crate::Uint;
 use core::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, IndexMut, Not,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, IndexMut, Not, Shl,
+    ShlAssign, Shr, ShrAssign,
 };
 use std::borrow::Cow;
 
@@ -46,6 +47,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(self) -> $res {
                 Uint::$fnname(self.0).into()
@@ -55,6 +58,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(&self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(&self) -> $res {
                 Uint::$fnname(&self.0).into()
@@ -64,6 +69,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(&mut self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(&mut self) -> $res {
                 Uint::$fnname(&mut self.0).into()
@@ -73,6 +80,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(self, $arg:ty) -> Option<Self>;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(self, a: $arg) -> Option<Self> {
                 Uint::$fnname(self.0, a).map(Bits::from)
@@ -82,6 +91,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(self, $arg:ty) -> (Self, bool);)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(self, a: $arg) -> (Self, bool) {
                 let (value, flag) = Uint::$fnname(self.0, a);
@@ -92,6 +103,8 @@ macro_rules! forward {
     ($(fn $fnname:ident(self, $arg:ty) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
             #[must_use]
             pub fn $fnname(self, a: $arg) -> $res {
                 Uint::$fnname(self.0, a).into()
@@ -143,4 +156,155 @@ impl<const BITS: usize, const LIMBS: usize> Index<usize> for Bits<BITS, LIMBS> {
     }
 }
 
-// TODO: IndexMut
+impl<const BITS: usize, const LIMBS: usize> Not for Bits<BITS, LIMBS> {
+    type Output = Self;
+
+    fn not(self) -> Self {
+        self.0.not().into()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Not for &Bits<BITS, LIMBS> {
+    type Output = Bits<BITS, LIMBS>;
+
+    fn not(self) -> Bits<BITS, LIMBS> {
+        self.0.not().into()
+    }
+}
+
+macro_rules! impl_bit_op {
+    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<Bits<BITS, LIMBS>>
+            for Bits<BITS, LIMBS>
+        {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: Bits<BITS, LIMBS>) {
+                self.0.$fn_assign(&rhs.0);
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Bits<BITS, LIMBS>>
+            for Bits<BITS, LIMBS>
+        {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: &Bits<BITS, LIMBS>) {
+                self.0.$fn_assign(rhs.0);
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<Bits<BITS, LIMBS>>
+            for Bits<BITS, LIMBS>
+        {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(mut self, rhs: Bits<BITS, LIMBS>) -> Self::Output {
+                self.0.$fn_assign(rhs.0);
+                self
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<&Bits<BITS, LIMBS>>
+            for Bits<BITS, LIMBS>
+        {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(mut self, rhs: &Bits<BITS, LIMBS>) -> Self::Output {
+                self.0.$fn_assign(rhs.0);
+                self
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<Bits<BITS, LIMBS>>
+            for &Bits<BITS, LIMBS>
+        {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, mut rhs: Bits<BITS, LIMBS>) -> Self::Output {
+                rhs.0.$fn_assign(self.0);
+                rhs
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<&Bits<BITS, LIMBS>>
+            for &Bits<BITS, LIMBS>
+        {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: &Bits<BITS, LIMBS>) -> Self::Output {
+                self.clone().$fn(rhs)
+            }
+        }
+    };
+}
+
+impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign);
+impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
+impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
+
+macro_rules! impl_shift {
+    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<usize> for Bits<BITS, LIMBS> {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: usize) {
+                self.0.$fn_assign(rhs);
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&usize> for Bits<BITS, LIMBS> {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: &usize) {
+                self.0.$fn_assign(rhs);
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> $trait<usize> for Bits<BITS, LIMBS> {
+            type Output = Self;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(mut self, rhs: usize) -> Self {
+                self.0.$fn(rhs).into()
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> $trait<usize> for &Bits<BITS, LIMBS> {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: usize) -> Self::Output {
+                self.0.$fn(rhs).into()
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> $trait<&usize> for Bits<BITS, LIMBS> {
+            type Output = Self;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(mut self, rhs: &usize) -> Self {
+                self.0.$fn(rhs).into()
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> $trait<&usize> for &Bits<BITS, LIMBS> {
+            type Output = Bits<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: &usize) -> Self::Output {
+                self.0.$fn(rhs).into()
+            }
+        }
+    };
+}
+
+impl_shift!(Shl, shl, ShlAssign, shl_assign);
+impl_shift!(Shr, shr, ShrAssign, shr_assign);
