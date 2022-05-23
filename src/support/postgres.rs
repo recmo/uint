@@ -212,7 +212,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                     return Err(Box::new(FromSqlError::ParseError(ty.clone())));
                 }
                 let len: usize = i32::from_be_bytes(raw[..4].try_into()?).try_into()?;
-                let mut raw = &raw[4..];
+                let raw = &raw[4..];
 
                 // Shift padding to the other end
                 let padding = 8 - rem_up(len, 8);
@@ -221,7 +221,6 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                     for i in (1..raw.len()).rev() {
                         raw[i] = raw[i] >> padding | raw[i - 1] << (8 - padding);
                     }
-                    let n = raw.len();
                     raw[0] >>= padding;
                 }
                 // Construct from bits
@@ -376,8 +375,7 @@ mod tests {
                 for ty in &[/*Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC,*/ Type::BIT, Type::VARBIT] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
-                        println!("testing {:?} {}", value, ty);
-                        dbg!(hex::encode(&serialized));
+                        // println!("testing {:?} {}", value, ty);
                         let deserialized = U::from_sql(ty, &serialized).unwrap();
                         assert_eq!(deserialized, value);
                     }

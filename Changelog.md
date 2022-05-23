@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `FromSql`, `from_str`, `from_str_radix`, `from_base_be`, `from_base_le`.
-- `checked_shl`
+- All the binary operations.
+- `Bits`, a newtype wrapped `Uint` restricted to non-numeric operations.
 
 ## [0.2.1] — 2022-05-18
 

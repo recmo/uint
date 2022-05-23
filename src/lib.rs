@@ -17,6 +17,7 @@
 mod add;
 pub mod aliases;
 mod base_convert;
+mod bit_vec;
 mod bits;
 mod bytes;
 mod const_for;
@@ -29,6 +30,9 @@ mod utils;
 #[cfg(feature = "dyn")]
 #[doc(inline)]
 pub use uint_dyn::UintDyn;
+
+#[doc(inline)]
+pub use bit_vec::Bits;
 
 #[doc(inline)]
 pub use self::{
@@ -62,8 +66,12 @@ pub mod nightly {
     ///   issue for `generic_const_exprs`.
     /// * [Rust blog](https://blog.rust-lang.org/inside-rust/2021/09/06/Splitting-const-generics.html)
     ///   2021-09-06 Splitting const generics.
-
     pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
+
+    /// Alias for `Bits` specified only by bit size.
+    ///
+    /// See [`Uint`] for more information.
+    pub type Bits<const BITS: usize> = crate::Bits<BITS, { crate::nlimbs(BITS) }>;
 }
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
