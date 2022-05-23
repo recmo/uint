@@ -20,6 +20,7 @@ mod base_convert;
 mod bit_vec;
 mod bits;
 mod bytes;
+mod cmp;
 mod const_for;
 mod from;
 mod string;
@@ -35,9 +36,7 @@ pub use uint_dyn::UintDyn;
 pub use bit_vec::Bits;
 
 #[doc(inline)]
-pub use self::{
-    add::OverflowingAdd, base_convert::BaseConvertError, bytes::nbytes, string::ParseError,
-};
+pub use self::{base_convert::BaseConvertError, bytes::nbytes, string::ParseError};
 
 #[doc(inline)]
 pub use ruint_macro::uint;
