@@ -3,7 +3,6 @@ use core::{
     iter::Sum,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
-use itertools::izip;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the absolute difference between `self` and `other`.
@@ -60,7 +59,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// then the wrapped value is returned.
     #[must_use]
     pub fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
-        todo!()
+        let mut carry = 0_u128;
+        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
+            carry += u128::from(*lhs) + u128::from(rhs);
+            *lhs = carry as u64;
+            carry >>= 64;
+        }
+        (self, carry > 0)
     }
 
     /// Calculates $\mod{-\mathtt{self}}_{2^{BITS}}$.
@@ -83,7 +88,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// occurred then the wrapped value is returned.
     #[must_use]
     pub fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
-        todo!()
+        let mut carry = 0_u128;
+        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
+            carry = carry.wrapping_add(u128::from(*lhs).wrapping_sub(u128::from(rhs)));
+            *lhs = carry as u64;
+            carry >>= 64;
+        }
+        (self, carry > 0)
     }
 
     /// Computes `self + rhs`, saturating at the numeric bounds instead of
@@ -272,10 +283,10 @@ pub mod bench {
     fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("uint_add_{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("add_{}", BITS), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
-                |(a, b)| black_box(black_box(a).overflowing_add(black_box(b))),
+                |(a, b)| black_box(black_box(a) + black_box(b)),
                 BatchSize::SmallInput,
             );
         });
