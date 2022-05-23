@@ -283,12 +283,22 @@ pub mod tests {
     use proptest::proptest;
 
     #[test]
+    fn test_neg_one() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            assert_eq!(-U::from(1), !U::ZERO);
+        });
+    }
+
+    #[test]
     fn test_commutative() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(a: U, b: U)| {
                 assert_eq!(a + b, b + a);
+                assert_eq!(a - b, -(b - a));
             });
         });
     }
@@ -305,6 +315,18 @@ pub mod tests {
     }
 
     #[test]
+    fn test_identity() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                assert_eq!(value + U::ZERO, value);
+                assert_eq!(value - U::ZERO, value);
+            });
+        });
+    }
+
+    #[test]
     fn test_inverse() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
@@ -313,18 +335,6 @@ pub mod tests {
                 assert_eq!(a + (-a), U::ZERO);
                 assert_eq!(a - a, U::ZERO);
                 assert_eq!(-(-a), a);
-            });
-        });
-    }
-
-    #[test]
-    fn test_identity() {
-        const_for!(BITS in SIZES {
-            const LIMBS: usize = nlimbs(BITS);
-            type U = Uint<BITS, LIMBS>;
-            proptest!(|(value: U)| {
-                assert_eq!(value + U::ZERO, value);
-                assert_eq!(value - U::ZERO, value);
             });
         });
     }
