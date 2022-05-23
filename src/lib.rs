@@ -23,6 +23,7 @@ mod bytes;
 mod cmp;
 mod const_for;
 mod from;
+mod mul;
 mod string;
 mod support;
 mod uint_dyn;
@@ -236,5 +237,6 @@ pub mod bench {
 
     pub fn group(criterion: &mut Criterion) {
         add::bench::group(criterion);
+        mul::bench::group(criterion);
     }
 }
