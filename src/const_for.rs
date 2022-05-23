@@ -53,7 +53,7 @@ macro_rules! const_for {
         const_for!($C in NON_ZERO $x);
     };
     ($C:ident in NON_ZERO $x:block) => {
-        const_for!($C in [1, 2, 63, 64, 65, 127,128,129,256,384,512,4096] $x);
+        const_for!($C in [1, 2, 63, 64, 65, 127, 128, 129, 256, 384, 512, 4096] $x);
     };
     ($C:ident in BENCH $x:block) => {
         const_for!($C in [0, 64, 160, 256, 384, 512, 4096] $x);
