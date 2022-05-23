@@ -276,6 +276,60 @@ macro_rules! impl_bin_op {
 impl_bin_op!(Add, add, AddAssign, add_assign, wrapping_add);
 impl_bin_op!(Sub, sub, SubAssign, sub_assign, wrapping_sub);
 
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use proptest::proptest;
+
+    #[test]
+    fn test_commutative() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U)| {
+                assert_eq!(a + b, b + a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_associative() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U, c: U)| {
+                assert_eq!(a + (b + c), (a + b) + c);
+            });
+        });
+    }
+
+    #[test]
+    fn test_inverse() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U)| {
+                assert_eq!(a + (-a), U::ZERO);
+                assert_eq!(a - a, U::ZERO);
+                assert_eq!(-(-a), a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_identity() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                assert_eq!(value + U::ZERO, value);
+                assert_eq!(value - U::ZERO, value);
+            });
+        });
+    }
+}
+
 #[cfg(feature = "bench")]
 pub mod bench {
     use super::*;
