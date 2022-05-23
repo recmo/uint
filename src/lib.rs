@@ -66,8 +66,12 @@ pub mod nightly {
     ///   issue for `generic_const_exprs`.
     /// * [Rust blog](https://blog.rust-lang.org/inside-rust/2021/09/06/Splitting-const-generics.html)
     ///   2021-09-06 Splitting const generics.
-
     pub type Uint<const BITS: usize> = crate::Uint<BITS, { crate::nlimbs(BITS) }>;
+
+    /// Alias for `Bits` specified only by bit size.
+    ///
+    /// See [`Uint`] for more information.
+    pub type Bits<const BITS: usize> = crate::Bits<BITS, { crate::nlimbs(BITS) }>;
 }
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
