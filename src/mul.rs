@@ -1,6 +1,7 @@
 use crate::{impl_bin_op, Uint};
 use core::{
     iter::Product,
+    num::Wrapping,
     ops::{Mul, MulAssign},
 };
 
@@ -70,7 +71,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS == 0 || self.limbs[0] & 1 == 0 {
             return None;
         }
-        todo!()
+
+        // Compute inverse of first limb
+        let mut result = Self::ZERO;
+        result.limbs[0] = {
+            const W2: Wrapping<u64> = Wrapping(2);
+            const W3: Wrapping<u64> = Wrapping(3);
+            let n = Wrapping(self.limbs[0]);
+            let mut inv = n * W3 ^ W2; // Correct on 4 bits.
+            inv *= W2 - n * inv; // Correct on 8 bits.
+            inv *= W2 - n * inv; // Correct on 16 bits.
+            inv *= W2 - n * inv; // Correct on 32 bits.
+            inv *= W2 - n * inv; // Correct on 64 bits.
+            debug_assert_eq!(n.0.wrapping_mul(inv.0), 1);
+            inv.0
+        };
+
+        // Continue with rest of limbs
+        let mut correct_limbs = 1;
+        while correct_limbs < LIMBS {
+            result *= Self::from(2) - self * result;
+            correct_limbs *= 2;
+        }
+        result.limbs[LIMBS - 1] &= Self::MASK;
+
+        Some(result)
     }
 
     /// Calculates the complete product `self * rhs` without the possibility to
@@ -126,6 +151,17 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(a: U, b: U, c: U)| {
                 assert_eq!(a * (b * c), (a * b) * c);
+            });
+        });
+    }
+
+    #[test]
+    fn test_distributive() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U, c: U)| {
+                assert_eq!(a * (b + c), (a * b) + (a *c));
             });
         });
     }
