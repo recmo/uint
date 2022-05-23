@@ -1,5 +1,138 @@
 use crate::Uint;
+use core::{
+    iter::Sum,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 use itertools::izip;
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Computes the absolute difference between `self` and `other`.
+    /// 
+    /// Returns $\left\vert \mathtt{self} - \mathtt{other} \right\vert$.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn abs_diff(self, other: Self) -> Self {
+        if self < other {
+            other - self
+        } else {
+            self - other
+        }
+    }
+
+    /// Computes `self + rhs`, returning [`None`] if overflow occurred.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn checked_add(self, rhs: Self) -> Option<Self> {
+        match self.overflowing_add(rhs) {
+            (value, false) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// Computes `-self`, returning [`None`] unless `self == 0`.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn checked_neg(self) -> Option<Self> {
+        match self.overflowing_neg() {
+            (value, false) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// Computes `self - rhs`, returning [`None`] if overflow occurred.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn checked_sub(self, rhs: Self) -> Option<Self> {
+        match self.overflowing_sub(rhs) {
+            (value, false) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// Calculates $\mod{\mathtt{self} + \mathtt{rhs}}_{2^{BITS}}$.
+    /// 
+    /// Returns a tuple of the addition along with a boolean indicating whether
+    /// an arithmetic overflow would occur. If an overflow would have occurred
+    /// then the wrapped value is returned.
+    #[must_use]
+    pub fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
+        todo!()
+    }
+
+    /// Calculates $\mod{-\mathtt{self}}_{2^{BITS}}$.
+    /// 
+    /// Returns `!self + 1` using wrapping operations to return the value that
+    /// represents the negation of this unsigned value. Note that for positive
+    /// unsigned values overflow always occurs, but negating 0 does not overflow.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn overflowing_neg(mut self) -> (Self, bool) {
+        Self::ZERO.overflowing_sub(self)
+    }
+
+    /// Calculates $\mod{\mathtt{self} - \mathtt{rhs}}_{2^{BITS}}$.
+    /// 
+    /// Returns a tuple of the subtraction along with a boolean indicating
+    /// whether an arithmetic overflow would occur. If an overflow would have
+    /// occurred then the wrapped value is returned.
+    #[must_use]
+    pub fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
+        todo!()
+    }
+
+    /// Computes `self + rhs`, saturating at the numeric bounds instead of
+    /// overflowing.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn saturating_add(self, rhs: Self) -> Self {
+        match self.overflowing_add(rhs) {
+            (value, false) => value,
+            _ => Self::MAX,
+        }
+    }
+
+    /// Computes `self - rhs`, saturating at the numeric bounds instead of
+    /// overflowing
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn saturating_sub(self, rhs: Self) -> Self {
+        match self.overflowing_sub(rhs) {
+            (value, false) => value,
+            _ => Self::ZERO,
+        }
+    }
+
+    /// Computes `self + rhs`, wrapping around at the boundary of the type.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_add(self, rhs: Self) -> Self {
+        self.overflowing_add(rhs).0
+    }
+
+    /// Computes `-self`, wrapping around at the boundary of the type.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_neg(self) -> Self {
+        self.overflowing_neg().0
+    }
+
+    /// Computes `self - rhs`, wrapping around at the boundary of the type.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn wrapping_sub(self, rhs: Self) -> Self {
+        self.overflowing_sub(rhs).0
+    }
+}
 
 #[allow(clippy::module_name_repetitions)]
 pub trait OverflowingAdd: Sized {
@@ -23,50 +156,6 @@ impl<const BITS: usize, const LIMBS: usize> OverflowingAdd for Uint<BITS, LIMBS>
         (result, carry != 0)
     }
 }
-
-// #[cfg(target_arch = "aarch64")]
-// impl<const BITS: usize> OverflowingAdd for Uint<BITS>
-// where
-//     [(); nlimbs(BITS)]:,
-// {
-//     #[inline(never)]
-//     #[must_use]
-//     fn overflowing_add(self, other: Self) -> (Self, bool) {
-//         if BITS == 0 {
-//             return (self, false);
-//         }
-//         unsafe {
-//             let mut limbs = [0; nlimbs(BITS)];
-//             asm!(
-//                 "adds {}, {}, {}",
-//                 in(reg) self.limbs[0],
-//                 in(reg) other.limbs[0],
-//                 out(reg) limbs[0],
-//                 options(pure, nomem, nostack),
-//             );
-//             for (res, lhs, rhs) in izip!(
-//                 limbs.iter_mut(),
-//                 self.limbs.into_iter(),
-//                 other.limbs.into_iter()
-//             ) {
-//                 asm!(
-//                     "adcs {}, {}, {}",
-//                     in(reg) lhs,
-//                     in(reg) rhs,
-//                     out(reg) *res,
-//                     options(pure, nomem, nostack),
-//                 );
-//             }
-//             let mut carry: u64;
-//             asm!(
-//                 "cset {}, cs",
-//                 out(reg) carry,
-//                 options(pure, nomem, nostack),
-//             );
-//             (Self { limbs }, carry != 0)
-//         }
-//     }
-// }
 
 #[cfg(feature = "bench")]
 pub mod bench {

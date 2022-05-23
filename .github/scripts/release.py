@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Steps:
+# * Update `Cargo.lock`
 # * Retrieve current version from `Cargo.toml`
 # * Retrieve unreleased changes from the `Changelog.md`
 # * Stop if no changes
