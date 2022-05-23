@@ -237,5 +237,6 @@ pub mod bench {
 
     pub fn group(criterion: &mut Criterion) {
         add::bench::group(criterion);
+        mul::bench::group(criterion);
     }
 }

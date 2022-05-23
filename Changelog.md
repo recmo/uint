@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added add, sub, neg and sum functions.
+- Added non-widening mul functions.
 
 ## [0.3.0] — 2022-05-23
 

@@ -121,7 +121,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// bits of the result as two separate values, in that order.
     #[must_use]
     pub fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
-        todo!()
+        todo!() // TODO mul with mixed sizes and output sum of sizes
     }
 }
 
@@ -214,6 +214,37 @@ mod tests {
                 assert_eq!(a * a.ring_inverse().unwrap(), U::from(1));
                 assert_eq!(a.ring_inverse().unwrap().ring_inverse().unwrap(), a);
             });
+        });
+    }
+}
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use ::proptest::{
+        arbitrary::Arbitrary,
+        strategy::{Strategy, ValueTree},
+        test_runner::TestRunner,
+    };
+    use criterion::{black_box, BatchSize, Criterion};
+
+    pub fn group(criterion: &mut Criterion) {
+        const_for!(BITS in BENCH {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_mul::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_mul<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("mul/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, b)| black_box(black_box(a) * black_box(b)),
+                BatchSize::SmallInput,
+            );
         });
     }
 }
