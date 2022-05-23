@@ -1,11 +1,10 @@
-use crate::Uint;
+use crate::{impl_bin_op, Uint};
 use core::{
     iter::Product,
     ops::{Mul, MulAssign},
 };
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-
     /// Computes `self * rhs`, returning [`None`] if overflow occurred.
     #[allow(clippy::inline_always)]
     #[inline(always)]
@@ -24,9 +23,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// occurred then the wrapped value is returned.
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (Self::ZERO, false);
+        }
+        let mut result = Self::ZERO;
+        let mut overflow = false;
+        for (i, &rhs) in rhs.limbs.iter().enumerate() {
+            let mut carry = 0_u128;
+            for (res, &lhs) in result.limbs[i..].iter_mut().zip(self.limbs.iter()) {
+                carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
+                *res = carry as u64;
+                carry >>= 64;
+            }
+            overflow |= carry != 0;
+        }
+        overflow |= result.limbs[LIMBS - 1] > Self::MASK;
+        result.limbs[LIMBS - 1] &= Self::MASK;
+        (result, overflow)
     }
 
-    /// Computes `self * rhs`, saturating at the numeric bounds instead of overflowing.
+    /// Computes `self * rhs`, saturating at the numeric bounds instead of
+    /// overflowing.
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
@@ -37,26 +54,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
-    /// Calculates the complete product `self * rhs` without the possibility to
-    /// overflow.
-    /// 
-    /// This returns the low-order (wrapping) bits and the high-order (overflow)
-    /// bits of the result as two separate values, in that order.
+    /// Computes `self * rhs`, saturating at the numeric bounds instead of
+    /// overflowing.
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn widening_mul(self, rhs: Self) -> (Self, Self) {
-        self.carrying_mul(rhs, Self::ZERO)
-    }
-
-    /// Calculates the “full multiplication” `self * rhs + carry` without the
-    /// possibility to overflow.
-    /// 
-    /// This returns the low-order (wrapping) bits and the high-order (overflow)
-    /// bits of the result as two separate values, in that order.
-    #[must_use]
-    pub fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
-        todo!()
+    pub fn wrapping_mul(self, rhs: Self) -> Self {
+        self.overflowing_mul(rhs).0
     }
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning
@@ -67,5 +71,85 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return None;
         }
         todo!()
+    }
+
+    /// Calculates the complete product `self * rhs` without the possibility to
+    /// overflow.
+    ///
+    /// This returns the low-order (wrapping) bits and the high-order (overflow)
+    /// bits of the result as two separate values, in that order.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `LIMBS2` does not equal `LIMBS * 2`.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn widening_mul(self, rhs: Self) -> (Self, Self) {
+        self.carrying_mul(rhs, Self::ZERO)
+    }
+
+    /// Calculates the “full multiplication” `self * rhs + carry` without the
+    /// possibility to overflow.
+    ///
+    /// This returns the low-order (wrapping) bits and the high-order (overflow)
+    /// bits of the result as two separate values, in that order.
+    #[must_use]
+    pub fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
+        todo!()
+    }
+}
+
+impl_bin_op!(Mul, mul, MulAssign, mul_assign, wrapping_mul);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use proptest::proptest;
+
+    #[test]
+    fn test_commutative() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U)| {
+                assert_eq!(a * b, b * a);
+            });
+        });
+    }
+
+    #[test]
+    fn test_associative() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U, c: U)| {
+                assert_eq!(a * (b * c), (a * b) * c);
+            });
+        });
+    }
+
+    #[test]
+    fn test_identity() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                assert_eq!(value * U::from(1), value);
+            });
+        });
+    }
+
+    #[test]
+    fn test_inverse() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(mut a: U)| {
+                a |= U::from(1); // Make sure a is invertible
+                assert_eq!(a * a.ring_inverse().unwrap(), U::from(1));
+            });
+        });
     }
 }

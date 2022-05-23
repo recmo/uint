@@ -23,6 +23,7 @@ mod bytes;
 mod cmp;
 mod const_for;
 mod from;
+mod mul;
 mod string;
 mod support;
 mod uint_dyn;
