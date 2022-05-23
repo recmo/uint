@@ -30,7 +30,8 @@ pub enum ToUintError {
     NotANumber(usize),
 }
 
-#[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
+#[allow(clippy::derive_partial_eq_without_eq)] // False positive
+#[derive(Clone, Copy, Debug, Error, PartialEq, Eq, Hash)]
 #[allow(clippy::module_name_repetitions)]
 pub enum FromUintError<const BITS: usize, T> {
     #[error("Uint<{}> value is too large for {}", BITS, type_name::<T>())]

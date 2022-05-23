@@ -52,6 +52,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    #[allow(clippy::doc_markdown)]
     /// Calculates $\mod{\mathtt{self} + \mathtt{rhs}}_{2^{BITS}}$.
     ///
     /// Returns a tuple of the addition along with a boolean indicating whether
@@ -63,6 +64,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return (Self::ZERO, false);
         }
         let mut carry = 0_u128;
+        #[allow(clippy::cast_possible_truncation)] // Intentional
         for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
             carry += u128::from(*lhs) + u128::from(rhs);
             *lhs = carry as u64;
@@ -82,10 +84,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
-    pub fn overflowing_neg(mut self) -> (Self, bool) {
+    pub fn overflowing_neg(self) -> (Self, bool) {
         Self::ZERO.overflowing_sub(self)
     }
 
+    #[allow(clippy::doc_markdown)]
     /// Calculates $\mod{\mathtt{self} - \mathtt{rhs}}_{2^{BITS}}$.
     ///
     /// Returns a tuple of the subtraction along with a boolean indicating
@@ -97,6 +100,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return (Self::ZERO, false);
         }
         let mut carry = 0_u128;
+        #[allow(clippy::cast_possible_truncation)] // Intentional
         for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
             carry = carry.wrapping_add(u128::from(*lhs).wrapping_sub(u128::from(rhs)));
             *lhs = carry as u64;
@@ -298,7 +302,7 @@ pub mod bench {
         criterion.bench_function(&format!("neg/{}", BITS), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
-                |(a)| black_box(-black_box(a)),
+                |a| black_box(-black_box(a)),
                 BatchSize::SmallInput,
             );
         });
