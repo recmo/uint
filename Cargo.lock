@@ -1099,7 +1099,6 @@ dependencies = [
  "fastrlp",
  "hex",
  "hex-literal",
- "itertools",
  "postgres",
  "postgres-types",
  "primitive-types",

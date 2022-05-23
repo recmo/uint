@@ -28,7 +28,6 @@ path = "criterion.rs"
 required-features = [ "bench", "proptest" ]
 
 [dependencies]
-itertools = "0.10"
 thiserror = "1.0"
 ruint-macro = { version = "0.2.1", path = "./ruint-macro" }
 

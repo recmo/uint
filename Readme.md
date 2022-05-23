@@ -73,11 +73,11 @@ these nightly features are stabilized.
 ## Examples
 
 ```rust
-use ruint::{Uint, OverflowingAdd};
+use ruint::Uint;
 
 let a: Uint<256, 4> = Uint::from(0xf00f_u64);
 let b: Uint<256, 4> = Uint::from(42_u64);
-let (c, _carry) = a.overflowing_add(b);
+let c  = a + b;
 assert_eq!(c, Uint::from(0xf039_u64));
 ```
 
@@ -97,12 +97,12 @@ In fact, this macro recurses down the parse tree, so you can apply it to entire
 source files:
 
 ```rust
-# use ruint::{uint, OverflowingAdd};
+# use ruint::uint;
 uint!{
 
 let a = 42_U256;
 let b = 0xf00f_1337_c0d3_U256;
-let (c, _carry) = a.overflowing_add(b);
+let c = a + b;
 assert_eq!(c, 263947537596669_U256);
 
 }

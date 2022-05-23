@@ -382,9 +382,13 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
     type Output = Self;
 
     fn not(mut self) -> Self::Output {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
         for limb in self.as_limbs_mut().iter_mut() {
             *limb = u64::not(*limb);
         }
+        self.limbs[LIMBS - 1] &= Self::MASK;
         self
     }
 }
