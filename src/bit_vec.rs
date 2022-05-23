@@ -58,6 +58,5 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     }
     forward! {
         fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS];
-        fn reverse_bits(&mut self) -> ();
     }
 }

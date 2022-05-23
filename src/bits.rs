@@ -8,14 +8,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Reverses the order of bits in the integer. The least significant bit
     /// becomes the most significant bit, second least-significant bit becomes
     /// second most-significant bit, etc.
-    pub fn reverse_bits(&mut self) {
+    pub fn reverse_bits(mut self) -> Self {
         self.limbs.reverse();
         for limb in &mut self.limbs {
             *limb = limb.reverse_bits();
         }
         if BITS % 64 != 0 {
-            *self >>= 64 - BITS % 64;
+            self >>= 64 - BITS % 64;
         }
+        self
     }
 
     /// Returns the number of leading zeros in the binary representation of
@@ -196,6 +197,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             for i in 0..limbs {
                 self.limbs[i] = 0;
             }
+            self.limbs[LIMBS - 1] &= Self::MASK;
             return (self, overflow);
         }
 
@@ -220,6 +222,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         for i in 0..limbs {
             self.limbs[i] = 0;
         }
+        self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }
 
@@ -275,7 +278,40 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if limbs >= LIMBS {
             return (Self::ZERO, self != Self::ZERO);
         }
-        todo!()
+        if bits == 0 {
+            // Check for overflow
+            let mut overflow = false;
+            for i in 0..limbs {
+                overflow |= self.limbs[i] != 0;
+            }
+
+            // Shift
+            for i in 0..(LIMBS - limbs) {
+                self.limbs[i] = self.limbs[i + limbs];
+            }
+            for i in (LIMBS - limbs)..LIMBS {
+                self.limbs[i] = 0;
+            }
+            return (self, overflow);
+        }
+
+        // Check for overflow
+        let mut overflow = false;
+        for i in 0..limbs {
+            overflow |= self.limbs[i] != 0;
+        }
+        overflow |= self.limbs[limbs] >> bits != 0;
+
+        // Shift
+        for i in 0..(LIMBS - limbs - 1) {
+            self.limbs[i] = self.limbs[i + limbs] >> bits;
+            self.limbs[i] |= self.limbs[i + limbs + 1] << (64 - bits);
+        }
+        self.limbs[LIMBS - limbs - 1] = self.limbs[LIMBS - 1] >> bits;
+        for i in (LIMBS - limbs)..LIMBS {
+            self.limbs[i] = 0;
+        }
+        (self, overflow)
     }
 
     /// Right shift by `rhs` bits.
@@ -294,7 +330,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.overflowing_shr(rhs).0
     }
 
-    // TODO: rotate_left, rotate_right
+    /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
+    /// truncated bits to the end of the resulting integer.
+    #[must_use]
+    pub fn rotate_left(self, rhs: usize) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        let rhs = rhs % BITS;
+        self << rhs | self >> (BITS - rhs)
+    }
+
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn rotate_right(self, rhs: usize) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        let rhs = rhs % BITS;
+        self.rotate_left(BITS - rhs)
+    }
 }
 
 macro_rules! impl_bit_op {
@@ -551,5 +607,56 @@ mod tests {
             Uint::<127, 2>::from_limbs([0x0010_0000_0000_0000, 0]).checked_shl(64),
             Some(Uint::<127, 2>::from_limbs([0, 0x0010_0000_0000_0000]))
         );
+    }
+
+    #[test]
+    fn test_small() {
+        const_for!(BITS in [1, 2, 8, 16, 32, 63, 64] {
+            type U = Uint::<BITS, 1>;
+            proptest!(|(a: U, b: U)| {
+                assert_eq!(a | b, U::from_limbs([a.limbs[0] | b.limbs[0]]));
+                assert_eq!(a & b, U::from_limbs([a.limbs[0] & b.limbs[0]]));
+                assert_eq!(a ^ b, U::from_limbs([a.limbs[0] ^ b.limbs[0]]));
+            });
+            proptest!(|(a: U, s in 0..BITS)| {
+                assert_eq!(a << s, U::from_limbs([a.limbs[0] << s & U::MASK]));
+                assert_eq!(a >> s, U::from_limbs([a.limbs[0] >> s]));
+            });
+        });
+        proptest!(|(a: Uint::<32, 1>, s in 0_usize..=34)| {
+            assert_eq!(a.reverse_bits(), Uint::from((a.limbs[0] as u32).reverse_bits() as u64));
+            assert_eq!(a.rotate_left(s), Uint::from((a.limbs[0] as u32).rotate_left(s as u32) as u64));
+            assert_eq!(a.rotate_right(s), Uint::from((a.limbs[0] as u32).rotate_right(s as u32) as u64));
+        });
+        proptest!(|(a: Uint::<64, 1>, s in 0_usize..=66)| {
+            assert_eq!(a.reverse_bits(), Uint::from(a.limbs[0].reverse_bits()));
+            assert_eq!(a.rotate_left(s), Uint::from(a.limbs[0].rotate_left(s as u32)));
+            assert_eq!(a.rotate_right(s), Uint::from(a.limbs[0].rotate_right(s as u32)));
+        });
+    }
+
+    #[test]
+    fn test_shift_reverse() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U, shift in 0..=BITS + 2)| {
+                let left = (value << shift).reverse_bits();
+                let right = value.reverse_bits() >> shift;
+                assert_eq!(left, right);
+            });
+        });
+    }
+
+    #[test]
+    fn test_rotate() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U, shift in  0..=BITS + 2)| {
+                let rotated = value.rotate_left(shift).rotate_right(shift);
+                assert_eq!(value, rotated);
+            });
+        });
     }
 }
