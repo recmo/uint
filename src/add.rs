@@ -1,22 +1,22 @@
 use crate::Uint;
 use core::{
     iter::Sum,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
 use itertools::izip;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the absolute difference between `self` and `other`.
-    /// 
+    ///
     /// Returns $\left\vert \mathtt{self} - \mathtt{other} \right\vert$.
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
-            other - self
+            other.wrapping_sub(self)
         } else {
-            self - other
+            self.wrapping_sub(other)
         }
     }
 
@@ -54,7 +54,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Calculates $\mod{\mathtt{self} + \mathtt{rhs}}_{2^{BITS}}$.
-    /// 
+    ///
     /// Returns a tuple of the addition along with a boolean indicating whether
     /// an arithmetic overflow would occur. If an overflow would have occurred
     /// then the wrapped value is returned.
@@ -64,10 +64,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Calculates $\mod{-\mathtt{self}}_{2^{BITS}}$.
-    /// 
+    ///
     /// Returns `!self + 1` using wrapping operations to return the value that
     /// represents the negation of this unsigned value. Note that for positive
-    /// unsigned values overflow always occurs, but negating 0 does not overflow.
+    /// unsigned values overflow always occurs, but negating 0 does not
+    /// overflow.
     #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
@@ -76,7 +77,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Calculates $\mod{\mathtt{self} - \mathtt{rhs}}_{2^{BITS}}$.
-    /// 
+    ///
     /// Returns a tuple of the subtraction along with a boolean indicating
     /// whether an arithmetic overflow would occur. If an overflow would have
     /// occurred then the wrapped value is returned.
@@ -134,28 +135,121 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub trait OverflowingAdd: Sized {
-    fn overflowing_add(self, other: Self) -> (Self, bool);
-}
+impl<const BITS: usize, const LIMBS: usize> Neg for Uint<BITS, LIMBS> {
+    type Output = Self;
 
-impl<const BITS: usize, const LIMBS: usize> OverflowingAdd for Uint<BITS, LIMBS> {
-    #[must_use]
-    fn overflowing_add(self, other: Self) -> (Self, bool) {
-        let mut result = Self::MIN;
-
-        let mut carry: u128 = 0;
-        #[allow(clippy::cast_possible_truncation)]
-        for (res, &lhs, &rhs) in izip!(result.as_limbs_mut(), self.as_limbs(), other.as_limbs()) {
-            carry += u128::from(lhs) + u128::from(rhs);
-            *res = carry as u64;
-            carry >>= 64;
-        }
-        carry |= u128::from(result.as_limbs()[LIMBS - 1] & !Self::MASK);
-        result.as_limbs_mut()[LIMBS - 1] &= Self::MASK;
-        (result, carry != 0)
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        self.wrapping_neg()
     }
 }
+
+impl<const BITS: usize, const LIMBS: usize> Neg for &Uint<BITS, LIMBS> {
+    type Output = Uint<BITS, LIMBS>;
+
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        self.wrapping_neg()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Sum<Self> for Uint<BITS, LIMBS> {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let mut result = Self::ZERO;
+        for item in iter {
+            result += item;
+        }
+        result
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> Sum<&'a Self> for Uint<BITS, LIMBS> {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let mut result = Self::ZERO;
+        for item in iter {
+            result += item;
+        }
+        result
+    }
+}
+
+macro_rules! impl_bin_op {
+    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fdel:ident) => {
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
+            for Uint<BITS, LIMBS>
+        {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: Uint<BITS, LIMBS>) {
+                *self = self.$fdel(rhs);
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
+            for Uint<BITS, LIMBS>
+        {
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
+                *self = self.$fdel(*rhs);
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
+            for Uint<BITS, LIMBS>
+        {
+            type Output = Uint<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+                self.$fdel(rhs)
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
+            for Uint<BITS, LIMBS>
+        {
+            type Output = Uint<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+                self.$fdel(*rhs)
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
+            for &Uint<BITS, LIMBS>
+        {
+            type Output = Uint<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+                self.$fdel(rhs)
+            }
+        }
+        impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
+            for &Uint<BITS, LIMBS>
+        {
+            type Output = Uint<BITS, LIMBS>;
+
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+                self.$fdel(*rhs)
+            }
+        }
+    };
+}
+
+impl_bin_op!(Add, add, AddAssign, add_assign, wrapping_add);
+impl_bin_op!(Sub, sub, SubAssign, sub_assign, wrapping_sub);
 
 #[cfg(feature = "bench")]
 pub mod bench {
