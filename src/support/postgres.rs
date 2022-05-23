@@ -376,8 +376,7 @@ mod tests {
                 for ty in &[/*Type::BOOL, Type::INT2, Type::INT4, Type::INT8, Type::OID, Type::MONEY, Type::BYTEA, Type::CHAR, Type::TEXT, Type::VARCHAR, Type::JSON, Type::JSONB, Type::NUMERIC,*/ Type::BIT, Type::VARBIT] {
                     serialized.clear();
                     if value.to_sql(ty, &mut serialized).is_ok() {
-                        println!("testing {:?} {}", value, ty);
-                        dbg!(hex::encode(&serialized));
+                        // println!("testing {:?} {}", value, ty);
                         let deserialized = U::from_sql(ty, &serialized).unwrap();
                         assert_eq!(deserialized, value);
                     }
