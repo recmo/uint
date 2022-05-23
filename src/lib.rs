@@ -17,6 +17,7 @@
 mod add;
 pub mod aliases;
 mod base_convert;
+mod bit_vec;
 mod bits;
 mod bytes;
 mod const_for;
@@ -29,6 +30,9 @@ mod utils;
 #[cfg(feature = "dyn")]
 #[doc(inline)]
 pub use uint_dyn::UintDyn;
+
+#[doc(inline)]
+pub use bit_vec::Bits;
 
 #[doc(inline)]
 pub use self::{

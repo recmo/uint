@@ -157,6 +157,7 @@ Goals:
 * Fast platform agnostic generic algorithms.
 * Target specific assembly optimizations (where available).
 * Optional num-traits, etc, support.
+* Adhere to [Rust API Guidelines](https://rust-lang.github.io/api-guidelines)
 
 Maybe:
 
