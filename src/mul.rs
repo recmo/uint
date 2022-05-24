@@ -31,6 +31,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut overflow = false;
         for (i, &rhs) in rhs.limbs.iter().enumerate() {
             let mut carry = 0_u128;
+            #[allow(clippy::cast_possible_truncation)] // Intentional
             for (res, &lhs) in result.limbs[i..].iter_mut().zip(self.limbs.iter()) {
                 carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
                 *res = carry as u64;
@@ -78,7 +79,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             const W2: Wrapping<u64> = Wrapping(2);
             const W3: Wrapping<u64> = Wrapping(3);
             let n = Wrapping(self.limbs[0]);
-            let mut inv = n * W3 ^ W2; // Correct on 4 bits.
+            let mut inv = (n * W3) ^ W2; // Correct on 4 bits.
             inv *= W2 - n * inv; // Correct on 8 bits.
             inv *= W2 - n * inv; // Correct on 16 bits.
             inv *= W2 - n * inv; // Correct on 32 bits.
@@ -119,8 +120,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// This returns the low-order (wrapping) bits and the high-order (overflow)
     /// bits of the result as two separate values, in that order.
+    ///
+    /// # Panics
+    ///
+    /// Currently unimplemented
     #[must_use]
-    pub fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
+    #[allow(clippy::unused_self)]
+    pub fn carrying_mul(self, _rhs: Self, _carry: Self) -> (Self, Self) {
         todo!() // TODO mul with mixed sizes and output sum of sizes
     }
 }

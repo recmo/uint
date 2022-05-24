@@ -1,6 +1,22 @@
 /// Knuth division
-use crate::algorithms::limb_operations::{adc, msb};
 use core::{convert::TryFrom, u64};
+
+/// Compute a + b + carry, returning the result and the new carry over.
+const fn adc(a: u64, b: u64, carry: u64) -> (u64, u64) {
+    let ret = (a as u128) + (b as u128) + (carry as u128);
+    // We want truncation here
+    #[allow(clippy::cast_possible_truncation)]
+    (ret as u64, (ret >> 64) as u64)
+}
+
+/// Compute a - (b * c + borrow), returning the result and the new borrow.
+const fn msb(a: u64, b: u64, c: u64, borrow: u64) -> (u64, u64) {
+    let ret = (a as u128).wrapping_sub((b as u128) * (c as u128) + (borrow as u128));
+    // TODO: Why is this wrapping_sub required?
+    // We want truncation here
+    #[allow(clippy::cast_possible_truncation)]
+    (ret as u64, 0_u64.wrapping_sub((ret >> 64) as u64))
+}
 
 const fn val_2(lo: u64, hi: u64) -> u128 {
     ((hi as u128) << 64) | (lo as u128)
@@ -35,15 +51,17 @@ fn divrem_2by1(lo: u64, hi: u64, d: u64) -> (u64, u64) {
     (q as u64, r as u64)
 }
 
-pub(crate) fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
+#[allow(clippy::cast_possible_truncation)] // Intentional
+pub fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor > 0);
     let mut remainder = 0;
-    for i in (0..numerator.len()).rev() {
-        let (ni, ri) = divrem_2by1(numerator[i], remainder, divisor);
-        numerator[i] = ni;
-        remainder = ri;
+    for limb in numerator.iter_mut().rev() {
+        remainder <<= 64;
+        remainder |= u128::from(*limb);
+        *limb = (remainder / u128::from(divisor)) as u64;
+        remainder %= u128::from(divisor);
     }
-    remainder
+    remainder as u64
 }
 
 //      |  n2 n1 n0  |
@@ -87,16 +105,55 @@ fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
     }
 }
 
+pub fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
+    assert!(!divisor.is_empty());
+
+    // Trim most significant zeros from divisor.
+    let i = divisor
+        .iter()
+        .rposition(|&x| x != 0)
+        .expect("Divisor is zero");
+    let divisor = &mut divisor[..=i];
+
+    // Compute result
+    if divisor.len() == 1 {
+        let remainder = divrem_nby1(numerator, divisor[0]);
+
+        // Copy remainder to divisor (always fits)
+        divisor[0] = remainder;
+        for limb in &mut divisor[1..] {
+            *limb = 0;
+        }
+    } else {
+        divrem_nbym(numerator, divisor);
+
+        // Copy remainder to divisor (always fits)
+        let r_len = divisor.len();
+        divisor.copy_from_slice(&numerator[..r_len]);
+
+        // Store quotient in numerator (zero extended)
+        let q_len = numerator.len() - divisor.len();
+        numerator.copy_within(r_len.., 0);
+        for limb in &mut numerator[q_len..] {
+            *limb = 0;
+        }
+    }
+}
+
 /// Turns numerator into remainder, returns quotient.
 ///
 /// Implements Knuth's division algorithm.
 /// See D. Knuth "The Art of Computer Programming". Sec. 4.3.1. Algorithm D.
-/// See https://github.com/chfast/intx/blob/master/lib/intx/div.cpp
+/// See <https://github.com/chfast/intx/blob/master/lib/intx/div.cpp>
+///
+/// `divisor` must have non-zero first limbs. Consequently, the remainder is
+/// length at most `divisor.len()`, and the qouient is at most
+/// `numerator.len() - divisor.len()` limbs.
 ///
 /// NOTE: numerator must have one additional zero at the end.
 /// The result will be computed in-place in numerator.
 /// The divisor will be normalized.
-pub(crate) fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
+pub fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() > divisor.len());
     debug_assert!(*divisor.last().unwrap() > 0);
@@ -175,9 +232,6 @@ pub(crate) fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::u256::U256;
-    use proptest::prelude::*;
-    use zkp_macros_decl::u256h;
 
     const HALF: u64 = 1_u64 << 63;
     const FULL: u64 = u64::max_value();
@@ -202,8 +256,8 @@ mod tests {
         assert_eq!(quotient, expected_quotient);
     }
 
-    #[allow(clippy::unreadable_literal)]
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn test_divrem_8by4() {
         let mut numerator = [
             0x9c2bcebfa9cca2c6_u64,
@@ -243,28 +297,42 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn test_divrem_4by4() {
-        let a = u256h!("6f1480e63854afa41868b9a7d418e9c64edef514135f5899e72530a3d4e91ea3");
-        let b = u256h!("3ba5ddaec5090ef0b87126f34ee28533ffb08af4108f9aeaa62b65900d2a62bb");
-        let r = a.clone() - &b;
-        let mut numerator = [a.limb(0), a.limb(1), a.limb(2), a.limb(3), 0];
-        let mut divisor = [b.limb(0), b.limb(1), b.limb(2), b.limb(3)];
+        let mut numerator = [
+            0xe72530a3d4e91ea3,
+            0x4edef514135f5899,
+            0x1868b9a7d418e9c6,
+            0x6f1480e63854afa4,
+            0,
+        ];
+        let mut divisor = [
+            0xa62b65900d2a62bb,
+            0xffb08af4108f9aea,
+            0xb87126f34ee28533,
+            0x3ba5ddaec5090ef0,
+        ];
         divrem_nbym(&mut numerator, &mut divisor);
         let remainder = &numerator[0..4];
         let quotient = numerator[4];
-        assert_eq!(remainder, [r.limb(0), r.limb(1), r.limb(2), r.limb(3)]);
+        assert_eq!(remainder, [
+            0x40f9cb13c7bebbe8,
+            0x4f2e6a2002cfbdaf,
+            0x5ff792b485366492,
+            0x336ea337734ba0b3
+        ]);
         assert_eq!(quotient, 1);
     }
 
-    proptest!(
-        #[test]
-        fn div_3by2_correct(q: u64, d0: u64, d1: u64) {
-            // TODO: Add remainder
-            let d1 = d1 | (1 << 63);
-            let n = U256::from_limbs([d0, d1, 0, 0]) * &U256::from(q);
-            debug_assert!(n.limb(3) == 0);
-            let qhat = div_3by2(&[n.limb(0), n.limb(1), n.limb(2)], &[d0, d1]);
-            prop_assert_eq!(qhat, q);
-        }
-    );
+    // proptest!(
+    // #[test]
+    // fn div_3by2_correct(q: u64, d0: u64, d1: u64) {
+    // TODO: Add remainder
+    // let d1 = d1 | (1 << 63);
+    // let n = U256::from_limbs([d0, d1, 0, 0]) * &U256::from(q);
+    // debug_assert!(n.limb(3) == 0);
+    // let qhat = div_3by2(&[n.limb(0), n.limb(1), n.limb(2)], &[d0, d1]);
+    // prop_assert_eq!(qhat, q);
+    // }
+    // );
 }

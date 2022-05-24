@@ -15,6 +15,7 @@
 )]
 
 mod add;
+mod algorithms;
 pub mod aliases;
 mod base_convert;
 mod bit_vec;
@@ -22,6 +23,7 @@ mod bits;
 mod bytes;
 mod cmp;
 mod const_for;
+mod div;
 mod from;
 mod mul;
 mod string;
@@ -238,5 +240,6 @@ pub mod bench {
     pub fn group(criterion: &mut Criterion) {
         add::bench::group(criterion);
         mul::bench::group(criterion);
+        div::bench::group(criterion);
     }
 }
