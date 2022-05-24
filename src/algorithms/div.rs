@@ -1,5 +1,5 @@
 /// Knuth division
-use core::{convert::TryFrom, u64};
+use core::{convert::TryFrom, num, u64};
 
 use crate::div;
 
@@ -57,11 +57,12 @@ pub(crate) fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor > 0);
     let mut remainder = 0;
     for i in (0..numerator.len()).rev() {
-        let (ni, ri) = divrem_2by1(numerator[i], remainder, divisor);
-        numerator[i] = ni;
-        remainder = ri;
+        remainder <<= 64;
+        remainder |= u128::from(numerator[i]);
+        numerator[i] = (remainder / u128::from(divisor)) as u64;
+        remainder %= u128::from(divisor);
     }
-    remainder
+    remainder as u64
 }
 
 //      |  n2 n1 n0  |
