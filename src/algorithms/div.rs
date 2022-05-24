@@ -257,8 +257,8 @@ mod tests {
         assert_eq!(quotient, expected_quotient);
     }
 
-    #[allow(clippy::unreadable_literal)]
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn test_divrem_8by4() {
         let mut numerator = [
             0x9c2bcebfa9cca2c6_u64,
@@ -298,6 +298,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn test_divrem_4by4() {
         let mut numerator = [
             0xe72530a3d4e91ea3,
