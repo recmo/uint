@@ -1,7 +1,5 @@
 /// Knuth division
-use core::{convert::TryFrom, num, u64};
-
-use crate::div;
+use core::{convert::TryFrom, u64};
 
 /// Compute a + b + carry, returning the result and the new carry over.
 const fn adc(a: u64, b: u64, carry: u64) -> (u64, u64) {
@@ -53,13 +51,14 @@ fn divrem_2by1(lo: u64, hi: u64, d: u64) -> (u64, u64) {
     (q as u64, r as u64)
 }
 
-pub(crate) fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
+#[allow(clippy::cast_possible_truncation)] // Intentional
+pub fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor > 0);
     let mut remainder = 0;
-    for i in (0..numerator.len()).rev() {
+    for limb in numerator.iter_mut().rev() {
         remainder <<= 64;
-        remainder |= u128::from(numerator[i]);
-        numerator[i] = (remainder / u128::from(divisor)) as u64;
+        remainder |= u128::from(*limb);
+        *limb = (remainder / u128::from(divisor)) as u64;
         remainder %= u128::from(divisor);
     }
     remainder as u64
@@ -106,8 +105,8 @@ fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
     }
 }
 
-pub(crate) fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
-    assert!(divisor.len() >= 1);
+pub fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
+    assert!(!divisor.is_empty());
 
     // Trim most significant zeros from divisor.
     let i = divisor
@@ -145,7 +144,7 @@ pub(crate) fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
 ///
 /// Implements Knuth's division algorithm.
 /// See D. Knuth "The Art of Computer Programming". Sec. 4.3.1. Algorithm D.
-/// See https://github.com/chfast/intx/blob/master/lib/intx/div.cpp
+/// See <https://github.com/chfast/intx/blob/master/lib/intx/div.cpp>
 ///
 /// `divisor` must have non-zero first limbs. Consequently, the remainder is
 /// length at most `divisor.len()`, and the qouient is at most
@@ -154,7 +153,7 @@ pub(crate) fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
 /// NOTE: numerator must have one additional zero at the end.
 /// The result will be computed in-place in numerator.
 /// The divisor will be normalized.
-pub(crate) fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
+pub fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() > divisor.len());
     debug_assert!(*divisor.last().unwrap() > 0);
@@ -233,7 +232,6 @@ pub(crate) fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proptest::prelude::*;
 
     const HALF: u64 = 1_u64 << 63;
     const FULL: u64 = u64::max_value();

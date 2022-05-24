@@ -8,7 +8,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if rhs == Self::ZERO {
             return None;
         }
-        todo!() // Some(self / rhs)
+        Some(self.div(rhs))
     }
     /// Computes `self % rhs`, returning [`None`] if `rhs == 0`.
     #[must_use]
@@ -16,20 +16,26 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if rhs == Self::ZERO {
             return None;
         }
-        todo!() // Some(self % rhs)
+        Some(self.rem(rhs))
     }
 
+    /// # Panics
+    ///
+    /// Panics if `rhs == 0`.
     #[must_use]
     pub fn div_ceil(self, rhs: Self) -> Self {
-        assert!(rhs != Self::ZERO);
+        assert!(rhs != Self::ZERO, "Division by zero");
         let (q, r) = self.div_rem(rhs);
-        if r != Self::ZERO {
-            q + Self::from(1)
-        } else {
+        if r == Self::ZERO {
             q
+        } else {
+            q + Self::from(1)
         }
     }
 
+    /// # Panics
+    ///
+    /// Panics if `rhs == 0`.
     #[must_use]
     pub fn div_rem(self, rhs: Self) -> (Self, Self) {
         assert!(rhs != Self::ZERO, "Division by zero");
@@ -44,19 +50,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         )
     }
 
+    /// # Panics
+    ///
+    /// Panics if `rhs == 0`.
     #[must_use]
-    pub fn div(self, rhs: Self) -> Self {
+    pub fn wrapping_div(self, rhs: Self) -> Self {
         self.div_rem(rhs).0
     }
 
+    /// # Panics
+    ///
+    /// Panics if `rhs == 0`.
     #[must_use]
-    pub fn rem(self, rhs: Self) -> Self {
+    pub fn wrapping_rem(self, rhs: Self) -> Self {
         self.div_rem(rhs).1
     }
 }
 
-impl_bin_op!(Div, div, DivAssign, div_assign, div);
-impl_bin_op!(Rem, rem, RemAssign, rem_assign, rem);
+impl_bin_op!(Div, div, DivAssign, div_assign, wrapping_div);
+impl_bin_op!(Rem, rem, RemAssign, rem_assign, wrapping_rem);
 
 #[cfg(test)]
 pub mod tests {
@@ -65,7 +77,7 @@ pub mod tests {
     use proptest::{prop_assume, proptest};
 
     #[test]
-    fn test_divceil() {
+    fn test_div_ceil() {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
@@ -167,20 +179,23 @@ pub mod bench {
         }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{}/{}", BITS, BITS - BITS / 2), move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
-                    d >>= BITS / 2; // make d half size
-                    if d == Uint::ZERO {
-                        d = Uint::from(1);
-                    }
-                    (n, d)
-                },
-                |(a, b)| black_box(black_box(a).div_rem(black_box(b))),
-                BatchSize::SmallInput,
-            );
-        });
+        criterion.bench_function(
+            &format!("div_rem/{}/{}", BITS, BITS - BITS / 2),
+            move |bencher| {
+                bencher.iter_batched(
+                    || {
+                        let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
+                        d >>= BITS / 2; // make d half size
+                        if d == Uint::ZERO {
+                            d = Uint::from(1);
+                        }
+                        (n, d)
+                    },
+                    |(a, b)| black_box(black_box(a).div_rem(black_box(b))),
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
 
     fn bench_div_rem_full<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
