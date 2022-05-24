@@ -39,13 +39,43 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             Self::from_limbs(divisor),
         )
     }
+
+    fn div(self, rhs: Self) -> Self {
+        self.div_rem(rhs).0
+    }
+
+    fn rem(self, rhs: Self) -> Self {
+        self.div_rem(rhs).1
+    }
 }
+
+impl_bin_op!(Div, div, DivAssign, div_assign, div);
+impl_bin_op!(Rem, rem, RemAssign, rem_assign, rem);
 
 #[cfg(test)]
 pub mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
     use proptest::{prop_assume, proptest};
+
+    #[test]
+    fn test_divceil() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(n: U, mut d: U)| {
+                d >>= BITS / 2; // make d small
+                prop_assume!(d != U::ZERO);
+                let qf = n / d;
+                let qc = n.div_ceil(d);
+                assert!(qf <= qc);
+                assert!(qf == qc || qf == qc - U::from(1));
+                if qf == qc {
+                    assert!(n % d == U::ZERO);
+                }
+            });
+        });
+    }
 
     #[test]
     fn test_divrem() {
