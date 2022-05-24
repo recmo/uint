@@ -19,6 +19,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Some(self.rem(rhs))
     }
 
+    /// Computes `self / rhs` rounding up.
+    /// 
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
@@ -33,6 +35,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Computes `self / rhs` and `self % rhs`.
+    /// 
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
@@ -50,6 +54,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         )
     }
 
+    /// Computes `self / rhs` rounding down.
+    /// 
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
@@ -58,6 +64,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.div_rem(rhs).0
     }
 
+    /// Computes `self % rhs`.
+    /// 
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
