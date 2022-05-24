@@ -15,7 +15,7 @@ generic arguments: the number of bits and the number of 64-bit 'limbs' required 
 let answer: Uint<256, 4> = Uint::from(42);
 ```
 
-You can compute `LIMBS` yourself using $\mathtt{LIMBS} = \ceil{\mathtt{BITS} / 64}$,
+You can compute `LIMBS` yourself using $\mathtt{LIMBS} = \left\lceil{\mathtt{BITS} / 64}\right\rceil$,
 i.e.`LIMBS` equals `BITS` divided by $64$ rounded up. [`Uint`] will `panic!` if you try to
 construct it with incorrect arguments. Ideally this would be a compile time error, but
 that is blocked by Rust issue [#60551][r60551].
