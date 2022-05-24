@@ -23,6 +23,7 @@ mod bits;
 mod bytes;
 mod cmp;
 mod const_for;
+mod div;
 mod from;
 mod mul;
 mod string;

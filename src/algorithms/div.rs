@@ -1,6 +1,8 @@
 /// Knuth division
 use core::{convert::TryFrom, u64};
 
+use crate::div;
+
 /// Compute a + b + carry, returning the result and the new carry over.
 const fn adc(a: u64, b: u64, carry: u64) -> (u64, u64) {
     let ret = (a as u128) + (b as u128) + (carry as u128);
@@ -103,11 +105,50 @@ fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
     }
 }
 
+pub(crate) fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
+    assert!(divisor.len() >= 1);
+
+    // Trim most significant zeros from divisor.
+    let i = divisor
+        .iter()
+        .rposition(|&x| x != 0)
+        .expect("Divisor is zero");
+    let divisor = &mut divisor[..=i];
+
+    // Compute result
+    if divisor.len() == 1 {
+        let remainder = divrem_nby1(numerator, divisor[0]);
+
+        // Copy remainder to divisor (always fits)
+        divisor[0] = remainder;
+        for limb in &mut divisor[1..] {
+            *limb = 0;
+        }
+    } else {
+        divrem_nbym(numerator, divisor);
+
+        // Copy remainder to divisor (always fits)
+        let r_len = divisor.len();
+        divisor.copy_from_slice(&numerator[..r_len]);
+
+        // Store quotient in numerator (zero extended)
+        let q_len = numerator.len() - divisor.len();
+        numerator.copy_within(r_len.., 0);
+        for limb in &mut numerator[q_len..] {
+            *limb = 0;
+        }
+    }
+}
+
 /// Turns numerator into remainder, returns quotient.
 ///
 /// Implements Knuth's division algorithm.
 /// See D. Knuth "The Art of Computer Programming". Sec. 4.3.1. Algorithm D.
 /// See https://github.com/chfast/intx/blob/master/lib/intx/div.cpp
+///
+/// `divisor` must have non-zero first limbs. Consequently, the remainder is
+/// length at most `divisor.len()`, and the qouient is at most
+/// `numerator.len() - divisor.len()` limbs.
 ///
 /// NOTE: numerator must have one additional zero at the end.
 /// The result will be computed in-place in numerator.

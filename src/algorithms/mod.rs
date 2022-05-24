@@ -1,1 +1,1 @@
-mod div;
+pub(crate) mod div;
