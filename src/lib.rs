@@ -25,12 +25,13 @@ mod cmp;
 mod const_for;
 mod div;
 mod from;
+mod log;
 mod mul;
+mod pow;
 mod string;
 mod support;
 mod uint_dyn;
 mod utils;
-mod pow;
 
 #[cfg(feature = "dyn")]
 #[doc(inline)]
@@ -78,22 +79,26 @@ pub mod nightly {
 }
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
-/// 
+///
 /// [`Uint`] implements nearly all traits and methods from the `std` unsigned
 /// integer types, including most nightly only ones.
-/// 
+///
 /// # Notable differences from `std` uint types.
-/// 
-/// * The operators `+`, `-`, `*`, etc. using wrapping math by default.
-///   The std operators panic on overflow in debug, and are undefined in release,
-///   see [reference][std-overflow].
+///
+/// * The operators `+`, `-`, `*`, etc. using wrapping math by default. The std
+///   operators panic on overflow in debug, and are undefined in release, see
+///   [reference][std-overflow].
 /// * The [`Uint::checked_shl`], [`Uint::overflowing_shl`], etc return overflow
-///   when non-zero bits are shifted out. In std they return overflow when
-///   the shift amount is greater than the bit size.
-/// * Some methods like [`div_euclid`] and [`rem_euclid`] are left out because
-///   they are meaningless or redundant for unsigned integers. Std has them for
-///   compatibility with their signed integers.
-/// 
+///   when non-zero bits are shifted out. In std they return overflow when the
+///   shift amount is greater than the bit size.
+/// * Some methods like [`u64::div_euclid`] and [`u64::rem_euclid`] are left out
+///   because they are meaningless or redundant for unsigned integers. Std has
+///   them for compatibility with their signed integers.
+/// * Many functions that are `const` in std are not in [`Uint`].
+/// * [`Uint::to_le_bytes`] and [`Uint::to_be_bytes`] require the output size to
+///   be provided as a const-generic argument. They will runtime panic if the
+///   provided size is incorrect.
+///
 /// [std-overflow]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {

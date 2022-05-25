@@ -1,68 +1,128 @@
-use crate::{impl_bin_op, Uint};
+use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    pub const fn checked_log(self, base: u64) -> Option<u32> {
-        todo!()
+    #[must_use]
+    pub fn checked_pow(self, exp: Self) -> Option<Self> {
+        match self.overflowing_pow(exp) {
+            (x, false) => Some(x),
+            (_, true) => None,
+        }
     }
 
-    pub const fn checked_log10(self) -> Option<u32> {
-        todo!()
+    #[must_use]
+    pub fn overflowing_pow(mut self, exp: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (self, false);
+        }
+
+        // Exponentiation by squaring
+        let mut overflow = false;
+        let mut base_overflow = false;
+        let mut result = Self::from(1);
+        for mut limb in exp.limbs {
+            for _ in 0..64 {
+                // Multiply by base
+                if limb & 1 == 1 {
+                    let (r, o) = result.overflowing_mul(self);
+                    result = r;
+                    overflow |= o | base_overflow;
+                }
+
+                // Square base
+                let (s, o) = self.overflowing_mul(self);
+                self = s;
+                base_overflow |= o;
+                limb >>= 1;
+            }
+        }
+        (result, overflow)
     }
 
-    pub const fn checked_log2(self) -> Option<u32> {
-        todo!()
+    /// # The binary [Carmichael functions][cf]
+    ///
+    /// [cf]: https://en.wikipedia.org/wiki/Carmichael_function
+    ///
+    /// $$
+    /// λ(2^\mathtt{BITS}) = \begin{cases}
+    ///   2^{\mathtt{BITS} - 1} & \mathtt{BITS} ≤ 3
+    ///   2^{\mathtt{BITS} - 2} & \mathtt{BITS} > 3
+    /// \end{cases}
+    /// $$
+    #[must_use]
+    pub fn pow(self, exp: Self) -> Self {
+        self.wrapping_pow(exp)
     }
 
-    pub const fn checked_next_multiple_of(self, rhs: u64) -> Option<u64> {
-        todo!()
+    #[must_use]
+    pub fn saturating_pow(self, exp: Self) -> Self {
+        match self.overflowing_pow(exp) {
+            (x, false) => x,
+            (_, true) => Self::MAX,
+        }
     }
 
-    pub const fn checked_next_power_of_two(self) -> Option<u64> {
-        todo!()
+    #[must_use]
+    pub fn wrapping_pow(self, exp: Self) -> Self {
+        self.overflowing_pow(exp).0
     }
+}
 
-    pub const fn checked_pow(self, exp: u32) -> Option<u64> {
-        todo!()
-    }
-    
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if and only if `self == 2^k` for some `k`.
-    pub const fn is_power_of_two(self) -> bool {
+    #[must_use]
+    pub fn is_power_of_two(self) -> bool {
         self.count_ones() == 1
     }
 
-    pub const fn log(self, base: u64) -> u32 {
+    #[must_use]
+    pub fn checked_next_multiple_of(self, rhs: Self) -> Option<Self> {
         todo!()
     }
 
-    pub const fn log10(self) -> u32 {
+    #[must_use]
+    pub fn checked_next_power_of_two(self) -> Option<Self> {
         todo!()
     }
 
-    pub const fn log2(self) -> u32 {
+    #[must_use]
+    pub fn next_multiple_of(self, rhs: Self) -> Self {
         todo!()
     }
 
-    pub const fn next_multiple_of(self, rhs: u64) -> u64 {
+    #[must_use]
+    pub fn next_power_of_two(self) -> Self {
         todo!()
     }
+}
 
-    pub const fn next_power_of_two(self) -> u64 {
-        todo!()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use proptest::proptest;
+    use std::iter::repeat;
+
+    #[test]
+    fn test_pow2_shl() {
+        const_for!(BITS in NON_ZERO if (BITS >= 2) {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(e in 0..BITS+2)| {
+                assert_eq!(U::from(2).pow(U::from(e)), U::from(1) << e);
+            });
+        });
     }
 
-    pub const fn overflowing_pow(self, exp: u32) -> (u64, bool) {
-        todo!()
-    }
-
-    pub const fn pow(self, exp: u32) -> u64 {
-        todo!()
-    }
-
-    pub const fn saturating_pow(self, exp: u32) -> u64 {
-        todo!()
-    }
-
-    pub const fn wrapping_pow(self, exp: u32) -> u64 {
-        todo!()
+    #[test]
+    fn test_pow_product() {
+        const_for!(BITS in NON_ZERO if (BITS >= 64) {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(b in 2_u64..100, e in 0..BITS)| {
+                let b = U::from(b);
+                let prod = repeat(b).take(e as usize).product();
+                assert_eq!(b.pow(U::from(e)), prod);
+            });
+        });
     }
 }
