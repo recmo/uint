@@ -1,4 +1,5 @@
 use crate::Uint;
+use core::f64;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
@@ -24,6 +25,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.checked_log(2)
     }
 
+    /// # Panics
+    ///
+    /// Panics if the `base` is less than 2 or if the number is zero.
+    #[must_use]
     pub fn log(self, base: u64) -> u64 {
         assert!(base >= 2);
         assert!(self != Self::ZERO);
@@ -35,17 +40,33 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Find approximate result
-        let approx_self = f64::from(self);
-        let approx_base = base as f64;
-        let approx_log = approx_self.log(approx_base);
-        debug_assert!(approx_log > 0.0);
+        // f64 can hold integer values up to 2^53 exactly. With the smallest
+        // possible base (2) `self` would have to be more than a petabyte long
+        // to get into the non-exact integer domain.
+        #[allow(clippy::cast_precision_loss)]
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_sign_loss)]
+        let mut result = {
+            // Ideally we'd use f64::from(self), but that quickly overflows.
+            // So instead we take the highest bits and use
+            // log_base(bits * 2^exp) = (ln(bits) + ln(2) * exp) / ln(base)
+            let (bits, exp) = self.most_significant_bits();
+            // Convert to floats
+            let bits = bits as f64;
+            let exp = exp as f64;
+            let base = base as f64;
+            let result = exp.mul_add(f64::consts::LN_2, bits.ln()) / base.ln();
+            assert!(result.is_finite());
+            assert!(result > 0.0);
+            result.trunc() as u64
+        };
 
-        let mut result = approx_log as u64;
-
-        // Adjust result to get the exact value
+        // Adjust result to get the exact value. At most one of these should happen, but
+        // we loop regardless.
         loop {
             if let Some(value) = Self::from(base).checked_pow(Self::from(result)) {
                 if value > self {
+                    assert!(result >= 1);
                     result -= 1;
                     continue;
                 }
@@ -55,16 +76,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         loop {
             if let Some(value) = Self::from(base).checked_pow(Self::from(result + 1)) {
                 if value <= self {
+                    assert!(result < u64::MAX);
                     result += 1;
                     continue;
                 }
             }
             break;
-        }
-
-        assert!(Self::from(base).pow(Self::from(result)) <= self);
-        if let Some(value) = Self::from(base).checked_pow(Self::from(result + 1)) {
-            assert!(value > self);
         }
 
         result
@@ -105,6 +122,21 @@ mod tests {
                     assert!(value > U::ZERO);
                     assert_eq!(value.log(b), e as u64);
                     // assert_eq!(value.log(b + U::from(1)), e as u64);
+                }
+            });
+        });
+    }
+
+    #[test]
+    fn test_log_pow() {
+        const_for!(BITS in NON_ZERO if (BITS >= 64) {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(b in 2_u64..100, n: U)| {
+                let e = n.log(b);
+                assert!(U::from(b).pow(U::from(e)) <= n);
+                if let Some(value) = U::from(b).checked_pow(U::from(e + 1)) {
+                    assert!(value > n);
                 }
             });
         });
