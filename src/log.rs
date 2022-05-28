@@ -30,9 +30,44 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if base == 2 {
             return self.bit_len() as u64 - 1;
         }
+        if self < Self::from(base) {
+            return 0;
+        }
 
-        // https://people.csail.mit.edu/jaffer/III/ilog.pdf
-        todo!()
+        // Find approximate result
+        let approx_self = f64::from(self);
+        let approx_base = base as f64;
+        let approx_log = approx_self.log(approx_base);
+        debug_assert!(approx_log > 0.0);
+
+        let mut result = approx_log as u64;
+
+        // Adjust result to get the exact value
+        loop {
+            if let Some(value) = Self::from(base).checked_pow(Self::from(result)) {
+                if value > self {
+                    result -= 1;
+                    continue;
+                }
+            }
+            break;
+        }
+        loop {
+            if let Some(value) = Self::from(base).checked_pow(Self::from(result + 1)) {
+                if value <= self {
+                    result += 1;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        assert!(Self::from(base).pow(Self::from(result)) <= self);
+        if let Some(value) = Self::from(base).checked_pow(Self::from(result + 1)) {
+            assert!(value > self);
+        }
+
+        result
     }
 
     pub fn log10(self) -> u64 {
@@ -61,14 +96,15 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_pow_log() {
         const_for!(BITS in NON_ZERO if (BITS >= 64) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0..BITS)| {
                 if let Some(value) = U::from(b).checked_pow(U::from(e)) {
+                    assert!(value > U::ZERO);
                     assert_eq!(value.log(b), e as u64);
+                    // assert_eq!(value.log(b + U::from(1)), e as u64);
                 }
             });
         });

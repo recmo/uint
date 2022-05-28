@@ -9,6 +9,28 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint};
+    /// # uint!{
+    /// //assert_eq!(0_U0.overflowing_pow(0_U0), (0_U0, false));
+    /// //assert_eq!(0_U1.overflowing_pow(0_U1), (0_U1, false));
+    /// //assert_eq!(0_U1.overflowing_pow(1_U1), (0_U1, false));
+    /// //assert_eq!(1_U1.overflowing_pow(0_U1), (1_U1, false));
+    /// assert_eq!(1_U1.overflowing_pow(1_U1), (1_U1, false));
+    /// # }
+    /// ```
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint};
+    /// # uint!{
+    /// assert_eq!(36_U64.overflowing_pow(12_U64), (0x41c21cb8e1000000_U64, false));
+    /// assert_eq!(36_U64.overflowing_pow(13_U64), (0x3f4c09ffa4000000_U64, true));
+    /// assert_eq!(36_U68.overflowing_pow(13_U68), (0x093f4c09ffa4000000_U68, false));
+    /// assert_eq!(16_U65.overflowing_pow(32_U65), (0_U65, true));
+    /// # }
+    /// ```
     #[must_use]
     pub fn overflowing_pow(mut self, exp: Self) -> (Self, bool) {
         if BITS == 0 {
@@ -118,9 +140,9 @@ mod tests {
         const_for!(BITS in NON_ZERO if (BITS >= 64) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(b in 2_u64..100, e in 0..BITS)| {
+            proptest!(|(b in 2_u64..100, e in 0_usize..100)| {
                 let b = U::from(b);
-                let prod = repeat(b).take(e as usize).product();
+                let prod = repeat(b).take(e).product();
                 assert_eq!(b.pow(U::from(e)), prod);
             });
         });
