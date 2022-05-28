@@ -1,5 +1,4 @@
 use crate::Uint;
-use core::f64;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
@@ -49,13 +48,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut result = {
             // Ideally we'd use f64::from(self), but that quickly overflows.
             // So instead we take the highest bits and use
-            // log_base(bits * 2^exp) = (ln(bits) + ln(2) * exp) / ln(base)
+            // log_base(bits * 2^exp) = (log_2(bits) + exp) / log_2(base)
             let (bits, exp) = self.most_significant_bits();
             // Convert to floats
             let bits = bits as f64;
             let exp = exp as f64;
             let base = base as f64;
-            let result = exp.mul_add(f64::consts::LN_2, bits.ln()) / base.ln();
+            let result = (bits.log2() + exp) / base.log2();
             assert!(result.is_finite());
             assert!(result > 0.0);
             result.trunc() as u64
