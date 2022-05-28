@@ -8,7 +8,7 @@ mod rand;
 mod rlp;
 mod serde;
 
-// TODO:
+// FEATURE: Support for many more traits and crates.
 // * https://docs.rs/tracing/latest/tracing/trait.Value.html
 // * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der

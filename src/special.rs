@@ -1,6 +1,6 @@
 use crate::Uint;
 
-// TODO: Special functions
+// FEATURE: Special functions
 // * Factorial
 // * Extended GCD and LCM
 // * https://en.wikipedia.org/wiki/Euler%27s_totient_function

@@ -1,4 +1,4 @@
-// TODO: Implement the Uniform distribution.
+// FEATURE: Implement the Uniform distribution.
 
 #![cfg(feature = "rand")]
 use crate::Uint;

@@ -19,7 +19,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Pro tip: instead of setting `base = 10`, set it to the highest
     /// power of `10` that still fits `u64`. This way much fewer iterations
     /// are required to extract all the digits.
-    // TODO: Internalize this trick so the user won't have to worry about it.
+    // OPT: Internalize this trick so the user won't have to worry about it.
     /// # Panics
     ///
     /// Panics if the base is less than 2.
@@ -37,7 +37,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Pro tip: instead of setting `base = 10`, set it to the highest
     /// power of `10` that still fits `u64`. This way much fewer iterations
     /// are required to extract all the digits.
-    // TODO: Internalize this trick so the user won't have to worry about it.
+    ///
     /// # Panics
     ///
     /// Panics if the base is less than 2.

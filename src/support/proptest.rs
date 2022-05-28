@@ -8,13 +8,13 @@ use proptest::{
 };
 
 impl<const BITS: usize, const LIMBS: usize> Arbitrary for Uint<BITS, LIMBS> {
-    // TODO: Would be nice to have a value range as parameter
+    // FEATURE: Would be nice to have a value range as parameter
     // and/or a choice between uniform and 'exponential' distribution.
     type Parameters = ();
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(_: Self::Parameters) -> BoxedStrategy<Self> {
-        // TODO: Copy [`UniformArrayStrategy`] to avoid heap allocations
+        // OPT: Copy [`UniformArrayStrategy`] to avoid heap allocations
         let limbs: VecStrategy<Any> = vec(u64::arbitrary(), nlimbs(BITS));
         limbs
             .prop_map(|mut limbs| {

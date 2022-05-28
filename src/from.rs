@@ -1,6 +1,6 @@
-// TODO: It would be nice to impl From<_> as well, but then the generic
-// implementation `impl<T: Into<U>, U> TryFrom<U> for T` conflicts with our
-// own implementation. This means we can only implement one.
+// FEATURE: (BLOCKED) It would be nice to impl From<_> as well, but then the
+// generic implementation `impl<T: Into<U>, U> TryFrom<U> for T` conflicts with
+// our own implementation. This means we can only implement one.
 // In principle this can be worked around by `specialization`, but that
 // triggers other compiler issues at the moment.
 
@@ -11,6 +11,22 @@
 // {
 //     fn from(t: T) -> Self {
 //         Self::try_from(t).unwrap()
+//     }
+// }
+
+// FEATURE: (BLOCKED) It would be nice if we could make TryFrom assignment work
+// for all Uints.
+// impl<
+//         const BITS_SRC: usize,
+//         const LIMBS_SRC: usize,
+//         const BITS_DST: usize,
+//         const LIMBS_DST: usize,
+//     > TryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS_DST, LIMBS_DST>
+// {
+//     type Error = ToUintError;
+
+//     fn try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self,
+// Self::Error> {
 //     }
 // }
 
@@ -75,21 +91,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::from_limbs_slice(value.as_limbs())
     }
 }
-
-// TODO: Make this work somehow.
-// impl<
-//         const BITS_SRC: usize,
-//         const LIMBS_SRC: usize,
-//         const BITS_DST: usize,
-//         const LIMBS_DST: usize,
-//     > TryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS_DST, LIMBS_DST>
-// {
-//     type Error = ToUintError;
-
-//     fn try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self,
-// Self::Error> {         todo!()
-//     }
-// }
 
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
@@ -178,11 +179,6 @@ impl_from_signed_int!(i64, u64);
 impl_from_signed_int!(i128, u128);
 impl_from_signed_int!(isize, usize);
 
-// TODO: Make this a const trait using
-// #![feature(const_float_classify)]
-// #![feature(const_fn_floating_point_arithmetic)]
-// #![feature(const_float_bits_conv)]
-// and more.
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError;
 

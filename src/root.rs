@@ -1,3 +1,3 @@
 
-// TODO: Integer and module square root and higher roots.
+// FEATURE: Integer and module square root and higher roots.
 

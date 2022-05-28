@@ -1,5 +1,5 @@
-// TODO: Use u64::from_{be/le}_bytes().
-// TODO: Make `const fn`s when `const_for` is stable.
+// OPT: Use u64::from_{be/le}_bytes() to work 8 bytes at a time.
+// FEATURE: (BLOCKED) Make `const fn`s when `const_for` is stable.
 
 use crate::{
     utils::{trim_end_slice, trim_end_vec},

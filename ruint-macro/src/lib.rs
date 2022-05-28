@@ -21,7 +21,7 @@ fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
 }
 
 /// Construct a compiler error message.
-// FEATURE: Replace with Diagnostic API when stable.
+// FEATURE: (BLOCKED) Replace with Diagnostic API when stable.
 // See <https://doc.rust-lang.org/stable/proc_macro/struct.Diagnostic.html>
 fn error(span: Span, message: &str) -> TokenStream {
     // See: https://docs.rs/syn/1.0.70/src/syn/error.rs.html#243
@@ -94,7 +94,6 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
         #[allow(clippy::cast_lossless)]
         #[allow(clippy::cast_possible_truncation)]
         for limb in &mut limbs {
-            // TODO: Use `carry_mul` when stable.
             let product = (*limb as u128) * (base as u128) + (carry as u128);
             *limb = product as u64;
             carry = (product >> 64) as u64;

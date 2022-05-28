@@ -5,7 +5,7 @@ use core::fmt::{
 use std::str::FromStr;
 use thiserror::Error;
 
-// TODO: Respect width parameter in formatters.
+// FEATURE: Respect width parameter in formatters.
 
 impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
@@ -115,8 +115,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// * [`ParseError::InvalidDigit`] if the string contains a non-digit.
     /// * [`ParseError::InvalidRadix`] if the radix is larger than 64.
     /// * [`ParseError::BaseConvertError`] if [`Uint::from_base_be`] fails.
-    // TODO: Do proper unicode. Ignore zero-width spaces, joiners, etc. Recognize
-    // digits from other alphabets.
+    // FEATURE: Support proper unicode. Ignore zero-width spaces, joiners, etc.
+    // Recognize digits from other alphabets.
     pub fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError> {
         if radix > 64 {
             return Err(ParseError::InvalidRadix(radix));

@@ -47,9 +47,6 @@ pub use self::{base_convert::BaseConvertError, bytes::nbytes, string::ParseError
 #[doc(inline)]
 pub use ruint_macro::uint;
 
-// TODO: Have a `struct OverflowError` and use `Result<Self, OverflowError>`
-// instead of `Option<Self>`.
-
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
     //! Extra features that are nightly only.
@@ -78,6 +75,14 @@ pub mod nightly {
     /// See [`Uint`] for more information.
     pub type Bits<const BITS: usize> = crate::Bits<BITS, { crate::nlimbs(BITS) }>;
 }
+
+// FEATURE: (BLOCKED) Many functions could be made `const` if a number of
+// features land. This requires
+// #![feature(const_mut_refs)]
+// #![feature(const_float_classify)]
+// #![feature(const_fn_floating_point_arithmetic)]
+// #![feature(const_float_bits_conv)]
+// and more.
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 ///
@@ -145,7 +150,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Access the array of limbs.
-    // TODO: Can be made `const` with `#![feature(const_mut_refs)]`.
     #[must_use]
     pub fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
@@ -171,7 +175,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
         Self::assert_valid();
         if BITS > 0 {
-            // TODO: Add `<{BITS}>` to the type when Display works in const fn.
+            // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
                 limbs[Self::LIMBS - 1] <= Self::MASK,
                 "Value too large for this Uint"
@@ -216,7 +220,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     const fn assert_valid() {
-        // TODO: Replace with `assert_eq!` when it is made `const`.
+        // REFACTOR: (BLOCKED) Replace with `assert_eq!` when it is made `const`.
         // Blocked on Rust, not issue known.
         #[allow(clippy::manual_assert)]
         if LIMBS != Self::LIMBS {

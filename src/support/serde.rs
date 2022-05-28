@@ -15,7 +15,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
-            // TODO: Without allocations
+            // OPT: Allocation free method.
             let mut result = String::with_capacity(2 * Self::BYTES + 2);
             result.push_str("0x");
             for byte in bytes {
@@ -32,7 +32,6 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
 /// Deserialize human readable hex strings or byte arrays into hashes.
 /// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
 /// can be any length. They are interpreted big-endian.
-// TODO: Document and test the range of valid inputs.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         if deserializer.is_human_readable() {

@@ -592,9 +592,8 @@ mod tests {
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let zeros = value.leading_zeros();
                 assert!(zeros <= BITS);
-                // TODO: Check with bitshift operators.
-                // assert!(value << zeros >= Uint::MAX >> 1);
-                // assert_eq!(value >> (BITS - zeros), Uint::ZERO);
+                assert!(value << zeros >= Uint::MAX >> 1);
+                assert_eq!(value >> (BITS - zeros), Uint::ZERO);
             });
         });
         proptest!(|(value: u128)| {
