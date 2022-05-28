@@ -1,6 +1,6 @@
-use crate::{impl_bin_op, Uint};
+use crate::{impl_bin_op, nlimbs, Uint};
 use core::{
-    iter::Product,
+    iter::{zip, Product},
     num::Wrapping,
     ops::{Mul, MulAssign},
 };
@@ -127,27 +127,59 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Panics
     ///
-    /// Panics if `LIMBS2` does not equal `LIMBS * 2`.
-    #[allow(clippy::inline_always)]
-    #[inline(always)]
+    /// This function will runtime panic of the const generic arguments are
+    /// incorrect.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint};
+    /// # uint!{
+    /// assert_eq!(0_U0.widening_mul(0_U0), 0_U0);
+    /// assert_eq!(1_U1.widening_mul(1_U1), 1_U2);
+    /// assert_eq!(3_U2.widening_mul(7_U3), 21_U5);
+    /// # }
+    /// ```
     #[must_use]
-    pub fn widening_mul(self, rhs: Self) -> (Self, Self) {
-        self.carrying_mul(rhs, Self::ZERO)
-    }
+    pub fn widening_mul<
+        const BITS_RHS: usize,
+        const LIMBS_RHS: usize,
+        const BITS_RES: usize,
+        const LIMBS_RES: usize,
+    >(
+        self,
+        rhs: Uint<BITS_RHS, LIMBS_RHS>,
+    ) -> Uint<BITS_RES, LIMBS_RES> {
+        assert_eq!(BITS_RES, BITS + BITS_RHS);
+        assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
 
-    /// Calculates the “full multiplication” `self * rhs + carry` without the
-    /// possibility to overflow.
-    ///
-    /// This returns the low-order (wrapping) bits and the high-order (overflow)
-    /// bits of the result as two separate values, in that order.
-    ///
-    /// # Panics
-    ///
-    /// Currently unimplemented
-    #[must_use]
-    #[allow(clippy::unused_self)]
-    pub fn carrying_mul(self, _rhs: Self, _carry: Self) -> (Self, Self) {
-        todo!() // TODO mul with mixed sizes and output sum of sizes
+        let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
+
+        for (i, &lhs) in self.limbs.iter().enumerate() {
+            let (res, res_carry) = result.limbs.split_at_mut(i + LIMBS_RHS);
+            debug_assert_eq!(res.len(), LIMBS_RHS);
+
+            let mut carry = 0_u128;
+            #[allow(clippy::cast_possible_truncation)] // Intentional
+            for (res, &rhs) in zip(res.iter_mut(), rhs.limbs.iter()) {
+                carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
+                *res = carry as u64;
+                carry >>= 64;
+            }
+            #[allow(clippy::cast_possible_truncation)] // Intentional
+            for res in res_carry.iter_mut() {
+                carry += u128::from(*res);
+                *res = carry as u64;
+                carry >>= 64;
+            }
+            debug_assert_eq!(carry, 0);
+        }
+
+        if LIMBS_RES > 0 {
+            debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
+        }
+
+        result
     }
 }
 
@@ -240,6 +272,27 @@ mod tests {
             });
         });
     }
+
+
+    #[test]
+    fn test_widening_mul() {
+        const_for!(BITS_LHS in BENCH {
+            const LIMBS_LHS: usize = nlimbs(BITS_LHS);
+            const_for!(BITS_RHS in BENCH {
+                const LIMBS_RHS: usize = nlimbs(BITS_RHS);
+                const BITS_RES: usize = BITS_LHS + BITS_RHS;
+                const LIMBS_RES: usize = nlimbs(BITS_RES);
+                type Lhs = Uint<BITS_LHS, LIMBS_LHS>;
+                type Rhs = Uint<BITS_RHS, LIMBS_RHS>;
+                type Res = Uint<BITS_RES, LIMBS_RES>;
+                proptest!(|(lhs: Lhs, rhs: Rhs)| {
+                    let expected = Res::from(lhs) * Res::from(rhs);
+                    assert_eq!(lhs.widening_mul(rhs), expected);
+                });
+            });
+        });
+    }
+
 }
 
 #[cfg(feature = "bench")]
@@ -258,6 +311,15 @@ pub mod bench {
             const LIMBS: usize = nlimbs(BITS);
             bench_mul::<BITS, LIMBS>(criterion);
         });
+        const_for!(BITS_LHS in BENCH {
+            const LIMBS_LHS: usize = nlimbs(BITS_LHS);
+            const_for!(BITS_RHS in BENCH {
+                const LIMBS_RHS: usize = nlimbs(BITS_RHS);
+                const BITS_RES: usize = BITS_LHS + BITS_RHS;
+                const LIMBS_RES: usize = nlimbs(BITS_RES);
+                bench_widening_mul::<BITS_LHS, LIMBS_LHS, BITS_RHS, LIMBS_RHS, BITS_RES, LIMBS_RES>(criterion);
+            });
+        });
     }
 
     fn bench_mul<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
@@ -270,5 +332,38 @@ pub mod bench {
                 BatchSize::SmallInput,
             );
         });
+    }
+
+    fn bench_widening_mul<
+        const BITS_LHS: usize,
+        const LIMBS_LHS: usize,
+        const BITS_RHS: usize,
+        const LIMBS_RHS: usize,
+        const BITS_RES: usize,
+        const LIMBS_RES: usize,
+    >(
+        criterion: &mut Criterion,
+    ) {
+        let input = (
+            Uint::<BITS_LHS, LIMBS_LHS>::arbitrary(),
+            Uint::<BITS_RHS, LIMBS_RHS>::arbitrary(),
+        );
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(
+            &format!("widening_mul/{}/{}", BITS_LHS, BITS_RHS),
+            move |bencher| {
+                bencher.iter_batched(
+                    || input.new_tree(&mut runner).unwrap().current(),
+                    |(a, b)| {
+                        black_box(
+                            black_box(a).widening_mul::<BITS_RHS, LIMBS_RHS, BITS_RES, LIMBS_RES>(
+                                black_box(b),
+                            ),
+                        )
+                    },
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
 }
