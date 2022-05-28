@@ -32,8 +32,9 @@ print('Connected to', repo)
 # GitHub labels for issues
 labels = {
     'TODO': ['tracker', 'to do'],
+    'FEATURE': ['tracker', 'feature'],
     'OPT': ['tracker', 'optimize'],
-    'HACK': ['tracker', 'hack']
+    'HACK': ['tracker', 'hack'],
 }
 
 # GitHub users for emails
