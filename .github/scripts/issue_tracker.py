@@ -33,6 +33,7 @@ print('Connected to', repo)
 labels = {
     'TODO': ['tracker', 'to do'],
     'FEATURE': ['tracker', 'feature'],
+    'REFACTOR': ['tracker', 'refactor'],
     'OPT': ['tracker', 'optimize'],
     'HACK': ['tracker', 'hack'],
 }
@@ -204,7 +205,7 @@ def render(issue):
 <!--{json}-->
 '''.strip().format(**issue),
         assignee=users[issue['author-mail']],
-        labels=labels[issue['kind']]
+        labels=labels[issue['kind']] + (['blocked'] if 'blocked' in issue else []),
     )
 
 
