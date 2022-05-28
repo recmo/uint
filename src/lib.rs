@@ -28,6 +28,7 @@ mod from;
 mod log;
 mod mul;
 mod pow;
+mod special;
 mod string;
 mod support;
 mod uint_dyn;

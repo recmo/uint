@@ -89,34 +89,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    /// Returns `true` if and only if `self == 2^k` for some `k`.
-    #[must_use]
-    pub fn is_power_of_two(self) -> bool {
-        self.count_ones() == 1
-    }
-
-    #[must_use]
-    pub fn checked_next_multiple_of(self, rhs: Self) -> Option<Self> {
-        todo!()
-    }
-
-    #[must_use]
-    pub fn checked_next_power_of_two(self) -> Option<Self> {
-        todo!()
-    }
-
-    #[must_use]
-    pub fn next_multiple_of(self, rhs: Self) -> Self {
-        todo!()
-    }
-
-    #[must_use]
-    pub fn next_power_of_two(self) -> Self {
-        todo!()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
