@@ -586,14 +586,21 @@ mod tests {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
-            assert_eq!(Uint::<BITS, LIMBS>::ZERO.leading_zeros(), BITS);
-            assert_eq!(Uint::<BITS, LIMBS>::MAX.leading_zeros(), 0);
-            assert_eq!(Uint::<BITS, LIMBS>::from(1).leading_zeros(), BITS - 1);
-            proptest!(|(value: Uint<BITS, LIMBS>)| {
+            type U = Uint::<BITS, LIMBS>;
+            assert_eq!(U::ZERO.leading_zeros(), BITS);
+            assert_eq!(U::MAX.leading_zeros(), 0);
+            assert_eq!(U::from(1).leading_zeros(), BITS - 1);
+            proptest!(|(value: U)| {
                 let zeros = value.leading_zeros();
                 assert!(zeros <= BITS);
-                assert!(value << zeros >= Uint::MAX >> 1);
-                assert_eq!(value >> (BITS - zeros), Uint::ZERO);
+                assert!(zeros < BITS || value == U::ZERO);
+                if zeros < BITS {
+                    let (left, overflow) = value.overflowing_shl(zeros);
+                    assert!(!overflow);
+                    assert!(left.leading_zeros() == 0 || value == U::ZERO);
+                    assert!(left.bit(BITS - 1));
+                    assert_eq!(value >> (BITS - zeros), Uint::ZERO);
+                }
             });
         });
         proptest!(|(value: u128)| {
