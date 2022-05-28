@@ -262,5 +262,7 @@ pub mod bench {
         add::bench::group(criterion);
         mul::bench::group(criterion);
         div::bench::group(criterion);
+        pow::bench::group(criterion);
+        log::bench::group(criterion);
     }
 }

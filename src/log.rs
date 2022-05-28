@@ -86,10 +86,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         result
     }
 
+    #[must_use]
     pub fn log10(self) -> u64 {
         self.log(10)
     }
 
+    #[must_use]
     pub fn log2(self) -> u64 {
         self.log(2)
     }
@@ -99,7 +101,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U128, const_for, nlimbs};
-    use proptest::proptest;
+    use proptest::{proptest, prop_assume};
 
     #[test]
     fn test_checked_log2() {
@@ -132,12 +134,44 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, n: U)| {
+                prop_assume!(n > U::ZERO);
                 let e = n.log(b);
                 assert!(U::from(b).pow(U::from(e)) <= n);
                 if let Some(value) = U::from(b).checked_pow(U::from(e + 1)) {
                     assert!(value > n);
                 }
             });
+        });
+    }
+}
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use ::proptest::{
+        arbitrary::Arbitrary,
+        strategy::{Strategy, ValueTree},
+        test_runner::TestRunner,
+    };
+    use criterion::{black_box, BatchSize, Criterion};
+
+    pub fn group(criterion: &mut Criterion) {
+        const_for!(BITS in BENCH {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_log::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_log<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), 2_u64..100);
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("log/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(n, b)| black_box(black_box(n).checked_log(b)),
+                BatchSize::SmallInput,
+            );
         });
     }
 }

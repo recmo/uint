@@ -148,3 +148,34 @@ mod tests {
         });
     }
 }
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use ::proptest::{
+        arbitrary::Arbitrary,
+        strategy::{Strategy, ValueTree},
+        test_runner::TestRunner,
+    };
+    use criterion::{black_box, BatchSize, Criterion};
+
+    pub fn group(criterion: &mut Criterion) {
+        const_for!(BITS in BENCH {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_pow::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("pow/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(b, e)| black_box(black_box(b).pow(black_box(e))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+}
