@@ -18,7 +18,7 @@ mod add;
 mod algorithms;
 pub mod aliases;
 mod base_convert;
-mod bit_vec;
+mod bit_arr;
 mod bits;
 mod bytes;
 mod cmp;
@@ -34,12 +34,12 @@ mod support;
 mod uint_dyn;
 mod utils;
 
-#[cfg(feature = "dyn")]
+#[cfg(all(feature = "dyn", feature = "unstable"))]
 #[doc(inline)]
 pub use uint_dyn::UintDyn;
 
 #[doc(inline)]
-pub use bit_vec::Bits;
+pub use bit_arr::Bits;
 
 #[doc(inline)]
 pub use self::{base_convert::BaseConvertError, bytes::nbytes, string::ParseError};

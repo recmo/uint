@@ -5,7 +5,7 @@ use core::ops::{
 };
 use std::borrow::Cow;
 
-/// Bit vector
+/// Bit array.
 ///
 /// This is a newtype wrapper around [`Uint<BITS, LIMBS>`] that restricts
 /// operations to those relevant for bit vectors.
