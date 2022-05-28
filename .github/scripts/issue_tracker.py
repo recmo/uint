@@ -64,7 +64,7 @@ CONTEXT_LINES = 5
 # Rust like todos. For *.{rs}
 rust_todo = re.compile(r'//\W*(TODO|HACK|OPT)\W*(.*)$')
 rust_continuation = re.compile(r'//\W*(?!(TODO|HACK|OPT))(.*)$')
-# TODO: `todo!(..)` macros.
+rust_todo_macro = re.compile(r'\btodo!\((.*)\)')
 
 # Shell like todos. For *.{sh, yml, toml, py, Dockerfile, editorconfig, gitignore}
 # TODO: `# TODO: {message}`
@@ -142,8 +142,31 @@ def issues_from_file(filename):
                 issue = None
                 kind = None
                 issue_line = 0
+            else:
+                match = rust_todo_macro.search(line)
+                if match:
+                    issue = match.group(1)
+                    if issue == "":
+                        issue = "todo!()"
+                    kind = 'TODO'
+                    issue_line = line_number
+                    result = git_blame(filename, issue_line)
+                    context = get_context(
+                        filename,
+                        issue_line - CONTEXT_LINES,
+                        line_number + CONTEXT_LINES
+                    )
+                    result['filename'] = filename
+                    result['line'] = issue_line
+                    result['line_end'] = line_number
+                    result['kind'] = kind
+                    result['issue'] = issue
+                    result['head'] = issue.split('\n')[0]
+                    result['context'] = context
+                    result['repo'] = repo.full_name
+                    result['branch-hash'] = commit_hash
+                    yield result
             line_number += 1
-
 
 def issues_from_glob(pattern):
     for filename in glob.iglob(pattern, recursive=True):
