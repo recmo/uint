@@ -125,16 +125,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         (self.bit_len() + 7) / 8
     }
 
-    /// Returns the base 2 logarithm of the number, rounded down.
-    ///
-    /// This is equivalent to the index of the highest set bit.
-    ///
-    /// Returns None if the number is zero.
-    #[must_use]
-    pub fn checked_log2(&self) -> Option<usize> {
-        self.bit_len().checked_sub(1)
-    }
-
     /// Returns the most significant 64 bits of the number and the exponent.
     ///
     /// Given return value $(\mathtt{bits}, \mathtt{exponent})$, the `self` can
@@ -168,8 +158,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (bits, exponent)
         }
     }
-
-    // TODO: is_power_of_two, next_power_of_two
 
     /// Checked left shift by `rhs` bits.
     ///
@@ -633,16 +621,6 @@ mod tests {
             assert!(bits >= 1_u64 << 63);
             assert_eq!(exponent, 64 - limbs[1].leading_zeros() as usize);
         });
-    }
-
-    #[test]
-    fn test_checked_log2() {
-        assert_eq!(U128::from(0).checked_log2(), None);
-        assert_eq!(U128::from(1).checked_log2(), Some(0));
-        assert_eq!(U128::from(2).checked_log2(), Some(1));
-        assert_eq!(U128::from(3).checked_log2(), Some(1));
-        assert_eq!(U128::from(127).checked_log2(), Some(6));
-        assert_eq!(U128::from(128).checked_log2(), Some(7));
     }
 
     #[test]

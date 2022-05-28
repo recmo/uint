@@ -186,11 +186,7 @@ impl<const BITS: usize, const LIMBS: usize> Sum<Self> for Uint<BITS, LIMBS> {
     where
         I: Iterator<Item = Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result += item;
-        }
-        result
+        iter.fold(Self::ZERO, Self::wrapping_add)
     }
 }
 
@@ -199,11 +195,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Sum<&'a Self> for Uint<BITS, LIM
     where
         I: Iterator<Item = &'a Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result += item;
-        }
-        result
+        iter.copied().fold(Self::ZERO, Self::wrapping_add)
     }
 }
 

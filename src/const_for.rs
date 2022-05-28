@@ -58,4 +58,11 @@ macro_rules! const_for {
     ($C:ident in BENCH $x:block) => {
         const_for!($C in [0, 64, 160, 256, 384, 512, 4096] $x);
     };
+    ($C:ident in $S:ident if ( $c:expr ) $x:block) => {
+        const_for!($C in $S {
+            if $c {
+                $x
+            }
+        });
+    };
 }

@@ -22,6 +22,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns a tuple of the multiplication along with a boolean indicating
     /// whether an arithmetic overflow would occur. If an overflow would have
     /// occurred then the wrapped value is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint};
+    /// # uint!{
+    /// assert_eq!(1_U1.overflowing_mul(1_U1), (1_U1, false));
+    /// assert_eq!(0x010000000000000000_U65.overflowing_mul(0x010000000000000000_U65), (0x000000000000000000_U65, true));
+    /// # }
+    /// ```
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         if BITS == 0 {
@@ -30,14 +40,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut result = Self::ZERO;
         let mut overflow = false;
         for (i, &rhs) in rhs.limbs.iter().enumerate() {
+            if rhs == 0 {
+                continue;
+            }
+            let (lhs, lhs_overflow) = self.limbs.split_at(LIMBS - i);
             let mut carry = 0_u128;
             #[allow(clippy::cast_possible_truncation)] // Intentional
-            for (res, &lhs) in result.limbs[i..].iter_mut().zip(self.limbs.iter()) {
+            for (res, &lhs) in result.limbs[i..].iter_mut().zip(lhs.iter()) {
                 carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
                 *res = carry as u64;
                 carry >>= 64;
             }
             overflow |= carry != 0;
+            for &lhs in lhs_overflow.iter() {
+                if lhs > 0 {
+                    overflow = true;
+                    break;
+                }
+            }
         }
         overflow |= result.limbs[LIMBS - 1] > Self::MASK;
         result.limbs[LIMBS - 1] &= Self::MASK;
@@ -136,11 +156,10 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> 
     where
         I: Iterator<Item = Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result *= item;
+        if BITS == 0 {
+            return Self::ZERO;
         }
-        result
+        iter.fold(Self::from(1), Self::wrapping_mul)
     }
 }
 
@@ -149,11 +168,10 @@ impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS,
     where
         I: Iterator<Item = &'a Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result *= item;
+        if BITS == 0 {
+            return Self::ZERO;
         }
-        result
+        iter.copied().fold(Self::from(1), Self::wrapping_mul)
     }
 }
 
