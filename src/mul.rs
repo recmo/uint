@@ -141,6 +141,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # }
     /// ```
     #[must_use]
+    #[allow(clippy::similar_names)] // Don't confuse `res` and `rhs`.
     pub fn widening_mul<
         const BITS_RHS: usize,
         const LIMBS_RHS: usize,

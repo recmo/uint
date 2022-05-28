@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added add, sub, neg and sum functions.
-- Added non-widening mul functions.
+- Added mul functions.
 - Added division and remainder functions.
 - Added pow and log functions.
 - Added `next_power_of_two` and `next_multiple_of` functions.
