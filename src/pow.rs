@@ -101,7 +101,7 @@ mod tests {
         const_for!(BITS in NON_ZERO if (BITS >= 2) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(e in 0..BITS+2)| {
+            proptest!(|(e in 0..=BITS+1)| {
                 assert_eq!(U::from(2).pow(U::from(e)), U::from(1) << e);
             });
         });
