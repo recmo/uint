@@ -122,8 +122,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Calculates the complete product `self * rhs` without the possibility to
     /// overflow.
     ///
-    /// This returns the low-order (wrapping) bits and the high-order (overflow)
-    /// bits of the result as two separate values, in that order.
+    /// The argument `rhs` can be any size [`Uint`], the result size is the sum
+    /// of the bit-sizes of `self` and `rhs`.
     ///
     /// # Panics
     ///
