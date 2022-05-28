@@ -101,7 +101,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U128, const_for, nlimbs};
-    use proptest::{proptest, prop_assume};
+    use proptest::{prop_assume, proptest};
 
     #[test]
     fn test_checked_log2() {
