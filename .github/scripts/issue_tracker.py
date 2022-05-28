@@ -106,6 +106,12 @@ def get_context(filename, start, end):
         end = min(end, len(lines))
         return ''.join(lines[start:end])
 
+def prep_filename(filename):
+    if filename.startswith('src/'):
+        filename = filename[4:]
+    if filename.endswith('.rs'):
+        filename = filename[:-3]
+    return f"`{filename}`: "
 
 def issues_from_file(filename):
     with open(filename, 'r') as file:
@@ -134,8 +140,7 @@ def issues_from_file(filename):
                 result['line_end'] = line_number
                 result['kind'] = kind
                 result['issue'] = issue
-                result['head'] = '`' + filename.lstrip(
-                    "src/").rstrip(".rs") + '`: ' + issue.split('\n')[0]
+                result['head'] = prep_filename(filename) + issue.split('\n')[0]
                 result['context'] = context
                 result['repo'] = repo.full_name
                 result['branch-hash'] = commit_hash
@@ -162,8 +167,7 @@ def issues_from_file(filename):
                     result['line_end'] = line_number
                     result['kind'] = kind
                     result['issue'] = issue
-                    result['head'] = '`' + filename.lstrip(
-                        "src/").rstrip(".rs") + '`: ' + issue.split('\n')[0]
+                    result['head'] = prep_filename(filename)  + issue.split('\n')[0]
                     result['context'] = context
                     result['repo'] = repo.full_name
                     result['branch-hash'] = commit_hash
