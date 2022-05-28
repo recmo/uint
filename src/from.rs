@@ -40,6 +40,7 @@ pub enum FromUintError<const BITS: usize, T> {
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
+    ///
     /// Panics if the conversion fails, for example if the value is too large
     /// for the bit-size of the [`Uint`]. The panic will be attributed to the
     /// call site.
@@ -55,19 +56,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             Err(e) => panic!("Uint conversion error: {}", e),
         }
     }
+
+    #[must_use]
+    pub fn checked_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
+        value: Uint<BITS_SRC, LIMBS_SRC>,
+    ) -> Option<Self> {
+        Self::checked_from_limbs_slice(value.as_limbs())
+    }
+
+    /// # Panics
+    ///
+    /// Panics if the value is too large for the target type.
+    #[must_use]
+    #[track_caller]
+    pub fn from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
+        value: Uint<BITS_SRC, LIMBS_SRC>,
+    ) -> Self {
+        Self::from_limbs_slice(value.as_limbs())
+    }
 }
 
 // TODO: Make this work somehow.
 // impl<
-//     const SBITS: usize,
-//     const SLIMBS: usize,
-//     const TBITS: usize,
-//     const TLIMBS: usize,
-// > TryFrom<Uint<SBITS, SLIMBS>> for Uint<TBITS, TLIMBS> { type Error =
-// > ToUintError;
+//         const BITS_SRC: usize,
+//         const LIMBS_SRC: usize,
+//         const BITS_DST: usize,
+//         const LIMBS_DST: usize,
+//     > TryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS_DST, LIMBS_DST>
+// {
+//     type Error = ToUintError;
 
-//     fn try_from(value: Uint<SBITS, SLIMBS>) -> Result<Self, Self::Error> {
-//         todo!()
+//     fn try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self,
+// Self::Error> {         todo!()
 //     }
 // }
 
