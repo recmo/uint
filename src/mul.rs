@@ -156,8 +156,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
 
         for (i, &lhs) in self.limbs.iter().enumerate() {
-            let (res, res_carry) = result.limbs.split_at_mut(i + LIMBS_RHS);
-            // debug_assert_eq!(res.len(), LIMBS_RHS);
+            let (res, res_carry) = result.limbs[i..].split_at_mut(LIMBS_RHS);
+            debug_assert_eq!(res.len(), LIMBS_RHS);
 
             let mut carry = 0_u128;
             #[allow(clippy::cast_possible_truncation)] // Intentional
@@ -275,16 +275,23 @@ mod tests {
 
     #[test]
     fn test_widening_mul() {
+        // Left hand side
         const_for!(BITS_LHS in BENCH {
             const LIMBS_LHS: usize = nlimbs(BITS_LHS);
+            type Lhs = Uint<BITS_LHS, LIMBS_LHS>;
+
+            // Right hand side
             const_for!(BITS_RHS in BENCH {
                 const LIMBS_RHS: usize = nlimbs(BITS_RHS);
+                type Rhs = Uint<BITS_RHS, LIMBS_RHS>;
+
+                // Result
                 const BITS_RES: usize = BITS_LHS + BITS_RHS;
                 const LIMBS_RES: usize = nlimbs(BITS_RES);
-                type Lhs = Uint<BITS_LHS, LIMBS_LHS>;
-                type Rhs = Uint<BITS_RHS, LIMBS_RHS>;
                 type Res = Uint<BITS_RES, LIMBS_RES>;
+
                 proptest!(|(lhs: Lhs, rhs: Rhs)| {
+                    // Compute the result using the target size
                     let expected = Res::from_uint(lhs) * Res::from_uint(rhs);
                     assert_eq!(lhs.widening_mul(rhs), expected);
                 });
