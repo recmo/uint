@@ -157,7 +157,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         for (i, &lhs) in self.limbs.iter().enumerate() {
             let (res, res_carry) = result.limbs.split_at_mut(i + LIMBS_RHS);
-            debug_assert_eq!(res.len(), LIMBS_RHS);
+            // debug_assert_eq!(res.len(), LIMBS_RHS);
 
             let mut carry = 0_u128;
             #[allow(clippy::cast_possible_truncation)] // Intentional
@@ -273,7 +273,6 @@ mod tests {
         });
     }
 
-
     #[test]
     fn test_widening_mul() {
         const_for!(BITS_LHS in BENCH {
@@ -286,13 +285,12 @@ mod tests {
                 type Rhs = Uint<BITS_RHS, LIMBS_RHS>;
                 type Res = Uint<BITS_RES, LIMBS_RES>;
                 proptest!(|(lhs: Lhs, rhs: Rhs)| {
-                    let expected = Res::from(lhs) * Res::from(rhs);
+                    let expected = Res::from_uint(lhs) * Res::from_uint(rhs);
                     assert_eq!(lhs.widening_mul(rhs), expected);
                 });
             });
         });
     }
-
 }
 
 #[cfg(feature = "bench")]
