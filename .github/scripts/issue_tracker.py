@@ -134,7 +134,8 @@ def issues_from_file(filename):
                 result['line_end'] = line_number
                 result['kind'] = kind
                 result['issue'] = issue
-                result['head'] = issue.split('\n')[0]
+                result['head'] = filename.lstrip(
+                    "src/").rstrip(".rs") + ':' + issue.split('\n')[0]
                 result['context'] = context
                 result['repo'] = repo.full_name
                 result['branch-hash'] = commit_hash
@@ -161,7 +162,8 @@ def issues_from_file(filename):
                     result['line_end'] = line_number
                     result['kind'] = kind
                     result['issue'] = issue
-                    result['head'] = issue.split('\n')[0]
+                    result['head'] = filename.lstrip(
+                        "src/").rstrip(".rs") + ':' + issue.split('\n')[0]
                     result['context'] = context
                     result['repo'] = repo.full_name
                     result['branch-hash'] = commit_hash

@@ -21,7 +21,7 @@ fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
 }
 
 /// Construct a compiler error message.
-// TODO: Replace with Diagnostic API when stable.
+// FEATURE: Replace with Diagnostic API when stable.
 // See <https://doc.rust-lang.org/stable/proc_macro/struct.Diagnostic.html>
 fn error(span: Span, message: &str) -> TokenStream {
     // See: https://docs.rs/syn/1.0.70/src/syn/error.rs.html#243
