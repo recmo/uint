@@ -136,11 +136,10 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> 
     where
         I: Iterator<Item = Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result *= item;
+        if BITS == 0 {
+            return Self::ZERO;
         }
-        result
+        iter.fold(Self::from(1), Self::wrapping_mul)
     }
 }
 
@@ -149,11 +148,10 @@ impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS,
     where
         I: Iterator<Item = &'a Self>,
     {
-        let mut result = Self::ZERO;
-        for item in iter {
-            result *= item;
+        if BITS == 0 {
+            return Self::ZERO;
         }
-        result
+        iter.copied().fold(Self::from(1), Self::wrapping_mul)
     }
 }
 
