@@ -99,6 +99,10 @@ pub mod nightly {
 /// * [`Uint::to_le_bytes`] and [`Uint::to_be_bytes`] require the output size to
 ///   be provided as a const-generic argument. They will runtime panic if the
 ///   provided size is incorrect.
+/// * [`Uint::widening_mul`] takes as argument an [`Uint`] of arbitrary size and
+///   returns a result that is sized to fit the product without overflow (i.e.
+///   the sum of the bit sizes of self and the argument). The std version
+///   requires same-sized arguments and returns a pair of lower and higher bits.
 ///
 /// [std-overflow]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -155,6 +159,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.limbs
     }
 
+    /// Construct a new integer from little-endian a array of limbs.
+    ///
     /// # Panics
     ///
     /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
@@ -174,12 +180,39 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self { limbs }
     }
 
+    /// Construct a new integer from little-endian a slice of limbs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
     pub fn from_limbs_slice(slice: &[u64]) -> Self {
+        Self::checked_from_limbs_slice(slice).expect("Value too large for this Uint")
+    }
+
+    /// Construct a new integer from little-endian a slice of limbs, or `None`
+    /// if the value is too large for the [`Uint`].
+    #[must_use]
+    #[track_caller]
+    pub fn checked_from_limbs_slice(slice: &[u64]) -> Option<Self> {
         let mut limbs = [0; LIMBS];
-        limbs.copy_from_slice(slice);
-        Self::from_limbs(limbs)
+        if slice.len() < Self::LIMBS {
+            limbs[..slice.len()].copy_from_slice(slice);
+        } else {
+            let (head, tail) = slice.split_at(limbs.len());
+            limbs.copy_from_slice(head);
+            for &limb in tail {
+                if limb != 0 {
+                    return None;
+                }
+            }
+        }
+        if BITS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
+            None
+        } else {
+            Some(Self::from_limbs(limbs))
+        }
     }
 
     const fn assert_valid() {
