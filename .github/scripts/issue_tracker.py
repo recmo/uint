@@ -63,8 +63,9 @@ print('Found', len(open_issues), 'tracked issues on GitHub.')
 CONTEXT_LINES = 5
 
 # Rust like todos. For *.{rs}
-rust_todo = re.compile(r'//\W*(TODO|HACK|OPT)\W*(.*)$')
-rust_continuation = re.compile(r'//\W*(?!(TODO|HACK|OPT))(.*)$')
+rust_todo = re.compile(r'//\W*(TODO|HACK|OPT|FEATURE|REFACTOR)\W*(.*)$')
+rust_continuation = re.compile(
+    r'//\W*(?!(TODO|HACK|OPT|FEATURE|REFACTOR))(.*)$')
 rust_todo_macro = re.compile(r'\btodo!\((.*)\)')
 
 # Shell like todos. For *.{sh, yml, toml, py, Dockerfile, editorconfig, gitignore}
