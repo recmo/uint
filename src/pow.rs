@@ -87,6 +87,66 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn wrapping_pow(self, exp: Self) -> Self {
         self.overflowing_pow(exp).0
     }
+
+    /// Construct from double precision binary logarithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(U64::approx_pow2(-2.0), Some(0_U64));
+    /// assert_eq!(U64::approx_pow2(-1.0), Some(1_U64));
+    /// assert_eq!(U64::approx_pow2(0.0), Some(1_U64));
+    /// assert_eq!(U64::approx_pow2(1.0), Some(2_U64));
+    /// assert_eq!(U64::approx_pow2(1.6), Some(3_U64));
+    /// assert_eq!(U64::approx_pow2(2.0), Some(4_U64));
+    /// assert_eq!(U64::approx_pow2(64.0), None);
+    /// assert_eq!(U64::approx_pow2(10.385), Some(1337_U64));
+    /// # }
+    /// ```
+    #[must_use]
+    pub fn approx_pow2(exp: f64) -> Option<Self> {
+        const LN2_1P5: f64 = 0.584_962_500_721_156_2_f64;
+        const EXP2_63: f64 = 9_223_372_036_854_775_808_f64;
+
+        // FEATURE: Round negative to zero.
+        #[allow(clippy::cast_precision_loss)] // Self::BITS ~< 2^52 and so fits f64.
+        if exp < LN2_1P5 {
+            if exp < -1.0 {
+                return Some(Self::ZERO);
+            }
+            return Self::try_from(1).ok();
+        }
+        #[allow(clippy::cast_precision_loss)]
+        if exp > Self::BITS as f64 {
+            return None;
+        }
+
+        // Since exp < BITS, it has an integer and fractional part.
+        #[allow(clippy::cast_possible_truncation)] // exp <= BITS <= usize::MAX.
+        #[allow(clippy::cast_sign_loss)] // exp >= 0.
+        let shift = exp.trunc() as usize;
+        let fract = exp.fract();
+
+        // Compute the leading 64 bits
+        // Since `fract < 1.0` we have `fract.exp2() < 2`, so we can rescale by
+        // 2^63 and cast to u64.
+        #[allow(clippy::cast_possible_truncation)] // fract < 1.0
+        #[allow(clippy::cast_sign_loss)] // fract >= 0.
+        let bits = (fract.exp2() * EXP2_63) as u64;
+        // Note: If `fract` is zero this will result in `u64::MAX`.
+
+        if shift >= 63 {
+            // OPT: A dedicated function avoiding full-sized shift.
+            Some(Self::try_from(bits).ok()?.checked_shl(shift - 63)?)
+        } else {
+            let shift = 63 - shift;
+            // Divide `bits` by `2^shift`, rounding to nearest.
+            let bits = (bits >> shift) + ((bits >> (shift - 1)) & 1);
+            Self::try_from(bits).ok()
+        }
+    }
 }
 
 #[cfg(test)]
