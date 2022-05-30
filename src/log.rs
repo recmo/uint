@@ -95,6 +95,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn log2(self) -> u64 {
         self.log(2)
     }
+    #[must_use]
 }
 
 #[cfg(test)]
