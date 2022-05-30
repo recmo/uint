@@ -95,7 +95,33 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn log2(self) -> u64 {
         self.log(2)
     }
+
+    /// Double precision logarithm.
     #[must_use]
+    pub fn approx_log(self, base: f64) -> f64 {
+        self.approx_log2() / base.log2()
+    }
+
+    /// Double precision binary logarithm.
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)]
+    pub fn approx_log2(self) -> f64 {
+        // The naive solution would be `f64::from(self).log2()`, but
+        // `f64::from(self)` quickly overflows (`f64::MAX` is 2^1024).
+        // So instead we first approximate as `bits * 2^exp` and then
+        // compute using`log2(bits * 2^exp) = log2(bits) + exp`
+        let (bits, exp) = self.most_significant_bits();
+        // Convert to floats
+        let bits = bits as f64;
+        let exp = exp as f64;
+        bits.log2() + exp
+    }
+
+    /// Double precision decimal logarithm.
+    #[must_use]
+    pub fn approx_log10(self) -> f64 {
+        self.approx_log2() / core::f64::consts::LOG2_10
+    }
 }
 
 #[cfg(test)]
@@ -112,6 +138,24 @@ mod tests {
         assert_eq!(U128::from(3).checked_log2(), Some(1));
         assert_eq!(U128::from(127).checked_log2(), Some(6));
         assert_eq!(U128::from(128).checked_log2(), Some(7));
+    }
+
+    #[test]
+    fn test_approx_log2_pow2() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                let log = value.approx_log2();
+                let pow = U::approx_pow2(log).unwrap();
+                let error = value.abs_diff(pow);
+                let correct_bits = value.bit_len() - error.bit_len();
+                // The maximum precision we could expect here is 53 bits.
+                // OPT: Find out exactly where the precision is lost and what
+                // the bounds are.
+                assert!(correct_bits == value.bit_len() || correct_bits >= 42);
+            });
+        });
     }
 
     #[test]
