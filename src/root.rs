@@ -50,8 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // OPT: This could benefit from single-limb multiplication and division.
             // OPT: The division can be turned into bit-shifts when the degree is a power
             // of two.
-            let iter = (self / result.pow(Self::from(degree - 1))
-                + Self::from(degree - 1) * result)
+            let iter = (self / result.pow(degree - 1) + Self::from(degree - 1) * result)
                 / Self::from(degree);
             debug_assert!(iter != Self::ZERO);
             if !first && iter >= result {
@@ -76,11 +75,11 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U, degree in 1_usize..=5)| {
                 let root = value.root(degree);
-                let lower = root.pow(U::from(degree));
+                let lower = root.pow(degree);
                 assert!(value >= lower);
                 let upper = root
                     .checked_add(U::from(1))
-                    .and_then(|n| n.checked_pow(U::from(degree)));
+                    .and_then(|n| n.checked_pow(degree));
                 if let Some(upper) = upper {
                    assert!(value < upper);
                 }
@@ -95,11 +94,11 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U, degree in 1_usize..)| {
                 let root = value.root(degree);
-                let lower = root.pow(U::from(degree));
+                let lower = root.pow(degree);
                 assert!(value >= lower);
                 let upper = root
                     .checked_add(U::from(1))
-                    .and_then(|n| n.checked_pow(U::from(degree)));
+                    .and_then(|n| n.checked_pow(degree));
                 if let Some(upper) = upper {
                    assert!(value < upper);
                 }

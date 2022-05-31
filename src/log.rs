@@ -2,7 +2,7 @@ use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
-    pub fn checked_log(self, base: u64) -> Option<u64> {
+    pub fn checked_log(self, base: u64) -> Option<usize> {
         if base < 2 || self == Self::ZERO {
             return None;
         }
@@ -10,7 +10,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
-    pub fn checked_log10(self) -> Option<u64> {
+    pub fn checked_log10(self) -> Option<usize> {
         self.checked_log(10)
     }
 
@@ -20,7 +20,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Returns None if the number is zero.
     #[must_use]
-    pub fn checked_log2(self) -> Option<u64> {
+    pub fn checked_log2(self) -> Option<usize> {
         self.checked_log(2)
     }
 
@@ -28,11 +28,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if the `base` is less than 2 or if the number is zero.
     #[must_use]
-    pub fn log(self, base: u64) -> u64 {
+    pub fn log(self, base: u64) -> usize {
         assert!(base >= 2);
         assert!(self != Self::ZERO);
         if base == 2 {
-            return self.bit_len() as u64 - 1;
+            return self.bit_len() - 1;
         }
         if self < Self::from(base) {
             return 0;
@@ -42,12 +42,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         #[allow(clippy::cast_precision_loss)] // Approximate is good enough.
         #[allow(clippy::cast_possible_truncation)] // Approximate is good enough.
         #[allow(clippy::cast_sign_loss)] // Negative results cast to zeros. (TODO: Do they?)
-        let mut result = self.approx_log(base as f64) as u64;
+        let mut result = self.approx_log(base as f64) as usize;
 
         // Adjust result to get the exact value. At most one of these should happen, but
         // we loop regardless.
         loop {
-            if let Some(value) = Self::from(base).checked_pow(Self::from(result)) {
+            if let Some(value) = Self::from(base).checked_pow(result) {
                 if value > self {
                     assert!(result >= 1);
                     result -= 1;
@@ -57,9 +57,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             break;
         }
         loop {
-            if let Some(value) = Self::from(base).checked_pow(Self::from(result + 1)) {
+            if let Some(value) = Self::from(base).checked_pow(result + 1) {
                 if value <= self {
-                    assert!(result < u64::MAX);
+                    assert!(result < usize::MAX);
                     result += 1;
                     continue;
                 }
@@ -71,12 +71,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
-    pub fn log10(self) -> u64 {
+    pub fn log10(self) -> usize {
         self.log(10)
     }
 
     #[must_use]
-    pub fn log2(self) -> u64 {
+    pub fn log2(self) -> usize {
         self.log(2)
     }
 
@@ -160,9 +160,9 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0..BITS)| {
-                if let Some(value) = U::from(b).checked_pow(U::from(e)) {
+                if let Some(value) = U::from(b).checked_pow(e) {
                     assert!(value > U::ZERO);
-                    assert_eq!(value.log(b), e as u64);
+                    assert_eq!(value.log(b), e);
                     // assert_eq!(value.log(b + U::from(1)), e as u64);
                 }
             });
@@ -177,8 +177,8 @@ mod tests {
             proptest!(|(b in 2_u64..100, n: U)| {
                 prop_assume!(n > U::ZERO);
                 let e = n.log(b);
-                assert!(U::from(b).pow(U::from(e)) <= n);
-                if let Some(value) = U::from(b).checked_pow(U::from(e + 1)) {
+                assert!(U::from(b).pow(e) <= n);
+                if let Some(value) = U::from(b).checked_pow(e + 1) {
                     assert!(value > n);
                 }
             });
