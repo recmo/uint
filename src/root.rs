@@ -152,7 +152,7 @@ pub mod bench {
             bench_root::<BITS, LIMBS>(criterion, 2);
             bench_root::<BITS, LIMBS>(criterion, 3);
             bench_root::<BITS, LIMBS>(criterion, 5);
-            bench_root::<BITS, LIMBS>(criterion, 1_073_741_824);
+            bench_root::<BITS, LIMBS>(criterion, 127);
         });
     }
 
