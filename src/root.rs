@@ -1,5 +1,5 @@
 use crate::Uint;
-use core::cmp::min;
+use core::cmp::{min, Ordering};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the floor of the `degree`-th root of the number.
@@ -19,7 +19,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # uint!{
     /// assert_eq!(0_U64.root(2), 0_U64);
     /// assert_eq!(1_U64.root(63), 1_U64);
-    /// assert_eq!(0x0e75e26c01f2898c_U63.root(8181384194531620469), 1_U63);
     /// assert_eq!(0x0032da8b0f88575d_U63.root(64), 1_U63);
     /// assert_eq!(0x1756800000000000_U63.root(34), 3_U63);
     /// # }
@@ -64,28 +63,26 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 .map_or(Self::ZERO, |power| self / power);
             let iter = (division + Self::from(degree - 1) * result) / Self::from(degree);
 
-            // When `degree` is high and the initial guess is less than or equal to the
-            // (small) true result, it takes a long time to converge. Example:
-            // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
-            // root(196) takes 5918 iterations to converge from the initial guess of `2`.
-            // to the final result of `2`. This is because after the first iteration
-            // it jumps to `1533576856264507`. To fix this we cap the increase at `2x`.
-            // Once `result` exceeds the true result, it will converge downwards.
-            if !decreasing {
-                if iter == result {
-                    // Fix point reached.
-                    break result;
-                } else if iter < result {
-                    decreasing = true;
+            match (decreasing, iter.cmp(&result)) {
+                // Stop when we hit fix point or stop decreasing.
+                (_, Ordering::Equal) | (true, Ordering::Greater) => break result,
+
+                // Guess was underestimated, we are in the process of increasing it.
+                (false, Ordering::Greater) => {
+                    // When `degree` is high and the initial guess is less than or equal to the
+                    // (small) true result, it takes a long time to converge. Example:
+                    // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
+                    // root(196) takes 5918 iterations to converge from the initial guess of `2`.
+                    // to the final result of `2`. This is because after the first iteration
+                    // it jumps to `1533576856264507`. To fix this we cap the increase at `2x`.
+                    // Once `result` exceeds the true result, it will converge downwards.
+                    let iter = min(iter, result.saturating_shl(1));
                     result = iter;
-                } else {
-                    result = min(iter, result.saturating_shl(1));
                 }
-            } else {
-                if iter >= result {
-                    // If we are no longer decreasing, we have converged.
-                    break result;
-                } else {
+
+                // Converging downwards.
+                (_, Ordering::Less) => {
+                    decreasing = true;
                     result = iter;
                 }
             }
