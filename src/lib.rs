@@ -28,6 +28,7 @@ mod from;
 mod log;
 mod mul;
 mod pow;
+mod root;
 mod special;
 mod string;
 mod support;

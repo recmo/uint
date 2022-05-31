@@ -39,26 +39,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Find approximate result
-        // f64 can hold integer values up to 2^53 exactly. With the smallest
-        // possible base (2) `self` would have to be more than a petabyte long
-        // to get into the non-exact integer domain.
-        #[allow(clippy::cast_precision_loss)]
-        #[allow(clippy::cast_possible_truncation)]
-        #[allow(clippy::cast_sign_loss)]
-        let mut result = {
-            // Ideally we'd use f64::from(self), but that quickly overflows.
-            // So instead we take the highest bits and use
-            // log_base(bits * 2^exp) = (log_2(bits) + exp) / log_2(base)
-            let (bits, exp) = self.most_significant_bits();
-            // Convert to floats
-            let bits = bits as f64;
-            let exp = exp as f64;
-            let base = base as f64;
-            let result = (bits.log2() + exp) / base.log2();
-            assert!(result.is_finite());
-            assert!(result > 0.0);
-            result.trunc() as u64
-        };
+        #[allow(clippy::cast_precision_loss)] // Approximate is good enough.
+        #[allow(clippy::cast_possible_truncation)] // Approximate is good enough.
+        #[allow(clippy::cast_sign_loss)] // Negative results cast to zeros. (TODO: Do they?)
+        let mut result = self.approx_log(base as f64) as u64;
 
         // Adjust result to get the exact value. At most one of these should happen, but
         // we loop regardless.
@@ -103,6 +87,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Double precision binary logarithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(0_U64.approx_log2(), f64::NEG_INFINITY);
+    /// assert_eq!(1_U64.approx_log2(), 0.0);
+    /// assert_eq!(2_U64.approx_log2(), 1.0);
+    /// assert_eq!(U64::MAX.approx_log2(), 64.0);
+    /// # }
+    /// ```
     #[must_use]
     #[allow(clippy::cast_precision_loss)]
     pub fn approx_log2(self) -> f64 {

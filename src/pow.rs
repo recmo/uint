@@ -1,5 +1,7 @@
 use crate::Uint;
 
+// TODO: Make exp argumetns `usize` and leave ring math for later when we add
+// modexp.
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn checked_pow(self, exp: Self) -> Option<Self> {
