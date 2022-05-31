@@ -2,7 +2,7 @@
 name = "ruint"
 description = "Unsigned integer type with cont-generic bit length"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"
