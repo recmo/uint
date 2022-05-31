@@ -1,4 +1,5 @@
 use crate::Uint;
+use core::cmp::min;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the floor of the `degree`-th root of the number.
@@ -51,13 +52,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // Iterate using Newton's method
         // See <https://en.wikipedia.org/wiki/Integer_square_root#Algorithm_using_Newton's_method>
         // See <https://gmplib.org/manual/Nth-Root-Algorithm>
-        let mut first = true;
+        let mut decreasing = false;
         loop {
-            // OPT: When `degree` is high and the initial guess is less than or equal to the
-            // true result, it takes a long time to converge. Example:
-            // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
-            // root(196).
-            //
             // OPT: This could benefit from single-limb multiplication
             // and division.
             //
@@ -67,11 +63,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 .checked_pow(degree - 1)
                 .map_or(Self::ZERO, |power| self / power);
             let iter = (division + Self::from(degree - 1) * result) / Self::from(degree);
-            if !first && iter >= result {
-                break result;
+
+            // When `degree` is high and the initial guess is less than or equal to the
+            // (small) true result, it takes a long time to converge. Example:
+            // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
+            // root(196) takes 5918 iterations to converge from the initial guess of `2`.
+            // to the final result of `2`. This is because after the first iteration
+            // it jumps to `1533576856264507`. To fix this we cap the increase at `2x`.
+            // Once `result` exceeds the true result, it will converge downwards.
+            if !decreasing {
+                if iter == result {
+                    // Fix point reached.
+                    break result;
+                } else if iter < result {
+                    decreasing = true;
+                    result = iter;
+                } else {
+                    result = min(iter, result.saturating_shl(1));
+                }
+            } else {
+                if iter >= result {
+                    // If we are no longer decreasing, we have converged.
+                    break result;
+                } else {
+                    result = iter;
+                }
             }
-            first = false;
-            result = iter;
         }
     }
 }
