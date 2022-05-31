@@ -303,5 +303,6 @@ pub mod bench {
         div::bench::group(criterion);
         pow::bench::group(criterion);
         log::bench::group(criterion);
+        root::bench::group(criterion);
     }
 }

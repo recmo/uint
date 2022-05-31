@@ -33,6 +33,7 @@ macro_rules! impl_bin_op {
         {
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn_assign(&mut self, rhs: Uint<BITS, LIMBS>) {
                 *self = self.$fdel(rhs);
             }
@@ -42,6 +43,7 @@ macro_rules! impl_bin_op {
         {
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
                 *self = self.$fdel(*rhs);
             }
@@ -53,6 +55,7 @@ macro_rules! impl_bin_op {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(rhs)
             }
@@ -64,6 +67,7 @@ macro_rules! impl_bin_op {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(*rhs)
             }
@@ -75,6 +79,7 @@ macro_rules! impl_bin_op {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(rhs)
             }
@@ -86,6 +91,7 @@ macro_rules! impl_bin_op {
 
             #[allow(clippy::inline_always)]
             #[inline(always)]
+            #[track_caller]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fdel(*rhs)
             }

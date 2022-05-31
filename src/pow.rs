@@ -62,16 +62,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         (result, overflow)
     }
 
-    /// # The binary [Carmichael functions][cf]
-    ///
-    /// [cf]: https://en.wikipedia.org/wiki/Carmichael_function
-    ///
-    /// $$
-    /// λ(2^\mathtt{BITS}) = \begin{cases}
-    ///   2^{\mathtt{BITS} - 1} & \mathtt{BITS} ≤ 3
-    ///   2^{\mathtt{BITS} - 2} & \mathtt{BITS} > 3
-    /// \end{cases}
-    /// $$
     #[must_use]
     pub fn pow(self, exp: Self) -> Self {
         self.wrapping_pow(exp)
