@@ -16,21 +16,30 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
-    /// // assert_eq!(0_U64.root(2), 0_U64);
-    /// // assert_eq!(1_U64.root(63), 0_U64);
+    /// assert_eq!(0_U64.root(2), 0_U64);
+    /// assert_eq!(1_U64.root(63), 1_U64);
+    /// assert_eq!(0x0e75e26c01f2898c_U63.root(8181384194531620469), 1_U63);
+    /// assert_eq!(0x0032da8b0f88575d_U63.root(64), 1_U63);
+    /// assert_eq!(0x1756800000000000_U63.root(34), 3_U63);
     /// # }
     /// ```
     #[must_use]
     pub fn root(self, degree: usize) -> Self {
-        assert!(degree > 0);
+        assert!(degree > 0, "degree must be greater than zero");
 
-        // Handle case where `index > Self::MAX`.
-        if BITS == 0 || (BITS <= 64 && degree as u64 > Self::MAX.limbs[0]) {
-            return if self == Self::ZERO {
-                Self::ZERO
-            } else {
-                Self::from(1)
-            };
+        // Handle zero case (including BITS == 0).
+        if self == Self::ZERO {
+            return Self::ZERO;
+        }
+
+        // Handle case where `degree > Self::BITS`.
+        if degree >= Self::BITS {
+            return Self::from(1);
+        }
+
+        // Handle case where `degree == 1`.
+        if degree == 1 {
+            return self;
         }
 
         // Create a first guess.
@@ -44,15 +53,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // See <https://gmplib.org/manual/Nth-Root-Algorithm>
         let mut first = true;
         loop {
-            if result == Self::ZERO {
-                return result;
-            }
-            // OPT: This could benefit from single-limb multiplication and division.
-            // OPT: The division can be turned into bit-shifts when the degree is a power
-            // of two.
-            let iter = (self / result.pow(degree - 1) + Self::from(degree - 1) * result)
-                / Self::from(degree);
-            debug_assert!(iter != Self::ZERO);
+            // OPT: When `degree` is high and the initial guess is less than or equal to the
+            // true result, it takes a long time to converge. Example:
+            // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
+            // root(196).
+            //
+            // OPT: This could benefit from single-limb multiplication
+            // and division.
+            //
+            // OPT: The division can be turned into bit-shifts when the degree is a power of
+            // two.
+            let division = result
+                .checked_pow(degree - 1)
+                .map_or(Self::ZERO, |power| self / power);
+            let iter = (division + Self::from(degree - 1) * result) / Self::from(degree);
             if !first && iter >= result {
                 break result;
             }
@@ -92,7 +106,7 @@ mod tests {
         const_for!(BITS in SIZES if (BITS > 3) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(value: U, degree in 1_usize..)| {
+            proptest!(|(value: U, degree in 1_usize..=BITS)| {
                 let root = value.root(degree);
                 let lower = root.pow(degree);
                 assert!(value >= lower);
