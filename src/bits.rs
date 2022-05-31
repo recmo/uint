@@ -177,6 +177,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Saturating left shift by `rhs` bits.
+    ///
+    /// Returns $\mathtt{self} ⋅ 2^{\mathtt{rhs}}$ or [`Uint::MAX`] if the
+    /// result would $≥ 2^{\mathtt{BITS}}$. That is, it returns
+    /// [`Uint::MAX`] if the bits shifted out would be non-zero.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    #[must_use]
+    pub fn saturating_shl(self, rhs: usize) -> Self {
+        match self.overflowing_shl(rhs) {
+            (value, false) => value,
+            _ => Self::MAX,
+        }
+    }
+
     #[allow(clippy::doc_markdown)]
     /// Left shift by `rhs` bits with overflow detection.
     ///
