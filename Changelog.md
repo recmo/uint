@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `saturating_shl`.
+- Added `approx_log`, `approx_log2`, `approx_log10` for `f64` log approximations.
+- Added `approx_pow2` to construct from `f64` log2 approximation.
+- Added `root` computing integer roots.
+
+### Changed
+
+- Made logarithms `usize` to match `BITS` in `pow`, `log` functions.
+- Applied `track_caller` to div/rem ops to track div-by-zero easier.
+
 ## [1.0.0] — 2022-05-28
 
 ### Added

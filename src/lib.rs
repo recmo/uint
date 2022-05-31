@@ -28,6 +28,7 @@ mod from;
 mod log;
 mod mul;
 mod pow;
+mod root;
 mod special;
 mod string;
 mod support;
@@ -302,5 +303,6 @@ pub mod bench {
         div::bench::group(criterion);
         pow::bench::group(criterion);
         log::bench::group(criterion);
+        root::bench::group(criterion);
     }
 }

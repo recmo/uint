@@ -10,6 +10,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         Some(self.div(rhs))
     }
+
     /// Computes `self % rhs`, returning [`None`] if `rhs == 0`.
     #[must_use]
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
@@ -25,6 +26,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if `rhs == 0`.
     #[must_use]
+    #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
         assert!(rhs != Self::ZERO, "Division by zero");
         let (q, r) = self.div_rem(rhs);
@@ -41,6 +43,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if `rhs == 0`.
     #[must_use]
+    #[track_caller]
     pub fn div_rem(self, rhs: Self) -> (Self, Self) {
         assert!(rhs != Self::ZERO, "Division by zero");
         let mut result = vec![0_u64; LIMBS + 1];
@@ -60,6 +63,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if `rhs == 0`.
     #[must_use]
+    #[track_caller]
     pub fn wrapping_div(self, rhs: Self) -> Self {
         self.div_rem(rhs).0
     }
@@ -70,6 +74,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if `rhs == 0`.
     #[must_use]
+    #[track_caller]
     pub fn wrapping_rem(self, rhs: Self) -> Self {
         self.div_rem(rhs).1
     }
