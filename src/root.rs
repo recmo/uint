@@ -5,7 +5,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the floor of the `degree`-th root of the number.
     ///
     /// $$
-    /// \floor{\sqrt[\mathtt degree]{\mathtt{self}}}
+    /// \floor{\sqrt[\mathtt{degree}]{\mathtt{self}}}
     /// $$
     ///
     /// # Panics
@@ -62,23 +62,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 .checked_pow(degree - 1)
                 .map_or(Self::ZERO, |power| self / power);
             let iter = (division + Self::from(degree - 1) * result) / Self::from(degree);
-
             match (decreasing, iter.cmp(&result)) {
                 // Stop when we hit fix point or stop decreasing.
                 (_, Ordering::Equal) | (true, Ordering::Greater) => break result,
 
-                // Guess was underestimated, we are in the process of increasing it.
-                (false, Ordering::Greater) => {
-                    // When `degree` is high and the initial guess is less than or equal to the
-                    // (small) true result, it takes a long time to converge. Example:
-                    // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
-                    // root(196) takes 5918 iterations to converge from the initial guess of `2`.
-                    // to the final result of `2`. This is because after the first iteration
-                    // it jumps to `1533576856264507`. To fix this we cap the increase at `2x`.
-                    // Once `result` exceeds the true result, it will converge downwards.
-                    let iter = min(iter, result.saturating_shl(1));
-                    result = iter;
-                }
+                // When `degree` is high and the initial guess is less than or equal to the
+                // (small) true result, it takes a long time to converge. Example:
+                // 0x215f07147d573ef203e1f268ab1516d3f294619db820c5dfd0b334e4d06320b7_U256.
+                // root(196) takes 5918 iterations to converge from the initial guess of `2`.
+                // to the final result of `2`. This is because after the first iteration
+                // it jumps to `1533576856264507`. To fix this we cap the increase at `2x`.
+                // Once `result` exceeds the true result, it will converge downwards.
+                (false, Ordering::Greater) => result = min(iter, result.saturating_shl(1)),
 
                 // Converging downwards.
                 (_, Ordering::Less) => {
