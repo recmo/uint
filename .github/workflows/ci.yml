@@ -107,42 +107,17 @@ jobs:
         uses: Swatinem/rust-cache@v1
         with:
           key: cache-v1
-      - name: Install cargo-binutils
-        run: cargo install cargo-binutils
-      - name: Build tests with coverage
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
         run: |
-          cargo test --workspace --locked --all-features --all-targets --no-fail-fast --no-run
-          cargo test --workspace --locked --all-features --doc --no-fail-fast -- --help
-      - name: Run tests with coverage
-        run: |
-          cargo test --workspace --locked --all-features --all-targets --no-fail-fast -- --nocapture
-          cargo test --workspace --locked --all-features --doc --no-fail-fast
-      - name: Merge execution traces
-        run: cargo profdata -- merge -sparse $(find . -iname "profile-*.profraw") -o profile.profdata
-      - name: Export to lcov format for codecov
-        # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/instrument-coverage.html#including-doc-tests>
-        run:
-          cargo cov -- export
-            --format=lcov > profile.lcov
-            --instr-profile=profile.profdata
-            $(
-              for file in
-                $(
-                  cargo test --locked --all-features --all-targets
-                    --no-fail-fast --no-run --message-format=json
-                    | jq -r "select(.profile.test == true) | .filenames[]"
-                    | grep -v dSYM -
-                )
-                target/debug/doctestbins/*/rust_out;
-              do
-                [[ -x $file ]] && printf "%s %s " -object $file ;
-              done
-            )
+          cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info -- --nocapture
+          cargo llvm-cov --locked --workspace --all-features --doc --lcov --output-path lcov.info -- --nocapture
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v3.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
-          flags: test
+          files: lcov.info
           fail_ci_if_error: true
           verbose: true
 
