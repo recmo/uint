@@ -9,6 +9,12 @@ use crate::Uint;
 // * Feature parity with GMP:
 //   * https://gmplib.org/manual/Integer-Functions.html#Integer-Functions
 
+// https://en.wikipedia.org/wiki/Kronecker_symbol
+// Subsumes Jacobi and Legendre symbols.
+
+// Primality testing
+// https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test#Testing_against_small_sets_of_bases
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if and only if `self == 2^k` for some `k`.
     #[must_use]
