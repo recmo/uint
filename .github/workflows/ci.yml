@@ -109,6 +109,10 @@ jobs:
           key: cache-v1
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Build with code coverage
+        run: |
+          cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info -- --no-run
+          cargo llvm-cov --locked --workspace --all-features --doc --lcov --output-path lcov.info -- --help
       - name: Generate code coverage
         run: |
           cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info -- --nocapture
