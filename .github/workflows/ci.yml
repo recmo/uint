@@ -89,10 +89,6 @@ jobs:
     # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
     name: Coverage
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: -Cinstrument-coverage
-      RUSTDOCFLAGS: -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins
-      LLVM_PROFILE_FILE: profile-%m.profraw
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -111,12 +107,15 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Build with code coverage
         run: |
-          cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info -- --no-run
-          cargo llvm-cov --locked --workspace --all-features --doc --lcov --output-path lcov.info -- --help
+          cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --no-run
+          cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --help
       - name: Generate code coverage
         run: |
-          cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info -- --nocapture
-          cargo llvm-cov --locked --workspace --all-features --doc --lcov --output-path lcov.info -- --nocapture
+          # Generate profiles, but do not merge them
+          cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --nocapture
+          cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --nocapture
+          # Merge profiles
+          cargo llvm-cov --no-run --lcov --output-path lcov.info
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v3.1.0
         with:
