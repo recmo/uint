@@ -86,8 +86,15 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
             'a'..='f' => c as u64 - 'a' as u64 + 10,
             'A'..='F' => c as u64 - 'A' as u64 + 10,
             '_' => continue,
-            _ => return Err(format!("Invalid character: {}", c)),
+            _ => return Err(format!("Invalid character '{}'", c)),
         };
+        #[allow(clippy::cast_lossless)]
+        if digit > base as u64 {
+            return Err(format!(
+                "Invalid digit {} in base {} (did you forget the `0x` prefix?)",
+                c, base
+            ));
+        }
 
         // Multiply result by base
         let mut carry = 0_u64;

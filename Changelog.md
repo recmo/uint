@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Marked `Uint::as_limbs_mut` as unsafe.
 - Unified `mul` implementations and move to `algorithms`.
 
+### Fixed
+
+- `uint!` macro incorrectly accepting hex digits in decimal.
+
 ## [1.1.0] — 2022-05-31
 
 ### Added

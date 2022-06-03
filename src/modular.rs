@@ -180,7 +180,6 @@ mod tests {
             proptest!(config, |(a: U, b: U, c: U, m: U)| {
                 // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.
                 // TODO: (a^b)^c = a^(b * c). Which requires carmichael fn.
-                dbg!(a, b, c, m);
                 assert_eq!(a.mul_mod(b, m).pow_mod(c, m), a.pow_mod(c, m).mul_mod(b.pow_mod(c, m), m));
             });
         });
