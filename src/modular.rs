@@ -98,7 +98,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use proptest::proptest;
+    use core::cmp::min;
+    use proptest::{proptest, test_runner::Config};
 
     #[test]
     fn test_commutative() {
@@ -173,9 +174,13 @@ mod tests {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U, c: U, m: U)| {
+            // TODO: Increase cases when perf is better.
+            let mut config = Config::default();
+            config.cases = min(config.cases, if BITS > 500 { 3 } else { 10 });
+            proptest!(config, |(a: U, b: U, c: U, m: U)| {
                 // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.
                 // TODO: (a^b)^c = a^(b * c). Which requires carmichael fn.
+                dbg!(a, b, c, m);
                 assert_eq!(a.mul_mod(b, m).pow_mod(c, m), a.pow_mod(c, m).mul_mod(b.pow_mod(c, m), m));
             });
         });
