@@ -1,4 +1,4 @@
-use crate::{algorithms::div::divrem, impl_bin_op, Uint};
+use crate::{algorithms, impl_bin_op, Uint};
 use core::ops::{Div, DivAssign, Rem, RemAssign};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -50,7 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut divisor = [0_u64; LIMBS];
         result[..LIMBS].copy_from_slice(&self.limbs);
         divisor[..LIMBS].copy_from_slice(&rhs.limbs);
-        divrem(&mut result, &mut divisor);
+        algorithms::div_rem(&mut result, &mut divisor);
         (
             Self::from_limbs_slice(&result[..LIMBS]),
             Self::from_limbs(divisor),

@@ -15,7 +15,7 @@
 )]
 
 mod add;
-mod algorithms;
+pub mod algorithms;
 pub mod aliases;
 mod base_convert;
 mod bit_arr;
@@ -27,6 +27,7 @@ mod div;
 mod from;
 mod log;
 mod mul;
+mod mulmod;
 mod pow;
 mod root;
 mod special;

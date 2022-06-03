@@ -1,4 +1,4 @@
-use crate::{impl_bin_op, nlimbs, Uint};
+use crate::{algorithms, impl_bin_op, nlimbs, Uint};
 use core::{
     iter::{zip, Product},
     num::Wrapping,
@@ -34,33 +34,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (Self::ZERO, false);
-        }
         let mut result = Self::ZERO;
-        let mut overflow = false;
-        for (i, &rhs) in rhs.limbs.iter().enumerate() {
-            if rhs == 0 {
-                continue;
-            }
-            let (lhs, lhs_overflow) = self.limbs.split_at(LIMBS - i);
-            let mut carry = 0_u128;
-            #[allow(clippy::cast_possible_truncation)] // Intentional
-            for (res, &lhs) in result.limbs[i..].iter_mut().zip(lhs.iter()) {
-                carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
-                *res = carry as u64;
-                carry >>= 64;
-            }
-            overflow |= carry != 0;
-            for &lhs in lhs_overflow.iter() {
-                if lhs > 0 {
-                    overflow = true;
-                    break;
-                }
-            }
+        let mut overflow =
+            algorithms::mul_inline(self.as_limbs(), rhs.as_limbs(), result.as_limbs_mut());
+        if BITS > 0 {
+            overflow |= result.limbs[LIMBS - 1] > Self::MASK;
+            result.limbs[LIMBS - 1] &= Self::MASK;
         }
-        overflow |= result.limbs[LIMBS - 1] > Self::MASK;
-        result.limbs[LIMBS - 1] &= Self::MASK;
         (result, overflow)
     }
 
@@ -153,29 +133,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ) -> Uint<BITS_RES, LIMBS_RES> {
         assert_eq!(BITS_RES, BITS + BITS_RHS);
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
-
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
-
-        for (i, &lhs) in self.limbs.iter().enumerate() {
-            let (res, res_carry) = result.limbs[i..].split_at_mut(LIMBS_RHS);
-            debug_assert_eq!(res.len(), LIMBS_RHS);
-
-            let mut carry = 0_u128;
-            #[allow(clippy::cast_possible_truncation)] // Intentional
-            for (res, &rhs) in zip(res.iter_mut(), rhs.limbs.iter()) {
-                carry += u128::from(*res) + u128::from(lhs) * u128::from(rhs);
-                *res = carry as u64;
-                carry >>= 64;
-            }
-            #[allow(clippy::cast_possible_truncation)] // Intentional
-            for res in res_carry.iter_mut() {
-                carry += u128::from(*res);
-                *res = carry as u64;
-                carry >>= 64;
-            }
-            debug_assert_eq!(carry, 0);
-        }
-
+        algorithms::mul_inline(self.as_limbs(), rhs.as_limbs(), result.as_limbs_mut());
         if LIMBS_RES > 0 {
             debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
         }
