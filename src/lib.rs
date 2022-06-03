@@ -13,6 +13,8 @@
     all(has_generic_const_exprs, feature = "generic_const_exprs"),
     feature(generic_const_exprs)
 )]
+// See <https://github.com/taiki-e/coverage-helper>
+#![cfg_attr(coverage_nightly, feature(no_coverage))]
 
 mod add;
 pub mod algorithms;
