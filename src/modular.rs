@@ -6,7 +6,9 @@ use crate::{algorithms, nlimbs, Uint};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::doc_markdown)] // False positive
-    /// Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
+    /// ⚠️ Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
+    ///
+    /// **Warning.** This function is not part of the stable API.
     ///
     /// Returns zero if the modulus is zero.
     // FEATURE: Reduce larger bit-sizes to smaller ones.

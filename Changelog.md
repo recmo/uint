@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `reduce_mod`, `add_mod`, `mul_mod`, `pow_mod`.
+- Made `algorithms` public, but with unstable API for now.
+
+### Changed
+
+- Marked `Uint::as_limbs_mut` as unsafe.
+- Unified `mul` implementations and move to `algorithms`.
+
 ## [1.1.0] — 2022-05-31
 
 ### Added
