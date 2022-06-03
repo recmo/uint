@@ -105,9 +105,14 @@ fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
     }
 }
 
-/// ⚠️ Division.
+/// ⚠️ Division with remainder.
 ///
 /// **Warning.** This function is not part of the stable API.
+///
+/// # Algorithms
+///
+/// It uses schoolbook division when the `divisor` first a single limb,
+/// otherwise it uses Knuth's algorithm D.
 pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     assert!(!divisor.is_empty());
 

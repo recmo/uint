@@ -29,7 +29,7 @@ mod div;
 mod from;
 mod log;
 mod mul;
-mod mulmod;
+mod mul_mod;
 mod pow;
 mod root;
 mod special;
@@ -154,8 +154,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Access the array of limbs.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it allows setting a bit outside the bit
+    /// size if the bit-size is not limb-aligned.
     #[must_use]
-    pub fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
+    pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
