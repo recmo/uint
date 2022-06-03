@@ -1,11 +1,14 @@
 #![allow(clippy::module_name_repetitions)]
-use core::iter::zip;
 
 /// ⚠️ Computes `result += lhs * rhs` and checks for overflow.
 ///
 /// **Warning.** This function is not part of the stable API.
 ///
 /// Arrays are in little-endian order. All arrays can be arbitrary sized.
+///
+/// # Algorithm
+///
+/// Uses the schoolbook multiplication algorithm.
 ///
 /// # Examples
 ///
@@ -46,7 +49,7 @@ pub fn mul_inline(lhs: &[u64], rhs: &[u64], result: &mut [u64]) -> bool {
                     *result = carry as u64;
                     carry >>= 64;
                 }
-                // Excess rhs
+                // Excess product.
                 (None, Some(rhs)) => {
                     carry += u128::from(lhs) * u128::from(rhs);
                     overflow |= carry as u64;
@@ -77,12 +80,12 @@ mod tests {
     #[test]
     fn test_empty() {
         test_vals(&[], &[], &[], false);
-        test_vals(&[], &[], &[0], false);
         test_vals(&[], &[1], &[], false);
         test_vals(&[1], &[], &[], false);
         test_vals(&[1], &[1], &[], true);
-        test_vals(&[1], &[], &[0], false);
+        test_vals(&[], &[], &[0], false);
         test_vals(&[], &[1], &[0], false);
+        test_vals(&[1], &[], &[0], false);
         test_vals(&[1], &[1], &[1], false);
     }
 }
