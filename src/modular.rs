@@ -178,20 +178,6 @@ mod tests {
             });
         });
     }
-
-    #[test]
-    #[ignore]
-    fn test_inverse() {
-        const_for!(BITS in NON_ZERO {
-            const LIMBS: usize = nlimbs(BITS);
-            type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, m: U)| {
-                if let Some(inverse) = a.inv_mod(m) {
-                    assert_eq!(a.mul_mod(inverse, m), U::from(1));
-                }
-            });
-        });
-    }
 }
 
 #[cfg(feature = "bench")]
@@ -228,7 +214,11 @@ pub mod bench {
     }
 
     fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::arbitrary(),
+            Uint::arbitrary(),
+        );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("add_mod/{}", BITS), move |bencher| {
             bencher.iter_batched(
@@ -240,7 +230,11 @@ pub mod bench {
     }
 
     fn bench_mul<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::arbitrary(),
+            Uint::arbitrary(),
+        );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("mul_mod/{}", BITS), move |bencher| {
             bencher.iter_batched(
@@ -252,7 +246,11 @@ pub mod bench {
     }
 
     fn bench_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::arbitrary(),
+            Uint::arbitrary(),
+        );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("pow_mod/{}", BITS), move |bencher| {
             bencher.iter_batched(

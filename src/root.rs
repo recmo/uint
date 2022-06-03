@@ -92,6 +92,7 @@ mod tests {
     use proptest::proptest;
 
     #[test]
+    #[allow(clippy::absurd_extreme_comparisons)] // From macro.
     fn test_root() {
         const_for!(BITS in SIZES if (BITS > 3) {
             const LIMBS: usize = nlimbs(BITS);
