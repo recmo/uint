@@ -1,7 +1,10 @@
 use crate::{algorithms, nlimbs, Uint};
 
+// FEATURE: sub_mod, neg_mod, div_mod, root_mod
+// FEATURE: mul_mod_redc
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
+    // FEATURE: Reduce larger bit-sizes to smaller ones.
     #[must_use]
     pub fn reduce_mod(mut self, modulus: Self) -> Self {
         if modulus == Self::ZERO {
@@ -49,6 +52,35 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         algorithms::div_rem(&mut product, &mut modulus.limbs);
 
         modulus
+    }
+
+    /// Compute $\mod{\mathtt{self}^{\mathtt{rhs}}}_{\mathtt{modulus}}$.
+    #[must_use]
+    pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
+        if modulus == Self::ZERO {
+            // Also covers Self::BITS == 0
+            return Self::ZERO;
+        }
+
+        // Exponentiation by squaring
+        let mut result = Self::from(1);
+        while exp > Self::ZERO {
+            // Multiply by base
+            if exp.limbs[0] & 1 == 1 {
+                result = result.mul_mod(self, modulus);
+            }
+
+            // Square base
+            self = self.mul_mod(self, modulus);
+            exp >>= 1;
+        }
+        result
+    }
+
+    #[must_use]
+    pub fn inv_mod(self, _modulus: Self) -> Option<Self> {
+        // TODO: Implement this using the extended Euclidean algorithm.
+        todo!()
     }
 }
 
@@ -114,16 +146,41 @@ mod tests {
         });
     }
 
-    // #[test]
-    // fn test_inverse() {
-    //     const_for!(BITS in NON_ZERO {
-    //         const LIMBS: usize = nlimbs(BITS);
-    //         type U = Uint<BITS, LIMBS>;
-    //         proptest!(|(mut a: U)| {
-    //             a |= U::from(1); // Make sure a is invertible
-    //             assert_eq!(a * a.ring_inverse().unwrap(), U::from(1));
-    //             assert_eq!(a.ring_inverse().unwrap().ring_inverse().unwrap(),
-    // a);         });
-    //     });
-    // }
+    #[test]
+    fn test_pow_identity() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, m: U)| {
+                assert_eq!(a.pow_mod(U::from(0), m), U::from(1));
+                assert_eq!(a.pow_mod(U::from(1), m), a.reduce_mod(m));
+            });
+        });
+    }
+
+    #[test]
+    fn test_pow_rules() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U, c: U, m: U)| {
+                // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.
+                // TODO: (a^b)^c = a^(b * c). Which requires carmichael fn.
+                assert_eq!(a.mul_mod(b, m).pow_mod(c, m), a.pow_mod(c, m).mul_mod(b.pow_mod(c, m), m));
+            });
+        });
+    }
+
+    #[test]
+    fn test_inverse() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, m: U)| {
+                if let Some(inverse) = a.inv_mod(m) {
+                    assert_eq!(a.mul_mod(inverse, m), U::from(1));
+                }
+            });
+        });
+    }
 }
