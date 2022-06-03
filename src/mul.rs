@@ -1,6 +1,6 @@
 use crate::{algorithms, impl_bin_op, nlimbs, Uint};
 use core::{
-    iter::{zip, Product},
+    iter::Product,
     num::Wrapping,
     ops::{Mul, MulAssign},
 };

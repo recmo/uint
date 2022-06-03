@@ -1,9 +1,14 @@
 use crate::{algorithms, nlimbs, Uint};
 
-// FEATURE: sub_mod, neg_mod, div_mod, root_mod
+// FEATURE: sub_mod, neg_mod, inv_mod, div_mod, root_mod
 // FEATURE: mul_mod_redc
+// FEATURE: Modular wrapper class, like Wrapping.
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns zero if the modulus is zero.
     // FEATURE: Reduce larger bit-sizes to smaller ones.
     #[must_use]
     pub fn reduce_mod(mut self, modulus: Self) -> Self {
@@ -16,7 +21,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self
     }
 
+    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self} + \mathtt{rhs}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns zero if the modulus is zero.
     #[must_use]
     pub fn add_mod(self, rhs: Self, modulus: Self) -> Self {
         // Reduce inputs
@@ -31,7 +39,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         result
     }
 
+    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self} ⋅ \mathtt{rhs}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns zero if the modulus is zero.
     #[must_use]
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
         if modulus == Self::ZERO {
@@ -54,10 +65,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         modulus
     }
 
+    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self}^{\mathtt{rhs}}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns zero if the modulus is zero.
     #[must_use]
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
-        if modulus == Self::ZERO {
+        if modulus == Self::ZERO || modulus <= Self::from(1) {
             // Also covers Self::BITS == 0
             return Self::ZERO;
         }
@@ -75,12 +89,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             exp >>= 1;
         }
         result
-    }
-
-    #[must_use]
-    pub fn inv_mod(self, _modulus: Self) -> Option<Self> {
-        // TODO: Implement this using the extended Euclidean algorithm.
-        todo!()
     }
 }
 
@@ -152,7 +160,7 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(a: U, m: U)| {
-                assert_eq!(a.pow_mod(U::from(0), m), U::from(1));
+                assert_eq!(a.pow_mod(U::from(0), m), U::from(1).reduce_mod(m));
                 assert_eq!(a.pow_mod(U::from(1), m), a.reduce_mod(m));
             });
         });
@@ -172,6 +180,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_inverse() {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
@@ -181,6 +190,76 @@ mod tests {
                     assert_eq!(a.mul_mod(inverse, m), U::from(1));
                 }
             });
+        });
+    }
+}
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use ::proptest::{
+        arbitrary::Arbitrary,
+        strategy::{Strategy, ValueTree},
+        test_runner::TestRunner,
+    };
+    use criterion::{black_box, BatchSize, Criterion};
+
+    pub fn group(criterion: &mut Criterion) {
+        const_for!(BITS in BENCH {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_reduce::<BITS, LIMBS>(criterion);
+            bench_add::<BITS, LIMBS>(criterion);
+            bench_mul::<BITS, LIMBS>(criterion);
+            bench_pow::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_reduce<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("reduce_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, m)| black_box(black_box(a).reduce_mod(black_box(m))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("add_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, b, m)| black_box(black_box(a).add_mod(black_box(b), black_box(m))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_mul<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("mul_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, b, m)| black_box(black_box(a).mul_mod(black_box(b), black_box(m))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("pow_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, b, m)| black_box(black_box(a).pow_mod(black_box(b), black_box(m))),
+                BatchSize::SmallInput,
+            );
         });
     }
 }

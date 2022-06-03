@@ -162,7 +162,7 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
                 debug_assert_eq!(*limb, 0);
             }
         } else {
-            numerator[..buf_rem.len()].copy_from_slice(&buf_rem);
+            numerator[..buf_rem.len()].copy_from_slice(buf_rem);
             for limb in &mut numerator[buf_rem.len()..] {
                 *limb = 0;
             }

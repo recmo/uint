@@ -28,8 +28,8 @@ mod const_for;
 mod div;
 mod from;
 mod log;
+mod modular;
 mod mul;
-mod mul_mod;
 mod pow;
 mod root;
 mod special;
@@ -312,5 +312,6 @@ pub mod bench {
         pow::bench::group(criterion);
         log::bench::group(criterion);
         root::bench::group(criterion);
+        modular::bench::group(criterion);
     }
 }
