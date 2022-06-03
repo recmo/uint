@@ -388,7 +388,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
         if BITS == 0 {
             return Self::ZERO;
         }
-        for limb in self.as_limbs_mut().iter_mut() {
+        for limb in self.limbs.iter_mut() {
             *limb = u64::not(*limb);
         }
         self.limbs[LIMBS - 1] &= Self::MASK;
@@ -419,7 +419,7 @@ macro_rules! impl_bit_op {
             for Uint<BITS, LIMBS>
         {
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
-                for (limb, rhs) in self.as_limbs_mut().iter_mut().zip(rhs.as_limbs()) {
+                for (limb, rhs) in self.limbs.iter_mut().zip(rhs.limbs) {
                     u64::$fn_assign(limb, rhs);
                 }
             }

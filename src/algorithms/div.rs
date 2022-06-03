@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 /// Knuth division
 use core::{convert::TryFrom, u64};
 
@@ -105,7 +107,22 @@ fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
     }
 }
 
-pub fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
+/// ⚠️ Division with remainder.
+///
+/// **Warning.** This function is not part of the stable API.
+///
+/// The quotient is stored in the `numerator` and the remainder is stored
+/// in the `divisor`.
+///
+/// # Algorithms
+///
+/// It uses schoolbook division when the `divisor` first a single limb,
+/// otherwise it uses Knuth's algorithm D.
+///
+/// # Panics
+///
+/// Panics if `divisor` is zero.
+pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     assert!(!divisor.is_empty());
 
     // Trim most significant zeros from divisor.
@@ -125,17 +142,30 @@ pub fn divrem(numerator: &mut [u64], divisor: &mut [u64]) {
             *limb = 0;
         }
     } else {
-        divrem_nbym(numerator, divisor);
+        // Zero extend numerator
+        let mut buffer = Vec::with_capacity(numerator.len() + 1);
+        buffer.extend_from_slice(numerator);
+        buffer.push(0);
 
-        // Copy remainder to divisor (always fits)
-        let r_len = divisor.len();
-        divisor.copy_from_slice(&numerator[..r_len]);
+        divrem_nbym(&mut buffer, divisor);
+        let buf_div = &buffer[..divisor.len()];
+        let buf_rem = &buffer[divisor.len()..];
 
-        // Store quotient in numerator (zero extended)
-        let q_len = numerator.len() - divisor.len();
-        numerator.copy_within(r_len.., 0);
-        for limb in &mut numerator[q_len..] {
-            *limb = 0;
+        // Copy remainder to divisor
+        debug_assert_eq!(buf_div.len(), divisor.len());
+        divisor.copy_from_slice(buf_div);
+
+        // Copy quotient to numerator
+        if buf_rem.len() > numerator.len() {
+            numerator.copy_from_slice(&buf_rem[..numerator.len()]);
+            for limb in &buf_rem[numerator.len()..] {
+                debug_assert_eq!(*limb, 0);
+            }
+        } else {
+            numerator[..buf_rem.len()].copy_from_slice(buf_rem);
+            for limb in &mut numerator[buf_rem.len()..] {
+                *limb = 0;
+            }
         }
     }
 }

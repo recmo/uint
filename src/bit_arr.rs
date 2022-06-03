@@ -63,13 +63,13 @@ macro_rules! forward {
             }
         )*
     };
-    ($(fn $fnname:ident(&mut self) -> $res:ty;)*) => {
+    ($(unsafe fn $fnname:ident(&mut self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname(&mut self) -> $res {
+            pub unsafe fn $fnname(&mut self) -> $res {
                 Uint::$fnname(&mut self.0).into()
             }
         )*
@@ -123,7 +123,7 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         fn trailing_ones(&self) -> usize;
     }
     forward! {
-        fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS];
+        unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS];
     }
     forward! {
         fn checked_shl(self, usize) -> Option<Self>;

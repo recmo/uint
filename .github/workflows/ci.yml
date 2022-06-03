@@ -110,12 +110,16 @@ jobs:
           cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --help
           cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --help
       - name: Generate code coverage
+        env:
+          # Covered tests are slower, so reduce the test load. (We also shouldn't
+          # depend too much on case generation for coverage).
+          PROPTEST_CASES: 5
         run: |
           # Generate profiles, but do not merge them
           cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --nocapture
           cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --nocapture
-          # Merge profiles
-          cargo llvm-cov --no-run --lcov --output-path lcov.info
+      - name: Merge profiles
+        run: cargo llvm-cov --no-run --lcov --output-path lcov.info
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v3.1.0
         with:

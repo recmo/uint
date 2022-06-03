@@ -17,7 +17,7 @@
 #![cfg_attr(coverage_nightly, feature(no_coverage))]
 
 mod add;
-mod algorithms;
+pub mod algorithms;
 pub mod aliases;
 mod base_convert;
 mod bit_arr;
@@ -28,6 +28,7 @@ mod const_for;
 mod div;
 mod from;
 mod log;
+mod modular;
 mod mul;
 mod pow;
 mod root;
@@ -153,8 +154,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Access the array of limbs.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it allows setting a bit outside the bit
+    /// size if the bit-size is not limb-aligned.
     #[must_use]
-    pub fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
+    pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
@@ -306,5 +312,6 @@ pub mod bench {
         pow::bench::group(criterion);
         log::bench::group(criterion);
         root::bench::group(criterion);
+        modular::bench::group(criterion);
     }
 }

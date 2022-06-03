@@ -26,6 +26,9 @@ pub fn trim_end_vec<T: PartialEq>(vec: &mut Vec<T>, value: &T) {
 }
 
 #[macro_export]
+#[doc(hidden)]
+// TODO: (BLOCKED) make this macro `pub(crate)` when supported.
+// See <https://github.com/rust-lang/rust/issues/39412>
 macro_rules! impl_bin_op {
     ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fdel:ident) => {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
