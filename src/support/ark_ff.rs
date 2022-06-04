@@ -1,9 +1,8 @@
 //! Support for the [`ark-ff`](https://crates.io/crates/ark-ff) crate.
 #![cfg(feature = "ark-ff")]
 
-use crate::Uint;
+use crate::{Uint, ToFieldError};
 use ark_ff::{biginteger::*, fields::models::*, PrimeField};
-use thiserror::Error;
 
 macro_rules! impl_from_ark {
     ($ark:ty, $bits:expr, $limbs:expr) => {
@@ -41,12 +40,6 @@ impl_from_ark!(BigInteger384, 384, 6);
 impl_from_ark!(BigInteger448, 448, 7);
 impl_from_ark!(BigInteger768, 768, 12);
 impl_from_ark!(BigInteger832, 832, 13);
-
-#[derive(Debug, Clone, Copy, Error)]
-pub enum ToFieldError {
-    #[error("Number is equal or larger than the target field modulus.")]
-    NotInField,
-}
 
 macro_rules! impl_from_ark_field {
     ($field:ident, $params:ident, $bits:expr, $limbs:expr) => {

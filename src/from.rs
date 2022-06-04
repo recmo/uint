@@ -54,6 +54,13 @@ pub enum FromUintError<const BITS: usize, T> {
     Overflow(PhantomData<T>),
 }
 
+#[allow(dead_code)] // This is used by some support features.
+#[derive(Debug, Clone, Copy, Error)]
+pub enum ToFieldError {
+    #[error("Number is equal or larger than the target field modulus.")]
+    NotInField,
+}
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
