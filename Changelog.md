@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2022-06-03
+
 ### Added
 
 - Added `reduce_mod`, `add_mod`, `mul_mod`, `pow_mod`.
@@ -120,7 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/recmo/uint/releases/tag/v1.2.0
 [1.1.0]: https://github.com/recmo/uint/releases/tag/v1.1.0
 [1.0.0]: https://github.com/recmo/uint/releases/tag/v1.0.0
 [0.3.0]: https://github.com/recmo/uint/releases/tag/v0.3.0
