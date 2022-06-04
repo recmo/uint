@@ -1,8 +1,9 @@
 //! Support for the [`ark-ff`](https://crates.io/crates/ark-ff) crate.
 #![cfg(feature = "ark-ff")]
 
-use crate::{from::ToUintError, Uint};
-use ark_ff::biginteger::*;
+use crate::Uint;
+use ark_ff::{biginteger::*, fields::models::*, PrimeField};
+use thiserror::Error;
 
 macro_rules! impl_from_ark {
     ($ark:ty, $bits:expr, $limbs:expr) => {
@@ -41,9 +42,58 @@ impl_from_ark!(BigInteger448, 448, 7);
 impl_from_ark!(BigInteger768, 768, 12);
 impl_from_ark!(BigInteger832, 832, 13);
 
+#[derive(Debug, Clone, Copy, Error)]
+pub enum ToFieldError {
+    #[error("Number is equal or larger than the target field modulus.")]
+    NotInField,
+}
+
+macro_rules! impl_from_ark_field {
+    ($field:ident, $params:ident, $bits:expr, $limbs:expr) => {
+        impl<P: $params> From<$field<P>> for Uint<$bits, $limbs> {
+            fn from(value: $field<P>) -> Self {
+                value.into_repr().into()
+            }
+        }
+
+        impl<P: $params> From<&$field<P>> for Uint<$bits, $limbs> {
+            fn from(value: &$field<P>) -> Self {
+                value.into_repr().into()
+            }
+        }
+
+        impl<P: $params> TryFrom<Uint<$bits, $limbs>> for $field<P> {
+            type Error = ToFieldError;
+
+            fn try_from(value: Uint<$bits, $limbs>) -> Result<Self, ToFieldError> {
+                Self::from_repr(value.into()).ok_or(ToFieldError::NotInField)
+            }
+        }
+
+        impl<P: $params> TryFrom<&Uint<$bits, $limbs>> for $field<P> {
+            type Error = ToFieldError;
+
+            fn try_from(value: &Uint<$bits, $limbs>) -> Result<Self, ToFieldError> {
+                Self::from_repr(value.into()).ok_or(ToFieldError::NotInField)
+            }
+        }
+    };
+}
+
+impl_from_ark_field!(Fp64, Fp64Parameters, 64, 1);
+impl_from_ark_field!(Fp256, Fp256Parameters, 256, 4);
+impl_from_ark_field!(Fp320, Fp320Parameters, 320, 5);
+impl_from_ark_field!(Fp384, Fp384Parameters, 384, 6);
+impl_from_ark_field!(Fp448, Fp448Parameters, 448, 7);
+impl_from_ark_field!(Fp768, Fp768Parameters, 768, 12);
+impl_from_ark_field!(Fp832, Fp832Parameters, 832, 13);
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::aliases::U256;
+    use ark_bn254::{Fq, FqParameters, Fr, FrParameters};
+    use ark_ff::FpParameters;
     use proptest::proptest;
 
     macro_rules! test_roundtrip {
@@ -66,5 +116,27 @@ mod tests {
         test_roundtrip!(BigInteger448, 448, 7);
         test_roundtrip!(BigInteger768, 768, 12);
         test_roundtrip!(BigInteger832, 832, 13);
+    }
+
+    #[test]
+    fn test_fq_roundtrip() {
+        let modulus: U256 = FqParameters::MODULUS.into();
+        proptest!(|(value: U256)| {
+            let value: U256 = value % modulus;
+            let f: Fq = value.try_into().unwrap();
+            let back: U256 = f.into();
+            assert_eq!(back, value);
+        });
+    }
+
+    #[test]
+    fn test_fr_roundtrip() {
+        let modulus: U256 = FrParameters::MODULUS.into();
+        proptest!(|(value: U256)| {
+            let value: U256 = value % modulus;
+            let f: Fr = value.try_into().unwrap();
+            let back: U256 = f.into();
+            assert_eq!(back, value);
+        });
     }
 }
