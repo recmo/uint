@@ -46,7 +46,10 @@ pub use uint_dyn::UintDyn;
 pub use bit_arr::Bits;
 
 #[doc(inline)]
-pub use self::{base_convert::BaseConvertError, bytes::nbytes, string::ParseError};
+pub use self::{
+    base_convert::BaseConvertError, bytes::nbytes, from::FromUintError, from::ToFieldError,
+    from::ToUintError, string::ParseError,
+};
 
 #[doc(inline)]
 pub use ruint_macro::uint;
