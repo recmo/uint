@@ -1,6 +1,7 @@
 mod arbitrary;
 mod fastrlp;
-mod posseidon_rs;
+mod num_bigint;
+mod poseidon_rs;
 mod postgres;
 mod primitive_types;
 mod proptest;

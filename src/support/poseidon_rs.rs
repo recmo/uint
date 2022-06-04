@@ -20,11 +20,24 @@ impl From<Fr> for U256 {
     }
 }
 
+impl From<&Fr> for U256 {
+    fn from(n: &Fr) -> Self {
+        (*n).into()
+    }
+}
+
 #[allow(clippy::fallible_impl_from)] // This is deprecated anyway
 impl From<U256> for Fr {
     fn from(mut n: U256) -> Self {
         n %= MODULUS;
         Self::from_repr(FrRepr(n.into_limbs())).unwrap()
+    }
+}
+
+#[allow(clippy::fallible_impl_from)] // This is deprecated anyway
+impl From<&U256> for Fr {
+    fn from(n: &U256) -> Self {
+        (*n).into()
     }
 }
 
