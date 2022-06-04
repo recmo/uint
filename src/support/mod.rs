@@ -2,7 +2,6 @@ mod arbitrary;
 mod ark_ff;
 mod fastrlp;
 mod num_bigint;
-mod poseidon_rs;
 mod postgres;
 mod primitive_types;
 mod proptest;
@@ -16,13 +15,9 @@ mod serde;
 // * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
 // * https://crates.io/crates/zeroize
-// * https://crates.io/crates/ff
-// * https://crates.io/crates/ff_ce
-// * https://crates.io/crates/ark-ff
 // * https://crates.io/crates/bitvec
 //
 // Big int types:
-// * https://crates.io/crates/num-bigint
 // * https://crates.io/crates/crypto-bigint
 // * https://crates.io/crates/rug
 // * https://crates.io/crates/bigdecimal

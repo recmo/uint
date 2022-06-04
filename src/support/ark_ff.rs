@@ -1,7 +1,7 @@
 //! Support for the [`ark-ff`](https://crates.io/crates/ark-ff) crate.
 #![cfg(feature = "ark-ff")]
 
-use crate::{Uint, ToFieldError};
+use crate::{ToFieldError, Uint};
 use ark_ff::{biginteger::*, fields::models::*, PrimeField};
 
 macro_rules! impl_from_ark {
