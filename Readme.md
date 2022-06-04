@@ -123,6 +123,8 @@ named feature flag.
 * [`fastrlp`](https://docs.rs/fastrlp): Implements the [`Encodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 * [`primitive-types`](https://docs.rs/primitive-types): Implements the [`From<_>`] conversions between corresponding types.
 * [`postgres`](https://docs.rs/postgres): Implements the [`ToSql`](https://docs.rs/postgres/latest/postgres/types/trait.ToSql.html) trait supporting many column types.
+* [`num-bigint`](https://docs.rs/num-bigint): Implements conversion to/from [`BigUint`](https://docs.rs/num-bigint/latest/num_bigint/struct.BigUint.html) and [`BigInt`](https://docs.rs/num-bigint/latest/num_bigint/struct.BigInt.html).
+* [`ark-ff`](https://docs.rs/ark-ff): Implements conversion to/from the [`BigInteger*`](https://docs.rs/ark-ff/latest/ark_ff/biginteger/index.html) types and the [`Fp*`](https://docs.rs/ark-ff/latest/ark_ff/fields/models/index.html) types.
 
 ## Building and testing
 

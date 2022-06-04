@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `reduce_mod`, `add_mod`, `mul_mod`, `pow_mod`.
+- Added `num-bigint` and `ark-ff` support.
 - Made `algorithms` public, but with unstable API for now.
 
 ### Changed
