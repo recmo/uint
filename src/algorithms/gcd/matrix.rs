@@ -11,7 +11,7 @@ use crate::Uint;
 ///  [-.2   .3]    [ .2  -.3]
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Matrix(u64, u64, u64, u64, bool);
+pub struct Matrix(pub u64, pub u64, pub u64, pub u64, pub bool);
 
 impl Matrix {
     pub const IDENTITY: Self = Self(1, 0, 0, 1, true);
@@ -30,25 +30,27 @@ impl Matrix {
     /// Applies the matrix to a `Uint`.
     pub fn apply<const BITS: usize, const LIMBS: usize>(
         &self,
-        a: Uint<BITS, LIMBS>,
-        b: Uint<BITS, LIMBS>,
-    ) -> (Uint<BITS, LIMBS>, Uint<BITS, LIMBS>) {
+        a: &mut Uint<BITS, LIMBS>,
+        b: &mut Uint<BITS, LIMBS>,
+    ) {
         if BITS == 0 {
-            return (Uint::ZERO, Uint::ZERO);
+            return;
         }
         // OPT: We can avoid the temporary if we implement a dedicated matrix
         // multiplication.
-        if self.4 {
+        let (c, d) = if self.4 {
             (
-                Uint::from(self.0) * a - Uint::from(self.1) * b,
-                Uint::from(self.3) * b - Uint::from(self.2) * a,
+                Uint::from(self.0) * *a - Uint::from(self.1) * *b,
+                Uint::from(self.3) * *b - Uint::from(self.2) * *a,
             )
         } else {
             (
-                Uint::from(self.1) * b - Uint::from(self.0) * a,
-                Uint::from(self.2) * a - Uint::from(self.3) * b,
+                Uint::from(self.1) * *b - Uint::from(self.0) * *a,
+                Uint::from(self.2) * *a - Uint::from(self.3) * *b,
             )
-        }
+        };
+        *a = c;
+        *b = d;
     }
 
     /// Applies the matrix to a u128.
@@ -152,7 +154,7 @@ impl Matrix {
 
         // Here we do something original: The cofactors undergo identical
         // operations which makes them a candidate for SIMD instructions.
-        // They are also never exceed 32 bit, so we can SWAR them in a single u64.
+        // They also never exceed 32 bit, so we can SWAR them in a single u64.
         let mut k0 = 1_u64 << 32; // u0 = 1, v0 = 0
         let mut k1 = 1_u64; // u1 = 0, v1 = 1
         let mut even = true;
@@ -162,6 +164,7 @@ impl Matrix {
 
         // Compute a2
         let q = a0 / a1;
+        // dbg!(q);
         let mut a2 = a0 - q * a1;
         let mut k2 = k0 + q * k1;
         if a2 < LIMIT {
@@ -178,6 +181,7 @@ impl Matrix {
 
         // Compute a3
         let q = a1 / a2;
+        // dbg!(q);
         let mut a3 = a1 - q * a2;
         let mut k3 = k1 + q * k2;
 
@@ -194,6 +198,7 @@ impl Matrix {
             debug_assert!(a2 < a3);
             debug_assert!(a2 > 0);
             let q = a3 / a2;
+            // dbg!(q);
             a3 -= q * a2;
             k3 += q * k2;
             if a3 < LIMIT {
@@ -210,6 +215,7 @@ impl Matrix {
             debug_assert!(a2 < a3);
             debug_assert!(a2 > 0);
             let q = a3 / a2;
+            // dbg!(q);
             a3 -= q * a2;
             k3 += q * k2;
         }
@@ -285,7 +291,8 @@ impl Matrix {
             return q;
         }
         // We can return q here and have a perfectly valid single-word Lehmer GCD.
-        // return q;
+        return q;
+        // OPT: Fix the below method to get double-word Lehmer GCD.
 
         // Recompute r0 and r1 and take the high bits.
         // TODO: Is it safe to do this based on just the u128 prefix?
@@ -296,13 +303,7 @@ impl Matrix {
         let qn = Self::from_u64_prefix((r0s >> 64) as u64, (r1s >> 64) as u64);
 
         // Multiply matrices qn * q
-        Matrix(
-            qn.0 * q.0 + qn.1 * q.2,
-            qn.0 * q.1 + qn.1 * q.3,
-            qn.2 * q.0 + qn.3 * q.2,
-            qn.2 * q.1 + qn.3 * q.3,
-            qn.4 ^ !q.4,
-        )
+        qn.compose(q)
     }
 }
 
@@ -311,30 +312,30 @@ impl Matrix {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use core::cmp::{max, min};
+    use core::{
+        cmp::{max, min},
+        mem::swap,
+    };
     use proptest::proptest;
+    use std::str::FromStr;
 
     fn gcd(mut a: u128, mut b: u128) -> u128 {
-        loop {
-            if b == 0 {
-                return a;
-            }
+        while b != 0 {
             a %= b;
-            core::mem::swap(&mut a, &mut b);
+            swap(&mut a, &mut b);
         }
+        a
     }
 
     fn gcd_uint<const BITS: usize, const LIMBS: usize>(
         mut a: Uint<BITS, LIMBS>,
         mut b: Uint<BITS, LIMBS>,
     ) -> Uint<BITS, LIMBS> {
-        loop {
-            if b == Uint::ZERO {
-                return a;
-            }
+        while b != Uint::ZERO {
             a %= b;
-            core::mem::swap(&mut a, &mut b);
+            swap(&mut a, &mut b);
         }
+        a
     }
 
     #[test]
@@ -381,25 +382,120 @@ mod tests {
         });
     }
 
+    fn test_form_uint_one<const BITS: usize, const LIMBS: usize>(
+        mut a: Uint<BITS, LIMBS>,
+        mut b: Uint<BITS, LIMBS>,
+    ) {
+        let (a, b) = (max(a, b), min(a, b));
+        let m = Matrix::from(a, b);
+        let (mut c, mut d) = (a, b);
+        m.apply(&mut c, &mut d);
+        assert!(c >= d);
+        if m == Matrix::IDENTITY {
+            assert_eq!(c, a);
+            assert_eq!(d, b);
+        } else {
+            assert!(c <= a);
+            assert!(d < b);
+            assert_eq!(gcd_uint(a, b), gcd_uint(c, d));
+        }
+    }
+
     #[test]
-    fn test_from() {
+    fn test_from_uint_cases() {
+        // This case fails with the double-word version above.
+        type U129 = Uint<129, 3>;
+        test_form_uint_one(
+            U129::from_str("0x01de6ef6f3caa963a548d7a411b05b9988").unwrap(),
+            U129::from_str("0x006d7c4641f88b729a97889164dd8d07db").unwrap(),
+        );
+    }
+
+    #[test]
+    fn test_from_uint_proptest() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(a: U, b: U)| {
-                let (a, b) = (max(a,b), min(a,b));
-                let m = Matrix::from(a, b);
-                let (c, d) = m.apply(a, b);
-                assert!(c >= d);
-                if m == Matrix::IDENTITY {
-                    assert_eq!(c, a);
-                    assert_eq!(d, b);
-                } else {
-                    assert!(c <= a);
-                    assert!(d < b);
-                    assert_eq!(gcd_uint(a, b), gcd_uint(c, d));
-                }
+                test_form_uint_one(a, b);
             });
         });
+    }
+}
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use crate::{const_for, nlimbs};
+    use ::proptest::{
+        arbitrary::Arbitrary,
+        strategy::{Strategy, ValueTree},
+        test_runner::TestRunner,
+    };
+    use core::cmp::{max, min};
+    use criterion::{black_box, BatchSize, Criterion};
+
+    pub fn group(criterion: &mut Criterion) {
+        bench_from_u64(criterion);
+        bench_from_u64_prefix(criterion);
+        const_for!(BITS in BENCH {
+            const LIMBS: usize = nlimbs(BITS);
+            bench_apply::<BITS, LIMBS>(criterion);
+        });
+    }
+
+    fn bench_from_u64(criterion: &mut Criterion) {
+        let input = (u64::arbitrary(), u64::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function("algorithms/gcd/matrix/from_u64", move |bencher| {
+            bencher.iter_batched(
+                || {
+                    let (a, b) = input.new_tree(&mut runner).unwrap().current();
+                    (max(a, b), min(a, b))
+                },
+                |(a, b)| black_box(Matrix::from_u64(black_box(a), black_box(b))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_from_u64_prefix(criterion: &mut Criterion) {
+        let input = (u64::arbitrary(), u64::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function("algorithms/gcd/matrix/from_u64_prefix", move |bencher| {
+            bencher.iter_batched(
+                || {
+                    let (a, b) = input.new_tree(&mut runner).unwrap().current();
+                    (max(a, b), min(a, b))
+                },
+                |(a, b)| black_box(Matrix::from_u64_prefix(black_box(a), black_box(b))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_apply<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::<BITS, LIMBS>::arbitrary(),
+        );
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(
+            &format!("algorithms/gcd/matrix/apply/{}", BITS),
+            move |bencher| {
+                bencher.iter_batched(
+                    || {
+                        let (a, b) = input.new_tree(&mut runner).unwrap().current();
+                        let (a, b) = (max(a, b), min(a, b));
+                        let m = Matrix::from(a, b);
+                        (a, b, m)
+                    },
+                    |(mut a, mut b, m)| {
+                        black_box(black_box(m).apply(&mut black_box(a), &mut black_box(b)))
+                    },
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
 }
