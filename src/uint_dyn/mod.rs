@@ -2,12 +2,16 @@
 #![cfg(feature = "unstable")]
 use smallvec::SmallVec;
 
-/// Dynamically sized unsigned integer type.
+/// ⚠️ Dynamically sized unsigned integer type.
+///
+/// **Warning.** This is not part of the stable API.
 ///
 /// *Warning* This type is unstable can break in semver-compatible minor
 /// releases.
 pub struct UintDyn {
-    _limbs: SmallVec<[u64; 2]>,
+    _bit_len: usize,
+    // OPT: `bit_len` and the size in SmallVec are redundant.
+    _limbs:   SmallVec<[u64; 2]>,
 }
 
 #[cfg(test)]

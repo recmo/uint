@@ -1,6 +1,3 @@
-use crate::{u256::U256, Binary};
-use crunchy::unroll;
-
 /// Lehmer update matrix
 ///
 /// Signs are implicit, the boolean `.4` encodes which of two sign
