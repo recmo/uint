@@ -9,6 +9,16 @@ mod mul;
 
 pub use self::{
     div::div_rem,
-    gcd::LehmerMatrix,
+    gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{mul, mul_inline},
 };
+
+#[cfg(feature = "bench")]
+pub mod bench {
+    use super::*;
+    use criterion::Criterion;
+
+    pub fn group(criterion: &mut Criterion) {
+        gcd::bench::group(criterion)
+    }
+}

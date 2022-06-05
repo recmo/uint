@@ -316,5 +316,6 @@ pub mod bench {
         log::bench::group(criterion);
         root::bench::group(criterion);
         modular::bench::group(criterion);
+        algorithms::bench::group(criterion);
     }
 }

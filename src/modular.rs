@@ -92,6 +92,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         result
     }
+
+    /// Compute $\mod{\mathtt{self}^{-1}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns `None` if the inverse does not exist.
+    #[must_use]
+    pub fn inv_mod(mut self, modulus: Self) -> Option<Self> {
+        algorithms::inv_mod(self, modulus)
+    }
 }
 
 #[cfg(test)]
@@ -181,6 +189,19 @@ mod tests {
                 // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.
                 // TODO: (a^b)^c = a^(b * c). Which requires carmichael fn.
                 assert_eq!(a.mul_mod(b, m).pow_mod(c, m), a.pow_mod(c, m).mul_mod(b.pow_mod(c, m), m));
+            });
+        });
+    }
+
+    #[test]
+    fn test_inv() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, m: U)| {
+                if let Some(inv) = a.inv_mod(m) {
+                    assert_eq!(a.mul_mod(inv, m), U::from(1));
+                }
             });
         });
     }
