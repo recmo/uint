@@ -97,7 +97,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Returns `None` if the inverse does not exist.
     #[must_use]
-    pub fn inv_mod(mut self, modulus: Self) -> Option<Self> {
+    pub fn inv_mod(self, modulus: Self) -> Option<Self> {
         algorithms::inv_mod(self, modulus)
     }
 }

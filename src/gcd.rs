@@ -1,4 +1,4 @@
-use crate::{algorithms, nlimbs, Uint};
+use crate::{algorithms, Uint};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute the greatest common divisor of two [`Uint`]s.
@@ -11,12 +11,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0_U128.gcd(0_U128), 0_U128);
     /// # }
     /// ```
+    #[must_use]
     pub fn gcd(self, other: Self) -> Self {
         algorithms::gcd(self, other)
     }
 
     /// Compute the least common multiple of two [`Uint`]s or [`None`] if the
     /// result would be too large.
+    #[must_use]
     pub fn lcm(self, other: Self) -> Option<Self> {
         let other = other.checked_div(self.gcd(other)).unwrap_or_default();
         self.checked_mul(other)
@@ -38,6 +40,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note that the intermediate products may overflow, even though the result
     /// after subtraction will fit in the bit size of the [`Uint`].
+    #[must_use]
     pub fn gcd_extended(self, other: Self) -> (Self, Self, Self, bool) {
         algorithms::gcd_extended(self, other)
     }
@@ -46,7 +49,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U128, const_for, nlimbs};
+    use crate::{const_for, nlimbs};
     use proptest::proptest;
 
     #[test]

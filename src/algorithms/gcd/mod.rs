@@ -1,13 +1,18 @@
-// TODO: Make these algorithms work on limb slices.
+#![allow(clippy::module_name_repetitions)]
 
+// TODO: Make these algorithms work on limb slices.
 mod matrix;
 
 pub use self::matrix::Matrix as LehmerMatrix;
 use crate::Uint;
 use core::mem::swap;
 
-//// Lehmer's GCD algorithms.
-/// See `gcd_extended` for documentation.
+/// ⚠️ Lehmer's GCD algorithms.
+///
+/// **Warning.** This struct is not part of the stable API.
+///
+/// See [`gcd_extended`] for documentation.
+#[must_use]
 pub fn gcd<const BITS: usize, const LIMBS: usize>(
     mut a: Uint<BITS, LIMBS>,
     mut b: Uint<BITS, LIMBS>,
@@ -31,9 +36,13 @@ pub fn gcd<const BITS: usize, const LIMBS: usize>(
     a
 }
 
-/// Lehmer's extended GCD.
+/// ⚠️ Lehmer's extended GCD.
+///
+/// **Warning.** This struct is not part of the stable API.
 ///
 /// Returns `(gcd, x, y, sign)` such that `gcd = a * x + b * y`.
+///
+/// # Algorithm
 ///
 /// A variation of Euclids algorithm where repeated 64-bit approximations are
 /// used to make rapid progress on.
@@ -49,6 +58,7 @@ pub fn gcd<const BITS: usize, const LIMBS: usize>(
 ///
 /// See also `mpn_gcdext_lehmer_n` in GMP.
 /// <https://gmplib.org/repo/gmp-6.1/file/tip/mpn/generic/gcdext_lehmer.c#l146>
+#[must_use]
 pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
     mut a: Uint<BITS, LIMBS>,
     mut b: Uint<BITS, LIMBS>,
@@ -109,7 +119,7 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
     (a, s0, t0, even)
 }
 
-/// Modular inversion using extended GCD.
+/// ⚠️ Modular inversion using extended GCD.
 ///
 /// It uses the Bezout identity
 ///
@@ -126,6 +136,7 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
 /// It differs from `gcd_extended` in that it only computes the required
 /// cofactor, and returns `None` if the GCD is not one (i.e. when `num` does
 /// not have an inverse).
+#[must_use]
 pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
     num: Uint<BITS, LIMBS>,
     modulus: Uint<BITS, LIMBS>,
@@ -177,7 +188,6 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use core::cmp::{max, min};
     use proptest::proptest;
 
     #[test]
@@ -238,6 +248,6 @@ pub mod bench {
     use criterion::Criterion;
 
     pub fn group(criterion: &mut Criterion) {
-        matrix::bench::group(criterion)
+        matrix::bench::group(criterion);
     }
 }

@@ -1,4 +1,4 @@
-//! Collection of bignum algorithms.
+//! ⚠️ Collection of bignum algorithms.
 //!
 //! **Warning.** Most functions in this module are currently not considered part
 //! of the stable API and may be changed or removed in future minor releases.
@@ -19,6 +19,6 @@ pub mod bench {
     use criterion::Criterion;
 
     pub fn group(criterion: &mut Criterion) {
-        gcd::bench::group(criterion)
+        gcd::bench::group(criterion);
     }
 }

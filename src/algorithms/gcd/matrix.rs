@@ -1,6 +1,10 @@
+#![allow(clippy::use_self)]
+
 use crate::Uint;
 
-/// Lehmer update matrix
+/// ⚠️ Lehmer update matrix
+///
+/// **Warning.** This struct is not part of the stable API.
 ///
 /// Signs are implicit, the boolean `.4` encodes which of two sign
 /// patterns applies. The signs and layout of the matrix are:
@@ -17,7 +21,9 @@ impl Matrix {
     pub const IDENTITY: Self = Self(1, 0, 0, 1, true);
 
     /// Returns the matrix product `self * other`.
-    pub fn compose(self, other: Self) -> Self {
+    #[allow(clippy::suspicious_operation_groupings)]
+    #[must_use]
+    pub const fn compose(self, other: Self) -> Self {
         Self(
             self.0 * other.0 + self.1 * other.2,
             self.0 * other.1 + self.1 * other.3,
@@ -53,8 +59,9 @@ impl Matrix {
         *b = d;
     }
 
-    /// Applies the matrix to a u128.
-    pub fn apply_u128(&self, a: u128, b: u128) -> (u128, u128) {
+    /// Applies the matrix to a `u128`.
+    #[must_use]
+    pub const fn apply_u128(&self, a: u128, b: u128) -> (u128, u128) {
         // Intermediate values can overflow but the final result will fit, so we
         // compute mod 2^128.
         if self.4 {
@@ -78,6 +85,12 @@ impl Matrix {
         }
     }
 
+    /// Compute a Lehmer update matrix from two `Uint`s.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `b > a`.
+    #[must_use]
     pub fn from<const BITS: usize, const LIMBS: usize>(
         a: Uint<BITS, LIMBS>,
         b: Uint<BITS, LIMBS>,
@@ -105,6 +118,7 @@ impl Matrix {
     ///
     /// Panics if `r1 < r0`.
     // OPT: Would this be faster using extended binary gcd?
+    #[must_use]
     pub fn from_u64(mut r0: u64, mut r1: u64) -> Self {
         debug_assert!(r0 >= r1);
         if r1 == 0_u64 {
@@ -147,7 +161,9 @@ impl Matrix {
     ///
     /// Panics if `a0` does not have the highest bit set.
     /// Panics if `a0 < a1`.
-    pub fn from_u64_prefix(mut a0: u64, mut a1: u64) -> Self {
+    #[must_use]
+    #[allow(clippy::redundant_else)]
+    pub fn from_u64_prefix(a0: u64, mut a1: u64) -> Self {
         const LIMIT: u64 = 1_u64 << 32;
         debug_assert!(a0 >= 1_u64 << 63);
         debug_assert!(a0 >= a1);
@@ -281,7 +297,8 @@ impl Matrix {
     /// simplest out of these solutions.
     // OPT: We can update r0 and r1 in place. This won't remove the partially
     // redundant call to lehmer_update, but it reduces memory usage.
-    pub fn from_u128_prefix(mut r0: u128, mut r1: u128) -> Self {
+    #[must_use]
+    pub fn from_u128_prefix(r0: u128, r1: u128) -> Self {
         debug_assert!(r0 >= r1);
         let s = r0.leading_zeros();
         let r0s = r0 << s;
@@ -291,24 +308,26 @@ impl Matrix {
             return q;
         }
         // We can return q here and have a perfectly valid single-word Lehmer GCD.
-        return q;
+        q
         // OPT: Fix the below method to get double-word Lehmer GCD.
 
         // Recompute r0 and r1 and take the high bits.
         // TODO: Is it safe to do this based on just the u128 prefix?
-        let (r0, r1) = q.apply_u128(r0, r1);
-        let s = r0.leading_zeros();
-        let r0s = r0 << s;
-        let r1s = r1 << s;
-        let qn = Self::from_u64_prefix((r0s >> 64) as u64, (r1s >> 64) as u64);
+        // let (r0, r1) = q.apply_u128(r0, r1);
+        // let s = r0.leading_zeros();
+        // let r0s = r0 << s;
+        // let r1s = r1 << s;
+        // let qn = Self::from_u64_prefix((r0s >> 64) as u64, (r1s >> 64) as
+        // u64);
 
-        // Multiply matrices qn * q
-        qn.compose(q)
+        // // Multiply matrices qn * q
+        // qn.compose(q)
     }
 }
 
 #[cfg(test)]
 #[allow(clippy::cast_lossless)]
+#[allow(clippy::many_single_char_names)]
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
@@ -383,8 +402,8 @@ mod tests {
     }
 
     fn test_form_uint_one<const BITS: usize, const LIMBS: usize>(
-        mut a: Uint<BITS, LIMBS>,
-        mut b: Uint<BITS, LIMBS>,
+        a: Uint<BITS, LIMBS>,
+        b: Uint<BITS, LIMBS>,
     ) {
         let (a, b) = (max(a, b), min(a, b));
         let m = Matrix::from(a, b);
@@ -490,9 +509,7 @@ pub mod bench {
                         let m = Matrix::from(a, b);
                         (a, b, m)
                     },
-                    |(mut a, mut b, m)| {
-                        black_box(black_box(m).apply(&mut black_box(a), &mut black_box(b)))
-                    },
+                    |(a, b, m)| black_box(m).apply(&mut black_box(a), &mut black_box(b)),
                     BatchSize::SmallInput,
                 );
             },
