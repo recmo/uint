@@ -100,6 +100,41 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn inv_mod(self, modulus: Self) -> Option<Self> {
         algorithms::inv_mod(self, modulus)
     }
+
+    /// Montgomery multiplication.
+    ///
+    /// Computes
+    ///
+    /// $$
+    /// \mod{\frac{\mathtt{self} ⋅ \mathtt{other}}{ 2^{64 ·
+    /// \mathtt{LIMBS}}}}_{\mathtt{modulus}} $$
+    ///
+    /// For this algorithm to work, it needs an extra parameter `m64` which must
+    /// be set to
+    ///
+    /// $$
+    /// \mathtt{m64} = \mod{\frac{-1}{\mathtt{modulus}} }_{2^{64}}
+    /// $$
+    ///
+    /// This can be computed as
+    ///
+    /// ```
+    /// # use ruint::{uint, Uint, aliases::*};
+    /// # uint!{
+    /// # let modulus = 21888242871839275222246405745257275088548364400416034343698204186575808495617_U256;
+    /// let m64 = (-U64::from(modulus.as_limbs()[0]).inv_ring().unwrap()).as_limbs()[0];
+    /// # assert_eq!(m64.wrapping_mul(modulus.as_limbs()[0]), u64::MAX);
+    /// # assert_eq!(m64, 0xc2e1f593efffffff);
+    /// # }
+    /// ```
+    pub fn mul_redc(self, other: Self, modulus: Self, m64: u64) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        assert_eq!(m64.wrapping_mul(modulus.limbs[0]), u64::MAX);
+
+        todo!();
+    }
 }
 
 #[cfg(test)]
