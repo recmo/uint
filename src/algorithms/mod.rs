@@ -6,11 +6,13 @@
 mod div;
 mod gcd;
 mod mul;
+mod mul_redc;
 
 pub use self::{
     div::div_rem,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{mul, mul_inline},
+    mul_redc::mul_redc,
 };
 
 #[cfg(feature = "bench")]
