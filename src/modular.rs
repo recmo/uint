@@ -225,6 +225,7 @@ pub mod bench {
             bench_add::<BITS, LIMBS>(criterion);
             bench_mul::<BITS, LIMBS>(criterion);
             bench_pow::<BITS, LIMBS>(criterion);
+            bench_inv::<BITS, LIMBS>(criterion);
         });
     }
 
@@ -283,6 +284,21 @@ pub mod bench {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b, m)| black_box(black_box(a).pow_mod(black_box(b), black_box(m))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_inv<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::arbitrary(),
+        );
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("inv_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, m)| black_box(black_box(a).inv_mod(black_box(m))),
                 BatchSize::SmallInput,
             );
         });
