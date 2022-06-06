@@ -290,10 +290,7 @@ pub mod bench {
     }
 
     fn bench_inv<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        let input = (
-            Uint::<BITS, LIMBS>::arbitrary(),
-            Uint::arbitrary(),
-        );
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("inv_mod/{}", BITS), move |bencher| {
             bencher.iter_batched(
