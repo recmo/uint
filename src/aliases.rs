@@ -23,13 +23,13 @@ pub type U64 = Uint<64, 1>;
 pub type U128 = Uint<128, 2>;
 
 /// [`Uint`] for `192` bits.
-pub type U192 = Uint<256, 3>;
+pub type U192 = Uint<192, 3>;
 
 /// [`Uint`] for `256` bits.
 pub type U256 = Uint<256, 4>;
 
 /// [`Uint`] for `320` bits.
-pub type U320 = Uint<256, 5>;
+pub type U320 = Uint<320, 5>;
 
 /// [`Uint`] for `384` bits.
 pub type U384 = Uint<384, 6>;

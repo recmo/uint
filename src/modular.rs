@@ -92,6 +92,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         result
     }
+
+    /// Compute $\mod{\mathtt{self}^{-1}}_{\mathtt{modulus}}$.
+    ///
+    /// Returns `None` if the inverse does not exist.
+    #[must_use]
+    pub fn inv_mod(self, modulus: Self) -> Option<Self> {
+        algorithms::inv_mod(self, modulus)
+    }
 }
 
 #[cfg(test)]
@@ -184,6 +192,19 @@ mod tests {
             });
         });
     }
+
+    #[test]
+    fn test_inv() {
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, m: U)| {
+                if let Some(inv) = a.inv_mod(m) {
+                    assert_eq!(a.mul_mod(inv, m), U::from(1));
+                }
+            });
+        });
+    }
 }
 
 #[cfg(feature = "bench")]
@@ -204,6 +225,7 @@ pub mod bench {
             bench_add::<BITS, LIMBS>(criterion);
             bench_mul::<BITS, LIMBS>(criterion);
             bench_pow::<BITS, LIMBS>(criterion);
+            bench_inv::<BITS, LIMBS>(criterion);
         });
     }
 
@@ -262,6 +284,18 @@ pub mod bench {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b, m)| black_box(black_box(a).pow_mod(black_box(b), black_box(m))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_inv<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("inv_mod/{}", BITS), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(a, m)| black_box(black_box(a).inv_mod(black_box(m))),
                 BatchSize::SmallInput,
             );
         });

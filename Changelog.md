@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `inv_mod`, `gcd`, `gcd_extended`, `lcm`.
+
 ## [1.2.0] — 2022-06-03
 
 ### Added
 
-- Added `reduce_mod`, `add_mod`, `mul_mod`, `pow_mod`.
+- Added `reduce_mod`, `add_mod`, `mul_mod`, `pow_mod`, `inv_mod`.
 - Added `num-bigint` and `ark-ff` support.
 - Made `algorithms` public, but with unstable API for now.
 

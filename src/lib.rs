@@ -27,6 +27,7 @@ mod cmp;
 mod const_for;
 mod div;
 mod from;
+mod gcd;
 mod log;
 mod modular;
 mod mul;
@@ -316,5 +317,6 @@ pub mod bench {
         log::bench::group(criterion);
         root::bench::group(criterion);
         modular::bench::group(criterion);
+        algorithms::bench::group(criterion);
     }
 }
