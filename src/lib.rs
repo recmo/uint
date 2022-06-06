@@ -27,6 +27,7 @@ mod cmp;
 mod const_for;
 mod div;
 mod from;
+mod gcd;
 mod log;
 mod modular;
 mod mul;
