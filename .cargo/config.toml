@@ -3,4 +3,4 @@ criterion = "bench --bench=criterion --features=bench,proptest"
 
 # This enables KaTex in docs, but requires runing `cargo doc --no-deps`.
 [build]
-rustdocflags = "--html-in-header .cargo/katex-header.html"
+rustdocflags = "--cfg docsrs --html-in-header .cargo/katex-header.html"

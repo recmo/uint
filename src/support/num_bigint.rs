@@ -1,5 +1,6 @@
 //! Support for the [`num-bigint`](https://crates.io/crates/num-bigint) crate.
 #![cfg(feature = "num-bigint")]
+#![cfg_attr(docsrs, doc(cfg(feature = "num-bigint")))]
 
 use crate::{from::ToUintError, Uint};
 use num_bigint::{BigInt, BigUint, Sign};

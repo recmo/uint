@@ -1,5 +1,6 @@
 //! Support for the [`postgres`](https://crates.io/crates/postgres) crate.
 #![cfg(feature = "postgres")]
+#![cfg_attr(docsrs, doc(cfg(feature = "postgres")))]
 
 use crate::{
     utils::{rem_up, trim_end_vec},
