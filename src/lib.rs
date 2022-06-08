@@ -305,6 +305,7 @@ mod test {
 }
 
 #[cfg(feature = "bench")]
+#[doc(hidden)]
 pub mod bench {
     use super::*;
     use criterion::Criterion;

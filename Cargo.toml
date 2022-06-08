@@ -82,3 +82,4 @@ debug = true
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "--html-in-header", ".cargo/katex-header.html" ]
+all-features = true
