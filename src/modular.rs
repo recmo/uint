@@ -138,7 +138,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # assert_eq!(inv, 0xc2e1f593efffffff);
     /// # }
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `inv` is not correct.
     // TODO: Improve the conversion dev-ex.
+    #[must_use]
     pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {
         if BITS == 0 {
             return Self::ZERO;

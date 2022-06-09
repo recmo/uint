@@ -12,7 +12,7 @@ pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
     // Compute temp full product.
     // OPT: Do combined multiplication and reduction.
     let mut temp = vec![0; 2 * m.len() + 1];
-    mul(&a, &b, &mut temp);
+    mul(a, b, &mut temp);
 
     // Reduce temp.
     for i in 0..m.len() {
@@ -20,11 +20,13 @@ pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
 
         // REFACTOR: Create add_mul1 routine.
         let mut carry = 0;
+        #[allow(clippy::cast_possible_truncation)] // Intentional
         for j in 0..m.len() {
             carry += u128::from(temp[i + j]) + u128::from(m[j]) * u128::from(u);
             temp[i + j] = carry as u64;
             carry >>= 64;
         }
+        #[allow(clippy::cast_possible_truncation)] // Intentional
         for j in m.len()..(temp.len() - i) {
             carry += u128::from(temp[i + j]);
             temp[i + j] = carry as u64;
@@ -54,6 +56,8 @@ pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
     if reduce {
         // REFACTOR: Create sub routine
         let mut carry = 0;
+        #[allow(clippy::cast_possible_truncation)] // Intentional
+        #[allow(clippy::cast_sign_loss)] // Intentional
         for (r, m) in zip(result.iter_mut(), m.iter().copied()) {
             carry += i128::from(*r) - i128::from(m);
             *r = carry as u64;
