@@ -2,7 +2,7 @@
 //!
 //! Currently only encodes to/from a big-endian byte array.
 #![cfg(feature = "sqlx")]
-#![cfg_attr(docsrs, doc(cfg(feature = "sqlx")))]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "sqlx")))]
 
 use crate::{ToUintError, Uint};
 use sqlx_core::{

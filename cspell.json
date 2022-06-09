@@ -13,7 +13,6 @@
         "cset",
         "divq",
         "divrem",
-        "docsrs",
         "Encodable",
         "fastrlp",
         "froms",

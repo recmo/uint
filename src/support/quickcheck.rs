@@ -1,6 +1,6 @@
 //! Support for the [`quickcheck`](https://crates.io/crates/quickcheck) crate.
 #![cfg(feature = "quickcheck")]
-#![cfg_attr(docsrs, doc(cfg(feature = "quickcheck")))]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "quickcheck")))]
 
 use crate::Uint;
 use quickcheck::{Arbitrary, Gen};

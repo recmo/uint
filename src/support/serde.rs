@@ -1,6 +1,6 @@
 //! Support for the [`serde`](https://crates.io/crates/serde) crate.
 #![cfg(feature = "serde")]
-#![cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "serde")))]
 
 use crate::{nbytes, Uint};
 use core::fmt::{Formatter, Result as FmtResult};

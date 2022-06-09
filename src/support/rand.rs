@@ -1,6 +1,6 @@
 //! Support for the [`rand`](https://crates.io/crates/rand) crate.
 #![cfg(feature = "rand")]
-#![cfg_attr(docsrs, doc(cfg(feature = "rand")))]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "rand")))]
 
 // FEATURE: Implement the Uniform distribution.
 

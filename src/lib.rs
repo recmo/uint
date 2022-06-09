@@ -16,7 +16,7 @@
 // See <https://github.com/taiki-e/coverage-helper>
 #![cfg_attr(coverage_nightly, feature(no_coverage))]
 // See <https://stackoverflow.com/questions/61417452/how-to-get-a-feature-requirement-tag-in-the-documentation-generated-by-cargo-do>
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(has_doc_cfg, feature(doc_cfg))]
 
 mod add;
 pub mod algorithms;
