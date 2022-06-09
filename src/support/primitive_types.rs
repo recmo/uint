@@ -1,5 +1,6 @@
 //! Support for the [`primitive-types`](https://crates.io/crates/primitive-types) crate.
 #![cfg(feature = "primitive-types")]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "primitive-types")))]
 
 use crate::aliases as ours;
 use primitive_types::{U128, U256, U512};

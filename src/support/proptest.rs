@@ -1,4 +1,7 @@
+//! Support for the [`proptest`](https://crates.io/crates/proptest) crate.
 #![cfg(feature = "proptest")]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "proptest")))]
+
 use crate::{nlimbs, Uint};
 use proptest::{
     arbitrary::Arbitrary,

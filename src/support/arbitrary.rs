@@ -1,4 +1,6 @@
+//! Support for the [`arbitrary`](https://crates.io/crates/arbitrary) crate.
 #![cfg(feature = "arbitrary")]
+#![cfg_attr(has_doc_cfg, doc(cfg(feature = "arbitrary")))]
 use crate::Uint;
 use arbitrary::{Arbitrary, Result, Unstructured};
 

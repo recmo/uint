@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `inv_mod`, `mul_redc`, `gcd`, `gcd_extended`, `lcm`.
+- Added `sqlx` support.
 
 ### Changed
 

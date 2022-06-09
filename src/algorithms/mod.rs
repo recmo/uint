@@ -16,6 +16,7 @@ pub use self::{
 };
 
 #[cfg(feature = "bench")]
+#[doc(hidden)]
 pub mod bench {
     use super::*;
     use criterion::Criterion;
