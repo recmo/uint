@@ -31,6 +31,7 @@
         "ruint",
         "RUSTDOCFLAGS",
         "serde",
+        "sqlx",
         "thiserror",
         "trunc",
         "Unnormalize"

@@ -9,6 +9,7 @@ mod quickcheck;
 mod rand;
 mod rlp;
 mod serde;
+mod sqlx;
 
 // FEATURE: Support for many more traits and crates.
 // * https://docs.rs/tracing/latest/tracing/trait.Value.html
@@ -25,4 +26,3 @@ mod serde;
 //
 // More databases:
 // * https://crates.io/crates/diesel
-// * https://crates.io/crates/sqlx

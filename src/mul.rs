@@ -261,6 +261,7 @@ mod tests {
 }
 
 #[cfg(feature = "bench")]
+#[doc(hidden)]
 pub mod bench {
     use super::*;
     use crate::{const_for, nlimbs};
