@@ -68,7 +68,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning
     /// [`None`] if the inverse does not exist.
     #[must_use]
-    pub fn ring_inverse(self) -> Option<Self> {
+    pub fn inv_ring(self) -> Option<Self> {
         if BITS == 0 || self.limbs[0] & 1 == 0 {
             return None;
         }
@@ -227,8 +227,8 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(mut a: U)| {
                 a |= U::from(1); // Make sure a is invertible
-                assert_eq!(a * a.ring_inverse().unwrap(), U::from(1));
-                assert_eq!(a.ring_inverse().unwrap().ring_inverse().unwrap(), a);
+                assert_eq!(a * a.inv_ring().unwrap(), U::from(1));
+                assert_eq!(a.inv_ring().unwrap().inv_ring().unwrap(), a);
             });
         });
     }

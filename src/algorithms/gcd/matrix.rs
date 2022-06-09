@@ -118,6 +118,7 @@ impl Matrix {
     ///
     /// Panics if `r1 < r0`.
     // OPT: Would this be faster using extended binary gcd?
+    // See <https://en.algorithmica.org/hpc/algorithms/gcd>
     #[must_use]
     pub fn from_u64(mut r0: u64, mut r1: u64) -> Self {
         debug_assert!(r0 >= r1);

@@ -45,6 +45,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute $\mod{\mathtt{self} ⋅ \mathtt{rhs}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
+    ///
+    /// See [`mul_redc`](Self::mul_redc) for a faster variant at the cost of
+    /// some pre-computation.
     #[must_use]
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
         if modulus == Self::ZERO {
@@ -100,14 +103,71 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn inv_mod(self, modulus: Self) -> Option<Self> {
         algorithms::inv_mod(self, modulus)
     }
+
+    #[allow(clippy::doc_markdown)] // False positive
+    /// Montgomery multiplication.
+    ///
+    /// Computes
+    ///
+    /// $$
+    /// \mod{\frac{\mathtt{self} ⋅ \mathtt{other}}{ 2^{64 ·
+    /// \mathtt{LIMBS}}}}_{\mathtt{modulus}} $$
+    ///
+    /// This is useful because it can be computed notably faster than
+    /// [`mul_mod`](Self::mul_mod). Many computations can be done by
+    /// pre-multiplying values with $R = 2^{64 · \mathtt{LIMBS}}$
+    /// and then using [`mul_redc`](Self::mul_redc) instead of
+    /// [`mul_mod`](Self::mul_mod).
+    ///
+    /// For this algorithm to work, it needs an extra parameter `inv` which must
+    /// be set to
+    ///
+    /// $$
+    /// \mathtt{inv} = \mod{\frac{-1}{\mathtt{modulus}} }_{2^{64}}
+    /// $$
+    ///
+    /// The `inv` value only exists for odd values of `modulus`. It can be
+    /// computed using [`inv_ring`](Self::inv_ring) from `U64`.
+    ///
+    /// ```
+    /// # use ruint::{uint, Uint, aliases::*};
+    /// # uint!{
+    /// # let modulus = 21888242871839275222246405745257275088548364400416034343698204186575808495617_U256;
+    /// let inv = (-U64::from(modulus.as_limbs()[0]).inv_ring().unwrap()).as_limbs()[0];
+    /// # assert_eq!(inv.wrapping_mul(modulus.as_limbs()[0]), u64::MAX);
+    /// # assert_eq!(inv, 0xc2e1f593efffffff);
+    /// # }
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `inv` is not correct.
+    // TODO: Improve the conversion dev-ex.
+    #[must_use]
+    pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        assert_eq!(inv.wrapping_mul(modulus.limbs[0]), u64::MAX);
+        let mut result = Self::ZERO;
+        algorithms::mul_redc(
+            &self.limbs,
+            &other.limbs,
+            &mut result.limbs,
+            &modulus.limbs,
+            inv,
+        );
+        debug_assert!(result < modulus);
+        result
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{const_for, nlimbs};
+    use crate::{aliases::U64, const_for, nlimbs};
     use core::cmp::min;
-    use proptest::{proptest, test_runner::Config};
+    use proptest::{prop_assume, proptest, test_runner::Config};
 
     #[test]
     fn test_commutative() {
@@ -201,6 +261,29 @@ mod tests {
             proptest!(|(a: U, m: U)| {
                 if let Some(inv) = a.inv_mod(m) {
                     assert_eq!(a.mul_mod(inv, m), U::from(1));
+                }
+            });
+        });
+    }
+
+    #[test]
+    fn test_mul_redc() {
+        const_for!(BITS in NON_ZERO if (BITS >= 16) {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U, m: U)| {
+                prop_assume!(m >= U::from(2));
+                if let Some(inv) = U64::from(m.as_limbs()[0]).inv_ring() {
+                    let inv = (-inv).as_limbs()[0];
+
+                    let r = U::from(2).pow_mod(U::from(64 * LIMBS), m);
+                    let ar = a.mul_mod(r, m);
+                    let br = b.mul_mod(r, m);
+                    // TODO: Test for larger (>= m) values of a, b.
+
+                    let expected = a.mul_mod(b, m).mul_mod(r, m);
+
+                    assert_eq!(ar.mul_redc(br, m, inv), expected);
                 }
             });
         });
