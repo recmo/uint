@@ -85,5 +85,5 @@ opt-level = 3
 debug = true
 
 [package.metadata.docs.rs]
-rustdoc-args = [ "--html-in-header", ".cargo/katex-header.html" ]
+rustdoc-args = [ "--cfg", "has_cfg_doc", "--html-in-header", ".cargo/katex-header.html" ]
 all-features = true

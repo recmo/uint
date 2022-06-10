@@ -6,7 +6,7 @@ use crate::{from::ToUintError, Uint};
 use num_bigint::{BigInt, BigUint, Sign};
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<BigUint> for Uint<BITS, LIMBS> {
-    type Error = ToUintError;
+    type Error = ToUintError<Self>;
 
     #[allow(clippy::only_used_in_recursion)] // False positive
     fn try_from(value: BigUint) -> Result<Self, Self::Error> {
@@ -15,11 +15,15 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<BigUint> for Uint<BITS, LIMB
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&BigUint> for Uint<BITS, LIMBS> {
-    type Error = ToUintError;
+    type Error = ToUintError<Self>;
 
     fn try_from(value: &BigUint) -> Result<Self, Self::Error> {
-        Self::checked_from_limbs_slice(value.to_u64_digits().as_slice())
-            .ok_or(ToUintError::ValueTooLarge(BITS))
+        let (n, overflow) = Self::overflowing_from_limbs_slice(value.to_u64_digits().as_slice());
+        if overflow {
+            Err(ToUintError::ValueTooLarge(BITS, n))
+        } else {
+            Ok(n)
+        }
     }
 }
 
@@ -36,7 +40,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for BigUint
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<BigInt> for Uint<BITS, LIMBS> {
-    type Error = ToUintError;
+    type Error = ToUintError<Self>;
 
     fn try_from(value: BigInt) -> Result<Self, Self::Error> {
         Self::try_from(&value)
@@ -44,14 +48,18 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<BigInt> for Uint<BITS, LIMBS
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&BigInt> for Uint<BITS, LIMBS> {
-    type Error = ToUintError;
+    type Error = ToUintError<Self>;
 
     fn try_from(value: &BigInt) -> Result<Self, Self::Error> {
         let (sign, digits) = value.to_u64_digits();
+        let (n, overflow) = Self::overflowing_from_limbs_slice(digits.as_slice());
         if sign == Sign::Minus {
-            return Err(ToUintError::ValueNegative(BITS));
+            Err(ToUintError::ValueNegative(BITS, n))
+        } else if overflow {
+            Err(ToUintError::ValueTooLarge(BITS, n))
+        } else {
+            Ok(n)
         }
-        Self::checked_from_limbs_slice(digits.as_slice()).ok_or(ToUintError::ValueTooLarge(BITS))
     }
 }
 

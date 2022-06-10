@@ -207,30 +207,55 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn from_limbs_slice(slice: &[u64]) -> Self {
-        Self::checked_from_limbs_slice(slice).expect("Value too large for this Uint")
+        match Self::overflowing_from_limbs_slice(slice) {
+            (n, false) => n,
+            (_, true) => panic!("Value too large for this Uint"),
+        }
     }
 
     /// Construct a new integer from little-endian a slice of limbs, or `None`
     /// if the value is too large for the [`Uint`].
     #[must_use]
-    #[track_caller]
     pub fn checked_from_limbs_slice(slice: &[u64]) -> Option<Self> {
-        let mut limbs = [0; LIMBS];
-        if slice.len() < Self::LIMBS {
-            limbs[..slice.len()].copy_from_slice(slice);
-        } else {
-            let (head, tail) = slice.split_at(limbs.len());
-            limbs.copy_from_slice(head);
-            for &limb in tail {
-                if limb != 0 {
-                    return None;
-                }
-            }
+        match Self::overflowing_from_limbs_slice(slice) {
+            (n, false) => Some(n),
+            (_, true) => None,
         }
-        if BITS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
-            None
+    }
+
+    #[must_use]
+    pub fn wrapping_from_limbs_slice(slice: &[u64]) -> Self {
+        Self::overflowing_from_limbs_slice(slice).0
+    }
+
+    /// Construct a new [`Uint`] from a little-endian slice of limbs. Returns
+    /// a potentially truncated value and a boolean indicating whether the value
+    /// was truncated.
+    #[must_use]
+    pub fn overflowing_from_limbs_slice(slice: &[u64]) -> (Self, bool) {
+        Self::assert_valid();
+        if slice.len() < LIMBS {
+            let mut limbs = [0; LIMBS];
+            limbs[..slice.len()].copy_from_slice(slice);
+            (Self::from_limbs(limbs), false)
         } else {
-            Some(Self::from_limbs(limbs))
+            let (head, tail) = slice.split_at(LIMBS);
+            let mut limbs = [0; LIMBS];
+            limbs.copy_from_slice(head);
+            let mut overflow = tail.iter().any(|&limb| limb != 0);
+            if LIMBS > 0 {
+                overflow |= limbs[LIMBS - 1] > Self::MASK;
+                limbs[LIMBS - 1] &= Self::MASK;
+            }
+            (Self::from_limbs(limbs), overflow)
+        }
+    }
+
+    #[must_use]
+    pub fn saturating_from_limbs_slice(slice: &[u64]) -> Self {
+        match Self::overflowing_from_limbs_slice(slice) {
+            (n, false) => n,
+            (_, true) => Self::MAX,
         }
     }
 

@@ -41,7 +41,8 @@ where
 {
     fn decode(value: <DB as HasValueRef<'a>>::ValueRef) -> Result<Self, BoxDynError> {
         let bytes = Vec::<u8>::decode(value)?;
+        // TODO: wrapping
         Self::try_from_be_slice(bytes.as_slice())
-            .ok_or_else(|| ToUintError::ValueTooLarge(BITS).into())
+            .ok_or_else(|| ToUintError::ValueTooLarge(BITS, Self::ZERO).into())
     }
 }
