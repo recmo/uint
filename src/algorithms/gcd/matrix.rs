@@ -433,6 +433,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::absurd_extreme_comparisons)] // Generated code
     fn test_from_uint_proptest() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);

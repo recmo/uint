@@ -215,6 +215,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::absurd_extreme_comparisons)] // Generated code
     fn test_gcd() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
@@ -229,6 +230,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::absurd_extreme_comparisons)] // Generated code
     fn test_gcd_extended() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);

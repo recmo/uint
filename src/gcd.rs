@@ -54,6 +54,7 @@ mod tests {
     use proptest::{proptest, test_runner::Config};
 
     #[test]
+    #[allow(clippy::absurd_extreme_comparisons)] // Generated code
     fn test_gcd_identities() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
