@@ -417,6 +417,7 @@ impl_from_signed_int!(isize, usize);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
+    // TODO: Correctly implement wrapping.
     fn try_from(value: f64) -> Result<Self, Self::Error> {
         if value.is_nan() {
             return Err(ToUintError::NotANumber(BITS));
