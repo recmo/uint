@@ -32,7 +32,7 @@
 // }
 
 use crate::Uint;
-use core::{any::type_name, convert::TryFrom, fmt::Display, marker::PhantomData};
+use core::{any::type_name, convert::TryFrom, fmt::Debug};
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
@@ -159,6 +159,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(300_U12.to::<i16>(), 300_i16);
+    /// assert_eq!(300_U12.to::<U256>(), 300_U256);
     /// # }
     /// ```
     #[must_use]
@@ -166,13 +167,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn to<T>(&self) -> T
     where
         Self: UintTryTo<T>,
+        T: Debug,
     {
-        match self.uint_try_to() {
-            Ok(n) => n,
-            Err(_) => panic!("Uint conversion error"),
-        }
+        self.uint_try_to().expect("Uint conversion error")
     }
 
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(300_U12.wrapping_to::<i8>(), 44_i8);
+    /// assert_eq!(255_U32.wrapping_to::<i8>(), -1_i8);
+    /// assert_eq!(0x1337cafec0d3_U256.wrapping_to::<U32>(), 0xcafec0d3_U32);
+    /// # }
+    /// ```
     #[must_use]
     pub fn wrapping_to<T>(&self) -> T
     where
@@ -183,14 +192,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(300_U12.saturating_to::<i16>(), 300_i16);
+    /// assert_eq!(255_U32.saturating_to::<i8>(), 127);
+    /// assert_eq!(0x1337cafec0d3_U256.saturating_to::<U32>(), U32::MAX);
+    /// # }
+    /// ```
     #[must_use]
     pub fn saturating_to<T>(&self) -> T
     where
         Self: UintTryTo<T>,
     {
         match self.uint_try_to() {
-            Ok(n) => n,
-            Err(FromUintError::Overflow(_, _, n)) => n,
+            Ok(n) | Err(FromUintError::Overflow(_, _, n)) => n,
         }
     }
 
@@ -226,6 +244,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 /// implementations.
 #[allow(clippy::module_name_repetitions)]
 pub trait UintTryFrom<T>: Sized {
+    #[allow(clippy::missing_errors_doc)]
     fn uint_try_from(value: T) -> Result<Self, ToUintError<Self>>;
 }
 
@@ -255,6 +274,7 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_S
 /// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
 /// See [`UintTryFrom`].
 pub trait UintTryTo<T>: Sized {
+    #[allow(clippy::missing_errors_doc)]
     fn uint_try_to(&self) -> Result<T, FromUintError<T>>;
 }
 
@@ -485,8 +505,8 @@ macro_rules! to_int {
                 if value.bit_len() > $bits {
                     return Err(Self::Error::Overflow(
                         BITS,
-                        value.limbs[0] as $int,
-                        <$int>::MAX,
+                        value.limbs[0] as Self,
+                        Self::MAX,
                     ));
                 }
                 Ok(value.as_limbs()[0] as Self)
