@@ -1528,6 +1528,7 @@ dependencies = [
  "smallvec",
  "sqlx-core",
  "thiserror",
+ "zeroize",
 ]
 
 [[package]]

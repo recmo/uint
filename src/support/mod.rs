@@ -10,6 +10,7 @@ mod rand;
 mod rlp;
 mod serde;
 mod sqlx;
+mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
 // * https://docs.rs/tracing/latest/tracing/trait.Value.html
