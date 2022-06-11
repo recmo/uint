@@ -4,7 +4,7 @@
 #![cfg(feature = "zeroize")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "zeroize")))]
 
-use crate::Uint;
+use crate::{Bits, Uint};
 use zeroize::Zeroize;
 
 impl<const BITS: usize, const LIMBS: usize> Zeroize for Uint<BITS, LIMBS> {
@@ -13,5 +13,11 @@ impl<const BITS: usize, const LIMBS: usize> Zeroize for Uint<BITS, LIMBS> {
             // SAFETY: Setting limbs to zero always safe.
             self.as_limbs_mut().zeroize();
         }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Zeroize for Bits<BITS, LIMBS> {
+    fn zeroize(&mut self) {
+        self.as_uint_mut().zeroize();
     }
 }

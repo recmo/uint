@@ -16,7 +16,6 @@ mod zeroize;
 // * https://docs.rs/tracing/latest/tracing/trait.Value.html
 // * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
-// * https://crates.io/crates/zeroize
 // * https://crates.io/crates/bitvec
 //
 // Big int types:
