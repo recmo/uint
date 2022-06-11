@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `from` now supports `Uint` arguments.
 - `saturating_from`, `wrapping_from`, `to`, `wrapping_to`, `saturating_to`.
 - `wrapping_from_limbs_slice`, `overflowing_from_limbs_slice`, `saturating_from_limbs_slice`.
-- `zeroize` support.
+- Add `zeroize` and `valuable` support.
 
 ### Changed
 

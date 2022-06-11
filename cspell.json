@@ -32,6 +32,7 @@
         "RUSTDOCFLAGS",
         "serde",
         "sqlx",
+        "Structable",
         "thiserror",
         "trunc",
         "Unnormalize"

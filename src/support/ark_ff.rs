@@ -5,6 +5,8 @@
 use crate::{ToFieldError, Uint};
 use ark_ff::{biginteger::*, fields::models::*, PrimeField};
 
+// FEATURE: Implement the `BigInteger` trait.
+
 macro_rules! impl_from_ark {
     ($ark:ty, $bits:expr, $limbs:expr) => {
         impl From<$ark> for Uint<$bits, $limbs> {
