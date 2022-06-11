@@ -5,10 +5,8 @@ use core::ops::{
 };
 use std::borrow::Cow;
 
-/// Bit array.
-///
-/// This is a newtype wrapper around [`Uint<BITS, LIMBS>`] that restricts
-/// operations to those relevant for bit vectors.
+/// A newtype wrapper around [`Uint`] that restricts operations to those
+/// relevant for bit arrays.
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {

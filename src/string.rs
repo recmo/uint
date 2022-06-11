@@ -90,14 +90,18 @@ impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
     }
 }
 
+/// Error for [`from_str_radix`](Uint::from_str_radix).
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
 pub enum ParseError {
+    /// Invalid digit in string.
     #[error("invalid digit")]
     InvalidDigit(char),
 
-    #[error("invalid radix, up to 36 is supported")]
+    /// Invalid radix, up to base 64 is supported.
+    #[error("invalid radix, up to 64 is supported")]
     InvalidRadix(u64),
 
+    /// Error from [`Uint::from_base_be`].
     #[error(transparent)]
     BaseConvertError(#[from] BaseConvertError),
 }

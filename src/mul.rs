@@ -252,7 +252,7 @@ mod tests {
 
                 proptest!(|(lhs: Lhs, rhs: Rhs)| {
                     // Compute the result using the target size
-                    let expected = Res::from_uint(lhs) * Res::from_uint(rhs);
+                    let expected = Res::from(lhs) * Res::from(rhs);
                     assert_eq!(lhs.widening_mul(rhs), expected);
                 });
             });

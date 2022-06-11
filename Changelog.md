@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `from` now supports `Uint` arguments.
+- `saturating_from`, `wrapping_from`, `to`, `wrapping_to`, `saturating_to`.
+- `wrapping_from_limbs_slice`, `overflowing_from_limbs_slice`, `saturating_from_limbs_slice`.
+
+### Changed
+
+- `ToUintError` and `FromUintError` now contain wrapped value and other context.
+- `from_uint` and `checked_from_uint` are now deprecated.
+
 ## [1.3.0] — 2022-06-08
 
 ### Added

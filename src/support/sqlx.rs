@@ -4,7 +4,7 @@
 #![cfg(feature = "sqlx")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "sqlx")))]
 
-use crate::{ToUintError, Uint};
+use crate::Uint;
 use sqlx_core::{
     database::{Database, HasArguments, HasValueRef},
     decode::Decode,
@@ -12,6 +12,13 @@ use sqlx_core::{
     error::BoxDynError,
     types::Type,
 };
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+enum DecodeError {
+    #[error("Value too large for target type")]
+    Overflow,
+}
 
 impl<const BITS: usize, const LIMBS: usize, DB: Database> Type<DB> for Uint<BITS, LIMBS>
 where
@@ -41,7 +48,6 @@ where
 {
     fn decode(value: <DB as HasValueRef<'a>>::ValueRef) -> Result<Self, BoxDynError> {
         let bytes = Vec::<u8>::decode(value)?;
-        Self::try_from_be_slice(bytes.as_slice())
-            .ok_or_else(|| ToUintError::ValueTooLarge(BITS).into())
+        Self::try_from_be_slice(bytes.as_slice()).ok_or_else(|| DecodeError::Overflow.into())
     }
 }

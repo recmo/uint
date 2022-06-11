@@ -164,6 +164,7 @@ impl Matrix {
     /// Panics if `a0 < a1`.
     #[must_use]
     #[allow(clippy::redundant_else)]
+    #[allow(clippy::cognitive_complexity)] // REFACTOR: Improve
     pub fn from_u64_prefix(a0: u64, mut a1: u64) -> Self {
         const LIMIT: u64 = 1_u64 << 32;
         debug_assert!(a0 >= 1_u64 << 63);

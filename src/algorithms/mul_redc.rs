@@ -2,6 +2,7 @@ use super::mul;
 use core::iter::zip;
 
 /// See Handbook of Applied Cryptography, Algorithm 14.32, p. 601.
+#[allow(clippy::cognitive_complexity)] // REFACTOR: Improve
 pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
     debug_assert!(!m.is_empty());
     debug_assert_eq!(a.len(), m.len());
