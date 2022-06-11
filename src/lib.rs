@@ -50,8 +50,10 @@ pub use bit_arr::Bits;
 
 #[doc(inline)]
 pub use self::{
-    base_convert::BaseConvertError, bytes::nbytes, from::FromUintError, from::ToFieldError,
-    from::ToUintError, string::ParseError,
+    base_convert::BaseConvertError,
+    bytes::nbytes,
+    from::{FromUintError, ToFieldError, ToUintError, UintTryFrom, UintTryTo},
+    string::ParseError,
 };
 
 #[doc(inline)]

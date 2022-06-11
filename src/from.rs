@@ -50,9 +50,9 @@ pub enum ToUintError<T> {
 #[allow(clippy::derive_partial_eq_without_eq)] // False positive
 #[derive(Clone, Copy, Debug, Error, PartialEq, Eq, Hash)]
 #[allow(clippy::module_name_repetitions)]
-pub enum FromUintError<const BITS: usize, T> {
-    #[error("Uint<{}> value is too large for {}", BITS, type_name::<T>())]
-    Overflow(PhantomData<T>),
+pub enum FromUintError<T> {
+    #[error("Uint<{0}> value is too large for {}", type_name::<T>())]
+    Overflow(usize, T, T),
 }
 
 #[allow(dead_code)] // This is used by some support features.
@@ -78,15 +78,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # uint!{
     /// assert_eq!(U8::from(142_u16), 142_U8);
     /// assert_eq!(U64::from(0x7014b4c2d1f2_U256), 0x7014b4c2d1f2_U64);
+    /// assert_eq!(U64::from(3.145), 3_U64);
     /// # }
     /// ```
     #[must_use]
     #[track_caller]
     pub fn from<T>(value: T) -> Self
     where
-        Self: OwnTryFrom<T>,
+        Self: UintTryFrom<T>,
     {
-        match Self::own_try_from(value) {
+        match Self::uint_try_from(value) {
             Ok(n) => n,
             Err(e) => panic!("Uint conversion error: {}", e),
         }
@@ -111,9 +112,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn saturating_from<T>(value: T) -> Self
     where
-        Self: OwnTryFrom<T>,
+        Self: UintTryFrom<T>,
     {
-        match Self::own_try_from(value) {
+        match Self::uint_try_from(value) {
             Ok(n) => n,
             Err(ToUintError::ValueTooLarge(..)) => Self::MAX,
             Err(ToUintError::ValueNegative(..) | ToUintError::NotANumber(_)) => Self::ZERO,
@@ -139,9 +140,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn wrapping_from<T>(value: T) -> Self
     where
-        Self: OwnTryFrom<T>,
+        Self: UintTryFrom<T>,
     {
-        match Self::own_try_from(value) {
+        match Self::uint_try_from(value) {
             Ok(n) | Err(ToUintError::ValueTooLarge(_, n) | ToUintError::ValueNegative(_, n)) => n,
             Err(ToUintError::NotANumber(_)) => Self::ZERO,
         }
@@ -157,7 +158,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
-    /// let n: i16 = 300_U13.to();
     /// assert_eq!(300_U12.to::<i16>(), 300_i16);
     /// # }
     /// ```
@@ -165,11 +165,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn to<T>(&self) -> T
     where
-        T: for<'a> TryFrom<&'a Self>,
+        Self: UintTryTo<T>,
     {
-        match T::try_from(self) {
+        match self.uint_try_to() {
             Ok(n) => n,
             Err(_) => panic!("Uint conversion error"),
+        }
+    }
+
+    #[must_use]
+    pub fn wrapping_to<T>(&self) -> T
+    where
+        Self: UintTryTo<T>,
+    {
+        match self.uint_try_to() {
+            Ok(n) | Err(FromUintError::Overflow(_, n, _)) => n,
+        }
+    }
+
+    #[must_use]
+    pub fn saturating_to<T>(&self) -> T
+    where
+        Self: UintTryTo<T>,
+    {
+        match self.uint_try_to() {
+            Ok(n) => n,
+            Err(FromUintError::Overflow(_, _, n)) => n,
         }
     }
 
@@ -197,20 +218,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 }
 
 /// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
+/// Use [`TryFrom`] instead.
 ///
 /// We cannot implement [`TryFrom<Uint>`] for [`Uint`] directly, but we can
 /// create a new identical trait and implement it there. We can even give this
 /// trait a blanket implementation inheriting all [`TryFrom<_>`]
 /// implementations.
 #[allow(clippy::module_name_repetitions)]
-pub trait OwnTryFrom<T>: Sized {
-    fn own_try_from(value: T) -> Result<Self, ToUintError<Self>>;
+pub trait UintTryFrom<T>: Sized {
+    fn uint_try_from(value: T) -> Result<Self, ToUintError<Self>>;
+}
+
+/// Blanket implementation for any type that implements [`TryFrom<Uint>`].
+impl<const BITS: usize, const LIMBS: usize, T> UintTryFrom<T> for Uint<BITS, LIMBS>
+where
+    Self: TryFrom<T, Error = ToUintError<Self>>,
+{
+    fn uint_try_from(value: T) -> Result<Self, ToUintError<Self>> {
+        Self::try_from(value)
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_SRC: usize>
-    OwnTryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS, LIMBS>
+    UintTryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS, LIMBS>
 {
-    fn own_try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self, ToUintError<Self>> {
+    fn uint_try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self, ToUintError<Self>> {
         let (n, overflow) = Self::overflowing_from_limbs_slice(value.as_limbs());
         if overflow {
             Err(ToUintError::ValueTooLarge(BITS, n))
@@ -220,13 +252,33 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_S
     }
 }
 
-/// Blanket implementation for any type that implements [`TryFrom<Uint>`].
-impl<A, B> OwnTryFrom<A> for B
+/// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
+/// See [`UintTryFrom`].
+pub trait UintTryTo<T>: Sized {
+    fn uint_try_to(&self) -> Result<T, FromUintError<T>>;
+}
+
+impl<const BITS: usize, const LIMBS: usize, T> UintTryTo<T> for Uint<BITS, LIMBS>
 where
-    B: TryFrom<A, Error = ToUintError<B>>,
+    T: for<'a> TryFrom<&'a Self, Error = FromUintError<T>>,
 {
-    fn own_try_from(value: A) -> Result<Self, ToUintError<Self>> {
-        B::try_from(value)
+    fn uint_try_to(&self) -> Result<T, FromUintError<T>> {
+        T::try_from(self)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize, const BITS_DST: usize, const LIMBS_DST: usize>
+    UintTryTo<Uint<BITS_DST, LIMBS_DST>> for Uint<BITS, LIMBS>
+{
+    fn uint_try_to(
+        &self,
+    ) -> Result<Uint<BITS_DST, LIMBS_DST>, FromUintError<Uint<BITS_DST, LIMBS_DST>>> {
+        let (n, overflow) = Uint::overflowing_from_limbs_slice(self.as_limbs());
+        if overflow {
+            Err(FromUintError::Overflow(BITS_DST, n, Uint::MAX))
+        } else {
+            Ok(n)
+        }
     }
 }
 
@@ -394,7 +446,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
 macro_rules! to_value_to_ref {
     ($t:ty) => {
         impl<const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>> for $t {
-            type Error = FromUintError<BITS, Self>;
+            type Error = FromUintError<Self>;
 
             fn try_from(value: Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
                 Self::try_from(&value)
@@ -406,14 +458,14 @@ macro_rules! to_value_to_ref {
 to_value_to_ref!(bool);
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool {
-    type Error = FromUintError<BITS, Self>;
+    type Error = FromUintError<Self>;
 
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         if BITS == 0 {
             return Ok(false);
         }
         if value.bit_len() > 1 {
-            return Err(Self::Error::Overflow(PhantomData));
+            return Err(Self::Error::Overflow(BITS, value.bit(0), true));
         }
         Ok(value.as_limbs()[0] != 0)
     }
@@ -424,14 +476,18 @@ macro_rules! to_int {
         to_value_to_ref!($int);
 
         impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for $int {
-            type Error = FromUintError<BITS, Self>;
+            type Error = FromUintError<Self>;
 
             fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
                 if BITS == 0 {
                     return Ok(0);
                 }
                 if value.bit_len() > $bits {
-                    return Err(Self::Error::Overflow(PhantomData));
+                    return Err(Self::Error::Overflow(
+                        BITS,
+                        value.limbs[0] as $int,
+                        <$int>::MAX,
+                    ));
                 }
                 Ok(value.as_limbs()[0] as Self)
             }
@@ -451,7 +507,7 @@ to_int!(u64, 64);
 to_value_to_ref!(i128);
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128 {
-    type Error = FromUintError<BITS, Self>;
+    type Error = FromUintError<Self>;
 
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
@@ -459,11 +515,14 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128
         if BITS == 0 {
             return Ok(0);
         }
-        if value.bit_len() > 127 {
-            return Err(Self::Error::Overflow(PhantomData));
+        if BITS <= 64 {
+            return Ok(value.as_limbs()[0] as i128);
         }
         let mut result = value.as_limbs()[0] as i128;
         result |= (value.as_limbs()[1] as i128) << 64;
+        if value.bit_len() > 127 {
+            return Err(Self::Error::Overflow(BITS, result, i128::MAX));
+        }
         Ok(result)
     }
 }
@@ -471,7 +530,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128
 to_value_to_ref!(u128);
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128 {
-    type Error = FromUintError<BITS, Self>;
+    type Error = FromUintError<Self>;
 
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
@@ -479,11 +538,14 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
         if BITS == 0 {
             return Ok(0);
         }
-        if value.bit_len() > 128 {
-            return Err(Self::Error::Overflow(PhantomData));
+        if BITS <= 64 {
+            return Ok(value.as_limbs()[0] as u128);
         }
         let mut result: u128 = value.as_limbs()[0] as u128;
         result |= (value.as_limbs()[1] as u128) << 64;
+        if value.bit_len() > 128 {
+            return Err(Self::Error::Overflow(BITS, result, u128::MAX));
+        }
         Ok(result)
     }
 }
