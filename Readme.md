@@ -154,22 +154,20 @@ Check documentation coverage
 RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --workspace --all-features --no-deps
 ```
 
-## To do
-
-Goals:
+## Features
 
 * All the quality of life features one could want.
 * Compatible with std `u64`, etc types. See Rust's [integer methods](https://doc.rust-lang.org/stable/std/primitive.u64.html).
+* Adhere to [Rust API Guidelines](https://rust-lang.github.io/api-guidelines)
+* Montgomery REDC and other algo's for implementing prime fields.
+
+## To do
+
 * Builds `no-std` and `wasm`.
 * Fast platform agnostic generic algorithms.
 * Target specific assembly optimizations (where available).
 * Optional num-traits, etc, support.
-* Adhere to [Rust API Guidelines](https://rust-lang.github.io/api-guidelines)
-
-Maybe:
-
 * Run-time sized type with compatible interface.
-* Montgomery REDC and other algo's for implementing prime fields.
 
 ---
 
