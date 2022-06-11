@@ -157,19 +157,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
+    /// let n: i16 = 300_U13.to();
     /// assert_eq!(300_U12.to::<i16>(), 300_i16);
     /// # }
     /// ```
     #[must_use]
     #[track_caller]
-    pub fn to<'a, T>(&'a self) -> T
+    pub fn to<T>(&self) -> T
     where
-        T: TryFrom<&'a Self>,
-        <T as TryFrom<&'a Self>>::Error: Display,
+        T: for<'a> TryFrom<&'a Self>,
     {
         match T::try_from(self) {
             Ok(n) => n,
-            Err(e) => panic!("Uint conversion error: {}", e),
+            Err(_) => panic!("Uint conversion error"),
         }
     }
 
@@ -180,6 +180,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the value is too large for the target type.
     #[must_use]
     #[track_caller]
+    #[deprecated(since = "1.4.0", note = "Use `::from()` instead.")]
     pub fn from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
         value: Uint<BITS_SRC, LIMBS_SRC>,
     ) -> Self {
@@ -187,31 +188,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
+    #[deprecated(since = "1.4.0", note = "Use `::checked_from()` instead.")]
     pub fn checked_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
         value: Uint<BITS_SRC, LIMBS_SRC>,
     ) -> Option<Self> {
         Self::checked_from_limbs_slice(value.as_limbs())
-    }
-
-    #[must_use]
-    pub fn wrapping_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
-        value: Uint<BITS_SRC, LIMBS_SRC>,
-    ) -> Self {
-        Self::wrapping_from_limbs_slice(value.as_limbs())
-    }
-
-    #[must_use]
-    pub fn overflowing_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
-        value: Uint<BITS_SRC, LIMBS_SRC>,
-    ) -> (Self, bool) {
-        Self::overflowing_from_limbs_slice(value.as_limbs())
-    }
-
-    #[must_use]
-    pub fn saturating_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
-        value: Uint<BITS_SRC, LIMBS_SRC>,
-    ) -> Self {
-        Self::saturating_from_limbs_slice(value.as_limbs())
     }
 }
 
