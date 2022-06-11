@@ -13,6 +13,7 @@
 //         Self::try_from(t).unwrap()
 //     }
 // }
+// See <https://github.com/rust-lang/rust/issues/50133>
 
 // FEATURE: (BLOCKED) It would be nice if we could make TryFrom assignment work
 // for all Uints.
@@ -69,14 +70,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the conversion fails, for example if the value is too large
     /// for the bit-size of the [`Uint`]. The panic will be attributed to the
     /// call site.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(U8::from(142_u16), 142_U8);
+    /// assert_eq!(U64::from(0x7014b4c2d1f2_U256), 0x7014b4c2d1f2_U64);
+    /// # }
+    /// ```
     #[must_use]
     #[track_caller]
     pub fn from<T>(value: T) -> Self
     where
-        Self: TryFrom<T>,
-        <Self as TryFrom<T>>::Error: Display,
+        Self: OwnTryFrom<T>,
     {
-        match Self::try_from(value) {
+        match Self::own_try_from(value) {
             Ok(n) => n,
             Err(e) => panic!("Uint conversion error: {}", e),
         }
@@ -87,12 +97,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// If the value is not a number (like `f64::NAN`), then the result is
     /// set zero.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(U8::saturating_from(300_u16), 255_U8);
+    /// assert_eq!(U8::saturating_from(-10_i16),   0_U8);
+    /// assert_eq!(U32::saturating_from(0x7014b4c2d1f2_U256), U32::MAX);
+    /// # }
+    /// ```
     #[must_use]
     pub fn saturating_from<T>(value: T) -> Self
     where
-        Self: TryFrom<T, Error = ToUintError<Self>>,
+        Self: OwnTryFrom<T>,
     {
-        match Self::try_from(value) {
+        match Self::own_try_from(value) {
             Ok(n) => n,
             Err(ToUintError::ValueTooLarge(..)) => Self::MAX,
             Err(ToUintError::ValueNegative(..) | ToUintError::NotANumber(_)) => Self::ZERO,
@@ -104,17 +125,41 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// If the value is not a number (like `f64::NAN`), then the result is
     /// set zero.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(U8::wrapping_from(300_u16),  44_U8);
+    /// assert_eq!(U8::wrapping_from(-10_i16), 246_U8);
+    /// assert_eq!(U32::wrapping_from(0x7014b4c2d1f2_U256), 0xb4c2d1f2_U32);
+    /// # }
+    /// ```
     #[must_use]
     pub fn wrapping_from<T>(value: T) -> Self
     where
-        Self: TryFrom<T, Error = ToUintError<Self>>,
+        Self: OwnTryFrom<T>,
     {
-        match Self::try_from(value) {
+        match Self::own_try_from(value) {
             Ok(n) | Err(ToUintError::ValueTooLarge(_, n) | ToUintError::ValueNegative(_, n)) => n,
             Err(ToUintError::NotANumber(_)) => Self::ZERO,
         }
     }
 
+    /// # Panics
+    ///
+    /// Panics if the conversion fails, for example if the value is too large
+    /// for the bit-size of the target type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::{Uint, uint, aliases::*};
+    /// # uint!{
+    /// assert_eq!(300_U12.to::<i16>(), 300_i16);
+    /// # }
+    /// ```
     #[must_use]
     #[track_caller]
     pub fn to<'a, T>(&'a self) -> T
@@ -170,19 +215,54 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
+/// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
+///
+/// We cannot implement [`TryFrom<Uint>`] for [`Uint`] directly, but we can
+/// create a new identical trait and implement it there. We can even give this
+/// trait a blanket implementation inheriting all [`TryFrom<_>`]
+/// implementations.
+#[allow(clippy::module_name_repetitions)]
+pub trait OwnTryFrom<T>: Sized {
+    fn own_try_from(value: T) -> Result<Self, ToUintError<Self>>;
+}
+
+impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_SRC: usize>
+    OwnTryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS, LIMBS>
+{
+    fn own_try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self, ToUintError<Self>> {
+        let (n, overflow) = Self::overflowing_from_limbs_slice(value.as_limbs());
+        if overflow {
+            Err(ToUintError::ValueTooLarge(BITS, n))
+        } else {
+            Ok(n)
+        }
+    }
+}
+
+/// Blanket implementation for any type that implements [`TryFrom<Uint>`].
+impl<A, B> OwnTryFrom<A> for B
+where
+    B: TryFrom<A, Error = ToUintError<B>>,
+{
+    fn own_try_from(value: A) -> Result<Self, ToUintError<Self>> {
+        B::try_from(value)
+    }
+}
+
 // u64 is a single limb, so this is the base case
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
-    #[must_use]
     fn try_from(value: u64) -> Result<Self, Self::Error> {
-        if Self::LIMBS <= 1 {
+        if LIMBS <= 1 {
             if value > Self::MASK {
                 let mut limbs = [0; LIMBS];
-                limbs[0] = value % Self::MASK;
+                if LIMBS == 1 {
+                    limbs[0] = value & Self::MASK;
+                }
                 return Err(ToUintError::ValueTooLarge(BITS, Self::from_limbs(limbs)));
             }
-            if Self::LIMBS == 0 {
+            if LIMBS == 0 {
                 return Ok(Self::ZERO);
             }
         }
