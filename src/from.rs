@@ -35,29 +35,44 @@ use crate::Uint;
 use core::{any::type_name, convert::TryFrom, fmt::Debug};
 use thiserror::Error;
 
+/// Error for [`TryFrom<T>`][TryFrom] for [`Uint`].
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
 pub enum ToUintError<T> {
+    /// Value is too large to fit the Uint.
+    ///
+    /// `.0` is `BITS` and `.1` is the wrapped value.
     #[error("Value is too large for Uint<{0}>")]
     ValueTooLarge(usize, T),
 
+    /// Negative values can not be represented as Uint.
+    ///
+    /// `.0` is `BITS` and `.1` is the wrapped value.
     #[error("Negative values can not be represented as Uint<{0}>")]
     ValueNegative(usize, T),
 
+    /// 'Not a number' (NaN) not be represented as Uint
     #[error("'Not a number' (NaN) not be represented as Uint<{0}>")]
     NotANumber(usize),
 }
 
+/// Error for [`TryFrom<Uint>`][TryFrom].
 #[allow(clippy::derive_partial_eq_without_eq)] // False positive
 #[derive(Clone, Copy, Debug, Error, PartialEq, Eq, Hash)]
 #[allow(clippy::module_name_repetitions)]
 pub enum FromUintError<T> {
+    /// The Uint value is too large for the target type.
+    ///
+    /// `.0` number of `BITS` in the Uint, `.1` is the wrapped value and
+    /// `.2` is the maximum representable value in the target type.
     #[error("Uint<{0}> value is too large for {}", type_name::<T>())]
     Overflow(usize, T, T),
 }
 
+/// Error for [`TryFrom<Uint>`][TryFrom] for [`ark_ff`](https://docs.rs/ark-ff) and others.
 #[allow(dead_code)] // This is used by some support features.
 #[derive(Debug, Clone, Copy, Error)]
 pub enum ToFieldError {
+    /// Number is equal or larger than the target field modulus.
     #[error("Number is equal or larger than the target field modulus.")]
     NotInField,
 }
@@ -235,7 +250,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
-/// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
+/// ⚠️ Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
 /// Use [`TryFrom`] instead.
 ///
 /// We cannot implement [`TryFrom<Uint>`] for [`Uint`] directly, but we can
@@ -271,8 +286,8 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_S
     }
 }
 
-/// Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
-/// See [`UintTryFrom`].
+/// ⚠️ Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
+/// Use [`TryFrom`] instead.
 pub trait UintTryTo<T>: Sized {
     #[allow(clippy::missing_errors_doc)]
     fn uint_try_to(&self) -> Result<T, FromUintError<T>>;

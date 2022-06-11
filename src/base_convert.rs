@@ -1,13 +1,20 @@
 use crate::Uint;
 use thiserror::Error;
 
+/// Error for [`from_base_le`][Uint::from_base_le] and
+/// [`from_base_be`][Uint::from_base_be].
 #[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
 pub enum BaseConvertError {
+    /// The value is too large to fit the target type.
     #[error("The value is too large to fit the target type")]
     Overflow,
+
+    /// The requested number base `.0` is less than two.
     #[error("The requested number base {0} is less than two")]
     InvalidBase(u64),
+
+    /// The provided digit `.0` is out of range for requested base `.1`.
     #[error("digit {0} is out of range for base {1}")]
     InvalidDigit(u64, u64),
 }

@@ -133,7 +133,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # use ruint::{uint, Uint, aliases::*};
     /// # uint!{
     /// # let modulus = 21888242871839275222246405745257275088548364400416034343698204186575808495617_U256;
-    /// let inv = (-U64::wrapping_from(modulus).inv_ring().unwrap()).to();
+    /// let inv = U64::wrapping_from(modulus).inv_ring().unwrap().wrapping_neg().to();
     /// let prod = 5_U256.mul_redc(6_U256, modulus, inv);
     /// # assert_eq!(inv.wrapping_mul(modulus.wrapping_to()), u64::MAX);
     /// # assert_eq!(inv, 0xc2e1f593efffffff);
