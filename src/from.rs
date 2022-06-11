@@ -423,11 +423,21 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             return Err(ToUintError::NotANumber(BITS));
         }
         if value < 0.0 {
-            return Err(ToUintError::ValueNegative(BITS, Self::ZERO)); // Wrapping
+            let wrapped = match Self::try_from(value.abs()) {
+                Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
+                _ => Self::ZERO,
+            }
+            .wrapping_neg();
+            return Err(ToUintError::ValueNegative(BITS, wrapped));
         }
         #[allow(clippy::cast_precision_loss)] // BITS is small-ish
-        if value >= (Self::BITS as f64).exp2() {
-            return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO)); // Wrapping
+        let modulus = (Self::BITS as f64).exp2();
+        if value >= modulus {
+            let wrapped = match Self::try_from(value % modulus) {
+                Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
+                _ => Self::ZERO,
+            };
+            return Err(ToUintError::ValueTooLarge(BITS, wrapped)); // Wrapping
         }
         if value < 0.5 {
             return Ok(Self::ZERO);
@@ -452,16 +462,22 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         // Convert mantissa * 2^(exponent - 52) to Uint
         #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
         if exponent as usize > Self::BITS + 52 {
-            return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO)); // Wrapping
+            // Wrapped value is zero because the value is extended with zero bits.
+            return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO));
         }
         if exponent <= 52 {
             // Truncate mantissa
             Self::try_from(mantissa >> (52 - exponent))
         } else {
             #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
-            Self::try_from(mantissa)?
-                .checked_shl(exponent as usize - 52)
-                .ok_or(ToUintError::ValueTooLarge(BITS, Self::ZERO)) // Wrapping
+            let exponent = exponent as usize - 52;
+            let n = Self::try_from(mantissa)?;
+            let (n, overflow) = n.overflowing_shl(exponent);
+            if overflow {
+                Err(ToUintError::ValueTooLarge(BITS, n))
+            } else {
+                Ok(n)
+            }
         }
     }
 }
