@@ -50,14 +50,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use proptest::proptest;
+    use core::cmp::min;
+    use proptest::{proptest, test_runner::Config};
 
     #[test]
     fn test_gcd_identities() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U)| {
+            // TODO: Increase cases when perf is better.
+            let mut config = Config::default();
+            config.cases = min(config.cases, if BITS > 500 { 3 } else { 10 });
+            proptest!(config, |(a: U, b: U)| {
                 let g = a.gcd(b);
                 assert_eq!(b.gcd(a), g);
                 if a == U::ZERO && b == U::ZERO {

@@ -188,7 +188,8 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use proptest::proptest;
+    use core::cmp::min;
+    use proptest::{proptest, test_runner::Config};
 
     #[test]
     fn test_gcd_one() {
@@ -218,7 +219,10 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U)| {
+            // TODO: Increase cases when perf is better.
+            let mut config = Config::default();
+            config.cases = min(config.cases, if BITS > 500 { 9 } else { 30 });
+            proptest!(config, |(a: U, b: U)| {
                 assert_eq!(gcd(a, b), gcd_ref(a, b));
             });
         });
@@ -229,7 +233,10 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U)| {
+            // TODO: Increase cases when perf is better.
+            let mut config = Config::default();
+            config.cases = min(config.cases, if BITS > 500 { 3 } else { 10 });
+            proptest!(config, |(a: U, b: U)| {
                 let (g, x, y, sign) = gcd_extended(a, b);
                 assert_eq!(g, gcd_ref(a, b));
                 if sign {

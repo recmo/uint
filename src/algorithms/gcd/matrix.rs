@@ -337,7 +337,7 @@ mod tests {
         cmp::{max, min},
         mem::swap,
     };
-    use proptest::proptest;
+    use proptest::{proptest, test_runner::Config};
     use std::str::FromStr;
 
     fn gcd(mut a: u128, mut b: u128) -> u128 {
@@ -437,7 +437,10 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U)| {
+            // TODO: Increase cases when perf is better.
+            let mut config = Config::default();
+            config.cases = min(config.cases, if BITS > 500 { 12 } else { 40 });
+            proptest!(config, |(a: U, b: U)| {
                 test_form_uint_one(a, b);
             });
         });
