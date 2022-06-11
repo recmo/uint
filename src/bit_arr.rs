@@ -22,6 +22,21 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
     pub const ZERO: Self = Self(Uint::<BITS, LIMBS>::ZERO);
+
+    #[must_use]
+    pub const fn into_inner(self) -> Uint<BITS, LIMBS> {
+        self.0
+    }
+
+    #[must_use]
+    pub const fn as_uint(&self) -> &Uint<BITS, LIMBS> {
+        &self.0
+    }
+
+    #[must_use]
+    pub fn as_uint_mut(&mut self) -> &mut Uint<BITS, LIMBS> {
+        &mut self.0
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for Bits<BITS, LIMBS> {

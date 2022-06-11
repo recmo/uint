@@ -10,12 +10,12 @@ mod rand;
 mod rlp;
 mod serde;
 mod sqlx;
+mod valuable;
+mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
-// * https://docs.rs/tracing/latest/tracing/trait.Value.html
 // * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
-// * https://crates.io/crates/zeroize
 // * https://crates.io/crates/bitvec
 //
 // Big int types:
@@ -26,3 +26,5 @@ mod sqlx;
 //
 // More databases:
 // * https://crates.io/crates/diesel
+
+// FEATURE: Make sure `Bits` has the same level of support.

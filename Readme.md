@@ -127,6 +127,8 @@ named feature flag.
 * [`ark-ff`](https://docs.rs/ark-ff): Implements conversion to/from the [`BigInteger*`](https://docs.rs/ark-ff/latest/ark_ff/biginteger/index.html) types and the [`Fp*`](https://docs.rs/ark-ff/latest/ark_ff/fields/models/index.html) types.
 * [`sqlx`](https://docs.rs/sqlx): Implements database agnostic storage as byte array. Requires
   `sqlx` to be used with the `tokio-native-tls` runtime, due to issue [sqlx#1627](https://github.com/launchbadge/sqlx/issues/1627).
+* [`zeroize`](https://docs.rs/zeroize): Implements the [`Zeroize`](https://docs.rs/zeroize/latest/zeroize/trait.Zeroize.html) trait. This makes [`Uint`] and [`Bits`] compatible with the [`secrecy`](https://crates.io/crates/secrecy) crate.
+* [`valuable`](https://docs.rs/valuable): Implements the [`Valuable`](https://docs.rs/valuable/0.1.0/valuable/trait.Valuable.html) trait.
 
 ## Building and testing
 
