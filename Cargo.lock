@@ -161,9 +161,9 @@ dependencies = [
 
 [[package]]
 name = "auto_impl"
-version = "0.5.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7862e21c893d65a1650125d157eaeec691439379a1cee17ee49031b79236ada4"
+checksum = "8a8c1df849285fbacd587de7818cc7d13be6cd2cbcd47a04fb1801b0e2706e33"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -547,9 +547,9 @@ dependencies = [
 
 [[package]]
 name = "fastrlp"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d6d351c969482a4f706cfb7dbebb2981746c3075c47acbfeb5a4a447440da5f"
+checksum = "0493d1c72e9bd097d02b962fa005f6241e6e97179d7ecd2ca1027e46f69db208"
 dependencies = [
  "arrayvec",
  "auto_impl",
