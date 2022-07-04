@@ -33,7 +33,7 @@ thiserror = "1.0"
 ruint-macro = { version = "1.0.0", path = "./ruint-macro" }
 
 # UintDyn
-smallvec = { version = "1.8.0", optional = true, features = [ "union" ] }
+smallvec = { version = "1.9.0", optional = true, features = [ "union" ] }
 
 # Optional
 rand = { version = "0.8.5", optional = true }
