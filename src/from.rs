@@ -324,6 +324,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         if LIMBS <= 1 {
             if value > Self::MASK {
+                // Construct wrapped value
                 let mut limbs = [0; LIMBS];
                 if LIMBS == 1 {
                     limbs[0] = value & Self::MASK;
