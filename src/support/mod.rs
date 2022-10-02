@@ -5,6 +5,7 @@ mod num_bigint;
 mod postgres;
 mod primitive_types;
 mod proptest;
+mod pyo3;
 mod quickcheck;
 mod rand;
 mod rlp;
@@ -17,7 +18,6 @@ mod zeroize;
 // * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
 // * https://crates.io/crates/bitvec
-// * https://crates.io/crates/pyo3
 
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Zeroable.html
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Pod.html
