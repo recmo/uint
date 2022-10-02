@@ -22,7 +22,6 @@ mod zeroize;
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Zeroable.html
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Pod.html
 
-//
 // Big int types:
 // * https://crates.io/crates/crypto-bigint
 // * https://crates.io/crates/rug

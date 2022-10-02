@@ -7,7 +7,6 @@ use crate::{algorithms, nlimbs, Uint};
 // See also <https://static1.squarespace.com/static/61f7cacf2d7af938cad5b81c/t/62deb4e0c434f7134c2730ee/1658762465114/modular_multiplication.pdf>
 // FEATURE: Modular wrapper class, like Wrapping.
 
-
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[allow(clippy::doc_markdown)] // False positive
     /// ⚠️ Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
