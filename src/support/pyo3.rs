@@ -27,6 +27,7 @@ use pyo3::{
     exceptions::PyOverflowError, ffi, AsPyPointer, FromPyObject, IntoPy, PyAny, PyErr, PyObject,
     PyResult, Python, ToPyObject,
 };
+use std::ffi::c_uchar;
 
 impl<const BITS: usize, const LIMBS: usize> ToPyObject for Uint<BITS, LIMBS> {
     fn to_object(&self, py: Python<'_>) -> PyObject {
@@ -44,12 +45,8 @@ impl<const BITS: usize, const LIMBS: usize> ToPyObject for Uint<BITS, LIMBS> {
         // and `_PyLong_FromByteArray`.
         let bytes = self.as_le_bytes();
         unsafe {
-            let obj = ffi::_PyLong_FromByteArray(
-                bytes.as_ptr() as *const std::os::raw::c_uchar,
-                bytes.len(),
-                1,
-                0,
-            );
+            let obj =
+                ffi::_PyLong_FromByteArray(bytes.as_ptr().cast::<c_uchar>(), bytes.len(), 1, 0);
             PyObject::from_owned_ptr(py, obj)
         }
     }
@@ -62,7 +59,7 @@ impl<const BITS: usize, const LIMBS: usize> IntoPy<PyObject> for Uint<BITS, LIMB
 }
 
 impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for Uint<BITS, LIMBS> {
-    fn extract(ob: &'source PyAny) -> PyResult<Uint<BITS, LIMBS>> {
+    fn extract(ob: &'source PyAny) -> PyResult<Self> {
         let mut result = Self::ZERO;
 
         // On little endian let Python write directly to the uint.
@@ -70,7 +67,7 @@ impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for U
         let py_result = unsafe {
             let raw = result.as_le_slice_mut();
             ffi::_PyLong_AsByteArray(
-                ob.as_ptr() as *mut ffi::PyLongObject,
+                ob.as_ptr().cast::<ffi::PyLongObject>(),
                 raw.as_mut_ptr(),
                 raw.len(),
                 1,
@@ -84,7 +81,7 @@ impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for U
             let mut raw = vec![0_u8; Self::LIMBS * 8];
             let py_result = unsafe {
                 ffi::_PyLong_AsByteArray(
-                    ob.as_ptr() as *mut ffi::PyLongObject,
+                    ob.as_ptr().cast::<ffi::PyLongObject>(),
                     raw.as_mut_ptr(),
                     raw.len(),
                     1,

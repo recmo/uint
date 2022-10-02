@@ -223,10 +223,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         assert_eq!(BYTES, Self::BYTES);
-        match Self::try_from_be_slice(&bytes) {
-            Some(uint) => uint,
-            None => panic!("Value too large for Uint<{}>", BITS),
-        }
+        Self::try_from_be_slice(&bytes).expect("Value too large for Uint")
     }
 
     /// Converts a little-endian byte array of size exactly
@@ -245,10 +242,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         assert_eq!(BYTES, Self::BYTES);
-        match Self::try_from_le_slice(&bytes) {
-            Some(uint) => uint,
-            None => panic!("Value too large for Uint<{}>", BITS),
-        }
+        Self::try_from_le_slice(&bytes).expect("Value too large for Uint")
     }
 }
 
