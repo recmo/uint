@@ -129,6 +129,7 @@ named feature flag.
   `sqlx` to be used with the `tokio-native-tls` runtime, due to issue [sqlx#1627](https://github.com/launchbadge/sqlx/issues/1627).
 * [`zeroize`](https://docs.rs/zeroize): Implements the [`Zeroize`](https://docs.rs/zeroize/latest/zeroize/trait.Zeroize.html) trait. This makes [`Uint`] and [`Bits`] compatible with the [`secrecy`](https://crates.io/crates/secrecy) crate.
 * [`valuable`](https://docs.rs/valuable): Implements the [`Valuable`](https://docs.rs/valuable/0.1.0/valuable/trait.Valuable.html) trait.
+* [`pyo3`](https://docs.rs/pyo3): Implements the [`ToPyObject`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.ToPyObject.html), [`IntoPy`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.IntoPy.html) and [`FromPyObject`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.FromPyObject.html) traits.
 
 ## Building and testing
 
