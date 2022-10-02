@@ -118,3 +118,48 @@ impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for U
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{
+        aliases::{U0, U256, U512, U64, U8},
+        const_for, nlimbs,
+    };
+    use proptest::proptest;
+
+    #[test]
+    fn test_roundtrip() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            const_for!(BITS in SIZES {
+                const LIMBS: usize = nlimbs(BITS);
+                type U = Uint<BITS, LIMBS>;
+                proptest!(|(value: U)| {
+                    let obj = value.into_py(py);
+                    let native = obj.extract::<U>(py).unwrap();
+                    assert_eq!(value, native);
+                });
+            });
+        });
+    }
+
+    #[test]
+    fn test_errors() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let obj = (-1_i64).to_object(py);
+            assert!(obj.extract::<U0>(py).is_err());
+            assert!(obj.extract::<U256>(py).is_err());
+
+            let obj = (1000_i64).to_object(py);
+            assert!(obj.extract::<U0>(py).is_err());
+            assert!(obj.extract::<U8>(py).is_err());
+
+            let obj = U512::MAX.to_object(py);
+            assert!(obj.extract::<U0>(py).is_err());
+            assert!(obj.extract::<U64>(py).is_err());
+            assert!(obj.extract::<U256>(py).is_err());
+        });
+    }
+}

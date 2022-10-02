@@ -17,6 +17,7 @@
         "divrem",
         "Encodable",
         "fastrlp",
+        "freethreaded",
         "froms",
         "itertools",
         "izip",
