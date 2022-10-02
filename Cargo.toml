@@ -12,7 +12,10 @@ readme = "Readme.md"
 license = "MIT"
 
 [workspace]
-members = ["ruint-macro"]
+members = [
+    "ruint-macro",
+    "bindings/python"
+]
 
 [features]
 default = []
