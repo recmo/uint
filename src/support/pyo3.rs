@@ -32,8 +32,12 @@ impl<const BITS: usize, const LIMBS: usize> ToPyObject for Uint<BITS, LIMBS> {
     fn to_object(&self, py: Python<'_>) -> PyObject {
         // Fast path for small ints
         if BITS <= 64 {
-            let value = self.as_limbs().first().unwrap_or(0);
-            return value.into_py(py);
+            let value = self.as_limbs().first().copied().unwrap_or(0);
+            return unsafe {
+                let obj = ffi::PyLong_FromUnsignedLongLong(value);
+                assert!(!obj.is_null(), "Out of memory");
+                PyObject::from_owned_ptr(py, obj)
+            };
         }
 
         // Convert using little endian bytes (trivial on LE archs)
@@ -64,7 +68,6 @@ impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for U
         // On little endian let Python write directly to the uint.
         #[cfg(target_endian = "little")]
         let py_result = unsafe {
-            // TODO: Check write buffer size.
             let raw = result.as_le_slice_mut();
             ffi::_PyLong_AsByteArray(
                 ob.as_ptr() as *mut ffi::PyLongObject,
@@ -74,12 +77,44 @@ impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for U
                 0,
             )
         };
+
+        // On big endian we use an intermediate
+        #[cfg(not(target_endian = "little"))]
+        let py_result = {
+            let mut raw = vec![0_u8; Self::LIMBS * 8];
+            let py_result = unsafe {
+                ffi::_PyLong_AsByteArray(
+                    ob.as_ptr() as *mut ffi::PyLongObject,
+                    raw.as_mut_ptr(),
+                    raw.len(),
+                    1,
+                    0,
+                )
+            };
+            result = Self::try_from_le_slice(raw.as_slice()).ok_or_else(|| {
+                PyOverflowError::new_err(format!("Number to large to fit Uint<{}>", Self::BITS))
+            })?;
+            py_result
+        };
+
+        // Handle error from `_PyLong_AsByteArray`.
         if py_result != 0 {
-            return Err(todo!());
+            // A TypeError is set if the value is negative and an Overflow error if the
+            // value does not fit `raw.len()` bytes.
+            return Err(PyErr::fetch(ob.py()));
         }
-        // TODO: Check mask.
+
+        // Check mask since we wrote raw.
+        #[cfg(target_endian = "little")]
+        if let Some(last) = result.as_limbs().last() {
+            if *last > Self::MASK {
+                return Err(PyOverflowError::new_err(format!(
+                    "Number to large to fit Uint<{}>",
+                    Self::BITS
+                )));
+            }
+        }
 
         Ok(result)
     }
 }
-
