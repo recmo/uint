@@ -80,7 +80,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
         match *ty {
             // Big-endian simple types
             // Note `BufMut::put_*` methods write big-endian by default.
-            Type::BOOL => out.put_u8(if bool::try_from(*self)? { 1 } else { 0 }),
+            Type::BOOL => out.put_u8(u8::from(bool::try_from(*self)?)),
             Type::INT2 => out.put_i16(self.try_into()?),
             Type::INT4 => out.put_i32(self.try_into()?),
             Type::OID => out.put_u32(self.try_into()?),
