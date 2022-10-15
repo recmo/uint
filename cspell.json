@@ -40,7 +40,8 @@
         "Structable",
         "thiserror",
         "trunc",
-        "Unnormalize"
+        "unnormalize",
+        "zeroize"
     ],
     "ignoreWords": [],
     "import": []
