@@ -130,6 +130,7 @@ named feature flag.
 * [`zeroize`](https://docs.rs/zeroize): Implements the [`Zeroize`](https://docs.rs/zeroize/latest/zeroize/trait.Zeroize.html) trait. This makes [`Uint`] and [`Bits`] compatible with the [`secrecy`](https://crates.io/crates/secrecy) crate.
 * [`valuable`](https://docs.rs/valuable): Implements the [`Valuable`](https://docs.rs/valuable/0.1.0/valuable/trait.Valuable.html) trait.
 * [`pyo3`](https://docs.rs/pyo3): Implements the [`ToPyObject`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.ToPyObject.html), [`IntoPy`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.IntoPy.html) and [`FromPyObject`](https://docs.rs/pyo3/latest/pyo3/conversion/trait.FromPyObject.html) traits.
+* [`parity-scale-codec`](https://docs.rs/parity-scale-codec): Implements the [`Encode`](https://docs.rs/parity-scale-codec/latest/parity_scale_codec/trait.Encode.html), [`Decode`](https://docs.rs/parity-scale-codec/latest/parity_scale_codec/trait.Decode.html) and [`MaxEncodedLen`](https://github.com/paritytech/parity-scale-codec/blob/47d98a1c23dabc890fdb548d115a18070082c66e/src/max_encoded_len.rs) traits.
 
 ## Building and testing
 

@@ -1577,6 +1577,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "num-bigint",
+ "parity-scale-codec",
  "postgres",
  "postgres-types",
  "primitive-types",

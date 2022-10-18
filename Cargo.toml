@@ -54,6 +54,7 @@ sqlx-core = { version = "0.6", optional = true, features = [ "runtime-tokio-nati
 zeroize = { version = "1.5", optional = true }
 valuable = { version = "0.1.0", optional = true }
 pyo3 = { version = "0.17.1", optional = true }
+parity-scale-codec = { version = "3.2.1", optional = true, features = [ "max-encoded-len" ] }
 
 # Secretly dev-dependencies
 criterion = { version = "0.4", optional = true }
