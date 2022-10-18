@@ -8,8 +8,9 @@ use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 // FEATURE: Implement compact encoding
 
 impl<const BITS: usize, const LIMBS: usize> Encode for Uint<BITS, LIMBS> {
+    /// u32 prefix for compact encoding + bytes needed for LE bytes representation
     fn size_hint(&self) -> usize {
-        Self::BYTES
+        core::mem::size_of::<u32>() + Self::BYTES
     }
 
     fn using_encoded<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
