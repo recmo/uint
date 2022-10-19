@@ -59,7 +59,7 @@ pub struct CompactRefUint<'a, const BITS: usize, const LIMBS: usize>(pub &'a Uin
 
 impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BITS, LIMBS> {
     fn size_hint(&self) -> usize {
-        match self.0.trailing_ones() {
+        match self.0.bit_len() {
             0..=6 => 1,
             0..=14 => 2,
             0..=30 => 4,
@@ -178,7 +178,6 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
                 bytes => {
                     let le_byte_slice = (0..bytes)
                         .map(|_| input.read_byte())
-                        .rev()
                         .collect::<Result<Vec<_>, _>>()?;
                     let x = Uint::<BITS, LIMBS>::try_from_le_slice(&le_byte_slice)
                         .ok_or(Error::from("value is larger than fits the Uint"))?;
@@ -215,9 +214,9 @@ fn assert_compact_supported<const BITS: usize>() {
 
 #[cfg(test)]
 mod tests {
-    use crate::support::scale::{CompactRefUint, CompactUint, COMPACT_BITS_LIMIT};
+    use crate::support::scale::{CompactRefUint, CompactUint};
     use crate::{const_for, nlimbs, Uint};
-    use parity_scale_codec::{Decode, Encode};
+    use parity_scale_codec::{Compact, Decode, Encode};
     use proptest::proptest;
 
     #[test]
@@ -234,17 +233,26 @@ mod tests {
 
     #[test]
     fn test_scale_compact() {
-        const_for!(BITS in SIZES {
+        const_for!(BITS in [1, 2, 3, 7, 8, 9, 15, 16, 17, 29, 30, 31, 32, 33, 63, 64, 65, 127, 128, 129, 256, 384, 512, 535] {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
-                if BITS < COMPACT_BITS_LIMIT {
-                    let serialized_compact = CompactRefUint(&value).encode();
-                    let deserialized_compact = CompactUint::decode(&mut serialized_compact.as_slice()).unwrap();
-                    assert_eq!(value, deserialized_compact.0);
+                // value.serialize_compact().deserialize_compact() == value
+                let serialized_compact = CompactRefUint(&value).encode();
+                let deserialized_compact = CompactUint::decode(&mut serialized_compact.as_slice()).unwrap();
+                assert_eq!(value, deserialized_compact.0);
 
-                    if BITS < 30 && value != Uint::ZERO {
-                        let serialized_normal = value.encode();
-                        assert!(serialized_compact.len() < serialized_normal.len());
+                // Only for 0-(2**128-1) values.
+                // Check that our compact implementation is the same as parity-scale-codec's.
+                // value.serialize_compact_parity() == value.serialize_compact()
+                let value_u128: Result<u128, _> = value.try_into();
+                if let Ok(value_u128) = value_u128 {
+                    match BITS {
+                        0..=8 => assert_eq!(serialized_compact, Compact(value_u128 as u8).encode()),
+                        0..=16 => assert_eq!(serialized_compact, Compact(value_u128 as u16).encode()),
+                        0..=32 => assert_eq!(serialized_compact, Compact(value_u128 as u32).encode()),
+                        0..=64 => assert_eq!(serialized_compact, Compact(value_u128 as u64).encode()),
+                        0..=128 => assert_eq!(serialized_compact, Compact(value_u128 as u128).encode()),
+                        _ => {}
                     }
                 }
             });
