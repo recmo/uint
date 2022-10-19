@@ -5,7 +5,9 @@
 use crate::Uint;
 use parity_scale_codec::{Compact, CompactAs, Decode, Encode, Error, Input, MaxEncodedLen, Output};
 
-// FEATURE: Implement compact encoding
+// Compact encoding is supported only for 0-(2**536-1) values:
+// https://docs.substrate.io/reference/scale-codec/#fn-1
+pub(crate) const COMPACT_BITS_LIMIT: usize = 536;
 
 impl<const BITS: usize, const LIMBS: usize> Encode for Uint<BITS, LIMBS> {
     /// u32 prefix for compact encoding + bytes needed for LE bytes representation
@@ -32,6 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
     }
 }
 
+// TODO: Use nightly generic const expressions to validate that BITS parameter is less than 536
 pub struct CompactUint<const BITS: usize, const LIMBS: usize>(pub Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> From<Compact<Self>> for CompactUint<BITS, LIMBS> {
@@ -65,7 +68,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BI
     }
 
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
-        assert!(BITS <= 536);
+        assert_compact_supported::<BITS>();
 
         match self.0.bit_len() {
             // 0..=0b0011_1111
@@ -118,7 +121,7 @@ const OUT_OF_RANGE: &str = "out of range Uint decoding";
 
 impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-        assert!(BITS <= 536);
+        assert_compact_supported::<BITS>();
 
         let prefix = input.read_byte()?;
         Ok(Self(match prefix % 4 {
@@ -190,7 +193,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
                             (1 << bits % 64) - 1
                         }
                     }
-                    if Uint::<536, 9>::from(x)
+                    if Uint::<COMPACT_BITS_LIMIT, 9>::from(x)
                         > Uint::from_limbs_slice(&new_limbs) >> ((68 - bytes as usize + 1) * 8)
                     {
                         x
@@ -203,9 +206,16 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
     }
 }
 
+fn assert_compact_supported<const BITS: usize>() {
+    assert!(
+        BITS < COMPACT_BITS_LIMIT,
+        "compact encoding is supported only for 0-(2**536-1) values"
+    );
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::support::scale::{CompactRefUint, CompactUint};
+    use crate::support::scale::{CompactRefUint, CompactUint, COMPACT_BITS_LIMIT};
     use crate::{const_for, nlimbs, Uint};
     use parity_scale_codec::{Decode, Encode};
     use proptest::proptest;
@@ -227,10 +237,15 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
-                if BITS <= 536 {
-                    let serialized = CompactRefUint(&value).encode();
-                    let deserialized = CompactUint::decode(&mut serialized.as_slice()).unwrap();
-                    assert_eq!(value, deserialized.0);
+                if BITS < COMPACT_BITS_LIMIT {
+                    let serialized_compact = CompactRefUint(&value).encode();
+                    let deserialized_compact = CompactUint::decode(&mut serialized_compact.as_slice()).unwrap();
+                    assert_eq!(value, deserialized_compact.0);
+
+                    if BITS < 30 && value != Uint::ZERO {
+                        let serialized_normal = value.encode();
+                        assert!(serialized_compact.len() < serialized_normal.len());
+                    }
                 }
             });
         });
