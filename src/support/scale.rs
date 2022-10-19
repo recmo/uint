@@ -94,6 +94,11 @@ impl<'a, const BITS: usize, const LIMBS: usize> EncodeAsRef<'a, Uint<BITS, LIMBS
 
 impl<'a, const BITS: usize, const LIMBS: usize> EncodeLike for CompactRefUint<'a, BITS, LIMBS> {}
 
+/// Compact/general integers are encoded with the two least significant bits denoting the mode:
+///     `0b00`: single-byte mode: upper six bits are the LE encoding of the value. Valid only for values of `0-63`.
+///     `0b01`: two-byte mode: upper six bits and the following byte is the LE encoding of the value. Valid only for values of `64-(2\*\*14-1)`.
+///     `0b10`: four-byte mode: upper six bits and the following three bytes are the LE encoding of the value. Valid only for values of `(2\*\*14)-(2\*\*30-1)`.
+///     `0b11`: Big-integer mode: The upper six bits are the number of bytes following, plus four. The value is contained, LE encoded, in the bytes following. The final (most significant) byte must be non-zero. Valid only for values of `(2\*\*30)-(2\*\*536-1)`.
 impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BITS, LIMBS> {
     fn size_hint(&self) -> usize {
         match self.0.bit_len() {
