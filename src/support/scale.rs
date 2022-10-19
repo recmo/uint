@@ -3,7 +3,10 @@
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "parity-scale-codec")))]
 
 use crate::Uint;
-use parity_scale_codec::{Compact, CompactAs, Decode, Encode, Error, Input, MaxEncodedLen, Output};
+use parity_scale_codec::{
+    Compact, CompactAs, Decode, Encode, EncodeAsRef, EncodeLike, Error, HasCompact, Input,
+    MaxEncodedLen, Output,
+};
 
 // Compact encoding is supported only for 0-(2**536-1) values:
 // https://docs.substrate.io/reference/scale-codec/#fn-1
@@ -37,7 +40,21 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
 // TODO: Use nightly generic const expressions to validate that BITS parameter is less than 536
 pub struct CompactUint<const BITS: usize, const LIMBS: usize>(pub Uint<BITS, LIMBS>);
 
-impl<const BITS: usize, const LIMBS: usize> From<Compact<Self>> for CompactUint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for CompactUint<BITS, LIMBS> {
+    fn from(v: Uint<BITS, LIMBS>) -> Self {
+        Self(v)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<CompactUint<BITS, LIMBS>> for Uint<BITS, LIMBS> {
+    fn from(v: CompactUint<BITS, LIMBS>) -> Self {
+        v.0
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<Compact<CompactUint<BITS, LIMBS>>>
+    for CompactUint<BITS, LIMBS>
+{
     fn from(v: Compact<Self>) -> Self {
         v.0
     }
@@ -55,7 +72,27 @@ impl<const BITS: usize, const LIMBS: usize> CompactAs for CompactUint<BITS, LIMB
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> HasCompact for Uint<BITS, LIMBS> {
+    type Type = CompactUint<BITS, LIMBS>;
+}
+
 pub struct CompactRefUint<'a, const BITS: usize, const LIMBS: usize>(pub &'a Uint<BITS, LIMBS>);
+
+impl<'a, const BITS: usize, const LIMBS: usize> From<&'a Uint<BITS, LIMBS>>
+    for CompactRefUint<'a, BITS, LIMBS>
+{
+    fn from(v: &'a Uint<BITS, LIMBS>) -> Self {
+        Self(v)
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> EncodeAsRef<'a, Uint<BITS, LIMBS>>
+    for CompactUint<BITS, LIMBS>
+{
+    type RefType = CompactRefUint<'a, BITS, LIMBS>;
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> EncodeLike for CompactRefUint<'a, BITS, LIMBS> {}
 
 impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BITS, LIMBS> {
     fn size_hint(&self) -> usize {
@@ -214,6 +251,7 @@ fn assert_compact_supported<const BITS: usize>() {
 
 #[cfg(test)]
 mod tests {
+    use crate::aliases::U256;
     use crate::support::scale::{CompactRefUint, CompactUint};
     use crate::{const_for, nlimbs, Uint};
     use parity_scale_codec::{Compact, Decode, Encode};
@@ -257,5 +295,20 @@ mod tests {
                 }
             });
         });
+    }
+
+    #[test]
+    fn test_scale_compact_derive() {
+        #[derive(Debug, PartialEq, parity_scale_codec::Encode, parity_scale_codec::Decode)]
+        struct Data {
+            #[codec(compact)]
+            value: U256,
+        }
+
+        let data = Data { value: U256::MAX };
+        let serialized = data.encode();
+        let deserialized = Data::decode(&mut serialized.as_slice()).unwrap();
+
+        assert_eq!(data, deserialized)
     }
 }
