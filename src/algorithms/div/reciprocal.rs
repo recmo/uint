@@ -110,6 +110,40 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
     v4.0
 }
 
+/// ```python
+/// ((2**64)**3 - 1) // d - 2**64
+/// ```
+pub fn reciprocal_2_mg10(d: u128) -> u64 {
+    debug_assert!(d >= (1 << 127));
+    let d1 = (d >> 64) as u64;
+    let d0 = d as u64;
+
+    let mut v = reciprocal(d1);
+    let mut p = d1.wrapping_mul(v).wrapping_add(d0);
+    // OPT: This is checking the carry flag
+    if p < d0 {
+        v = v.wrapping_sub(1);
+        if p >= d1 {
+            v = v.wrapping_sub(1);
+            p = p.wrapping_sub(d1);
+        }
+        p = p.wrapping_sub(d1);
+    }
+    let t = u128::from(v) * u128::from(d0);
+    let t1 = (t >> 64) as u64;
+    let t0 = t as u64;
+
+    let p = p.wrapping_add(t1);
+    // OPT: This is checking the carry flag
+    if p < t1 {
+        v = v.wrapping_sub(1);
+        if (u128::from(p) << 64) | u128::from(t0) >= d {
+            v = v.wrapping_sub(1);
+        }
+    }
+    v
+}
+
 #[inline(always)]
 pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
@@ -154,6 +188,36 @@ pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
     (q1, r)
 }
 
+#[inline(always)]
+fn div_3x2_mg10(u21: u128, u0: u64, d10: u128, v: u64) -> (u64, u128) {
+    debug_assert!(d10 >= (1 << 127));
+    debug_assert!(u21 < d10);
+    debug_assert_eq!(v, reciprocal_2_mg10(d10));
+
+    let u1 = u21 as u64;
+    let d1 = (d10 >> 64) as u64;
+    let d0 = d10 as u64;
+    let q10 = u128::from(v) * (u21 >> 64) + u21;
+    let mut q1 = (q10 >> 64) as u64;
+    let q0 = q10 as u64;
+    let r1 = u1.wrapping_sub(q1.wrapping_mul(d1));
+    let t10 = u128::from(d0) * u128::from(q1);
+    let mut r10 = ((u128::from(r1) << 64) | u128::from(u0))
+        .wrapping_sub(t10)
+        .wrapping_sub(d10);
+    let r1 = (r10 >> 64) as u64;
+    q1 = q1.wrapping_add(1);
+    if r1 >= q0 {
+        q1 = q1.wrapping_sub(1);
+        r10 = r10.wrapping_add(d10);
+    }
+    if unlikely(r10 >= d10) {
+        q1 = q1.wrapping_add(1);
+        r10 = r10.wrapping_sub(d10);
+    }
+    (q1, r10)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,14 +234,52 @@ mod tests {
     }
 
     #[test]
+    fn test_reciprocal_2() {
+        assert_eq!(reciprocal_2_mg10(1 << 127), u64::MAX);
+        assert_eq!(reciprocal_2_mg10(u128::MAX), 0);
+        assert_eq!(
+            reciprocal_2_mg10(0xd555_5555_5555_5555_5555_5555_5555_5555),
+            0x3333_3333_3333_3333
+        );
+        assert_eq!(
+            reciprocal_2_mg10(0xd0e7_57b0_2171_5fbe_cba4_ad0e_825a_e500),
+            0x39b6_c5af_970f_86b3
+        );
+        assert_eq!(
+            reciprocal_2_mg10(0xae5d_6551_8a51_3208_a850_5491_9637_eb17),
+            0x77db_09d1_5c3b_970b
+        );
+    }
+
+    #[test]
     fn test_div_2x1_mg10() {
         proptest!(|(q: u64, r: u64, mut d: u64)| {
             let d = d | (1 << 63);
             let r = r % d;
             let n = u128::from(q) * u128::from(d) + u128::from(r);
             let v = reciprocal(d);
-            let actual = div_2x1_mg10(n, d, v);
-            assert_eq!((q,r), actual);
+            assert_eq!(div_2x1_mg10(n, d, v), (q,r));
+        });
+    }
+
+    #[test]
+    fn test_div_3x2_mg10() {
+        proptest!(|(q: u64, r: u128, mut d: u128)| {
+            let d = d | (1 << 127);
+            let r = r % d;
+            let (n21, n0) = {
+                let d1 = (d >> 64) as u64;
+                let d0 = d as u64;
+                let r1 = (r >> 64) as u64;
+                let r0 = r as u64;
+                // n = q * d + r
+                let n10 = u128::from(q) * u128::from(d0) + u128::from(r0);
+                let n0 = n10 as u64;
+                let n21 = (n10 >> 64) + u128::from(q) * u128::from(d1) + u128::from(r1);
+                (n21, n0)
+            };
+            let v = reciprocal_2_mg10(d);
+            assert_eq!(div_3x2_mg10(n21, n0, d, v), (q, r));
         });
     }
 }
@@ -193,8 +295,10 @@ pub mod bench {
     pub fn group(criterion: &mut Criterion) {
         bench_reciprocal_ref(criterion);
         bench_reciprocal_mg10(criterion);
+        bench_reciprocal_2_mg10(criterion);
         bench_div_2x1_ref(criterion);
         bench_div_2x1_mg10(criterion);
+        bench_div_3x2_mg10(criterion);
     }
 
     fn bench_reciprocal_ref(criterion: &mut Criterion) {
@@ -214,6 +318,17 @@ pub mod bench {
             bencher.iter_batched(
                 || rng.gen::<u64>() | (1 << 63),
                 |a| black_box(reciprocal_mg10(black_box(a))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_reciprocal_2_mg10(criterion: &mut Criterion) {
+        let mut rng = rand::thread_rng();
+        criterion.bench_function("algo/div/reciprocal_2/mg10", move |bencher| {
+            bencher.iter_batched(
+                || rng.gen::<u128>() | (1 << 127),
+                |a| black_box(reciprocal_2_mg10(black_box(a))),
                 BatchSize::SmallInput,
             );
         });
@@ -251,6 +366,35 @@ pub mod bench {
                     (n, d, v)
                 },
                 |(u, d, v)| black_box(div_2x1_mg10(u, d, v)),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_div_3x2_mg10(criterion: &mut Criterion) {
+        let mut rng = rand::thread_rng();
+        criterion.bench_function("algo/div/div_3x2/mg10", move |bencher| {
+            bencher.iter_batched(
+                || {
+                    let q: u64 = rng.gen();
+                    let r: u128 = rng.gen();
+                    let d = rng.gen::<u128>() | (1 << 127);
+                    let r = r % d;
+                    let (n21, n0) = {
+                        let d1 = (d >> 64) as u64;
+                        let d0 = d as u64;
+                        let r1 = (r >> 64) as u64;
+                        let r0 = r as u64;
+                        // n = q * d + r
+                        let n10 = u128::from(q) * u128::from(d0) + u128::from(r0);
+                        let n0 = n10 as u64;
+                        let n21 = (n10 >> 64) + u128::from(q) * u128::from(d1) + u128::from(r1);
+                        (n21, n0)
+                    };
+                    let v = reciprocal_2_mg10(d);
+                    (n21, n0, d, v)
+                },
+                |(n21, n0, d, v)| black_box(div_3x2_mg10(n21, n0, d, v)),
                 BatchSize::SmallInput,
             );
         });
