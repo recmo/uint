@@ -130,14 +130,14 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 
             // Hex strings
             Type::CHAR | Type::TEXT | Type::VARCHAR => {
-                out.put_slice(format!("{:#x}", self).as_bytes());
+                out.put_slice(format!("{self:#x}").as_bytes());
             }
             Type::JSON | Type::JSONB => {
                 if *ty == Type::JSONB {
                     // Version 1 of JSONB is just plain text JSON.
                     out.put_u8(1);
                 }
-                out.put_slice(format!("\"{:#x}\"", self).as_bytes());
+                out.put_slice(format!("\"{self:#x}\"").as_bytes());
             }
 
             // Binary coded decimal types
@@ -387,7 +387,7 @@ mod tests {
 
     // Query the binary encoding of an SQL expression
     fn get_binary(client: &mut Client, expr: &str) -> Vec<u8> {
-        let query = format!("COPY (SELECT {}) TO STDOUT WITH BINARY;", expr);
+        let query = format!("COPY (SELECT {expr}) TO STDOUT WITH BINARY;");
 
         // See <https://www.postgresql.org/docs/current/sql-copy.html>
         let mut reader = client.copy_out(&query).unwrap();
@@ -428,7 +428,7 @@ mod tests {
         value: Uint<BITS, LIMBS>,
         ty: &Type,
     ) {
-        println!("testing {:?} {}", value, ty);
+        println!("testing {value:?} {ty}");
 
         // Encode value locally
         let mut serialized = BytesMut::new();
@@ -453,12 +453,12 @@ mod tests {
                 value = value,
                 bits = if BITS == 0 { 1 } else { BITS },
             ),
-            Type::VARBIT => format!("B'{value:b}'::varbit", value = value,),
-            Type::BYTEA => format!("'\\x{:x}'::bytea", value),
-            Type::CHAR => format!("'{:#x}'::char({})", value, 2 + 2 * nbytes(BITS)),
-            Type::TEXT | Type::VARCHAR => format!("'{:#x}'::{}", value, ty.name()),
-            Type::JSON | Type::JSONB => format!("'\"{:#x}\"'::{}", value, ty.name()),
-            _ => format!("{}::{}", value, ty.name()),
+            Type::VARBIT => format!("B'{value:b}'::varbit"),
+            Type::BYTEA => format!("'\\x{value:x}'::bytea"),
+            Type::CHAR => format!("'{value:#x}'::char({})", 2 + 2 * nbytes(BITS)),
+            Type::TEXT | Type::VARCHAR => format!("'{value:#x}'::{}", ty.name()),
+            Type::JSON | Type::JSONB => format!("'\"{value:#x}\"'::{}", ty.name()),
+            _ => format!("{value}::{}", ty.name()),
         };
         // dbg!(&expr);
         let ground_truth = {

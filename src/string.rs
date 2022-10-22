@@ -14,7 +14,7 @@ impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
         let mut spigot = self.to_base_be(BASE);
         write!(f, "{}", spigot.next().unwrap_or(0))?;
         for digits in spigot {
-            write!(f, "{:019}", digits)?;
+            write!(f, "{digits:019}")?;
         }
         Ok(())
     }
@@ -22,7 +22,7 @@ impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
 
 impl<const BITS: usize, const LIMBS: usize> Debug for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{:#x}_U{}", self, BITS)
+        write!(f, "{self:#x}_U{BITS}")
     }
 }
 
@@ -34,10 +34,10 @@ impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
             let width = 2 * rem_up(Self::BYTES, 8);
-            write!(f, "{:0width$x}", first, width = width)?;
+            write!(f, "{first:0width$x}")?;
         }
         for limb in limbs {
-            write!(f, "{:016x}", limb)?;
+            write!(f, "{limb:016x}")?;
         }
         Ok(())
     }
@@ -51,10 +51,10 @@ impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
             let width = 2 * rem_up(Self::BYTES, 8);
-            write!(f, "{:0width$X}", first, width = width)?;
+            write!(f, "{first:0width$X}")?;
         }
         for limb in limbs {
-            write!(f, "{:016X}", limb)?;
+            write!(f, "{limb:016X}")?;
         }
         Ok(())
     }
@@ -68,10 +68,10 @@ impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
         let mut limbs = self.as_limbs().iter().rev();
         if let Some(first) = limbs.next() {
             let width = rem_up(Self::BITS, 64);
-            write!(f, "{:0width$b}", first, width = width)?;
+            write!(f, "{first:0width$b}")?;
         }
         for limb in limbs {
-            write!(f, "{:064b}", limb)?;
+            write!(f, "{limb:064b}")?;
         }
         Ok(())
     }
@@ -84,7 +84,7 @@ impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
         let mut spigot = self.to_base_be(BASE);
         write!(f, "{:o}", spigot.next().unwrap_or(0))?;
         for digits in spigot {
-            write!(f, "{:021o}", digits)?;
+            write!(f, "{digits:021o}")?;
         }
         Ok(())
     }
@@ -200,15 +200,15 @@ mod tests {
             "90630363884335538722706632492458228784305343302099024356772372330524102404852"
         );
         assert_eq!(
-            format!("{:x}", N),
+            format!("{N:x}"),
             "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
         );
         assert_eq!(
-            format!("{:b}", N),
+            format!("{N:b}"),
             "1100100001011110111101111101011110010110100100011111111001111001010101110011101100011010011100000110010011000001100111000001101010011000000110011110101111011011110100011111101010101010101100011010100011101100100100100011010001000100001110001010101011110100"
         );
         assert_eq!(
-            format!("{:o}", N),
+            format!("{N:o}"),
             "14413675753626443771712563543234062301470152300636573364375252543243544443210416125364"
         );
     }
@@ -217,12 +217,12 @@ mod tests {
     fn test_hex() {
         proptest!(|(value: u64)| {
             let n: Uint<64, 1> = Uint::from(value);
-            assert_eq!(format!("{:x}", n), format!("{:016x}", value));
-            assert_eq!(format!("{:#x}", n), format!("{:#018x}", value));
-            assert_eq!(format!("{:X}", n), format!("{:016X}", value));
-            assert_eq!(format!("{:#X}", n), format!("{:#018X}", value));
-            assert_eq!(format!("{:b}", n), format!("{:064b}", value));
-            assert_eq!(format!("{:#b}", n), format!("{:#066b}", value));
+            assert_eq!(format!("{n:x}"), format!("{value:016x}"));
+            assert_eq!(format!("{n:#x}"), format!("{value:#018x}"));
+            assert_eq!(format!("{n:X}"), format!("{value:016X}"));
+            assert_eq!(format!("{n:#X}"), format!("{value:#018X}"));
+            assert_eq!(format!("{n:b}"), format!("{value:064b}"));
+            assert_eq!(format!("{n:#b}"), format!("{value:#066b}"));
         });
     }
 }

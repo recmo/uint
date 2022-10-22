@@ -208,7 +208,7 @@ pub mod bench {
     fn bench_log<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), 2_u64..100);
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("log/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("log/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(n, b)| black_box(black_box(n).checked_log(b)),

@@ -162,7 +162,7 @@ pub mod bench {
         }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), u64::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{}/64", BITS), move |bencher| {
+        criterion.bench_function(&format!("div_rem/{BITS}/64"), move |bencher| {
             bencher.iter_batched(
                 || {
                     let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
@@ -187,7 +187,7 @@ pub mod bench {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(
-            &format!("div_rem/{}/{}", BITS, BITS - BITS / 2),
+            &format!("div_rem/{BITS}/{}", BITS - BITS / 2),
             move |bencher| {
                 bencher.iter_batched(
                     || {
@@ -211,7 +211,7 @@ pub mod bench {
         }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{}/{}", BITS, BITS), move |bencher| {
+        criterion.bench_function(&format!("div_rem/{BITS}/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || {
                     let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
