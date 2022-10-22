@@ -33,11 +33,11 @@ use core::{intrinsics::unlikely, u64};
 /// [gmp]: https://gmplib.org/manual/Basecase-Division
 /// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L1736
 #[inline(never)]
-pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
+pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() >= divisor.len());
-    debug_assert!(*divisor.last().unwrap() > (1 << 63));
-    debug_assert!(*numerator.last().unwrap() == 0);
+    debug_assert!(*divisor.last().unwrap() >= (1 << 63));
+    // debug_assert!(*numerator.last().unwrap() == 0);
 
     let n = divisor.len();
     let m = numerator.len() - n - 1;
@@ -88,6 +88,15 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithms::{
+        add::{cmp, sbb_n},
+        mul,
+    };
+    use proptest::{
+        collection, num, proptest,
+        strategy::{Just, Strategy},
+    };
+    use std::cmp::Ordering;
 
     // Basic test without exceptional paths
     #[test]
@@ -102,7 +111,6 @@ mod tests {
             0x18276b093f5d1dac,
             0xfe2e0bccb9e6d8b3,
             0x1bebfb3bc05d9347,
-            0x0000000000000000,
         ];
         let mut divisor = [
             0x800000000000000,
@@ -115,7 +123,6 @@ mod tests {
             0xd9eea4fc30c5ac6c_u64,
             0x944a2d832d5a6a08_u64,
             0x22f06722e8d883b1_u64,
-            0x0000000000000000_u64,
         ];
         let expected_remainder = [
             0x9800000000000000,
@@ -125,7 +132,7 @@ mod tests {
         ];
         div_nxm(&mut numerator, &mut divisor);
         let remainder = &numerator[0..4];
-        let quotient = &numerator[4..9];
+        let quotient = &numerator[4..8];
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
     }
@@ -134,5 +141,35 @@ mod tests {
 
     // TODO: Test with n21 == d
 
-    // TODO: Proptest
+    // Proptest without forced exceptional paths
+    #[test]
+    fn test_div() {
+        let quotient = collection::vec(num::u64::ANY, 1..10);
+        let divisor = collection::vec(num::u64::ANY, 2..10).prop_map(|mut vec| {
+            *vec.last_mut().unwrap() |= 1 << 63;
+            vec
+        });
+        let dr = divisor.prop_flat_map(|divisor| {
+            let d = divisor.clone();
+            let remainder =
+                collection::vec(num::u64::ANY, divisor.len()).prop_map(move |mut vec| {
+                    if cmp(&vec, &d) != Ordering::Less {
+                        let carry = sbb_n(&mut vec, &d, 0);
+                        assert_eq!(carry, 0);
+                    }
+                    vec
+                });
+            (Just(divisor), remainder)
+        });
+        proptest!(|(quotient in quotient, (divisor, remainder) in dr)| {
+            let mut numerator: Vec<u64> = vec![0; divisor.len() + quotient.len()];
+            numerator[..remainder.len()].copy_from_slice(&remainder);
+            mul(quotient.as_slice(), divisor.as_slice(), &mut numerator);
+
+            div_nxm(numerator.as_mut_slice(), divisor.as_slice());
+            let (r, q) = numerator.split_at(divisor.len());
+            assert_eq!(r, remainder);
+            assert_eq!(q, quotient);
+        });
+    }
 }
