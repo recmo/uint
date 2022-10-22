@@ -108,6 +108,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
 }
 
 /// Helper function to remove  optionally `0x` prefix from hex strings.
+#[allow(clippy::missing_const_for_fn)]
 fn trim_hex_prefix(str: &str) -> &str {
     if str.len() >= 2 && (&str[..2] == "0x" || &str[..2] == "0X") {
         &str[2..]

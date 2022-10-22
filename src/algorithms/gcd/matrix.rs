@@ -506,7 +506,7 @@ pub mod bench {
         );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(
-            &format!("algorithms/gcd/matrix/apply/{}", BITS),
+            &format!("algorithms/gcd/matrix/apply/{BITS}"),
             move |bencher| {
                 bencher.iter_batched(
                     || {
