@@ -21,6 +21,10 @@ pub use self::{
 
 trait DoubleWord<T>: Sized + Copy {
     fn join(high: T, low: T) -> Self;
+    fn mul(a: T, b: T) -> Self;
+    fn muladd(a: T, b: T, c: T) -> Self;
+    fn muladd2(a: T, b: T, c: T, d: T) -> Self;
+
     fn high(self) -> T;
     fn low(self) -> T;
     fn split(self) -> (T, T);
@@ -30,6 +34,21 @@ impl DoubleWord<u64> for u128 {
     #[inline(always)]
     fn join(high: u64, low: u64) -> Self {
         (Self::from(high) << 64) | Self::from(low)
+    }
+
+    #[inline(always)]
+    fn mul(a: u64, b: u64) -> Self {
+        Self::from(a) * Self::from(b)
+    }
+
+    #[inline(always)]
+    fn muladd(a: u64, b: u64, c: u64) -> Self {
+        Self::from(a) * Self::from(b) + Self::from(c)
+    }
+
+    #[inline(always)]
+    fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
+        Self::from(a) * Self::from(b) + Self::from(c) + Self::from(d)
     }
 
     #[inline(always)]

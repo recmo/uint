@@ -2,20 +2,13 @@
 //! See [MG10].
 //!
 //! [MG10]: https://gmplib.org/~tege/division-paper.pdf
-//! https://gmplib.org/~tege/divcnst-pldi94.pdf
-//! https://homepage.divms.uiowa.edu/~jones/bcd/divide.html
-//! https://libdivide.com/
-//! https://github.com/ridiculousfish/libdivide
-//! https://gmplib.org/list-archives/gmp-devel/2019-October/005590.html
-//!
-//! https://nnethercote.github.io/perf-book/profiling.html
+//! [GM94]: https://gmplib.org/~tege/divcnst-pldi94.pdf
+//! [new]: https://gmplib.org/list-archives/gmp-devel/2019-October/005590.html
+#![allow(dead_code, clippy::cast_possible_truncation, clippy::cast_lossless)]
 
 use std::num::Wrapping;
 
-use core::intrinsics::unlikely;
-
-/// The MG10 algorithm is faster (3ns vs 20ns).
-pub use self::reciprocal_mg10 as reciprocal;
+pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
 
 /// Computes $\floor{\frac{2^{128} - 1}}{\mathtt{d}}} - 2^{64}$.
 ///
@@ -24,27 +17,10 @@ pub use self::reciprocal_mg10 as reciprocal;
 #[inline(always)]
 pub fn reciprocal_ref(d: u64) -> u64 {
     debug_assert!(d >= (1 << 63));
-    let mut r = u128::MAX / u128::from(d);
+    let r = u128::MAX / u128::from(d);
     debug_assert!(r >= (1 << 64));
     debug_assert!(r < (1 << 65));
     r as u64
-}
-
-#[inline(always)]
-fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let r = a * b;
-    Wrapping((r >> 64) as u64)
-}
-
-#[inline(always)]
-fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let c = u128::from(c.0);
-    let r = a * b + c;
-    Wrapping((r >> 64) as u64)
 }
 
 /// Computes $\floor{\frac{2^{128} - 1}}{\mathtt{d}}} - 2^{64}$.
@@ -69,8 +45,6 @@ fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u
 /// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L683
 #[inline(always)]
 pub fn reciprocal_mg10(d: u64) -> u64 {
-    debug_assert!(d >= (1 << 63));
-    let d = Wrapping(d);
     const ZERO: Wrapping<u64> = Wrapping(0);
     const ONE: Wrapping<u64> = Wrapping(1);
 
@@ -96,13 +70,17 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
         1024,
     ];
 
+    debug_assert!(d >= (1 << 63));
+    let d = Wrapping(d);
+
     let d0 = d & ONE;
     let d9 = d >> 55;
     let d40 = ONE + (d >> 24);
     let d63 = (d + ONE) >> 1;
-    let v0 = Wrapping(TABLE[(d9.0 - 256) as usize] as u64);
+    // let v0 = Wrapping(TABLE[(d9.0 - 256) as usize] as u64);
+    let v0 = Wrapping(*unsafe { TABLE.get_unchecked((d9.0 - 256) as usize) } as u64);
     let v1 = (v0 << 11) - ((v0 * v0 * d40) >> 40) - ONE;
-    let v2 = (v1 << 13) + (v1 * ((ONE << 60) - v1 * d40) >> 47);
+    let v2 = (v1 << 13) + ((v1 * ((ONE << 60) - v1 * d40)) >> 47);
     let e = ((v2 >> 1) & (ZERO - d0)) - v2 * d63;
     let v3 = (mul_hi(v2, e) >> 1) + (v2 << 31);
     let v4 = v3 - muladd_hi(v3, d, d) - d;
@@ -113,6 +91,7 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
 /// ```python
 /// ((2**64)**3 - 1) // d - 2**64
 /// ```
+#[inline(always)]
 pub fn reciprocal_2_mg10(d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
     let d1 = (d >> 64) as u64;
@@ -144,78 +123,23 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
     v
 }
 
+#[allow(clippy::missing_const_for_fn)] // False positive
 #[inline(always)]
-pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
-    debug_assert!(d >= (1 << 63));
-    debug_assert!((u >> 64) < d as u128);
-    let d = u128::from(d);
-    let q = (u / d) as u64;
-    let r = (u % d) as u64;
-    (q, r)
+fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
+    let a = u128::from(a.0);
+    let b = u128::from(b.0);
+    let r = a * b;
+    Wrapping((r >> 64) as u64)
 }
 
-/// Computes the quotient and remainder of a `u128` divided by a `u64`.
-///
-/// Requires
-/// * `u < d * 2**64`,
-/// * `d >= 2**63`, and
-/// * `v = reciprocal(d)`.
-///
-/// Implements algorithm 4 from [MG10]. The running time is 2.7 ns versus 18 ns
-/// for [`div_2x1_ref`].
-///
-/// [MG10]: https://gmplib.org/~tege/division-paper.pdf
+#[allow(clippy::missing_const_for_fn)] // False positive
 #[inline(always)]
-pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
-    debug_assert!(d >= (1 << 63));
-    debug_assert!((u >> 64) < d as u128);
-    debug_assert_eq!(v, reciprocal(d));
-
-    let q = u + (u >> 64) * u128::from(v);
-    let q0 = q as u64;
-    let q1 = ((q >> 64) as u64).wrapping_add(1);
-    let r = (u as u64).wrapping_sub(q1.wrapping_mul(d));
-    let (q1, r) = if r > q0 {
-        (q1.wrapping_sub(1), r.wrapping_add(d))
-    } else {
-        (q1, r)
-    };
-    let (q1, r) = if unlikely(r >= d) {
-        (q1.wrapping_add(1), r.wrapping_sub(d))
-    } else {
-        (q1, r)
-    };
-    (q1, r)
-}
-
-#[inline(always)]
-fn div_3x2_mg10(u21: u128, u0: u64, d10: u128, v: u64) -> (u64, u128) {
-    debug_assert!(d10 >= (1 << 127));
-    debug_assert!(u21 < d10);
-    debug_assert_eq!(v, reciprocal_2_mg10(d10));
-
-    let u1 = u21 as u64;
-    let d1 = (d10 >> 64) as u64;
-    let d0 = d10 as u64;
-    let q10 = u128::from(v) * (u21 >> 64) + u21;
-    let mut q1 = (q10 >> 64) as u64;
-    let q0 = q10 as u64;
-    let r1 = u1.wrapping_sub(q1.wrapping_mul(d1));
-    let t10 = u128::from(d0) * u128::from(q1);
-    let mut r10 = ((u128::from(r1) << 64) | u128::from(u0))
-        .wrapping_sub(t10)
-        .wrapping_sub(d10);
-    let r1 = (r10 >> 64) as u64;
-    q1 = q1.wrapping_add(1);
-    if r1 >= q0 {
-        q1 = q1.wrapping_sub(1);
-        r10 = r10.wrapping_add(d10);
-    }
-    if unlikely(r10 >= d10) {
-        q1 = q1.wrapping_add(1);
-        r10 = r10.wrapping_sub(d10);
-    }
-    (q1, r10)
+fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
+    let a = u128::from(a.0);
+    let b = u128::from(b.0);
+    let c = u128::from(c.0);
+    let r = a * b + c;
+    Wrapping((r >> 64) as u64)
 }
 
 #[cfg(test)]
@@ -250,55 +174,19 @@ mod tests {
             0x77db_09d1_5c3b_970b
         );
     }
-
-    #[test]
-    fn test_div_2x1_mg10() {
-        proptest!(|(q: u64, r: u64, mut d: u64)| {
-            let d = d | (1 << 63);
-            let r = r % d;
-            let n = u128::from(q) * u128::from(d) + u128::from(r);
-            let v = reciprocal(d);
-            assert_eq!(div_2x1_mg10(n, d, v), (q,r));
-        });
-    }
-
-    #[test]
-    fn test_div_3x2_mg10() {
-        proptest!(|(q: u64, r: u128, mut d: u128)| {
-            let d = d | (1 << 127);
-            let r = r % d;
-            let (n21, n0) = {
-                let d1 = (d >> 64) as u64;
-                let d0 = d as u64;
-                let r1 = (r >> 64) as u64;
-                let r0 = r as u64;
-                // n = q * d + r
-                let n10 = u128::from(q) * u128::from(d0) + u128::from(r0);
-                let n0 = n10 as u64;
-                let n21 = (n10 >> 64) + u128::from(q) * u128::from(d1) + u128::from(r1);
-                (n21, n0)
-            };
-            let v = reciprocal_2_mg10(d);
-            assert_eq!(div_3x2_mg10(n21, n0, d, v), (q, r));
-        });
-    }
 }
 
 #[cfg(feature = "bench")]
 #[doc(hidden)]
 pub mod bench {
     use super::*;
-    use crate::{const_for, nlimbs};
     use criterion::{black_box, BatchSize, Criterion};
-    use rand::{thread_rng, Rng};
+    use rand::Rng;
 
     pub fn group(criterion: &mut Criterion) {
         bench_reciprocal_ref(criterion);
         bench_reciprocal_mg10(criterion);
         bench_reciprocal_2_mg10(criterion);
-        bench_div_2x1_ref(criterion);
-        bench_div_2x1_mg10(criterion);
-        bench_div_3x2_mg10(criterion);
     }
 
     fn bench_reciprocal_ref(criterion: &mut Criterion) {
@@ -329,72 +217,6 @@ pub mod bench {
             bencher.iter_batched(
                 || rng.gen::<u128>() | (1 << 127),
                 |a| black_box(reciprocal_2_mg10(black_box(a))),
-                BatchSize::SmallInput,
-            );
-        });
-    }
-
-    fn bench_div_2x1_ref(criterion: &mut Criterion) {
-        let mut rng = rand::thread_rng();
-        criterion.bench_function("algo/div/div_2x1/ref", move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let q: u64 = rng.gen();
-                    let r: u64 = rng.gen();
-                    let d = rng.gen::<u64>() | (1 << 63);
-                    let r = r % d;
-                    let n = u128::from(q) * u128::from(d) + u128::from(r);
-                    (n, d)
-                },
-                |(u, d)| black_box(div_2x1_ref(u, d)),
-                BatchSize::SmallInput,
-            );
-        });
-    }
-
-    fn bench_div_2x1_mg10(criterion: &mut Criterion) {
-        let mut rng = rand::thread_rng();
-        criterion.bench_function("algo/div/div_2x1/mg10", move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let q: u64 = rng.gen();
-                    let r: u64 = rng.gen();
-                    let d = rng.gen::<u64>() | (1 << 63);
-                    let r = r % d;
-                    let n = u128::from(q) * u128::from(d) + u128::from(r);
-                    let v = reciprocal_mg10(d);
-                    (n, d, v)
-                },
-                |(u, d, v)| black_box(div_2x1_mg10(u, d, v)),
-                BatchSize::SmallInput,
-            );
-        });
-    }
-
-    fn bench_div_3x2_mg10(criterion: &mut Criterion) {
-        let mut rng = rand::thread_rng();
-        criterion.bench_function("algo/div/div_3x2/mg10", move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let q: u64 = rng.gen();
-                    let r: u128 = rng.gen();
-                    let d = rng.gen::<u128>() | (1 << 127);
-                    let r = r % d;
-                    let (n21, n0) = {
-                        let d1 = (d >> 64) as u64;
-                        let d0 = d as u64;
-                        let r1 = (r >> 64) as u64;
-                        let r0 = r as u64;
-                        // n = q * d + r
-                        let n10 = u128::from(q) * u128::from(d0) + u128::from(r0);
-                        let n0 = n10 as u64;
-                        let n21 = (n10 >> 64) + u128::from(q) * u128::from(d1) + u128::from(r1);
-                        (n21, n0)
-                    };
-                    let v = reciprocal_2_mg10(d);
-                    (n21, n0, d, v)
-                },
-                |(n21, n0, d, v)| black_box(div_3x2_mg10(n21, n0, d, v)),
                 BatchSize::SmallInput,
             );
         });

@@ -13,6 +13,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes `self % rhs`, returning [`None`] if `rhs == 0`.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
         if rhs == Self::ZERO {
             return None;
