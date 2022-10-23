@@ -36,7 +36,9 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 
 /// Compute single limb division.
 ///
-/// The divisor does not need normalization. See algorithm 7 from [MG10].
+/// The highest limb of `numerator` and `divisor` must be nonzero.
+/// The divisor does not need normalization.
+/// See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
@@ -296,25 +298,6 @@ mod tests {
     }
 
     #[test]
-    fn test_div_nx1_g_2() {
-        let quotient = [1337];
-        let divisor = 42;
-        let remainder = 12;
-
-        // Construct problem
-        let mut numerator = vec![0; quotient.len() + 1];
-        numerator[0] = remainder;
-        mul(&quotient, &[divisor], &mut numerator);
-
-        // Test
-        let r = div_nx1(&mut numerator, divisor);
-
-        assert_eq!(&numerator[..quotient.len()], &quotient);
-
-        assert_eq!(r, remainder);
-    }
-
-    #[test]
     fn test_div_nx1() {
         let any_vec = collection::vec(num::u64::ANY, 1..10);
         let divrem = (1..u64::MAX, num::u64::ANY).prop_map(|(d, r)| (d, r % d));
@@ -323,6 +306,11 @@ mod tests {
             let mut numerator = vec![0; quotient.len() + 1];
             numerator[0] = remainder;
             mul(&quotient, &[divisor], &mut numerator);
+
+            // Trim numerator
+            while numerator.last() == Some(&0) {
+                numerator.pop();
+            }
 
             // Test
             let r = div_nx1(&mut numerator, divisor);

@@ -47,6 +47,15 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(!numerator.is_empty());
     debug_assert!(*numerator.last().unwrap() != 0);
 
+    // If numerator is smaller than divisor (q, r) = (0, numerator)
+    if numerator.len() < divisor.len() {
+        let (remainder, padding) = divisor.split_at_mut(numerator.len());
+        remainder.copy_from_slice(numerator);
+        padding.fill(0);
+        return;
+    }
+    debug_assert!(numerator.len() >= divisor.len());
+
     // Compute quotient and remainder.
     if divisor.len() <= 2 {
         if divisor.len() == 1 {
