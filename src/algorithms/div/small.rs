@@ -101,16 +101,15 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 }
 
 /// Compute double limb division.
+///
+/// Requires `divisor` to be in the range $[2^{64}, 2^{128})$.
 #[inline(always)]
 pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
-    debug_assert!(divisor != 0);
+    debug_assert!(divisor >= 1 << 64);
     debug_assert!(!limbs.is_empty());
     debug_assert!(*limbs.last().unwrap() != 0);
 
     // Normalize and compute reciprocal
-    if divisor.high() == 0 {
-        return div_nx1(limbs, divisor.low()) as u128;
-    }
     let shift = divisor.high().leading_zeros();
     if shift == 0 {
         return div_nx2_normalized(limbs, divisor);
@@ -386,35 +385,8 @@ mod tests {
     }
 
     #[test]
-    fn test_div_nx2_2() {
-        let quotient = vec![2];
-        let divisor = 135228888162006517828758789990063129213;
-        let remainder = 69824590596925427805857027451641953031;
-
-        // Construct problem
-        let mut numerator = vec![0; quotient.len() + 2];
-        numerator[0] = remainder.low();
-        numerator[1] = remainder.high();
-        dbg!(&numerator);
-        mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
-        dbg!(&numerator);
-
-        // Trim numerator
-        while numerator.last() == Some(&0) {
-            numerator.pop();
-        }
-
-        dbg!(&numerator, divisor, &quotient, remainder);
-
-        // Test
-        let r = div_nx2(&mut numerator, divisor);
-        assert_eq!(&numerator[..quotient.len()], &quotient);
-        assert_eq!(r, remainder);
-    }
-
-    #[test]
     fn test_div_nx2() {
-        let any_vec = collection::vec(u64::ANY, 1..10);
+        let any_vec = collection::vec(u64::ANY, 2..10);
         let divrem = (1..u128::MAX, u128::ANY).prop_map(|(d, r)| (d, r % d));
         proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
             // Construct problem

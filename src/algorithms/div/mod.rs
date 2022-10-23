@@ -68,20 +68,10 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
                 divisor[0] = div_nx1(numerator, divisor[0]);
             }
         } else {
-            // Append a zero to the numerator
-            // OPT: Avoid allocation
-            let mut tnumerator = vec![0; numerator.len() + 1];
-            tnumerator[..numerator.len()].copy_from_slice(numerator);
-
-            // Normalize
-            let shift = normalize(&mut tnumerator, divisor);
-
             let d = u128::join(divisor[1], divisor[0]);
-            let remainder = div_nx2(&mut tnumerator, d) >> shift;
+            let remainder = div_nx2(numerator, d);
             divisor[0] = remainder.low();
             divisor[1] = remainder.high();
-
-            numerator.copy_from_slice(&tnumerator[..numerator.len()]);
         }
     } else {
         // Append a zero to the numerator
