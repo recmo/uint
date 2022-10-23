@@ -13,7 +13,7 @@ use crate::{algorithms::DoubleWord, utils::unlikely};
 
 pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 
-/// Compute single limb division.
+/// Compute single limb normalized division.
 ///
 /// The divisor must be normalized. See algorithm 7 from [MG10].
 ///
@@ -81,12 +81,12 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     remainder >> shift
 }
 
-/// Compute double limb division.
+/// Compute double limb normalized division.
 ///
 /// The divisor must be normalized. This is a variant of [`div_nx1`] using
 /// [`div_3x2`] internally.
 #[inline(always)]
-pub fn div_nx2(u: &mut [u64], d: u128) -> u128 {
+pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 127));
 
@@ -98,6 +98,48 @@ pub fn div_nx2(u: &mut [u64], d: u128) -> u128 {
         remainder = r;
     }
     remainder
+}
+
+/// Compute double limb division.
+#[inline(always)]
+pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
+    debug_assert!(divisor != 0);
+    debug_assert!(!limbs.is_empty());
+    debug_assert!(*limbs.last().unwrap() != 0);
+
+    // Normalize and compute reciprocal
+    if divisor.high() == 0 {
+        return div_nx1(limbs, divisor.low()) as u128;
+    }
+    let shift = divisor.high().leading_zeros();
+    if shift == 0 {
+        return div_nx2_normalized(limbs, divisor);
+    }
+    let divisor = divisor << shift;
+    let reciprocal = reciprocal_2(divisor);
+
+    let mut remainder: u128 = 0;
+    for i in (0..=limbs.len()).rev() {
+        // Shift limbs
+        let upper = if i == limbs.len() { 0 } else { limbs[i] };
+        let lower = if i == 0 { 0 } else { limbs[i - 1] };
+        let u = (upper << shift) | (lower >> (64 - shift));
+
+        // Compute quotient
+        let (q, r) = div_3x2(remainder, u, divisor, reciprocal);
+
+        // Store quotient
+        // NOTE: Rust doesn't eliminate the bounds check by itself.
+        if i != limbs.len() {
+            limbs[i] = q;
+        } else {
+            debug_assert_eq!(q, 0);
+        }
+        remainder = r;
+    }
+
+    // Normalize remainder
+    remainder >> shift
 }
 
 #[inline(always)]
@@ -221,10 +263,15 @@ pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
 
 #[cfg(test)]
 mod tests {
-    use crate::algorithms::mul;
+    use crate::algorithms::{div, mul};
 
     use super::*;
-    use proptest::{collection, num, proptest, strategy::Strategy};
+    use proptest::{
+        collection,
+        num::{u128, u64},
+        prop_assume, proptest,
+        strategy::Strategy,
+    };
 
     #[test]
     fn test_div_2x1_mg10() {
@@ -281,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_div_nx1_normalized() {
-        let any_vec = collection::vec(num::u64::ANY, ..10);
+        let any_vec = collection::vec(u64::ANY, ..10);
         proptest!(|(quotient in any_vec, mut divisor: u64, mut remainder: u64)| {
             // Construct problem
             divisor |= 1 << 63;
@@ -299,8 +346,8 @@ mod tests {
 
     #[test]
     fn test_div_nx1() {
-        let any_vec = collection::vec(num::u64::ANY, 1..10);
-        let divrem = (1..u64::MAX, num::u64::ANY).prop_map(|(d, r)| (d, r % d));
+        let any_vec = collection::vec(u64::ANY, 1..10);
+        let divrem = (1..u64::MAX, u64::ANY).prop_map(|(d, r)| (d, r % d));
         proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 1];
@@ -311,6 +358,7 @@ mod tests {
             while numerator.last() == Some(&0) {
                 numerator.pop();
             }
+            prop_assume!(!numerator.is_empty());
 
             // Test
             let r = div_nx1(&mut numerator, divisor);
@@ -320,15 +368,66 @@ mod tests {
     }
 
     #[test]
-    fn test_div_nx2() {
-        let any_vec = collection::vec(num::u64::ANY, ..10);
-        let divrem = (1_u128 << 127.., num::u128::ANY).prop_map(|(d, r)| (d, r % d));
+    fn test_div_nx2_normalized() {
+        let any_vec = collection::vec(u64::ANY, ..10);
+        let divrem = (1_u128 << 127.., u128::ANY).prop_map(|(d, r)| (d, r % d));
         proptest!(|(quotient in any_vec, (mut divisor, mut remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
             numerator[1] = remainder.high();
             mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+
+            // Test
+            let r = div_nx2_normalized(&mut numerator, divisor);
+            assert_eq!(&numerator[..quotient.len()], &quotient);
+            assert_eq!(r, remainder);
+        });
+    }
+
+    #[test]
+    fn test_div_nx2_2() {
+        let quotient = vec![2];
+        let divisor = 135228888162006517828758789990063129213;
+        let remainder = 69824590596925427805857027451641953031;
+
+        // Construct problem
+        let mut numerator = vec![0; quotient.len() + 2];
+        numerator[0] = remainder.low();
+        numerator[1] = remainder.high();
+        dbg!(&numerator);
+        mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+        dbg!(&numerator);
+
+        // Trim numerator
+        while numerator.last() == Some(&0) {
+            numerator.pop();
+        }
+
+        dbg!(&numerator, divisor, &quotient, remainder);
+
+        // Test
+        let r = div_nx2(&mut numerator, divisor);
+        assert_eq!(&numerator[..quotient.len()], &quotient);
+        assert_eq!(r, remainder);
+    }
+
+    #[test]
+    fn test_div_nx2() {
+        let any_vec = collection::vec(u64::ANY, 1..10);
+        let divrem = (1..u128::MAX, u128::ANY).prop_map(|(d, r)| (d, r % d));
+        proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
+            // Construct problem
+            let mut numerator = vec![0; quotient.len() + 2];
+            numerator[0] = remainder.low();
+            numerator[1] = remainder.high();
+            mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+
+            // Trim numerator
+            while numerator.last() == Some(&0) {
+                numerator.pop();
+            }
+            prop_assume!(!numerator.is_empty());
 
             // Test
             let r = div_nx2(&mut numerator, divisor);
