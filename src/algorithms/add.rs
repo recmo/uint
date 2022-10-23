@@ -1,6 +1,19 @@
 #![allow(dead_code)] // TODO
 
 use super::ops::{adc, sbb};
+use core::cmp::Ordering;
+
+#[inline(always)]
+pub fn cmp(lhs: &[u64], rhs: &[u64]) -> Ordering {
+    debug_assert_eq!(lhs.len(), rhs.len());
+    for (l, r) in lhs.iter().rev().zip(rhs.iter().rev()) {
+        match l.cmp(r) {
+            Ordering::Equal => continue,
+            other => return other,
+        }
+    }
+    Ordering::Equal
+}
 
 /// `lhs += rhs + carry`
 #[inline(always)]
