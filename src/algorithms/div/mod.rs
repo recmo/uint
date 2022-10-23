@@ -40,12 +40,12 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
 
     // Compute quotient and remainder.
     if divisor.len() <= 2 {
-        // Normalize
-        let shift = normalize(numerator, divisor);
-
         if divisor.len() == 1 {
-            divisor[0] = div_nx1(numerator, divisor[0]) >> shift;
+            divisor[0] = div_nx1(numerator, divisor[0]);
         } else {
+            // Normalize
+            let shift = normalize(numerator, divisor);
+
             let d = u128::join(divisor[1], divisor[0]);
             let remainder = div_nx2(numerator, d) >> shift;
             divisor[0] = remainder.low();

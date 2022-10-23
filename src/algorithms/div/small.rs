@@ -19,7 +19,7 @@ pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
-pub fn div_nx1(u: &mut [u64], d: u64) -> u64 {
+pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 63));
 
@@ -40,7 +40,7 @@ pub fn div_nx1(u: &mut [u64], d: u64) -> u64 {
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
-pub fn div_nx1_g(limbs: &mut [u64], divisor: u64) -> u64 {
+pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     if limbs.is_empty() {
         // OPT: Short vectors
         return 0;
@@ -49,7 +49,7 @@ pub fn div_nx1_g(limbs: &mut [u64], divisor: u64) -> u64 {
     // Normalize and compute reciprocal
     let shift = divisor.leading_zeros();
     if shift == 0 {
-        return div_nx1(limbs, divisor);
+        return div_nx1_normalized(limbs, divisor);
     }
     let divisor = divisor << shift;
     let reciprocal = reciprocal(divisor);
@@ -278,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn test_div_nx1() {
+    fn test_div_nx1_normalized() {
         let any_vec = collection::vec(num::u64::ANY, ..10);
         proptest!(|(quotient in any_vec, mut divisor: u64, mut remainder: u64)| {
             // Construct problem
@@ -289,7 +289,7 @@ mod tests {
             mul(&quotient, &[divisor], &mut numerator);
 
             // Test
-            let r = div_nx1(&mut numerator, divisor);
+            let r = div_nx1_normalized(&mut numerator, divisor);
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
@@ -306,11 +306,8 @@ mod tests {
         numerator[0] = remainder;
         mul(&quotient, &[divisor], &mut numerator);
 
-        // dbg!(&numerator, divisor);
-        // dbg!(&quotient, remainder);
-
         // Test
-        let r = div_nx1_g(&mut numerator, divisor);
+        let r = div_nx1(&mut numerator, divisor);
 
         assert_eq!(&numerator[..quotient.len()], &quotient);
 
@@ -318,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn test_div_nx1_g() {
+    fn test_div_nx1() {
         let any_vec = collection::vec(num::u64::ANY, 1..10);
         let divrem = (1..u64::MAX, num::u64::ANY).prop_map(|(d, r)| (d, r % d));
         proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
@@ -328,7 +325,7 @@ mod tests {
             mul(&quotient, &[divisor], &mut numerator);
 
             // Test
-            let r = div_nx1_g(&mut numerator, divisor);
+            let r = div_nx1(&mut numerator, divisor);
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
@@ -337,7 +334,7 @@ mod tests {
     #[test]
     fn test_div_nx2() {
         let any_vec = collection::vec(num::u64::ANY, ..10);
-        let divrem = (num::u128::ANY, num::u128::ANY).prop_map(|(d, r)| (d, r % d));
+        let divrem = (1_u128 << 127.., num::u128::ANY).prop_map(|(d, r)| (d, r % d));
         proptest!(|(quotient in any_vec, (mut divisor, mut remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 2];
