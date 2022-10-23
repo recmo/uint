@@ -38,26 +38,28 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(!divisor.is_empty());
     debug_assert!(divisor.last() != Some(&0));
 
-    // Append a zero to the numerator
-    // OPT: Avoid allocation
-    let mut tnumerator = vec![0; numerator.len() + 1];
-    tnumerator[..numerator.len()].copy_from_slice(numerator);
-
-    // Normalize
-    let shift = normalize(tnumerator.as_mut_slice(), divisor);
-
     // Compute quotient and remainder.
     if divisor.len() <= 2 {
+        // Normalize
+        let shift = normalize(numerator, divisor);
+
         if divisor.len() == 1 {
-            divisor[0] = div_nx1(tnumerator.as_mut_slice(), divisor[0]);
+            divisor[0] = div_nx1(numerator, divisor[0]) >> shift;
         } else {
             let d = u128::join(divisor[1], divisor[0]);
-            let remainder = div_nx2(tnumerator.as_mut_slice(), d);
+            let remainder = div_nx2(numerator, d) >> shift;
             divisor[0] = remainder.low();
             divisor[1] = remainder.high();
         }
-        numerator.copy_from_slice(&tnumerator[..numerator.len()]);
     } else {
+        // Append a zero to the numerator
+        // OPT: Avoid allocation
+        let mut tnumerator = vec![0; numerator.len() + 1];
+        tnumerator[..numerator.len()].copy_from_slice(numerator);
+
+        // Normalize
+        let shift = normalize(tnumerator.as_mut_slice(), divisor);
+
         div_nxm(tnumerator.as_mut_slice(), divisor);
 
         // Copy over quotient and remainder
@@ -66,10 +68,10 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
         let (numerator, padding) = numerator.split_at_mut(quotient.len());
         numerator.copy_from_slice(quotient);
         padding.fill(0);
-    }
 
-    // Unnormalize
-    unnormalize(divisor, shift);
+        // Unnormalize
+        unnormalize(divisor, shift);
+    }
 }
 
 #[inline(always)]

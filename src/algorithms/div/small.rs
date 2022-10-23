@@ -20,6 +20,7 @@ pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
 pub fn div_nx1(u: &mut [u64], d: u64) -> u64 {
+    // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 63));
 
     let v = reciprocal(d);
@@ -33,12 +34,59 @@ pub fn div_nx1(u: &mut [u64], d: u64) -> u64 {
     r
 }
 
+/// Compute single limb division.
+///
+/// The divisor does not need normalization. See algorithm 7 from [MG10].
+///
+/// [MG10]: https://gmplib.org/~tege/division-paper.pdf
+#[inline(always)]
+pub fn div_nx1_g(limbs: &mut [u64], divisor: u64) -> u64 {
+    if limbs.is_empty() {
+        // OPT: Short vectors
+        return 0;
+    }
+
+    // Normalize and compute reciprocal
+    let shift = divisor.leading_zeros();
+    if shift == 0 {
+        return div_nx1(limbs, divisor);
+    }
+    let divisor = divisor << shift;
+    let reciprocal = reciprocal(divisor);
+
+    let mut remainder = 0;
+    for i in (0..=limbs.len()).rev() {
+        // Shift limbs
+        let upper = if i == limbs.len() { 0 } else { limbs[i] };
+        let lower = if i == 0 { 0 } else { limbs[i - 1] };
+        let u = (upper << shift) | (lower >> (64 - shift));
+
+        // Compute quotient
+        let n = u128::join(remainder, u);
+        let (q, r) = div_2x1(n, divisor, reciprocal);
+
+        // Store quotient
+        if i < limbs.len() {
+            limbs[i] = q;
+        } else {
+            debug_assert_eq!(q, 0);
+        }
+        remainder = r;
+    }
+
+    // Un-normalize remainder
+    remainder >>= shift;
+
+    remainder
+}
+
 /// Compute double limb division.
 ///
 /// The divisor must be normalized. This is a variant of [`div_nx1`] using
 /// [`div_3x2`] internally.
 #[inline(always)]
 pub fn div_nx2(u: &mut [u64], d: u128) -> u128 {
+    // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 127));
 
     let v = reciprocal_2(d);
@@ -175,7 +223,7 @@ mod tests {
     use crate::algorithms::mul;
 
     use super::*;
-    use proptest::{collection, num, proptest};
+    use proptest::{collection, num, proptest, strategy::Strategy};
 
     #[test]
     fn test_div_2x1_mg10() {
@@ -249,12 +297,50 @@ mod tests {
     }
 
     #[test]
+    fn test_div_nx1_g_2() {
+        let quotient = [1337];
+        let divisor = 42;
+        let remainder = 12;
+
+        // Construct problem
+        let mut numerator = vec![0; quotient.len() + 1];
+        numerator[0] = remainder;
+        mul(&quotient, &[divisor], &mut numerator);
+
+        // dbg!(&numerator, divisor);
+        // dbg!(&quotient, remainder);
+
+        // Test
+        let r = div_nx1_g(&mut numerator, divisor);
+
+        assert_eq!(&numerator[..quotient.len()], &quotient);
+
+        assert_eq!(r, remainder);
+    }
+
+    #[test]
+    fn test_div_nx1_g() {
+        let any_vec = collection::vec(num::u64::ANY, 1..10);
+        let divrem = (1..u64::MAX, num::u64::ANY).prop_map(|(d, r)| (d, r % d));
+        proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
+            // Construct problem
+            let mut numerator = vec![0; quotient.len() + 1];
+            numerator[0] = remainder;
+            mul(&quotient, &[divisor], &mut numerator);
+
+            // Test
+            let r = div_nx1_g(&mut numerator, divisor);
+            assert_eq!(&numerator[..quotient.len()], &quotient);
+            assert_eq!(r, remainder);
+        });
+    }
+
+    #[test]
     fn test_div_nx2() {
         let any_vec = collection::vec(num::u64::ANY, ..10);
-        proptest!(|(quotient in any_vec, mut divisor: u128, mut remainder: u128)| {
+        let divrem = (num::u128::ANY, num::u128::ANY).prop_map(|(d, r)| (d, r % d));
+        proptest!(|(quotient in any_vec, (mut divisor, mut remainder) in divrem)| {
             // Construct problem
-            divisor |= 1 << 127;
-            remainder %= divisor;
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
             numerator[1] = remainder.high();
