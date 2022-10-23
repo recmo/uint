@@ -2,7 +2,8 @@
 
 use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
 use crate::algorithms::{add::adc_n, mul::submul_nx1};
-use core::{intrinsics::unlikely, u64};
+use core::{ u64};
+use crate::utils::unlikely;
 
 /// In-place Knuth long division
 #[allow(clippy::many_single_char_names)]

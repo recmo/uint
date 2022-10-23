@@ -23,8 +23,8 @@
 #![cfg_attr(coverage_nightly, feature(no_coverage))]
 // See <https://stackoverflow.com/questions/61417452/how-to-get-a-feature-requirement-tag-in-the-documentation-generated-by-cargo-do>
 #![cfg_attr(has_doc_cfg, feature(doc_cfg))]
-// TODO: Only on nightly
-#![feature(core_intrinsics)]
+// Nightly only feature flag to enable the `unlikely` compiler hint.
+#![cfg_attr(has_core_intrinsics, feature(core_intrinsics))]
 
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
