@@ -37,7 +37,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() >= divisor.len());
     debug_assert!(*divisor.last().unwrap() >= (1 << 63));
-    // debug_assert!(*numerator.last().unwrap() == 0);
 
     let n = divisor.len();
     let m = numerator.len() - n - 1;
@@ -52,11 +51,15 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
         // OPT: Re-use
         let n21 = u128::join(numerator[j + n], numerator[j + n - 1]);
         let n0 = numerator[j + n - 2];
+        debug_assert!(n21 <= d);
 
-        // Division overflow check
-        assert!(n21 < d);
-        // TODO: Handle
-        // if unlikely(n21 == d) {}
+        // Overflow case
+        if n21 == d {
+            let q = u64::MAX;
+            let carry = submul_nx1(&mut numerator[j..j + n], &divisor, q);
+            numerator[j + n] = q;
+            continue;
+        }
 
         // Calculate 3x2 approximate quotient word.
         // By using 3x2 limbs we get a quotient that is very likely correct
@@ -75,9 +78,10 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
         // If we have a carry then the quotient was one too large.
         // We correct by decrementing the quotient and adding one divisor back.
         if unlikely(borrow) {
-            dbg!();
             q = q.wrapping_sub(1);
-            let _ = adc_n(numerator, divisor, 0);
+            let carry = adc_n(&mut numerator[j..j + n], &divisor[..n], 0);
+            // Expect carry because we flip sign again.
+            debug_assert_eq!(carry, 1);
         }
 
         // Store remainder in the unused bits of numerator
@@ -100,7 +104,6 @@ mod tests {
 
     // Basic test without exceptional paths
     #[test]
-    #[allow(clippy::unreadable_literal)]
     fn test_divrem_8by4() {
         let mut numerator = [
             0x3000000000000000,
@@ -131,15 +134,76 @@ mod tests {
             0x5fe38801c609f277,
         ];
         div_nxm(&mut numerator, &mut divisor);
-        let remainder = &numerator[0..4];
-        let quotient = &numerator[4..8];
+        let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
     }
 
-    // TODO: Test with unlikely q too large.
+    // Test case that forces the `unlikely(borrow)` branch.
+    #[test]
+    fn test_div_rollback() {
+        let mut numerator = [
+            0x1656178c14142000,
+            0x821415dfe9e81612,
+            0x1616561616161616,
+            0x96000016820016,
+        ];
+        let mut divisor = [0x1415dfe9e8161414, 0x1656161616161682, 0x9600001682001616];
+        let expected_quotient = [0xffffffffffffff];
+        let expected_remainder = [0x166bf775fc2a3414, 0x1656161616161680, 0x9600001682001616];
+        div_nxm(&mut numerator, &mut divisor);
+        let (remainder, quotient) = numerator.split_at(divisor.len());
+        assert_eq!(remainder, expected_remainder);
+        assert_eq!(quotient, expected_quotient);
+    }
+
+    // Test case that forces the `unlikely(borrow)` branch.
+    #[test]
+    fn test_div_rollback_2() {
+        let mut numerator = [
+            0x100100000,
+            0x81000,
+            0x1000000000000000,
+            0x0,
+            0x0,
+            0xfffff00000000000,
+            0xffffffffffffffff,
+            0xdfffffffffffff,
+        ];
+        let mut divisor = [
+            0xfffffffffff00000,
+            0xffffffffffffffff,
+            0xfffffffffffff3ff,
+            0xffffffffffffffff,
+            0xdfffffffffffffff,
+        ];
+        let expected_quotient = [0xffffedb6db6db6e9, 0xffffffffffffffff, 0xffffffffffffff];
+        let expected_remainder = [
+            0xdb6db6dc6ea00000,
+            0x80ffe,
+            0xf2492492492ec00,
+            0x1000,
+            0x2000000000000000,
+        ];
+        div_nxm(&mut numerator, &mut divisor);
+        let (remainder, quotient) = numerator.split_at(divisor.len());
+        assert_eq!(quotient, expected_quotient);
+        assert_eq!(remainder, expected_remainder);
+    }
 
     // TODO: Test with n21 == d
+
+    #[test]
+    fn test_div_overflow() {
+        let mut numerator = [0xb200000000000002, 0x1, 0x0, 0xfdffffff00000000];
+        let mut divisor = [0x10002, 0x0, 0xfdffffff00000000];
+        let expected_quotient = [0xffffffffffffffff];
+        let expected_remainder = [0xb200000000010004, 0xfffffffffffeffff, 0xfdfffffeffffffff];
+        div_nxm(&mut numerator, &mut divisor);
+        let (remainder, quotient) = numerator.split_at(divisor.len());
+        assert_eq!(quotient, expected_quotient);
+        assert_eq!(remainder, expected_remainder);
+    }
 
     // Proptest without forced exceptional paths
     #[test]
