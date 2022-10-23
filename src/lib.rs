@@ -22,7 +22,6 @@ mod add;
 pub mod algorithms;
 pub mod aliases;
 mod base_convert;
-mod bit_arr;
 mod bits;
 mod bytes;
 mod cmp;
@@ -40,13 +39,14 @@ mod string;
 mod support;
 mod uint_dyn;
 mod utils;
+mod wrappers;
 
 #[cfg(all(feature = "dyn", feature = "unstable"))]
 #[doc(inline)]
 pub use uint_dyn::UintDyn;
 
 #[doc(inline)]
-pub use bit_arr::Bits;
+pub use crate::wrappers::Bits;
 
 #[doc(inline)]
 pub use self::{
