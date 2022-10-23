@@ -25,7 +25,7 @@ pub fn div_nx1(u: &mut [u64], d: u64) -> u64 {
     let v = reciprocal(d);
     let mut r: u64 = 0;
     for u in u.iter_mut().rev() {
-        let n = (u128::from(r) << 64) | u128::from(*u);
+        let n = u128::join(r, *u);
         let (q, r0) = div_2x1(n, d, v);
         *u = q;
         r = r0;
@@ -172,8 +172,10 @@ pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
 
 #[cfg(test)]
 mod tests {
+    use crate::algorithms::mul;
+
     use super::*;
-    use proptest::proptest;
+    use proptest::{collection, num, proptest};
 
     #[test]
     fn test_div_2x1_mg10() {
@@ -225,6 +227,43 @@ mod tests {
             };
             let v = reciprocal_2(d);
             assert_eq!(div_3x2_mg10(n21, n0, d, v), (q, r));
+        });
+    }
+
+    #[test]
+    fn test_div_nx1() {
+        let any_vec = collection::vec(num::u64::ANY, ..10);
+        proptest!(|(quotient in any_vec, mut divisor: u64, mut remainder: u64)| {
+            // Construct problem
+            divisor |= 1 << 63;
+            remainder %= divisor;
+            let mut numerator = vec![0; quotient.len() + 1];
+            numerator[0] = remainder;
+            mul(&quotient, &[divisor], &mut numerator);
+
+            // Test
+            let r = div_nx1(&mut numerator, divisor);
+            assert_eq!(&numerator[..quotient.len()], &quotient);
+            assert_eq!(r, remainder);
+        });
+    }
+
+    #[test]
+    fn test_div_nx2() {
+        let any_vec = collection::vec(num::u64::ANY, ..10);
+        proptest!(|(quotient in any_vec, mut divisor: u128, mut remainder: u128)| {
+            // Construct problem
+            divisor |= 1 << 127;
+            remainder %= divisor;
+            let mut numerator = vec![0; quotient.len() + 2];
+            numerator[0] = remainder.low();
+            numerator[1] = remainder.high();
+            mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+
+            // Test
+            let r = div_nx2(&mut numerator, divisor);
+            assert_eq!(&numerator[..quotient.len()], &quotient);
+            assert_eq!(r, remainder);
         });
     }
 }
