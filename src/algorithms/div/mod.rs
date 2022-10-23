@@ -56,10 +56,26 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     }
     debug_assert!(numerator.len() >= divisor.len());
 
-    // Compute quotient and remainder.
+    // Compute quotient and remainder, branching out to different algorithms.
     if divisor.len() <= 2 {
         if divisor.len() == 1 {
-            divisor[0] = div_nx1(numerator, divisor[0]);
+            if numerator.len() <= 2 {
+                if numerator.len() == 1 {
+                    let q = numerator[0] / divisor[0];
+                    let r = numerator[0] % divisor[0];
+                    numerator[0] = q;
+                    divisor[0] = r;
+                } else {
+                    let n = u128::join(numerator[1], numerator[0]);
+                    let q = n / u128::from(divisor[0]);
+                    let r = n % u128::from(divisor[0]);
+                    numerator[0] = q.low();
+                    numerator[1] = q.high();
+                    divisor[0] = r.low();
+                }
+            } else {
+                divisor[0] = div_nx1(numerator, divisor[0]);
+            }
         } else {
             // Append a zero to the numerator
             // OPT: Avoid allocation
