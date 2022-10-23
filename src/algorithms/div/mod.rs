@@ -50,19 +50,15 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     if divisor.len() <= 2 {
         if divisor.len() == 1 {
             divisor[0] = div_nx1(tnumerator.as_mut_slice(), divisor[0]);
-            numerator.copy_from_slice(&tnumerator[..numerator.len()]);
         } else {
             let d = u128::join(divisor[1], divisor[0]);
             let remainder = div_nx2(tnumerator.as_mut_slice(), d);
             divisor[0] = remainder.low();
             divisor[1] = remainder.high();
-            numerator.copy_from_slice(&tnumerator[..numerator.len()]);
         }
+        numerator.copy_from_slice(&tnumerator[..numerator.len()]);
     } else {
         div_nxm(tnumerator.as_mut_slice(), divisor);
-
-        // Copy over remainder
-        let remainder = &tnumerator[..divisor.len()];
 
         // Copy over quotient and remainder
         let (remainder, quotient) = tnumerator.split_at(divisor.len());
@@ -102,8 +98,7 @@ fn unnormalize(remainder: &mut [u64], shift: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U512, uint, Uint};
-    use proptest::{collection, num, strategy::Strategy};
+    use crate::{aliases::U512, uint};
 
     // Test vectors from <https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/test/unittests/test_div.cpp#L58>
     // [[numerator, divisor, quotient, remainder]; _]

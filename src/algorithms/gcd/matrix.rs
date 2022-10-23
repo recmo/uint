@@ -390,7 +390,7 @@ mod tests {
             let (sa, sb) = (a << s, b << s);
 
             let m = Matrix::from_u64_prefix((sa >> 64) as u64, (sb >> 64) as u64);
-            let (c, d) = m.apply_u128(a as u128, b as u128);
+            let (c, d) = m.apply_u128(a, b);
             assert!(c >= d);
             if m == Matrix::IDENTITY {
                 assert_eq!(c, a);

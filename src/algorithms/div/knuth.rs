@@ -1,38 +1,11 @@
 //! Knuth division
-#![allow(
-    clippy::many_single_char_names,
-    clippy::similar_names,
-    clippy::diverging_sub_expression,
-    unreachable_code,
-    unused_variables
-)] // TODO
-
-use crate::algorithms::{add::adc_n, mul::submul_nx1};
 
 use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
+use crate::algorithms::{add::adc_n, mul::submul_nx1};
 use core::{intrinsics::unlikely, u64};
 
-/// Knuth division
-///
-/// Turns numerator into remainder, returns quotient.
-///
-/// Implements Knuth's division algorithm.
-/// See D. Knuth "The Art of Computer Programming". Sec. 4.3.1. Algorithm D.
-/// See <https://github.com/chfast/intx/blob/master/lib/intx/div.cpp>
-///
-/// `divisor` must have non-zero first limbs. Consequently, the remainder is
-/// length at most `divisor.len()`, and the quotient is at most
-/// `numerator.len() - divisor.len()` limbs.
-///
-/// NOTE: numerator must have one additional zero at the end.
-/// The result will be computed in-place in numerator.
-/// The divisor will be normalized.
-///
-/// TODO <https://janmr.com/blog/2014/04/basic-multiple-precision-long-division/>
-///
-/// [gmp]: https://gmplib.org/manual/Basecase-Division
-/// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L1736
-#[inline(never)]
+/// In-place Knuth long division
+#[allow(clippy::many_single_char_names)]
 pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() >= divisor.len());
@@ -48,7 +21,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
     // Compute the quotient one limb at a time.
     for j in (0..=m).rev() {
         // Fetch the first three limbs of the numerator.
-        // OPT: Re-use
         let n21 = u128::join(numerator[j + n], numerator[j + n - 1]);
         let n0 = numerator[j + n - 2];
         debug_assert!(n21 <= d);
@@ -56,7 +28,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
         // Overflow case
         if n21 == d {
             let q = u64::MAX;
-            let carry = submul_nx1(&mut numerator[j..j + n], &divisor, q);
+            let _carry = submul_nx1(&mut numerator[j..j + n], divisor, q);
             numerator[j + n] = q;
             continue;
         }
@@ -80,7 +52,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &[u64]) {
         if unlikely(borrow) {
             q = q.wrapping_sub(1);
             let carry = adc_n(&mut numerator[j..j + n], &divisor[..n], 0);
-            // Expect carry because we flip sign again.
+            // Expect carry because we flip sign back to positive.
             debug_assert_eq!(carry, 1);
         }
 
@@ -115,7 +87,7 @@ mod tests {
             0xfe2e0bccb9e6d8b3,
             0x1bebfb3bc05d9347,
         ];
-        let mut divisor = [
+        let divisor = [
             0x800000000000000,
             0x580c0c40583c55b5,
             0x6b16b3fb5bd85ed3,
@@ -133,7 +105,7 @@ mod tests {
             0x6dad759fcd6af14a,
             0x5fe38801c609f277,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        div_nxm(&mut numerator, &divisor);
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
@@ -148,10 +120,10 @@ mod tests {
             0x1616561616161616,
             0x96000016820016,
         ];
-        let mut divisor = [0x1415dfe9e8161414, 0x1656161616161682, 0x9600001682001616];
+        let divisor = [0x1415dfe9e8161414, 0x1656161616161682, 0x9600001682001616];
         let expected_quotient = [0xffffffffffffff];
         let expected_remainder = [0x166bf775fc2a3414, 0x1656161616161680, 0x9600001682001616];
-        div_nxm(&mut numerator, &mut divisor);
+        div_nxm(&mut numerator, &divisor);
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
@@ -170,7 +142,7 @@ mod tests {
             0xffffffffffffffff,
             0xdfffffffffffff,
         ];
-        let mut divisor = [
+        let divisor = [
             0xfffffffffff00000,
             0xffffffffffffffff,
             0xfffffffffffff3ff,
@@ -185,21 +157,19 @@ mod tests {
             0x1000,
             0x2000000000000000,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        div_nxm(&mut numerator, &divisor);
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(quotient, expected_quotient);
         assert_eq!(remainder, expected_remainder);
     }
 
-    // TODO: Test with n21 == d
-
     #[test]
     fn test_div_overflow() {
         let mut numerator = [0xb200000000000002, 0x1, 0x0, 0xfdffffff00000000];
-        let mut divisor = [0x10002, 0x0, 0xfdffffff00000000];
+        let divisor = [0x10002, 0x0, 0xfdffffff00000000];
         let expected_quotient = [0xffffffffffffffff];
         let expected_remainder = [0xb200000000010004, 0xfffffffffffeffff, 0xfdfffffeffffffff];
-        div_nxm(&mut numerator, &mut divisor);
+        div_nxm(&mut numerator, &divisor);
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(quotient, expected_quotient);
         assert_eq!(remainder, expected_remainder);

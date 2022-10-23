@@ -57,6 +57,7 @@ impl DoubleWord<u64> for u128 {
     }
 
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)]
     fn low(self) -> u64 {
         self as u64
     }
