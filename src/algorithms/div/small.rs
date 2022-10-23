@@ -8,9 +8,8 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(dead_code)] // TODO
 
-use crate::algorithms::DoubleWord;
 use super::reciprocal::{reciprocal, reciprocal_2};
-use crate::utils::unlikely;
+use crate::{algorithms::DoubleWord, utils::unlikely};
 
 pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 
