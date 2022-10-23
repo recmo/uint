@@ -54,11 +54,11 @@ pub fn div_nx1_g(limbs: &mut [u64], divisor: u64) -> u64 {
     let divisor = divisor << shift;
     let reciprocal = reciprocal(divisor);
 
-    let mut remainder = 0;
-    for i in (0..=limbs.len()).rev() {
+    let mut remainder = limbs.last().unwrap() >> (64 - shift);
+    for i in (1..limbs.len()).rev() {
         // Shift limbs
-        let upper = if i == limbs.len() { 0 } else { limbs[i] };
-        let lower = if i == 0 { 0 } else { limbs[i - 1] };
+        let upper = limbs[i];
+        let lower = limbs[i - 1];
         let u = (upper << shift) | (lower >> (64 - shift));
 
         // Compute quotient
@@ -66,18 +66,17 @@ pub fn div_nx1_g(limbs: &mut [u64], divisor: u64) -> u64 {
         let (q, r) = div_2x1(n, divisor, reciprocal);
 
         // Store quotient
-        if i < limbs.len() {
-            limbs[i] = q;
-        } else {
-            debug_assert_eq!(q, 0);
-        }
+        // NOTE: Rust doesn't eliminate the bounds check by itself.
+        *unsafe { limbs.get_unchecked_mut(i) } = q;
         remainder = r;
     }
+    // Compute last quotient
+    let n = u128::join(remainder, limbs[0] << shift);
+    let (q, remainder) = div_2x1(n, divisor, reciprocal);
+    limbs[0] = q;
 
     // Un-normalize remainder
-    remainder >>= shift;
-
-    remainder
+    remainder >> shift
 }
 
 /// Compute double limb division.
