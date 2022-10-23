@@ -52,6 +52,7 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
         padding.fill(0);
+        numerator.fill(0);
         return;
     }
     debug_assert!(numerator.len() >= divisor.len());
