@@ -41,6 +41,7 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 /// See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
+// TODO: Rewrite in a way that avoids bounds-checks without unsafe.
 #[inline(always)]
 pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor != 0);
@@ -55,10 +56,10 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     let divisor = divisor << shift;
     let reciprocal = reciprocal(divisor);
 
-    let mut remainder = limbs.last().unwrap() >> (64 - shift);
+    let last = unsafe { limbs.get_unchecked(limbs.len() - 1) };
+    let mut remainder = last >> (64 - shift);
     for i in (1..limbs.len()).rev() {
         // Shift limbs
-        // NOTE: Rustc is not able to eliminate the bounds checks.
         let upper = unsafe { limbs.get_unchecked(i) };
         let lower = unsafe { limbs.get_unchecked(i - 1) };
         let u = (upper << shift) | (lower >> (64 - shift));
@@ -68,14 +69,14 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
         let (q, r) = div_2x1(n, divisor, reciprocal);
 
         // Store quotient
-        // NOTE: Rust doesn't eliminate the bounds check by itself.
         *unsafe { limbs.get_unchecked_mut(i) } = q;
         remainder = r;
     }
     // Compute last quotient
-    let n = u128::join(remainder, limbs[0] << shift);
+    let first = unsafe { limbs.get_unchecked_mut(0) };
+    let n = u128::join(remainder, *first << shift);
     let (q, remainder) = div_2x1(n, divisor, reciprocal);
-    limbs[0] = q;
+    *first = q;
 
     // Un-normalize remainder
     remainder >> shift
@@ -83,8 +84,8 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
 
 /// Compute double limb normalized division.
 ///
-/// The divisor must be normalized. This is a variant of [`div_nx1`] using
-/// [`div_3x2`] internally.
+/// Requires `divisor` to be in the range $[2^{127}, 2^{128})$ (i.e.
+/// normalized). Same as [`div_nx1`] but using [`div_3x2`] internally.
 #[inline(always)]
 pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     // OPT: Version with in-place shifting of `u`
@@ -102,7 +103,9 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 
 /// Compute double limb division.
 ///
-/// Requires `divisor` to be in the range $[2^{64}, 2^{128})$.
+/// Requires `divisor` to be in the range $[2^{64}, 2^{128})$. Same as
+/// [`div_nx2_normalized`] but does the shifting of the numerator inline.
+// TODO: Rewrite in a way that avoids bounds-checks without unsafe.
 #[inline(always)]
 pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     debug_assert!(divisor >= 1 << 64);
@@ -117,27 +120,27 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     let divisor = divisor << shift;
     let reciprocal = reciprocal_2(divisor);
 
-    let mut remainder: u128 = 0;
-    for i in (0..=limbs.len()).rev() {
+    let last = unsafe { limbs.get_unchecked(limbs.len() - 1) };
+    let mut remainder: u128 = u128::from(last >> (64 - shift));
+    for i in (1..limbs.len()).rev() {
         // Shift limbs
-        let upper = if i == limbs.len() { 0 } else { limbs[i] };
-        let lower = if i == 0 { 0 } else { limbs[i - 1] };
+        let upper = unsafe { limbs.get_unchecked(i) };
+        let lower = unsafe { limbs.get_unchecked(i - 1) };
         let u = (upper << shift) | (lower >> (64 - shift));
 
         // Compute quotient
         let (q, r) = div_3x2(remainder, u, divisor, reciprocal);
 
         // Store quotient
-        // NOTE: Rust doesn't eliminate the bounds check by itself.
-        if i != limbs.len() {
-            limbs[i] = q;
-        } else {
-            debug_assert_eq!(q, 0);
-        }
+        *unsafe { limbs.get_unchecked_mut(i) } = q;
         remainder = r;
     }
+    // Compute last quotient
+    let first = unsafe { limbs.get_unchecked_mut(0) };
+    let (q, remainder) = div_3x2(remainder, *first << shift, divisor, reciprocal);
+    *first = q;
 
-    // Normalize remainder
+    // Un-normalize remainder
     remainder >> shift
 }
 
@@ -262,7 +265,7 @@ pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
 
 #[cfg(test)]
 mod tests {
-    use crate::algorithms::{div, mul};
+    use crate::algorithms::mul;
 
     use super::*;
     use proptest::{
@@ -347,7 +350,7 @@ mod tests {
     fn test_div_nx1() {
         let any_vec = collection::vec(u64::ANY, 1..10);
         let divrem = (1..u64::MAX, u64::ANY).prop_map(|(d, r)| (d, r % d));
-        proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
+        proptest!(|(quotient in any_vec,(divisor, remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 1];
             numerator[0] = remainder;
@@ -370,7 +373,7 @@ mod tests {
     fn test_div_nx2_normalized() {
         let any_vec = collection::vec(u64::ANY, ..10);
         let divrem = (1_u128 << 127.., u128::ANY).prop_map(|(d, r)| (d, r % d));
-        proptest!(|(quotient in any_vec, (mut divisor, mut remainder) in divrem)| {
+        proptest!(|(quotient in any_vec, (divisor, remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
@@ -388,7 +391,7 @@ mod tests {
     fn test_div_nx2() {
         let any_vec = collection::vec(u64::ANY, 2..10);
         let divrem = (1..u128::MAX, u128::ANY).prop_map(|(d, r)| (d, r % d));
-        proptest!(|(quotient in any_vec,(mut divisor, mut remainder) in divrem)| {
+        proptest!(|(quotient in any_vec,(divisor, remainder) in divrem)| {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
