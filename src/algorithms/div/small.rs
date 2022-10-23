@@ -41,10 +41,9 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
 pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
-    if limbs.is_empty() {
-        // OPT: Short vectors
-        return 0;
-    }
+    debug_assert!(divisor != 0);
+    debug_assert!(!limbs.is_empty());
+    debug_assert!(*limbs.last().unwrap() != 0);
 
     // Normalize and compute reciprocal
     let shift = divisor.leading_zeros();
@@ -57,8 +56,9 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     let mut remainder = limbs.last().unwrap() >> (64 - shift);
     for i in (1..limbs.len()).rev() {
         // Shift limbs
-        let upper = limbs[i];
-        let lower = limbs[i - 1];
+        // NOTE: Rustc is not able to eliminate the bounds checks.
+        let upper = unsafe { limbs.get_unchecked(i) };
+        let lower = unsafe { limbs.get_unchecked(i - 1) };
         let u = (upper << shift) | (lower >> (64 - shift));
 
         // Compute quotient

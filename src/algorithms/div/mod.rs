@@ -27,8 +27,6 @@ use crate::algorithms::DoubleWord;
 ///
 /// Panics if `divisor` is zero.
 pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
-    assert!(!divisor.is_empty());
-
     // Trim most significant zeros from divisor.
     let i = divisor
         .iter()
@@ -38,18 +36,36 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(!divisor.is_empty());
     debug_assert!(divisor.last() != Some(&0));
 
+    // Trim zeros from numerator
+    let numerator = if let Some(i) = numerator.iter().rposition(|&n| n != 0) {
+        &mut numerator[..=i]
+    } else {
+        // Empty numerator (q, r) = (0,0)
+        divisor.fill(0);
+        return;
+    };
+    debug_assert!(!numerator.is_empty());
+    debug_assert!(*numerator.last().unwrap() != 0);
+
     // Compute quotient and remainder.
     if divisor.len() <= 2 {
         if divisor.len() == 1 {
             divisor[0] = div_nx1(numerator, divisor[0]);
         } else {
+            // Append a zero to the numerator
+            // OPT: Avoid allocation
+            let mut tnumerator = vec![0; numerator.len() + 1];
+            tnumerator[..numerator.len()].copy_from_slice(numerator);
+
             // Normalize
-            let shift = normalize(numerator, divisor);
+            let shift = normalize(&mut tnumerator, divisor);
 
             let d = u128::join(divisor[1], divisor[0]);
-            let remainder = div_nx2(numerator, d) >> shift;
+            let remainder = div_nx2(&mut tnumerator, d) >> shift;
             divisor[0] = remainder.low();
             divisor[1] = remainder.high();
+
+            numerator.copy_from_slice(&tnumerator[..numerator.len()]);
         }
     } else {
         // Append a zero to the numerator
