@@ -23,7 +23,7 @@ use crate::algorithms::{ops::sbb, DoubleWord};
 /// ```
 #[inline(always)]
 #[allow(clippy::cast_possible_truncation)] // Intentional truncation.
-pub fn addmul(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
+pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
     let mut overflow = 0;
     for (i, a) in a.iter().copied().enumerate() {
         let mut result = result.iter_mut().skip(i);
@@ -58,6 +58,96 @@ pub fn addmul(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
         overflow |= carry as u64;
     }
     overflow != 0
+}
+
+#[inline(always)]
+pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
+    // Trim zeros from `a` and `b`
+    while let Some(&0) = a.first() {
+        a = &a[1..];
+        if !lhs.is_empty() {
+            lhs = &mut lhs[1..];
+        }
+    }
+    while let Some(&0) = a.last() {
+        a = &a[..a.len() - 1];
+    }
+    while let Some(&0) = b.first() {
+        b = &b[1..];
+        if !lhs.is_empty() {
+            lhs = &mut lhs[1..];
+        }
+    }
+    while let Some(&0) = b.last() {
+        b = &b[..b.len() - 1];
+    }
+    if a.is_empty() || b.is_empty() {
+        return false;
+    }
+    if lhs.is_empty() {
+        return true;
+    }
+    let (a, b) = if b.len() > a.len() { (b, a) } else { (a, b) };
+    debug_assert!(a.len() >= b.len());
+    debug_assert!(*a.first().unwrap() != 0);
+    debug_assert!(*a.last().unwrap() != 0);
+    debug_assert!(*b.first().unwrap() != 0);
+    debug_assert!(*b.last().unwrap() != 0);
+
+    // Iterate over limbs of `b` and add partial products to `lhs`.
+    let mut overflow = false;
+    for &b in b.iter() {
+        if lhs.len() >= a.len() {
+            let (target, rest) = lhs.split_at_mut(a.len());
+            let carry = addmul_nx1(target, a, b);
+            let carry = add_nx1(rest, carry);
+            overflow |= carry != 0;
+        } else {
+            overflow = true;
+            if lhs.is_empty() {
+                break;
+            }
+            addmul_nx1(lhs, &a[..lhs.len()], b);
+        }
+        lhs = &mut lhs[1..];
+    }
+    overflow
+}
+
+/// Computes `lhs += a` and returns the carry.
+#[inline(always)]
+pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
+    for lhs in lhs.iter_mut() {
+        if a == 0 {
+            return 0;
+        }
+        let sum = u128::add(*lhs, a);
+        *lhs = sum.low();
+        a = sum.high();
+    }
+    a
+}
+
+/// Computes `lhs += a * b` and returns the borrow.
+///
+/// Requires `lhs.len() == a.len()`.
+///
+/// $$
+/// \begin{aligned}
+/// \mathsf{lhs'} &= \mod{\mathsf{lhs} + \mathsf{a} ⋅ \mathsf{b}}_{2^{64⋅N}}
+/// \\\\ \mathsf{carry} &= \floor{\frac{\mathsf{lhs} + \mathsf{a} ⋅ \mathsf{b}
+/// }{2^{64⋅N}}} \end{aligned}
+/// $$
+#[inline(always)]
+pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
+    debug_assert_eq!(lhs.len(), a.len());
+    let mut carry = 0;
+    for (lhs, a) in lhs.iter_mut().zip(a.iter().copied()) {
+        let product = u128::muladd2(a, b, carry, *lhs);
+        *lhs = product.low();
+        carry = product.high();
+    }
+    carry
 }
 
 /// Computes `lhs -= a * b` and returns the borrow.
@@ -95,6 +185,38 @@ pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::{collection, num::u64, proptest};
+
+    #[test]
+    fn test_addmul() {
+        let any_vec = collection::vec(u64::ANY, 0..10);
+        proptest!(|(mut lhs in &any_vec, a in &any_vec, b in &any_vec)| {
+            // Reference
+            let mut ref_lhs = lhs.clone();
+            let ref_overflow = addmul_ref(&mut ref_lhs, &a, &b);
+
+            // Test
+            let overflow = addmul(&mut lhs, &a, &b);
+            assert_eq!(lhs, ref_lhs);
+            assert_eq!(overflow, ref_overflow);
+        });
+    }
+
+    #[test]
+    fn test_addmul_1() {
+        let mut lhs = [0];
+        let a = [1, 1];
+        let b = [1, 1];
+
+        // Reference
+        let mut ref_lhs = lhs.clone();
+        let ref_overflow = addmul_ref(&mut ref_lhs, &a, &b);
+
+        // Test
+        let overflow = addmul(&mut lhs, &a, &b);
+        assert_eq!(lhs, ref_lhs);
+        assert_eq!(overflow, ref_overflow);
+    }
 
     fn test_vals(lhs: &[u64], rhs: &[u64], expected: &[u64], expected_overflow: bool) {
         let mut result = vec![0; expected.len()];
