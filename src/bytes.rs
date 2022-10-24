@@ -226,7 +226,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         assert_eq!(BYTES, Self::BYTES);
-        Self::try_from_be_slice(&bytes).expect("Value too large for Uint")
+        let mut limbs = [0_u64; LIMBS];
+        for (limb, bytes) in limbs.iter_mut().zip(bytes.rchunks_exact(8)) {
+            *limb = u64::from_be_bytes(bytes.try_into().unwrap());
+        }
+        Self::from_limbs(limbs)
     }
 
     /// Converts a little-endian byte array of size exactly
