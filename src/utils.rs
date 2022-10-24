@@ -25,6 +25,21 @@ pub fn trim_end_vec<T: PartialEq>(vec: &mut Vec<T>, value: &T) {
     }
 }
 
+#[cfg(has_core_intrinsics)]
+pub use core::intrinsics::{likely, unlikely};
+
+#[cfg(not(has_core_intrinsics))]
+#[inline(always)]
+pub fn unlikely(b: bool) -> bool {
+    b
+}
+
+#[cfg(not(has_core_intrinsics))]
+#[inline(always)]
+pub fn likely(b: bool) -> bool {
+    b
+}
+
 #[macro_export]
 #[doc(hidden)]
 // TODO: (BLOCKED) make this macro `pub(crate)` when supported.

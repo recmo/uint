@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `parity-scale-codec` support.
+- Added unstable `algorithms::div` module and improved div algorithm.
 
 ## [1.4.1] — 2022-10-15
 

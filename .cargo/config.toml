@@ -1,5 +1,5 @@
 [alias]
-criterion = "bench --bench=criterion --features=bench,proptest"
+criterion = "bench --bench=criterion --features=bench"
 
 # This enables KaTex in docs, but requires runing `cargo doc --no-deps`.
 [build]

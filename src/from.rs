@@ -104,7 +104,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     {
         match Self::uint_try_from(value) {
             Ok(n) => n,
-            Err(e) => panic!("Uint conversion error: {}", e),
+            Err(e) => panic!("Uint conversion error: {e}"),
         }
     }
 

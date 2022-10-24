@@ -4,6 +4,7 @@ use core::ops::{Div, DivAssign, Rem, RemAssign};
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self / rhs`, returning [`None`] if `rhs == 0`.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_div(self, rhs: Self) -> Option<Self> {
         if rhs == Self::ZERO {
             return None;
@@ -13,6 +14,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes `self % rhs`, returning [`None`] if `rhs == 0`.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
         if rhs == Self::ZERO {
             return None;
@@ -46,7 +48,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
         assert!(rhs != Self::ZERO, "Division by zero");
-        algorithms::div_rem(&mut self.limbs, &mut rhs.limbs);
+        algorithms::div(&mut self.limbs, &mut rhs.limbs);
         (self, rhs)
     }
 
@@ -162,7 +164,7 @@ pub mod bench {
         }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), u64::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{}/64", BITS), move |bencher| {
+        criterion.bench_function(&format!("div_rem/{BITS}/64"), move |bencher| {
             bencher.iter_batched(
                 || {
                     let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
@@ -187,7 +189,7 @@ pub mod bench {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(
-            &format!("div_rem/{}/{}", BITS, BITS - BITS / 2),
+            &format!("div_rem/{BITS}/{}", BITS - BITS / 2),
             move |bencher| {
                 bencher.iter_batched(
                     || {
@@ -211,7 +213,7 @@ pub mod bench {
         }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{}/{}", BITS, BITS), move |bencher| {
+        criterion.bench_function(&format!("div_rem/{BITS}/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || {
                     let (n, mut d) = input.new_tree(&mut runner).unwrap().current();

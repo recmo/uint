@@ -361,6 +361,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
     /// truncated bits to the end of the resulting integer.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn rotate_left(self, rhs: usize) -> Self {
         if BITS == 0 {
             return Self::ZERO;

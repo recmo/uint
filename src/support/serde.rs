@@ -22,7 +22,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
             let mut result = String::with_capacity(2 * Self::BYTES + 2);
             result.push_str("0x");
             for byte in bytes {
-                write!(result, "{:02x}", byte).unwrap();
+                write!(result, "{byte:02x}").unwrap();
             }
             serializer.serialize_str(&result)
         } else {
@@ -100,7 +100,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
         }
         Uint::try_from_be_slice(value).ok_or_else(|| {
             E::invalid_value(
-                Unexpected::Other(&format!("Value to large for Uint<{}", BITS)),
+                Unexpected::Other(&format!("Value to large for Uint<{BITS}>")),
                 &self,
             )
         })
@@ -108,6 +108,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
 }
 
 /// Helper function to remove  optionally `0x` prefix from hex strings.
+#[allow(clippy::missing_const_for_fn)]
 fn trim_hex_prefix(str: &str) -> &str {
     if str.len() >= 2 && (&str[..2] == "0x" || &str[..2] == "0X") {
         &str[2..]
