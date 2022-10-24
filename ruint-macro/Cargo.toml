@@ -2,7 +2,7 @@
 name = "ruint-macro"
 description = "The `uint!` macro for `Uint` literals"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"

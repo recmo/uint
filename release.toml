@@ -3,5 +3,3 @@
 # Release using `cargo release --workspace`
 allow-branch = [ "main" ]
 shared-version = false
-consolidate-commits = true
-consolidate-pushes = true
