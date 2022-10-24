@@ -75,25 +75,7 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
             divisor[1] = remainder.high();
         }
     } else {
-        // Append a zero to the numerator
-        // OPT: Avoid allocation
-        let mut tnumerator = vec![0; numerator.len() + 1];
-        tnumerator[..numerator.len()].copy_from_slice(numerator);
-
-        // Normalize
-        let shift = normalize(tnumerator.as_mut_slice(), divisor);
-
-        div_nxm(tnumerator.as_mut_slice(), divisor);
-
-        // Copy over quotient and remainder
-        let (remainder, quotient) = tnumerator.split_at(divisor.len());
-        divisor.copy_from_slice(remainder);
-        let (numerator, padding) = numerator.split_at_mut(quotient.len());
-        numerator.copy_from_slice(quotient);
-        padding.fill(0);
-
-        // Unnormalize
-        unnormalize(divisor, shift);
+        div_nxm(numerator, divisor);
     }
 }
 
