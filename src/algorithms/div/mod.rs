@@ -1,3 +1,17 @@
+//! ⚠️ Collection of division algorithms.
+//!
+//! **Warning.** Most functions in this module are currently not considered part
+//! of the stable API and may be changed or removed in future minor releases.
+//!
+//! All division algorithms also compute the remainder. There is no benefit
+//! to splitting the division and remainder into separate functions, since
+//! the remainder is always computed as part of the division algorithm.
+//!
+//! These functions are adapted from algorithms in [MG10] and [K97].
+//!
+//! [K97]: https://cs.stanford.edu/~knuth/taocp.html
+//! [MG10]: https://gmplib.org/~tege/division-paper.pdf
+
 #![allow(clippy::similar_names)] // TODO
 
 mod knuth;
@@ -5,10 +19,10 @@ mod reciprocal;
 mod small;
 
 pub use self::{
-    knuth::div_nxm,
-    small::{div_nx1, div_nx2},
+    knuth::{div_nxm, div_nxm_normalized},
+    reciprocal::{reciprocal, reciprocal_2},
+    small::{div_2x1, div_3x2, div_nx1, div_nx1_normalized, div_nx2, div_nx2_normalized},
 };
-use super::{shift_left_small, shift_right_small};
 use crate::algorithms::DoubleWord;
 
 /// ⚠️ Division with remainder.
@@ -18,16 +32,17 @@ use crate::algorithms::DoubleWord;
 /// The quotient is stored in the `numerator` and the remainder is stored
 /// in the `divisor`.
 ///
-/// # Algorithms
+/// # Algorithm
 ///
-/// It uses schoolbook division when the `divisor` first a single limb,
-/// otherwise it uses Knuth's algorithm D.
+/// It trims zeros from the numerator and divisor then solves the trivial cases
+/// directly, or dispatches to the [`div_nx1`], [`div_nx2`] or [`div_nxm`]
+/// functions.
 ///
 /// # Panics
 ///
 /// Panics if `divisor` is zero.
 #[inline(always)]
-pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
+pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
     let i = divisor
         .iter()
@@ -77,29 +92,6 @@ pub fn div_rem(numerator: &mut [u64], divisor: &mut [u64]) {
         }
     } else {
         div_nxm(numerator, divisor);
-    }
-}
-
-#[inline(always)]
-fn normalize(numerator: &mut [u64], divisor: &mut [u64]) -> usize {
-    debug_assert!(!divisor.is_empty());
-    debug_assert!(divisor.last() != Some(&0));
-    let shift = divisor.last().unwrap().leading_zeros() as usize;
-
-    if shift > 0 {
-        let carry = shift_left_small(numerator, shift);
-        debug_assert_eq!(carry, 0);
-        let carry = shift_left_small(divisor, shift);
-        debug_assert_eq!(carry, 0);
-    }
-    debug_assert!(*divisor.last().unwrap() >= (1 << 63));
-    shift
-}
-
-#[inline(always)]
-fn unnormalize(remainder: &mut [u64], shift: usize) {
-    if shift > 0 {
-        shift_right_small(remainder, shift);
     }
 }
 
@@ -389,7 +381,7 @@ mod tests {
                 let mut divisor = <$d>::from(divisor).into_limbs();
                 let quotient = <$n>::from(quotient).into_limbs();
                 let remainder = <$d>::from(remainder).into_limbs();
-                div_rem(&mut numerator, &mut divisor);
+                div(&mut numerator, &mut divisor);
                 assert_eq!(numerator, quotient);
                 assert_eq!(divisor, remainder);
             }
@@ -459,7 +451,7 @@ mod tests {
             0xfc710038c13e4eed_u64,
             0x000000000000000b_u64,
         ];
-        div_rem(&mut numerator, &mut divisor);
+        div(&mut numerator, &mut divisor);
         assert_eq!(numerator[..5], expected_quotient);
         assert_eq!(divisor, expected_remainder);
     }

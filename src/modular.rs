@@ -68,7 +68,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         // Compute modulus using `div_rem`.
         // This stores the remainder in the divisor, `modulus`.
-        algorithms::div_rem(&mut product, &mut modulus.limbs);
+        algorithms::div(&mut product, &mut modulus.limbs);
 
         modulus
     }

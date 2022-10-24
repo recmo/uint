@@ -3,11 +3,16 @@
 use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
 use crate::{
     algorithms::{add::adc_n, mul::submul_nx1},
-    utils::unlikely,
+    utils::{likely, unlikely},
 };
 use core::u64;
 
-/// In-place Knuth long division
+/// ⚠️ In-place Knuth normalized long division with reciprocals.
+///
+/// Requires
+/// * the highest bit of the divisor to be set,
+/// * the `divisor` and `numerator` to be at least two limbs, and
+/// * `numerator` is at least as long as `divisor`.
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
@@ -29,7 +34,7 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
         debug_assert!(n21 <= d);
 
         // Overflow case
-        if n21 == d {
+        if unlikely(n21 == d) {
             let q = u64::MAX;
             let _carry = submul_nx1(&mut numerator[j..j + n], divisor, q);
             numerator[j + n] = q;
@@ -64,7 +69,12 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     }
 }
 
-/// In-place Knuth long division
+/// ⚠️ In-place Knuth long division with implicit normalization and reciprocals.
+///
+/// Requires
+/// * the highest limb of the divisor to be non-zero,
+/// * the `divisor` and `numerator` to be at least two limbs, and
+/// * `numerator` is at least as long as `divisor`.
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 3);
@@ -111,7 +121,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
         debug_assert!(n21 <= d);
 
         // Compute the quotient
-        let q = if n21 < d {
+        let q = if likely(n21 < d) {
             // Calculate 3x2 approximate quotient word.
             // By using 3x2 limbs we get a quotient that is very likely correct
             // and at most one too large. In the process we also get the first

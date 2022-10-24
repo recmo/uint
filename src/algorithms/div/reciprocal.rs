@@ -10,11 +10,12 @@ use std::num::Wrapping;
 
 pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
 
-/// Computes $\floor{\frac{2^{128} - 1}}{\mathtt{d}}} - 2^{64}$.
+/// ⚠️ Computes $\floor{\frac{2^{128} - 1}{\mathtt{d}}} - 2^{64}$.
 ///
 /// Requires $\mathtt{d} ≥ 2^{127}$, i.e. the highest bit of $\mathtt{d}$ must
 /// be set.
 #[inline(always)]
+#[must_use]
 pub fn reciprocal_ref(d: u64) -> u64 {
     debug_assert!(d >= (1 << 63));
     let r = u128::MAX / u128::from(d);
@@ -23,9 +24,12 @@ pub fn reciprocal_ref(d: u64) -> u64 {
     r as u64
 }
 
-/// Computes $\floor{\frac{2^{128} - 1}}{\mathtt{d}}} - 2^{64}$.
+/// ⚠️ Computes $\floor{\frac{2^{128} - 1}{\mathsf{d}}} - 2^{64}$.
 ///
-/// Using [MG10] algorithm 2. See also the [intx] implementation. Here is a
+/// Requires $\mathsf{d} ∈ [2^{63}, 2^{64})$, i.e. the highest bit of
+/// $\mathsf{d}$ must be set.
+///
+/// Using [MG10] algorithm 3. See also the [intx] implementation. Here is a
 /// direct translation of the algorithm to Python for reference:
 ///
 /// ```python
@@ -44,6 +48,7 @@ pub fn reciprocal_ref(d: u64) -> u64 {
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 /// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L683
 #[inline(always)]
+#[must_use]
 pub fn reciprocal_mg10(d: u64) -> u64 {
     const ZERO: Wrapping<u64> = Wrapping(0);
     const ONE: Wrapping<u64> = Wrapping(1);
@@ -88,10 +93,16 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
     v4.0
 }
 
-/// ```python
-/// ((2**64)**3 - 1) // d - 2**64
-/// ```
+/// ⚠️ Computes $\floor{\frac{2^{192} - 1}{\mathsf{d}}} - 2^{64}$.
+///
+/// Requires $\mathsf{d} ∈ [2^{127}, 2^{128})$, i.e. the most significant bit
+/// of $\mathsf{d}$ must be set.
+///
+/// Implements [MG10] algorithm 6.
+///
+/// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
+#[must_use]
 pub fn reciprocal_2_mg10(d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
     let d1 = (d >> 64) as u64;
@@ -125,6 +136,7 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
 
 #[allow(clippy::missing_const_for_fn)] // False positive
 #[inline(always)]
+#[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
     let a = u128::from(a.0);
     let b = u128::from(b.0);
@@ -134,6 +146,7 @@ fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
 
 #[allow(clippy::missing_const_for_fn)] // False positive
 #[inline(always)]
+#[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
     let a = u128::from(a.0);
     let b = u128::from(b.0);

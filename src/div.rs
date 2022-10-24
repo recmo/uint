@@ -48,7 +48,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
         assert!(rhs != Self::ZERO, "Division by zero");
-        algorithms::div_rem(&mut self.limbs, &mut rhs.limbs);
+        algorithms::div(&mut self.limbs, &mut rhs.limbs);
         (self, rhs)
     }
 

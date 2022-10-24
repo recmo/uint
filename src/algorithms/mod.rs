@@ -4,7 +4,7 @@
 //! of the stable API and may be changed or removed in future minor releases.
 
 mod add;
-mod div;
+pub mod div;
 mod gcd;
 mod mul;
 mod mul_redc;
@@ -12,7 +12,7 @@ mod ops;
 mod shift;
 
 pub use self::{
-    div::div_rem,
+    div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{mul, mul_inline},
     mul_redc::mul_redc,

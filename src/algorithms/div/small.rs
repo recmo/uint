@@ -11,9 +11,11 @@
 use super::reciprocal::{reciprocal, reciprocal_2};
 use crate::{algorithms::DoubleWord, utils::unlikely};
 
+// The running time is 2.7 ns for [`div_2x1_mg10`] versus 18 ns for
+// [`div_2x1_ref`].
 pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 
-/// Compute single limb normalized division.
+/// ⚠️ Compute single limb normalized division.
 ///
 /// The divisor must be normalized. See algorithm 7 from [MG10].
 ///
@@ -34,7 +36,7 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
     r
 }
 
-/// Compute single limb division.
+/// ⚠️ Compute single limb division.
 ///
 /// The highest limb of `numerator` and `divisor` must be nonzero.
 /// The divisor does not need normalization.
@@ -82,7 +84,7 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     remainder >> shift
 }
 
-/// Compute double limb normalized division.
+/// ⚠️ Compute double limb normalized division.
 ///
 /// Requires `divisor` to be in the range $[2^{127}, 2^{128})$ (i.e.
 /// normalized). Same as [`div_nx1`] but using [`div_3x2`] internally.
@@ -101,7 +103,7 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     remainder
 }
 
-/// Compute double limb division.
+/// ⚠️ Compute double limb division.
 ///
 /// Requires `divisor` to be in the range $[2^{64}, 2^{128})$. Same as
 /// [`div_nx2_normalized`] but does the shifting of the numerator inline.
@@ -145,6 +147,7 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
 }
 
 #[inline(always)]
+#[must_use]
 pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
     debug_assert!((u >> 64) < u128::from(d));
@@ -154,18 +157,18 @@ pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
     (q, r)
 }
 
-/// Computes the quotient and remainder of a `u128` divided by a `u64`.
+/// ⚠️ Computes the quotient and remainder of a `u128` divided by a `u64`.
 ///
 /// Requires
 /// * `u < d * 2**64`,
 /// * `d >= 2**63`, and
 /// * `v = reciprocal(d)`.
 ///
-/// Implements algorithm 4 from [MG10]. The running time is 2.7 ns versus 18 ns
-/// for [`div_2x1_ref`].
+/// Implements algorithm 4 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
+#[must_use]
 pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
     debug_assert!((u >> 64) < u128::from(d));
@@ -190,6 +193,7 @@ pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
 
 /// TODO: This implementation is off by one.
 #[inline(always)]
+#[must_use]
 pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
     debug_assert!(n21 < d);
@@ -236,12 +240,13 @@ pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
     }
 }
 
-/// Computes the quotient of a 192 bits divided by a normalized u128.
+/// ⚠️ Computes the quotient of a 192 bits divided by a normalized u128.
 ///
 /// Implements [MG10] algorithm 5.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
+#[must_use]
 pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
     debug_assert!(d >= (1 << 127));
     debug_assert!(u21 < d);
