@@ -89,15 +89,12 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
         )
     };
     debug_assert!(d >= 1 << 127);
-    dbg!(d, shift);
     let v = reciprocal_2(d);
     let m = if shift > 0 { m + 1 } else { m };
 
     // Compute the quotient one limb at a time.
     let mut q_high = 0;
     for j in (0..=m).rev() {
-        dbg!(&numerator);
-
         // Fetch the first three limbs of the shifted numerator starting at `j + n`.
         let (n21, n0) = {
             let n2 = numerator.get(j + n).copied().unwrap_or_default();
@@ -112,7 +109,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                 )
             }
         };
-        dbg!(n21, n0);
         debug_assert!(n21 <= d);
 
         // Compute the quotient
@@ -122,7 +118,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
             // and at most one too large. In the process we also get the first
             // two remainder limbs.
             let (mut q, r) = div_3x2(n21, n0, d, v);
-            dbg!(q);
 
             if q != 0 {
                 // Subtract the quotient times the divisor from the remainder.
@@ -140,7 +135,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                     // the remainder and carry in the middle of a limb.
                     let borrow = submul_nx1(&mut numerator[j..j + n], divisor, q);
                     let n2 = numerator.get(j + n).copied().unwrap_or_default();
-                    dbg!(borrow, n2);
                     borrow != n2
                 };
 
@@ -158,17 +152,14 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
         } else {
             // Overflow case
             let q = u64::MAX;
-            dbg!(q);
             let _carry = submul_nx1(&mut numerator[j..j + n], divisor, q);
             q
         };
 
         // Store the quotient in the processed bits of numerator plus `q_high`.
         if j + n < numerator.len() {
-            dbg!();
             numerator[j + n] = q;
         } else {
-            dbg!();
             q_high = q;
         }
     }
@@ -176,7 +167,9 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     // Copy remainder to `divisor` and `quotient` to numerator.
     divisor.copy_from_slice(&numerator[..n]);
     numerator.copy_within(n.., 0);
-    numerator[m] = q_high;
+    if shift != 0 {
+        numerator[m] = q_high;
+    }
     numerator[m + 1..].fill(0);
 }
 
