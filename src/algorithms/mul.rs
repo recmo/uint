@@ -2,7 +2,7 @@
 
 use crate::algorithms::{ops::sbb, DoubleWord};
 
-/// ⚠️ Computes `result += lhs * rhs` and checks for overflow.
+/// ⚠️ Computes `result += a * b` and checks for overflow.
 ///
 /// **Warning.** This function is not part of the stable API.
 ///
@@ -15,33 +15,25 @@ use crate::algorithms::{ops::sbb, DoubleWord};
 /// # Examples
 ///
 /// ```
-/// # use ruint::algorithms::mul;
+/// # use ruint::algorithms::addmul;
 /// let mut result = [0];
-/// let overflow = mul(&[3], &[4], &mut result);
+/// let overflow = addmul(&mut result, &[3], &[4]);
 /// assert_eq!(overflow, false);
 /// assert_eq!(result, [12]);
 /// ```
-pub fn mul(lhs: &[u64], rhs: &[u64], result: &mut [u64]) -> bool {
-    mul_inline(lhs, rhs, result)
-}
-
-/// ⚠️ Same as [`mul`], but will always inline.
-///
-/// **Warning.** This function is not part of the stable API.
-#[allow(clippy::inline_always)] // We want to decide at the call site.
 #[inline(always)]
 #[allow(clippy::cast_possible_truncation)] // Intentional truncation.
-pub fn mul_inline(lhs: &[u64], rhs: &[u64], result: &mut [u64]) -> bool {
+pub fn addmul(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
     let mut overflow = 0;
-    for (i, lhs) in lhs.iter().copied().enumerate() {
+    for (i, a) in a.iter().copied().enumerate() {
         let mut result = result.iter_mut().skip(i);
-        let mut rhs = rhs.iter().copied();
+        let mut b = b.iter().copied();
         let mut carry = 0_u128;
         loop {
-            match (result.next(), rhs.next()) {
+            match (result.next(), b.next()) {
                 // Partial product.
-                (Some(result), Some(rhs)) => {
-                    carry += u128::from(*result) + u128::from(lhs) * u128::from(rhs);
+                (Some(result), Some(b)) => {
+                    carry += u128::from(*result) + u128::from(a) * u128::from(b);
                     *result = carry as u64;
                     carry >>= 64;
                 }
@@ -52,8 +44,8 @@ pub fn mul_inline(lhs: &[u64], rhs: &[u64], result: &mut [u64]) -> bool {
                     carry >>= 64;
                 }
                 // Excess product.
-                (None, Some(rhs)) => {
-                    carry += u128::from(lhs) * u128::from(rhs);
+                (None, Some(b)) => {
+                    carry += u128::from(a) * u128::from(b);
                     overflow |= carry as u64;
                     carry >>= 64;
                 }
@@ -106,7 +98,7 @@ mod tests {
 
     fn test_vals(lhs: &[u64], rhs: &[u64], expected: &[u64], expected_overflow: bool) {
         let mut result = vec![0; expected.len()];
-        let overflow = mul(lhs, rhs, &mut result);
+        let overflow = addmul(&mut result, lhs, rhs);
         assert_eq!(overflow, expected_overflow);
         assert_eq!(result, expected);
     }

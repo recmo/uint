@@ -35,8 +35,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut result = Self::ZERO;
-        let mut overflow =
-            algorithms::mul_inline(self.as_limbs(), rhs.as_limbs(), &mut result.limbs);
+        let mut overflow = algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
             overflow |= result.limbs[LIMBS - 1] > Self::MASK;
             result.limbs[LIMBS - 1] &= Self::MASK;
@@ -134,7 +133,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert_eq!(BITS_RES, BITS + BITS_RHS);
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
-        algorithms::mul_inline(&self.limbs, &rhs.limbs, &mut result.limbs);
+        algorithms::addmul(&mut result.limbs, &self.limbs, &rhs.limbs);
         if LIMBS_RES > 0 {
             debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
         }

@@ -14,7 +14,7 @@ mod shift;
 pub use self::{
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
-    mul::{mul, mul_inline},
+    mul::{addmul, submul_nx1},
     mul_redc::mul_redc,
     shift::{shift_left_small, shift_right_small},
 };
