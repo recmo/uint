@@ -10,10 +10,11 @@ use parity_scale_codec::{
 
 // Compact encoding is supported only for 0-(2**536-1) values:
 // https://docs.substrate.io/reference/scale-codec/#fn-1
-pub(crate) const COMPACT_BITS_LIMIT: usize = 536;
+const COMPACT_BITS_LIMIT: usize = 536;
 
 impl<const BITS: usize, const LIMBS: usize> Encode for Uint<BITS, LIMBS> {
-    /// u32 prefix for compact encoding + bytes needed for LE bytes representation
+    /// u32 prefix for compact encoding + bytes needed for LE bytes
+    /// representation
     fn size_hint(&self) -> usize {
         core::mem::size_of::<u32>() + Self::BYTES
     }
@@ -37,7 +38,8 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
     }
 }
 
-// TODO: Use nightly generic const expressions to validate that BITS parameter is less than 536
+// TODO: Use nightly generic const expressions to validate that BITS parameter
+// is less than 536
 pub struct CompactUint<const BITS: usize, const LIMBS: usize>(pub Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for CompactUint<BITS, LIMBS> {
@@ -52,9 +54,7 @@ impl<const BITS: usize, const LIMBS: usize> From<CompactUint<BITS, LIMBS>> for U
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> From<Compact<CompactUint<BITS, LIMBS>>>
-    for CompactUint<BITS, LIMBS>
-{
+impl<const BITS: usize, const LIMBS: usize> From<Compact<Self>> for CompactUint<BITS, LIMBS> {
     fn from(v: Compact<Self>) -> Self {
         v.0
     }
@@ -94,18 +94,26 @@ impl<'a, const BITS: usize, const LIMBS: usize> EncodeAsRef<'a, Uint<BITS, LIMBS
 
 impl<'a, const BITS: usize, const LIMBS: usize> EncodeLike for CompactRefUint<'a, BITS, LIMBS> {}
 
-/// Compact/general integers are encoded with the two least significant bits denoting the mode:
-///     `0b00`: single-byte mode: upper six bits are the LE encoding of the value. Valid only for values of `0-63`.
-///     `0b01`: two-byte mode: upper six bits and the following byte is the LE encoding of the value. Valid only for values of `64-(2\*\*14-1)`.
-///     `0b10`: four-byte mode: upper six bits and the following three bytes are the LE encoding of the value. Valid only for values of `(2\*\*14)-(2\*\*30-1)`.
-///     `0b11`: Big-integer mode: The upper six bits are the number of bytes following, plus four. The value is contained, LE encoded, in the bytes following. The final (most significant) byte must be non-zero. Valid only for values of `(2\*\*30)-(2\*\*536-1)`.
+/// Compact/general integers are encoded with the two least significant bits
+/// denoting the mode:
+/// * `0b00`: single-byte mode: upper six bits are the LE encoding of the value.
+///   Valid only for values of `0-63`.
+/// * `0b01`: two-byte  mode: upper six bits and the following byte is the LE
+///   encoding of the value. Valid only for values of `64-(2\*\*14-1)`.
+/// * `0b10`: four-byte mode: upper  six bits and the following three bytes are
+///   the LE encoding of the value. Valid only for values of
+///   `(2\*\*14)-(2\*\*30-1)`.
+/// * `0b11`: Big-integer mode: The upper six bits are the number of bytes
+///   following, plus four. The  value is contained, LE encoded, in the bytes
+///   following. The final (most  significant) byte must be non-zero. Valid only
+///   for values of `(2\*\*30)-(2\*\*536-1)`.
 impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BITS, LIMBS> {
     fn size_hint(&self) -> usize {
         match self.0.bit_len() {
             0..=6 => 1,
-            0..=14 => 2,
-            0..=30 => 4,
-            _ => (32 - self.0.leading_zeros() / 8) as usize + 1,
+            7..=14 => 2,
+            15..=30 => 4,
+            _ => (32 - self.0.leading_zeros() / 8) + 1,
         }
     }
 
@@ -116,15 +124,16 @@ impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BI
             // 0..=0b0011_1111
             0..=6 => dest.push_byte((self.0.to::<u8>()) << 2),
             // 0..=0b0011_1111_1111_1111
-            0..=14 => ((self.0.to::<u16>() << 2) | 0b01).encode_to(dest),
+            7..=14 => ((self.0.to::<u16>() << 2) | 0b01).encode_to(dest),
             // 0..=0b0011_1111_1111_1111_1111_1111_1111_1111
-            0..=30 => ((self.0.to::<u32>() << 2) | 0b10).encode_to(dest),
+            15..=30 => ((self.0.to::<u32>() << 2) | 0b10).encode_to(dest),
             _ => {
                 let bytes_needed = self.0.byte_len();
                 assert!(
                     bytes_needed >= 4,
                     "Previous match arm matches anything less than 2^30; qed"
                 );
+                #[allow(clippy::cast_possible_truncation)] // bytes_needed <
                 dest.push_byte(0b11 + ((bytes_needed - 4) << 2) as u8);
                 dest.write(&self.0.as_le_bytes_trimmed());
             }
@@ -135,7 +144,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'a, BI
 /// Prefix another input with a byte.
 struct PrefixInput<'a, T> {
     prefix: Option<u8>,
-    input: &'a mut T,
+    input:  &'a mut T,
 }
 
 impl<'a, T: 'a + Input> Input for PrefixInput<'a, T> {
@@ -231,7 +240,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
                         new_limbs[limbs - 1] &= if bits % 64 == 0 {
                             u64::MAX
                         } else {
-                            (1 << bits % 64) - 1
+                            (1 << (bits % 64)) - 1
                         }
                     }
                     if Uint::<COMPACT_BITS_LIMIT, 9>::from(x)
@@ -256,9 +265,12 @@ fn assert_compact_supported<const BITS: usize>() {
 
 #[cfg(test)]
 mod tests {
-    use crate::aliases::U256;
-    use crate::support::scale::{CompactRefUint, CompactUint};
-    use crate::{const_for, nlimbs, Uint};
+    use crate::{
+        aliases::U256,
+        const_for, nlimbs,
+        support::scale::{CompactRefUint, CompactUint},
+        Uint,
+    };
     use parity_scale_codec::{Compact, Decode, Encode};
     use proptest::proptest;
 
@@ -289,12 +301,13 @@ mod tests {
                 // value.serialize_compact_parity() == value.serialize_compact()
                 let value_u128: Result<u128, _> = value.try_into();
                 if let Ok(value_u128) = value_u128 {
+                    #[allow(clippy::cast_possible_truncation)] // value < 2**BITS
                     match BITS {
                         0..=8 => assert_eq!(serialized_compact, Compact(value_u128 as u8).encode()),
-                        0..=16 => assert_eq!(serialized_compact, Compact(value_u128 as u16).encode()),
-                        0..=32 => assert_eq!(serialized_compact, Compact(value_u128 as u32).encode()),
-                        0..=64 => assert_eq!(serialized_compact, Compact(value_u128 as u64).encode()),
-                        0..=128 => assert_eq!(serialized_compact, Compact(value_u128 as u128).encode()),
+                        9..=16 => assert_eq!(serialized_compact, Compact(value_u128 as u16).encode()),
+                        17..=32 => assert_eq!(serialized_compact, Compact(value_u128 as u32).encode()),
+                        33..=64 => assert_eq!(serialized_compact, Compact(value_u128 as u64).encode()),
+                        65..=128 => assert_eq!(serialized_compact, Compact(value_u128).encode()),
                         _ => {}
                     }
                 }
@@ -304,7 +317,8 @@ mod tests {
 
     #[test]
     fn test_scale_compact_derive() {
-        #[derive(Debug, PartialEq, parity_scale_codec::Encode, parity_scale_codec::Decode)]
+        #[allow(clippy::semicolon_if_nothing_returned)] // False positive from macro expansion
+        #[derive(Debug, PartialEq, Encode, Decode)]
         struct Data {
             #[codec(compact)]
             value: U256,
@@ -314,6 +328,6 @@ mod tests {
         let serialized = data.encode();
         let deserialized = Data::decode(&mut serialized.as_slice()).unwrap();
 
-        assert_eq!(data, deserialized)
+        assert_eq!(data, deserialized);
     }
 }
