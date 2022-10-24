@@ -72,7 +72,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(*divisor.last().unwrap() >= 1);
 
     let n = divisor.len();
-    let m = numerator.len() - n - 1;
+    let m = numerator.len() - n;
 
     // Compute normalized divisor double-word and reciprocal.
     // TODO: Delegate to div_nxm_normalized if normalized.
@@ -90,7 +90,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     };
     debug_assert!(d >= 1 << 127);
     let v = reciprocal_2(d);
-    let m = if shift > 0 { m + 1 } else { m };
 
     // Compute the quotient one limb at a time.
     let mut q_high = 0;
@@ -141,7 +140,6 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                 // If we have a carry then the quotient was one too large.
                 // We correct by decrementing the quotient and adding one divisor back.
                 if unlikely(borrow) {
-                    dbg!();
                     q = q.wrapping_sub(1);
                     let carry = adc_n(&mut numerator[j..j + n], &divisor[..n], 0);
                     // Expect carry because we flip sign back to positive.
@@ -167,9 +165,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     // Copy remainder to `divisor` and `quotient` to numerator.
     divisor.copy_from_slice(&numerator[..n]);
     numerator.copy_within(n.., 0);
-    if shift != 0 {
-        numerator[m] = q_high;
-    }
+    numerator[m] = q_high;
     numerator[m + 1..].fill(0);
 }
 
@@ -421,6 +417,49 @@ mod tests {
             0x5abe292d53acf085,
             0x699fc911,
         ];
+        div_nxm(&mut numerator, &mut divisor);
+        assert_eq!(&numerator[..quotient.len()], quotient);
+        assert_eq!(divisor, remainder);
+    }
+
+    // Basic test with numerator and divisor the same size.
+    #[test]
+    fn test_div_nxm_4by4() {
+        let mut numerator = [
+            0x55a8f128f187ecee,
+            0xe059a1f3fe52e559,
+            0x570ab3b2aac5c5d9,
+            0xf7ea0c73b80ddca1,
+        ];
+        let mut divisor = [
+            0x6c8cd670adcae7da,
+            0x458d6428c7fd36d3,
+            0x4a73ad64cc703a1d,
+            0x33bf790f92ed51fe,
+        ];
+        let quotient = [0x4];
+        let remainder = [
+            0xa37597663a5c4d86,
+            0xca241150de5e0a0b,
+            0x2d3bfe1f7904dd64,
+            0x28ec28356c5894a8,
+        ];
+        div_nxm(&mut numerator, &mut divisor);
+        assert_eq!(&numerator[..quotient.len()], quotient);
+        assert_eq!(divisor, remainder);
+    }
+
+    #[test]
+    fn test_div_nxm_4by3() {
+        let mut numerator = [
+            0x8000000000000000,
+            0x8000000000000000,
+            0x8000000000000000,
+            0x8000000000000001,
+        ];
+        let mut divisor = [0x8000000000000000, 0x8000000000000000, 0x8000000000000000];
+        let quotient = [0x1, 0x1];
+        let remainder = [0x0, 0x8000000000000000, 0x7fffffffffffffff];
         div_nxm(&mut numerator, &mut divisor);
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
