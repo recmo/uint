@@ -276,9 +276,9 @@ pub mod bench {
             const LIMBS: usize = nlimbs(BITS);
             bench_mul::<BITS, LIMBS>(criterion);
         });
-        const_for!(BITS_LHS in BENCH {
+        const_for!(BITS_LHS in [64, 256,1024] {
             const LIMBS_LHS: usize = nlimbs(BITS_LHS);
-            const_for!(BITS_RHS in BENCH {
+            const_for!(BITS_RHS in [64, 256,1024] {
                 const LIMBS_RHS: usize = nlimbs(BITS_RHS);
                 const BITS_RES: usize = BITS_LHS + BITS_RHS;
                 const LIMBS_RES: usize = nlimbs(BITS_RES);
