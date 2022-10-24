@@ -291,7 +291,7 @@ pub mod bench {
     fn bench_mul<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("mul/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("mul/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b)| black_box(black_box(a) * black_box(b)),
@@ -316,7 +316,7 @@ pub mod bench {
         );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(
-            &format!("widening_mul/{}/{}", BITS_LHS, BITS_RHS),
+            &format!("widening_mul/{BITS_LHS}/{BITS_RHS}"),
             move |bencher| {
                 bencher.iter_batched(
                     || input.new_tree(&mut runner).unwrap().current(),

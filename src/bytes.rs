@@ -27,6 +27,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// most significant position.
     #[cfg(target_endian = "little")]
     #[must_use]
+    #[inline(always)]
     pub fn as_le_slice(&self) -> &[u8] {
         debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
         let data = addr_of!(self.limbs).cast();
@@ -44,6 +45,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// invalid state.
     #[cfg(target_endian = "little")]
     #[must_use]
+    #[inline(always)]
     pub unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
         debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
         let data = addr_of_mut!(self.limbs).cast();
@@ -54,6 +56,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Uses an optimized implementation on little-endian targets.
     #[must_use]
+    #[inline(always)]
     pub fn as_le_bytes(&self) -> Cow<'_, [u8]> {
         // On little endian platforms this is a no-op.
         #[cfg(target_endian = "little")]

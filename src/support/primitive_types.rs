@@ -10,13 +10,14 @@ use primitive_types::{U128, U256, U512};
 macro_rules! impl_froms {
     ($ours:ty, $theirs:ident) => {
         impl From<$theirs> for $ours {
-            #[inline]
+            #[inline(always)]
             fn from(value: $theirs) -> Self {
                 Self::from_limbs(value.0)
             }
         }
 
         impl From<$ours> for $theirs {
+            #[inline(always)]
             fn from(value: $ours) -> Self {
                 $theirs(value.into_limbs())
             }

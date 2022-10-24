@@ -1,3 +1,6 @@
+// TODO: Forward `const fn` as `const fn`.
+#![allow(clippy::missing_const_for_fn)]
+
 use crate::Uint;
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,

@@ -8,7 +8,7 @@ use std::{fmt::Write, str::FromStr};
 fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
     let mut limbs_str = String::new();
     for limb in limbs {
-        write!(&mut limbs_str, "{}u64,", limb).unwrap();
+        write!(&mut limbs_str, "{limb}u64,").unwrap();
     }
     let limbs_str = limbs_str.trim_end_matches(',');
     let limbs = (bits + 63) / 64;
@@ -51,7 +51,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     // Parse bit length
     let bits = bits
         .parse::<usize>()
-        .map_err(|e| format!("Error in suffix: {}", e))?;
+        .map_err(|e| format!("Error in suffix: {e}"))?;
     let num_limbs = (bits + 63) / 64;
     let mask = if bits == 0 {
         0
@@ -86,7 +86,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
             'a'..='f' => c as u64 - 'a' as u64 + 10,
             'A'..='F' => c as u64 - 'A' as u64 + 10,
             '_' => continue,
-            _ => return Err(format!("Invalid character '{}'", c)),
+            _ => return Err(format!("Invalid character '{c}'")),
         };
         #[allow(clippy::cast_lossless)]
         if digit > base as u64 {
@@ -124,7 +124,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
     // Check value range
     if limbs.len() > num_limbs || limbs.last().copied().unwrap_or(0) > mask {
         let value = value.trim_end_matches('_');
-        return Err(format!("Value too large for Uint<{}>: {}", bits, value));
+        return Err(format!("Value too large for Uint<{bits}>: {value}"));
     }
 
     Ok(construct(bits, &limbs))

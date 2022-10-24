@@ -1,6 +1,12 @@
 #![doc = include_str!("../Readme.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::inline_always,
+    clippy::unreadable_literal,
+    clippy::doc_markdown // Unfortunately many false positives on Latex.
+)]
 #![cfg_attr(
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
@@ -17,6 +23,12 @@
 #![cfg_attr(coverage_nightly, feature(no_coverage))]
 // See <https://stackoverflow.com/questions/61417452/how-to-get-a-feature-requirement-tag-in-the-documentation-generated-by-cargo-do>
 #![cfg_attr(has_doc_cfg, feature(doc_cfg))]
+// Nightly only feature flag to enable the `unlikely` compiler hint.
+#![cfg_attr(has_core_intrinsics, feature(core_intrinsics))]
+
+// Workaround for proc-macro `uint!` in this crate.
+// See <https://github.com/rust-lang/rust/pull/55275>
+extern crate self as ruint;
 
 mod add;
 pub mod algorithms;
@@ -157,6 +169,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// View the array of limbs.
     #[must_use]
+    #[inline(always)]
     pub const fn as_limbs(&self) -> &[u64; LIMBS] {
         &self.limbs
     }
@@ -168,6 +181,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// This function is unsafe because it allows setting a bit outside the bit
     /// size if the bit-size is not limb-aligned.
     #[must_use]
+    #[inline(always)]
     pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
@@ -176,6 +190,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Limbs are least significant first.
     #[must_use]
+    #[inline(always)]
     pub const fn into_limbs(self) -> [u64; LIMBS] {
         self.limbs
     }
@@ -189,9 +204,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the value is to large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
+    #[inline(always)]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
         Self::assert_valid();
-        if BITS > 0 {
+        if BITS > 0 && Self::MASK < u64::MAX {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
                 limbs[Self::LIMBS - 1] <= Self::MASK,
@@ -261,6 +277,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    #[inline(always)]
     const fn assert_valid() {
         // REFACTOR: (BLOCKED) Replace with `assert_eq!` when it is made `const`.
         // Blocked on Rust, not issue known.

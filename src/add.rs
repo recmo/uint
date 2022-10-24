@@ -290,7 +290,7 @@ pub mod bench {
     fn bench_neg<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = Uint::<BITS, LIMBS>::arbitrary();
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("neg/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("neg/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |a| black_box(-black_box(a)),
@@ -302,7 +302,7 @@ pub mod bench {
     fn bench_add<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("add/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("add/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b)| black_box(black_box(a) + black_box(b)),
@@ -314,7 +314,7 @@ pub mod bench {
     fn bench_sub<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("sub/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("sub/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(a, b)| black_box(black_box(a) - black_box(b)),

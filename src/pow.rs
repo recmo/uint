@@ -191,7 +191,7 @@ pub mod bench {
     fn bench_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
         let input = (Uint::<BITS, LIMBS>::arbitrary(), usize::arbitrary());
         let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("pow/{}", BITS), move |bencher| {
+        criterion.bench_function(&format!("pow/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(b, e)| black_box(black_box(b).pow(black_box(e))),

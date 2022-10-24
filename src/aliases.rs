@@ -48,3 +48,6 @@ pub type U2048 = Uint<2048, 32>;
 
 /// [`Uint`] for `4096` bits.
 pub type U4096 = Uint<4096, 64>;
+
+// TODO: B0, B1, B8, ... B4096
+// TODO: I0, I1, I8, ... I4096

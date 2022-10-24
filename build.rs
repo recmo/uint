@@ -6,6 +6,7 @@ fn main() {
     if nightly {
         println!("cargo:rustc-cfg=has_generic_const_exprs");
         println!("cargo:rustc-cfg=has_cfg_doc");
+        println!("cargo:rustc-cfg=has_core_intrinsics");
     }
     println!("cargo:rerun-if-changed=build.rs");
 }
