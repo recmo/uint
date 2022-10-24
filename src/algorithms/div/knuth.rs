@@ -13,6 +13,10 @@ use core::u64;
 /// * the highest bit of the divisor to be set,
 /// * the `divisor` and `numerator` to be at least two limbs, and
 /// * `numerator` is at least as long as `divisor`.
+///
+/// # Panics
+///
+/// May panic if the above requirements are not met.
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
@@ -75,6 +79,10 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 /// * the highest limb of the divisor to be non-zero,
 /// * the `divisor` and `numerator` to be at least two limbs, and
 /// * `numerator` is at least as long as `divisor`.
+///
+/// # Panics
+///
+/// May panic if the above requirements are not met.
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 3);

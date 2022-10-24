@@ -43,6 +43,10 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 /// See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
+///
+/// # Panics
+///
+/// May panics if the above requirements are not met.
 // TODO: Rewrite in a way that avoids bounds-checks without unsafe.
 #[inline(always)]
 pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
@@ -107,6 +111,10 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 ///
 /// Requires `divisor` to be in the range $[2^{64}, 2^{128})$. Same as
 /// [`div_nx2_normalized`] but does the shifting of the numerator inline.
+///
+/// # Panics
+///
+/// May panics if the above requirements are not met.
 // TODO: Rewrite in a way that avoids bounds-checks without unsafe.
 #[inline(always)]
 pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
