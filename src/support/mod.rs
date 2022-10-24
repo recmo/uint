@@ -9,6 +9,7 @@ mod pyo3;
 mod quickcheck;
 mod rand;
 mod rlp;
+mod scale;
 mod serde;
 mod sqlx;
 mod valuable;

@@ -50,7 +50,7 @@ pub enum ToUintError<T> {
     #[error("Negative values can not be represented as Uint<{0}>")]
     ValueNegative(usize, T),
 
-    /// 'Not a number' (NaN) not be represented as Uint
+    /// 'Not a number' (NaN) can not be represented as Uint
     #[error("'Not a number' (NaN) not be represented as Uint<{0}>")]
     NotANumber(usize),
 }
