@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
 
-Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathtt{BITS}}$. It requires two
+Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathsf{BITS}}$. It requires two
 generic arguments: the number of bits and the number of 64-bit 'limbs' required to store those bits.
 
 ```rust
@@ -15,7 +15,7 @@ generic arguments: the number of bits and the number of 64-bit 'limbs' required 
 let answer: Uint<256, 4> = Uint::from(42);
 ```
 
-You can compute `LIMBS` yourself using $\mathtt{LIMBS} = \left\lceil{\mathtt{BITS} / 64}\right\rceil$,
+You can compute `LIMBS` yourself using $\mathsf{LIMBS} = \left\lceil{\mathsf{BITS} / 64}\right\rceil$,
 i.e.`LIMBS` equals `BITS` divided by $64$ rounded up. [`Uint`] will `panic!` if you try to
 construct it with incorrect arguments. Ideally this would be a compile time error, but
 that is blocked by Rust issue [#60551][r60551].

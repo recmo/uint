@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] — 2022-10-24
+
+### Changed
+
+- Performance improvements in `wrapping_mul` and `from_bytes_be`.
+
 ## [1.5.0] — 2022-10-24
 
 ### Added
@@ -161,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.5.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/recmo/uint/releases/tag/v1.5.1
 [1.5.0]: https://github.com/recmo/uint/releases/tag/v1.5.0
 [1.4.1]: https://github.com/recmo/uint/releases/tag/v1.4.1
 [1.4.0]: https://github.com/recmo/uint/releases/tag/v1.4.0
