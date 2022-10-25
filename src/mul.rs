@@ -66,7 +66,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS > 0 {
             result.limbs[LIMBS - 1] &= Self::MASK;
         }
-        assert_eq!(result, self.overflowing_mul(rhs).0);
         result
     }
 
