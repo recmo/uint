@@ -117,15 +117,104 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
 /// Computes `lhs += a` and returns the carry.
 #[inline(always)]
 pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
+    if a == 0 {
+        return 0;
+    }
     for lhs in lhs.iter_mut() {
-        if a == 0 {
-            return 0;
-        }
         let sum = u128::add(*lhs, a);
         *lhs = sum.low();
         a = sum.high();
+        if a == 0 {
+            return 0;
+        }
     }
     a
+}
+
+/// Computes wrapping `lhs += a * b` when all arguments are the same length.
+#[inline(always)]
+pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert_eq!(lhs.len(), a.len());
+    assert_eq!(lhs.len(), b.len());
+    match lhs.len() {
+        0 => {}
+        1 => addmul_1(lhs, a, b),
+        2 => addmul_2(lhs, a, b),
+        3 => addmul_3(lhs, a, b),
+        4 => addmul_4(lhs, a, b),
+        _ => {
+            let _ = addmul(lhs, a, b);
+        }
+    }
+}
+
+/// Computes `lhs += a * b` for 1 limb.
+#[inline(always)]
+fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert_eq!(lhs.len(), 1);
+    assert_eq!(a.len(), 1);
+    assert_eq!(b.len(), 1);
+
+    mac(&mut lhs[0], a[0], b[0], 0);
+}
+
+/// Computes `lhs += a * b` for 2 limbs.
+#[inline(always)]
+fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert_eq!(lhs.len(), 2);
+    assert_eq!(a.len(), 2);
+    assert_eq!(b.len(), 2);
+
+    let carry = mac(&mut lhs[0], a[0], b[0], 0);
+    mac(&mut lhs[1], a[0], b[1], carry);
+
+    mac(&mut lhs[1], a[1], b[0], 0);
+}
+
+/// Computes `lhs += a * b` for 3 limbs.
+#[inline(always)]
+fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert_eq!(lhs.len(), 3);
+    assert_eq!(a.len(), 3);
+    assert_eq!(b.len(), 3);
+
+    let carry = mac(&mut lhs[0], a[0], b[0], 0);
+    let carry = mac(&mut lhs[1], a[0], b[1], carry);
+    mac(&mut lhs[2], a[0], b[2], carry);
+
+    let carry = mac(&mut lhs[1], a[1], b[0], 0);
+    mac(&mut lhs[2], a[1], b[1], carry);
+
+    mac(&mut lhs[2], a[2], b[0], 0);
+}
+
+/// Computes `lhs += a * b` for 4 limbs.
+#[inline(always)]
+fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert_eq!(lhs.len(), 4);
+    assert_eq!(a.len(), 4);
+    assert_eq!(b.len(), 4);
+
+    let carry = mac(&mut lhs[0], a[0], b[0], 0);
+    let carry = mac(&mut lhs[1], a[0], b[1], carry);
+    let carry = mac(&mut lhs[2], a[0], b[2], carry);
+    mac(&mut lhs[3], a[0], b[3], carry);
+
+    let carry = mac(&mut lhs[1], a[1], b[0], 0);
+    let carry = mac(&mut lhs[2], a[1], b[1], carry);
+    mac(&mut lhs[3], a[1], b[2], carry);
+
+    let carry = mac(&mut lhs[2], a[2], b[0], 0);
+    mac(&mut lhs[3], a[2], b[1], carry);
+
+    mac(&mut lhs[3], a[3], b[0], 0);
+}
+
+#[inline(always)]
+fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
+    let prod = u128::muladd2(a, b, c, *lhs);
+    *lhs = prod.low();
+    prod.high()
 }
 
 /// Computes `lhs += a * b` and returns the borrow.
@@ -202,22 +291,6 @@ mod tests {
         });
     }
 
-    #[test]
-    fn test_addmul_1() {
-        let mut lhs = [0];
-        let a = [1, 1];
-        let b = [1, 1];
-
-        // Reference
-        let mut ref_lhs = lhs.clone();
-        let ref_overflow = addmul_ref(&mut ref_lhs, &a, &b);
-
-        // Test
-        let overflow = addmul(&mut lhs, &a, &b);
-        assert_eq!(lhs, ref_lhs);
-        assert_eq!(overflow, ref_overflow);
-    }
-
     fn test_vals(lhs: &[u64], rhs: &[u64], expected: &[u64], expected_overflow: bool) {
         let mut result = vec![0; expected.len()];
         let overflow = addmul(&mut result, lhs, rhs);
@@ -260,5 +333,39 @@ mod tests {
             8411211985208067428
         ]);
         assert_eq!(borrow, 17196576577663999042);
+    }
+}
+
+#[cfg(feature = "bench")]
+#[doc(hidden)]
+pub mod bench {
+    use crate::const_for;
+
+    use super::*;
+    use criterion::{black_box, BatchSize, Criterion};
+    use rand::Rng;
+
+    pub fn group(criterion: &mut Criterion) {
+        bench_addmul_nnn(criterion);
+    }
+
+    fn bench_addmul_nnn(criterion: &mut Criterion) {
+        const_for!(SIZE in [0,1,2,3,4,5,6] {
+            let mut rng = rand::thread_rng();
+            criterion.bench_function(&format!("algo/addmul_n/{SIZE}"), move |bencher| {
+                bencher.iter_batched(
+                    || (
+                        rng.gen::<[u64; SIZE]>(),
+                        rng.gen::<[u64; SIZE]>(),
+                        rng.gen::<[u64; SIZE]>(),
+                    ),
+                    |(mut lhs, a, b)| {
+                        black_box(addmul_n(&mut lhs, &a, &b));
+                        black_box(lhs)
+                    },
+                    BatchSize::SmallInput,
+                );
+            });
+        });
     }
 }

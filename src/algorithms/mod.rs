@@ -14,7 +14,7 @@ mod shift;
 pub use self::{
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
-    mul::{addmul, addmul_nx1, submul_nx1},
+    mul::{addmul, addmul_n, addmul_nx1, submul_nx1},
     mul_redc::mul_redc,
     shift::{shift_left_small, shift_right_small},
 };
@@ -87,7 +87,8 @@ pub mod bench {
     use criterion::Criterion;
 
     pub fn group(criterion: &mut Criterion) {
-        gcd::bench::group(criterion);
+        mul::bench::group(criterion);
         div::bench::group(criterion);
+        gcd::bench::group(criterion);
     }
 }
