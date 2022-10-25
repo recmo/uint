@@ -35,8 +35,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut result = Self::ZERO;
-        let mut overflow =
-            algorithms::mul_inline(self.as_limbs(), rhs.as_limbs(), &mut result.limbs);
+        let mut overflow = algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
             overflow |= result.limbs[LIMBS - 1] > Self::MASK;
             result.limbs[LIMBS - 1] &= Self::MASK;
@@ -62,7 +61,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub fn wrapping_mul(self, rhs: Self) -> Self {
-        self.overflowing_mul(rhs).0
+        let mut result = Self::ZERO;
+        algorithms::addmul_n(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
+        if BITS > 0 {
+            result.limbs[LIMBS - 1] &= Self::MASK;
+        }
+        result
     }
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning
@@ -134,7 +138,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert_eq!(BITS_RES, BITS + BITS_RHS);
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
-        algorithms::mul_inline(&self.limbs, &rhs.limbs, &mut result.limbs);
+        algorithms::addmul(&mut result.limbs, &self.limbs, &rhs.limbs);
         if LIMBS_RES > 0 {
             debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
         }
@@ -277,9 +281,9 @@ pub mod bench {
             const LIMBS: usize = nlimbs(BITS);
             bench_mul::<BITS, LIMBS>(criterion);
         });
-        const_for!(BITS_LHS in BENCH {
+        const_for!(BITS_LHS in [64, 256,1024] {
             const LIMBS_LHS: usize = nlimbs(BITS_LHS);
-            const_for!(BITS_RHS in BENCH {
+            const_for!(BITS_RHS in [64, 256,1024] {
                 const LIMBS_RHS: usize = nlimbs(BITS_RHS);
                 const BITS_RES: usize = BITS_LHS + BITS_RHS;
                 const LIMBS_RES: usize = nlimbs(BITS_RES);

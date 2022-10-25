@@ -1,4 +1,4 @@
-use super::mul;
+use super::addmul;
 use core::iter::zip;
 
 /// See Handbook of Applied Cryptography, Algorithm 14.32, p. 601.
@@ -13,7 +13,7 @@ pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
     // Compute temp full product.
     // OPT: Do combined multiplication and reduction.
     let mut temp = vec![0; 2 * m.len() + 1];
-    mul(a, b, &mut temp);
+    addmul(&mut temp, a, b);
 
     // Reduce temp.
     for i in 0..m.len() {

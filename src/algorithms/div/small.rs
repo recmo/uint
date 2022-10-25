@@ -278,9 +278,8 @@ pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
 
 #[cfg(test)]
 mod tests {
-    use crate::algorithms::mul;
-
     use super::*;
+    use crate::algorithms::addmul;
     use proptest::{
         collection,
         num::{u128, u64},
@@ -350,7 +349,7 @@ mod tests {
             remainder %= divisor;
             let mut numerator = vec![0; quotient.len() + 1];
             numerator[0] = remainder;
-            mul(&quotient, &[divisor], &mut numerator);
+            addmul(&mut numerator, &quotient, &[divisor]);
 
             // Test
             let r = div_nx1_normalized(&mut numerator, divisor);
@@ -367,7 +366,7 @@ mod tests {
             // Construct problem
             let mut numerator = vec![0; quotient.len() + 1];
             numerator[0] = remainder;
-            mul(&quotient, &[divisor], &mut numerator);
+            addmul( &mut numerator, &quotient, &[divisor]);
 
             // Trim numerator
             while numerator.last() == Some(&0) {
@@ -391,7 +390,7 @@ mod tests {
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
             numerator[1] = remainder.high();
-            mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+            addmul(&mut numerator, &quotient, &[divisor.low(), divisor.high()]);
 
             // Test
             let r = div_nx2_normalized(&mut numerator, divisor);
@@ -409,7 +408,7 @@ mod tests {
             let mut numerator = vec![0; quotient.len() + 2];
             numerator[0] = remainder.low();
             numerator[1] = remainder.high();
-            mul(&quotient, &[divisor.low(), divisor.high()], &mut numerator);
+            addmul(&mut numerator, &quotient, &[divisor.low(), divisor.high()]);
 
             // Trim numerator
             while numerator.last() == Some(&0) {

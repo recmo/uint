@@ -63,7 +63,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // Alternatively we could use `alloca`, but that is blocked on
         // See <https://github.com/rust-lang/rust/issues/48055>
         let mut product = vec![0; nlimbs(2 * BITS)];
-        let overflow = algorithms::mul_inline(&self.limbs, &rhs.limbs, &mut product);
+        let overflow = algorithms::addmul(&mut product, &self.limbs, &rhs.limbs);
         debug_assert!(!overflow);
 
         // Compute modulus using `div_rem`.

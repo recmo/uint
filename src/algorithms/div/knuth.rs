@@ -192,7 +192,7 @@ mod tests {
     use super::*;
     use crate::algorithms::{
         add::{cmp, sbb_n},
-        mul,
+        addmul,
     };
     use proptest::{
         collection, num, proptest,
@@ -324,7 +324,7 @@ mod tests {
         proptest!(|(quotient in quotient, (divisor, remainder) in dr)| {
             let mut numerator: Vec<u64> = vec![0; divisor.len() + quotient.len()];
             numerator[..remainder.len()].copy_from_slice(&remainder);
-            mul(quotient.as_slice(), divisor.as_slice(), &mut numerator);
+            addmul(&mut numerator, quotient.as_slice(), divisor.as_slice());
 
             div_nxm_normalized(numerator.as_mut_slice(), divisor.as_slice());
             let (r, q) = numerator.split_at(divisor.len());
@@ -500,7 +500,7 @@ mod tests {
         proptest!(|(quotient in quotient, (mut divisor, remainder) in dr)| {
             let mut numerator: Vec<u64> = vec![0; divisor.len() + quotient.len()];
             numerator[..remainder.len()].copy_from_slice(&remainder);
-            mul(quotient.as_slice(), divisor.as_slice(), &mut numerator);
+            addmul(&mut numerator, quotient.as_slice(), divisor.as_slice());
 
             div_nxm(numerator.as_mut_slice(), divisor.as_mut_slice());
             assert_eq!(&numerator[..quotient.len()], quotient);
