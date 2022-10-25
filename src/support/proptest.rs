@@ -2,7 +2,7 @@
 #![cfg(feature = "proptest")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "proptest")))]
 
-use crate::{nlimbs, Uint};
+use crate::{nlimbs, Bits, Uint};
 use proptest::{
     arbitrary::Arbitrary,
     collection::{vec, VecStrategy},
@@ -26,6 +26,17 @@ impl<const BITS: usize, const LIMBS: usize> Arbitrary for Uint<BITS, LIMBS> {
                 }
                 Self::from_limbs_slice(&limbs)
             })
+            .boxed()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Arbitrary for Bits<BITS, LIMBS> {
+    type Parameters = <Uint<BITS, LIMBS> as Arbitrary>::Parameters;
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+        Uint::<BITS, LIMBS>::arbitrary_with(args)
+            .prop_map(Self::from)
             .boxed()
     }
 }

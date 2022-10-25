@@ -1,5 +1,5 @@
 //! Type aliases for common bit sizes of [`Uint`].
-use crate::Uint;
+use crate::{Bits, Uint};
 
 /// [`Uint`] for `0` bits. Always zero. Similar to `()`.
 pub type U0 = Uint<0, 0>;
@@ -48,6 +48,18 @@ pub type U2048 = Uint<2048, 32>;
 
 /// [`Uint`] for `4096` bits.
 pub type U4096 = Uint<4096, 64>;
+
+/// [`Bits`] for `128` bits.
+pub type H128 = Bits<128, 2>;
+
+/// [`Bits`] for `160` bits.
+pub type H160 = Bits<160, 3>;
+
+/// [`Bits`] for `256` bits.
+pub type H256 = Bits<256, 4>;
+
+/// [`Bits`] for `512` bits.
+pub type H512 = Bits<512, 8>;
 
 // TODO: B0, B1, B8, ... B4096
 // TODO: I0, I1, I8, ... I4096

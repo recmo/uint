@@ -10,6 +10,7 @@ use std::borrow::Cow;
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {

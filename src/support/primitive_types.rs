@@ -2,12 +2,10 @@
 #![cfg(feature = "primitive-types")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "primitive-types")))]
 
-use crate::aliases as ours;
-use primitive_types::{U128, U256, U512};
+use crate::{aliases as ours, Uint};
+use primitive_types::{H128, H160, H256, H512, U128, U256, U512};
 
-// FEATURE: Support H160, H256..
-
-macro_rules! impl_froms {
+macro_rules! impl_uint_froms {
     ($ours:ty, $theirs:ident) => {
         impl From<$theirs> for $ours {
             #[inline(always)]
@@ -25,9 +23,31 @@ macro_rules! impl_froms {
     };
 }
 
-impl_froms!(ours::U128, U128);
-impl_froms!(ours::U256, U256);
-impl_froms!(ours::U512, U512);
+impl_uint_froms!(ours::U128, U128);
+impl_uint_froms!(ours::U256, U256);
+impl_uint_froms!(ours::U512, U512);
+
+/// Hash types (H128, H160, H256, H512) in `primitive-types` are stored as big-endian order bytes.
+macro_rules! impl_bits_froms {
+    ($ours:ty, $ours_uint:ty, $theirs:ident) => {
+        impl From<$theirs> for $ours {
+            fn from(value: $theirs) -> Self {
+                Self::from(<$ours_uint>::from_be_bytes(value.0))
+            }
+        }
+
+        impl From<$ours> for $theirs {
+            fn from(value: $ours) -> Self {
+                Self::from(value.as_uint().to_be_bytes())
+            }
+        }
+    };
+}
+
+impl_bits_froms!(ours::H128, Uint::<128, 2>, H128);
+impl_bits_froms!(ours::H160, Uint::<160, 3>, H160);
+impl_bits_froms!(ours::H256, Uint::<256, 4>, H256);
+impl_bits_froms!(ours::H512, Uint::<512, 8>, H512);
 
 #[cfg(test)]
 mod tests {
@@ -51,5 +71,9 @@ mod tests {
         test_roundtrip::<ours::U128, U128>();
         test_roundtrip::<ours::U256, U256>();
         test_roundtrip::<ours::U512, U512>();
+        test_roundtrip::<ours::H128, H128>();
+        test_roundtrip::<ours::H160, H160>();
+        test_roundtrip::<ours::H256, H256>();
+        test_roundtrip::<ours::H512, H512>();
     }
 }
