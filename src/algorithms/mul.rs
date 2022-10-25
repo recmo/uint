@@ -2,27 +2,8 @@
 
 use crate::algorithms::{ops::sbb, DoubleWord};
 
-/// ⚠️ Computes `result += a * b` and checks for overflow.
-///
-/// **Warning.** This function is not part of the stable API.
-///
-/// Arrays are in little-endian order. All arrays can be arbitrary sized.
-///
-/// # Algorithm
-///
-/// Uses the schoolbook multiplication algorithm.
-///
-/// # Examples
-///
-/// ```
-/// # use ruint::algorithms::addmul;
-/// let mut result = [0];
-/// let overflow = addmul(&mut result, &[3], &[4]);
-/// assert_eq!(overflow, false);
-/// assert_eq!(result, [12]);
-/// ```
-#[inline(always)]
 #[allow(clippy::cast_possible_truncation)] // Intentional truncation.
+#[allow(dead_code)] // Used for testing
 pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
     let mut overflow = 0;
     for (i, a) in a.iter().copied().enumerate() {
@@ -60,25 +41,46 @@ pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
     overflow != 0
 }
 
+/// ⚠️ Computes `result += a * b` and checks for overflow.
+///
+/// **Warning.** This function is not part of the stable API.
+///
+/// Arrays are in little-endian order. All arrays can be arbitrary sized.
+///
+/// # Algorithm
+///
+/// Trims zeros from inputs, then uses the schoolbook multiplication algorithm.
+/// It takes the shortest input as the outer loop.
+///
+/// # Examples
+///
+/// ```
+/// # use ruint::algorithms::addmul;
+/// let mut result = [0];
+/// let overflow = addmul(&mut result, &[3], &[4]);
+/// assert_eq!(overflow, false);
+/// assert_eq!(result, [12]);
+/// ```
 #[inline(always)]
+#[allow(clippy::missing_panics_doc)] // False positive; never panics.
 pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
     // Trim zeros from `a` and `b`
-    while let Some(&0) = a.first() {
+    while a.first() == Some(&0) {
         a = &a[1..];
         if !lhs.is_empty() {
             lhs = &mut lhs[1..];
         }
     }
-    while let Some(&0) = a.last() {
+    while a.last() == Some(&0) {
         a = &a[..a.len() - 1];
     }
-    while let Some(&0) = b.first() {
+    while b.first() == Some(&0) {
         b = &b[1..];
         if !lhs.is_empty() {
             lhs = &mut lhs[1..];
         }
     }
-    while let Some(&0) = b.last() {
+    while b.last() == Some(&0) {
         b = &b[..b.len() - 1];
     }
     if a.is_empty() || b.is_empty() {
@@ -88,6 +90,7 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
         return true;
     }
     let (a, b) = if b.len() > a.len() { (b, a) } else { (a, b) };
+    debug_assert!(!b.is_empty());
     debug_assert!(a.len() >= b.len());
     debug_assert!(*a.first().unwrap() != 0);
     debug_assert!(*a.last().unwrap() != 0);
@@ -132,6 +135,10 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
 }
 
 /// Computes wrapping `lhs += a * b` when all arguments are the same length.
+///
+/// # Panics
+///
+/// Panics if the lengts are not the same.
 #[inline(always)]
 pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assert_eq!(lhs.len(), a.len());
@@ -360,7 +367,7 @@ pub mod bench {
                         rng.gen::<[u64; SIZE]>(),
                     ),
                     |(mut lhs, a, b)| {
-                        black_box(addmul_n(&mut lhs, &a, &b));
+                        addmul_n(&mut lhs, &a, &b);
                         black_box(lhs)
                     },
                     BatchSize::SmallInput,
