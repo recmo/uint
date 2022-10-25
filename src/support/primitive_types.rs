@@ -27,7 +27,8 @@ impl_uint_froms!(ours::U128, U128);
 impl_uint_froms!(ours::U256, U256);
 impl_uint_froms!(ours::U512, U512);
 
-/// Hash types (H128, H160, H256, H512) in `primitive-types` are stored as big-endian order bytes.
+/// Hash types (H128, H160, H256, H512) in `primitive-types` are stored as
+/// big-endian order bytes.
 macro_rules! impl_bits_froms {
     ($ours:ty, $theirs:ident) => {
         impl From<$theirs> for $ours {
