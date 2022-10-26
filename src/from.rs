@@ -556,6 +556,7 @@ to_int!(i32, 31);
 to_int!(u32, 32);
 to_int!(i64, 63);
 to_int!(u64, 64);
+to_int!(usize, std::mem::size_of::<usize>() * 8);
 
 to_value_to_ref!(i128);
 
