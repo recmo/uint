@@ -45,10 +45,10 @@ macro_rules! impl_bits_froms {
     };
 }
 
-impl_bits_froms!(ours::H128, H128);
-impl_bits_froms!(ours::H160, H160);
-impl_bits_froms!(ours::H256, H256);
-impl_bits_froms!(ours::H512, H512);
+impl_bits_froms!(ours::B128, H128);
+impl_bits_froms!(ours::B160, H160);
+impl_bits_froms!(ours::B256, H256);
+impl_bits_froms!(ours::B512, H512);
 
 #[cfg(test)]
 mod tests {
@@ -72,9 +72,9 @@ mod tests {
         test_roundtrip::<ours::U128, U128>();
         test_roundtrip::<ours::U256, U256>();
         test_roundtrip::<ours::U512, U512>();
-        test_roundtrip::<ours::H128, H128>();
-        test_roundtrip::<ours::H160, H160>();
-        test_roundtrip::<ours::H256, H256>();
-        test_roundtrip::<ours::H512, H512>();
+        test_roundtrip::<ours::B128, H128>();
+        test_roundtrip::<ours::B160, H160>();
+        test_roundtrip::<ours::B256, H256>();
+        test_roundtrip::<ours::B512, H512>();
     }
 }
