@@ -30,13 +30,13 @@ pub use core::intrinsics::{likely, unlikely};
 
 #[cfg(not(has_core_intrinsics))]
 #[inline(always)]
-pub fn unlikely(b: bool) -> bool {
+pub const fn unlikely(b: bool) -> bool {
     b
 }
 
 #[cfg(not(has_core_intrinsics))]
 #[inline(always)]
-pub fn likely(b: bool) -> bool {
+pub const fn likely(b: bool) -> bool {
     b
 }
 

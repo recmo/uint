@@ -525,17 +525,19 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool
 }
 
 macro_rules! to_int {
-    ($int:ty, $bits:expr) => {
+    ($($int:ty)*) => {$(
         to_value_to_ref!($int);
 
         impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for $int {
             type Error = FromUintError<Self>;
 
             fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
+                const SIGNED: bool = <$int>::MIN != 0;
+                const CAPACITY: usize = if SIGNED { <$int>::BITS - 1 } else { <$int>::BITS } as usize;
                 if BITS == 0 {
                     return Ok(0);
                 }
-                if value.bit_len() > $bits {
+                if value.bit_len() > CAPACITY {
                     return Err(Self::Error::Overflow(
                         BITS,
                         value.limbs[0] as Self,
@@ -545,18 +547,10 @@ macro_rules! to_int {
                 Ok(value.as_limbs()[0] as Self)
             }
         }
-    };
+    )*};
 }
 
-to_int!(i8, 7);
-to_int!(u8, 8);
-to_int!(i16, 15);
-to_int!(u16, 16);
-to_int!(i32, 31);
-to_int!(u32, 32);
-to_int!(i64, 63);
-to_int!(u64, 64);
-to_int!(usize, std::mem::size_of::<usize>() * 8);
+to_int!(i8 u8 i16 u16 i32 u32 i64 u64 isize usize);
 
 to_value_to_ref!(i128);
 
