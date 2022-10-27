@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `TryFrom<Uint> for usize`
+
 ## [1.5.1] — 2022-10-24
 
 ### Changed
