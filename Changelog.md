@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `TryFrom<Uint> for usize`
+- `TryFrom<Uint>` for `isize` and `usize`
+- Support for `bn-rs`
 
 ## [1.5.1] — 2022-10-24
 

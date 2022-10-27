@@ -241,6 +241,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bn-rs"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55f9480d25c1283e8806b280f65e885b4fb840e8e8d72b784401233c9bd83202"
+dependencies = [
+ "getrandom",
+ "js-sys",
+ "primitive-types 0.11.1",
+ "rustc-hex",
+ "thiserror",
+ "uint",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -568,6 +583,18 @@ dependencies = [
 
 [[package]]
 name = "fixed-hash"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfcf0ed7fe52a17a03854ec54a9f76d6d84508d1c0e66bc1793301c73fc8493c"
+dependencies = [
+ "byteorder",
+ "rand",
+ "rustc-hex",
+ "static_assertions",
+]
+
+[[package]]
+name = "fixed-hash"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
@@ -696,8 +723,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c05aeb6a22b8f62540c194aac980f2115af067bfe15a0734d7277a768d396b31"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1223,11 +1252,22 @@ checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
 name = "primitive-types"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e28720988bff275df1f51b171e1b2a18c30d194c4d2b61defdacecd625a5d94a"
+dependencies = [
+ "fixed-hash 0.7.0",
+ "impl-codec",
+ "uint",
+]
+
+[[package]]
+name = "primitive-types"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5cfd65aea0c5fa0bfcc7c9e7ca828c921ef778f43d325325ec84bda371bfa75a"
 dependencies = [
- "fixed-hash",
+ "fixed-hash 0.8.0",
  "impl-codec",
  "uint",
 ]
@@ -1511,6 +1551,7 @@ dependencies = [
  "ark-bn254",
  "ark-ff",
  "bincode",
+ "bn-rs",
  "bytes",
  "coverage-helper",
  "criterion",
@@ -1521,7 +1562,7 @@ dependencies = [
  "parity-scale-codec",
  "postgres",
  "postgres-types",
- "primitive-types",
+ "primitive-types 0.12.0",
  "proptest",
  "pyo3",
  "quickcheck",
