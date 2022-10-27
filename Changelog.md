@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `TryFrom<Uint> for usize`
-- Hash type aliases (`H128`, `H160`, `H256`, `H512`), `From` and `Into` trait implementations for `primitive-types` hash types
+- Bit type aliases (`B128`, `B160`, `B256`, `B512`, ...)
+- `From` and `Into` trait implementations for `primitive-types` bit types
+- Support for `bn-rs`
 
 ## [1.5.1] — 2022-10-24
 

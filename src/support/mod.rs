@@ -1,5 +1,6 @@
 mod arbitrary;
 mod ark_ff;
+mod bn_rs;
 mod fastrlp;
 mod num_bigint;
 mod postgres;
@@ -20,6 +21,8 @@ mod zeroize;
 // * https://crates.io/crates/der
 // * https://crates.io/crates/bitvec
 
+// * open-fastrlp
+
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Zeroable.html
 // * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Pod.html
 
@@ -28,7 +31,11 @@ mod zeroize;
 // * https://crates.io/crates/rug
 // * https://crates.io/crates/bigdecimal
 // * https://crates.io/crates/rust_decimal
-//
+
+// * wasm-bindgen `JsValue` bigint: https://docs.rs/wasm-bindgen/latest/wasm_bindgen/struct.JsValue.html#method.bigint_from_str
+//   or from_f64.
+// * Neon `JsBigInt` once it lands: https://github.com/neon-bindings/neon/pull/861
+
 // More databases:
 // * https://crates.io/crates/diesel
 
