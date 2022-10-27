@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `TryFrom<Uint>` for `isize` and `usize`
+- `TryFrom<Uint> for usize`
+- Bit type aliases (`B128`, `B160`, `B256`, `B512`, ...)
+- `From` and `Into` trait implementations for `primitive-types` bit types
 - Support for `bn-rs`
 
 ## [1.5.1] — 2022-10-24

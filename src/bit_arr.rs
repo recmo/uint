@@ -10,6 +10,7 @@ use std::borrow::Cow;
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
@@ -68,13 +69,13 @@ macro_rules! forward {
             }
         )*
     };
-    ($(fn $fnname:ident(&self) -> $res:ty;)*) => {
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident:$generic_ty:ty),+>)?(&self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname(&self) -> $res {
+            pub fn $fnname$(<$(const $generic_arg:$generic_ty),+>)?(&self) -> $res {
                 Uint::$fnname(&self.0).into()
             }
         )*
@@ -124,6 +125,17 @@ macro_rules! forward {
             }
         )*
     };
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident:$generic_ty:ty),+>)?($($arg:ident:$arg_ty:ty),+) -> $res:ty;)*) => {
+        $(
+            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            #[must_use]
+            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> $res {
+                Uint::$fnname($($arg),+).into()
+            }
+        )*
+    };
 }
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
@@ -132,6 +144,8 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     }
     forward! {
         fn as_le_bytes(&self) -> Cow<'_, [u8]>;
+        fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
+        fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
         fn as_limbs(&self) -> &[u64; LIMBS];
         fn leading_zeros(&self) -> usize;
         fn leading_ones(&self) -> usize;
@@ -154,6 +168,9 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         fn wrapping_shr(self, usize) -> Self;
         fn rotate_left(self, usize) -> Self;
         fn rotate_right(self, usize) -> Self;
+    }
+    forward! {
+        fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self;
     }
 }
 

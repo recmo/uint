@@ -40,3 +40,5 @@ mod zeroize;
 // * https://crates.io/crates/diesel
 
 // FEATURE: Make sure `Bits` has the same level of support.
+
+// TODO: Add more support for `Bits`, for example `rand` and `quickcheck`.
