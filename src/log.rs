@@ -2,8 +2,8 @@ use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
-    pub fn checked_log(self, base: u64) -> Option<usize> {
-        if base < 2 || self == Self::ZERO {
+    pub fn checked_log(self, base: Self) -> Option<usize> {
+        if base < Self::from(2) || self == Self::ZERO {
             return None;
         }
         Some(self.log(base))
@@ -11,7 +11,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[must_use]
     pub fn checked_log10(self) -> Option<usize> {
-        self.checked_log(10)
+        self.checked_log(Self::from(10))
     }
 
     /// Returns the base 2 logarithm of the number, rounded down.
@@ -21,63 +21,67 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns None if the number is zero.
     #[must_use]
     pub fn checked_log2(self) -> Option<usize> {
-        self.checked_log(2)
+        self.checked_log(Self::from(2))
     }
 
     /// # Panics
     ///
     /// Panics if the `base` is less than 2 or if the number is zero.
     #[must_use]
-    pub fn log(self, base: u64) -> usize {
-        assert!(base >= 2);
+    pub fn log(self, base: Self) -> usize {
         assert!(self != Self::ZERO);
-        if base == 2 {
+        assert!(base >= Self::from(2));
+        if base == Self::from(2) {
             return self.bit_len() - 1;
         }
-        if self < Self::from(base) {
+        if self < base {
             return 0;
         }
 
         // Find approximate result
-        #[allow(clippy::cast_precision_loss)] // Approximate is good enough.
-        #[allow(clippy::cast_possible_truncation)] // Approximate is good enough.
-        #[allow(clippy::cast_sign_loss)] // Negative results cast to zeros. (TODO: Do they?)
-        let mut result = self.approx_log(base as f64) as usize;
+        #[allow(clippy::cast_precision_loss)] // Casting base to `f64` is fine.
+        let result = self.approx_log2() / base.approx_log2();
+        // We handled edge cases above, so the result should be normal and fit `Self`.
+        assert!(result.is_normal());
+        let mut result = result.try_into().unwrap();
 
         // Adjust result to get the exact value. At most one of these should happen, but
         // we loop regardless.
         loop {
-            if let Some(value) = Self::from(base).checked_pow(result) {
+            if let Some(value) = base.checked_pow(result) {
                 if value > self {
-                    assert!(result >= 1);
-                    result -= 1;
+                    assert!(result != Self::ZERO);
+                    result -= Self::from(1);
                     continue;
                 }
+            } else {
+                // Overflow, so definitely larger than `value`
+                result -= Self::from(1);
             }
             break;
         }
-        loop {
-            if let Some(value) = Self::from(base).checked_pow(result + 1) {
+        while let Some(trial) = result.checked_add(Self::from(1)) {
+            if let Some(value) = base.checked_pow(trial) {
                 if value <= self {
-                    assert!(result < usize::MAX);
-                    result += 1;
+                    result = trial;
                     continue;
                 }
             }
             break;
         }
 
-        result
+        // Should always be possible.
+        result.to()
     }
 
     #[must_use]
     pub fn log10(self) -> usize {
-        self.log(10)
+        self.log(Self::from(10))
     }
 
     #[must_use]
     pub fn log2(self) -> usize {
-        self.log(2)
+        self.log(Self::from(2))
     }
 
     /// Double precision logarithm.
@@ -160,9 +164,9 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0..BITS)| {
-                if let Some(value) = U::from(b).checked_pow(e) {
+                if let Some(value) = U::from(b).checked_pow(U::from(e)) {
                     assert!(value > U::ZERO);
-                    assert_eq!(value.log(b), e);
+                    assert_eq!(value.log(U::from(b)), e);
                     // assert_eq!(value.log(b + U::from(1)), e as u64);
                 }
             });
@@ -176,9 +180,9 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, n: U)| {
                 prop_assume!(n > U::ZERO);
-                let e = n.log(b);
-                assert!(U::from(b).pow(e) <= n);
-                if let Some(value) = U::from(b).checked_pow(e + 1) {
+                let e = n.log(U::from(b));
+                assert!(U::from(b).pow(U::from(e)) <= n);
+                if let Some(value) = U::from(b).checked_pow(U::from(e + 1)) {
                     assert!(value > n);
                 }
             });
@@ -206,12 +210,15 @@ pub mod bench {
     }
 
     fn bench_log<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        if BITS < 7 {
+            return;
+        }
         let input = (Uint::<BITS, LIMBS>::arbitrary(), 2_u64..100);
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("log/{BITS}"), move |bencher| {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
-                |(n, b)| black_box(black_box(n).checked_log(b)),
+                |(n, b)| black_box(black_box(n).checked_log(Uint::<BITS, LIMBS>::from(b))),
                 BatchSize::SmallInput,
             );
         });
