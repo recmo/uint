@@ -74,9 +74,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
-    pub fn wrapping_pow(self, exp: Self) -> Self {
-        // TODO: Dedicated algorithm (avoiding overflowing squares and muls).
-        self.overflowing_pow(exp).0
+    pub fn wrapping_pow(mut self, mut exp: Self) -> Self {
+        if BITS == 0 {
+            return self;
+        }
+
+        // Exponentiation by squaring
+        let mut result = Self::from(1);
+        while exp != Self::ZERO {
+            // Multiply by base
+            if exp.bit(0) {
+                result = result.wrapping_mul(self);
+            }
+
+            // Square base
+            self = self.wrapping_mul(self);
+            exp >>= 1;
+        }
+        result
     }
 
     /// Construct from double precision binary logarithm.
@@ -201,6 +216,21 @@ pub mod bench {
             bencher.iter_batched(
                 || input.new_tree(&mut runner).unwrap().current(),
                 |(b, e)| black_box(black_box(b).pow(black_box(e))),
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    fn bench_wrapping_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::<BITS, LIMBS>::arbitrary(),
+        );
+        let mut runner = TestRunner::deterministic();
+        criterion.bench_function(&format!("wrapping_pow/{BITS}"), move |bencher| {
+            bencher.iter_batched(
+                || input.new_tree(&mut runner).unwrap().current(),
+                |(b, e)| black_box(black_box(b).wrapping_pow(black_box(e))),
                 BatchSize::SmallInput,
             );
         });
