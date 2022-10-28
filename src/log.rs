@@ -1,5 +1,3 @@
-// TODO: Make base arguments `Self`
-
 use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -43,7 +41,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // Find approximate result
         #[allow(clippy::cast_precision_loss)] // Casting base to `f64` is fine.
         let result = self.approx_log2() / base.approx_log2();
-        // TODO: Is this conversion guaranteed?
+        // We handled edge cases above, so the result should be normal and fit `Self`.
+        assert!(result.is_normal());
         let mut result = result.try_into().unwrap();
 
         // Adjust result to get the exact value. At most one of these should happen, but

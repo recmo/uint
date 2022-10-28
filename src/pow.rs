@@ -1,7 +1,5 @@
 use crate::Uint;
 
-// TODO: `exp: Self`
-
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub fn checked_pow(self, exp: Self) -> Option<Self> {
