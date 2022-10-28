@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bit type aliases (`B128`, `B160`, `B256`, `B512`, ...)
 - `From` and `Into` trait implementations for `primitive-types` bit types
 - Support for `bn-rs`
+- Derive `Default` for `Bits`
 
 ### Changed
 
