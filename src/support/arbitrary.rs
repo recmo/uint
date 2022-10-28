@@ -4,6 +4,12 @@
 use crate::Uint;
 use arbitrary::{Arbitrary, Result, Unstructured};
 
+// TODO: Instead of uniform random sampling, we should use a distribution that
+// exercises different scales more. Something like sum(±2ⁱ for random i). The
+// reduction step can then remove terms or make them smaller.
+
+// TODO: We should use `rand` in tests, not `arbitrary`.
+
 impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIMBS> {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
         let mut limbs = [0; LIMBS];
