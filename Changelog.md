@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `From` and `Into` trait implementations for `primitive-types` bit types
 - Support for `bn-rs`
 
+### Changed
+
+- (Breaking) Changed the arguments of `pow` and `log` to `Uint`.
+- More efficient `wrapping_pow` implementation.
+
 ## [1.5.1] — 2022-10-24
 
 ### Changed
