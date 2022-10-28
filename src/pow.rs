@@ -14,21 +14,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(36_U64.overflowing_pow(12), (0x41c21cb8e1000000_U64, false));
-    /// assert_eq!(36_U64.overflowing_pow(13), (0x3f4c09ffa4000000_U64, true));
-    /// assert_eq!(36_U68.overflowing_pow(13), (0x093f4c09ffa4000000_U68, false));
-    /// assert_eq!(16_U65.overflowing_pow(32), (0_U65, true));
+    /// assert_eq!(36_U64.overflowing_pow(12_U64), (0x41c21cb8e1000000_U64, false));
+    /// assert_eq!(36_U64.overflowing_pow(13_U64), (0x3f4c09ffa4000000_U64, true));
+    /// assert_eq!(36_U68.overflowing_pow(13_U68), (0x093f4c09ffa4000000_U68, false));
+    /// assert_eq!(16_U65.overflowing_pow(32_U65), (0_U65, true));
     /// # }
     /// ```
     /// Small cases:
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(0_U0.overflowing_pow(0), (0_U0, false));
-    /// assert_eq!(0_U1.overflowing_pow(0), (1_U1, false));
-    /// assert_eq!(0_U1.overflowing_pow(1), (0_U1, false));
-    /// assert_eq!(1_U1.overflowing_pow(0), (1_U1, false));
-    /// assert_eq!(1_U1.overflowing_pow(1), (1_U1, false));
+    /// assert_eq!(0_U0.overflowing_pow(0_U0), (0_U0, false));
+    /// assert_eq!(0_U1.overflowing_pow(0_U1), (1_U1, false));
+    /// assert_eq!(0_U1.overflowing_pow(1_U1), (0_U1, false));
+    /// assert_eq!(1_U1.overflowing_pow(0_U1), (1_U1, false));
+    /// assert_eq!(1_U1.overflowing_pow(1_U1), (1_U1, false));
     /// # }
     /// ```
     #[must_use]
