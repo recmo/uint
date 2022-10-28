@@ -1,8 +1,10 @@
 use crate::Uint;
 
+// TODO: `exp: Self`
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
-    pub fn checked_pow(self, exp: usize) -> Option<Self> {
+    pub fn checked_pow(self, exp: Self) -> Option<Self> {
         match self.overflowing_pow(exp) {
             (x, false) => Some(x),
             (_, true) => None,
@@ -32,7 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # }
     /// ```
     #[must_use]
-    pub fn overflowing_pow(mut self, mut exp: usize) -> (Self, bool) {
+    pub fn overflowing_pow(mut self, mut exp: Self) -> (Self, bool) {
         if BITS == 0 {
             return (self, false);
         }
@@ -41,9 +43,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut overflow = false;
         let mut base_overflow = false;
         let mut result = Self::from(1);
-        while exp > 0 {
+        while exp != Self::ZERO {
             // Multiply by base
-            if exp & 1 == 1 {
+            if exp.bit(0) {
                 let (r, o) = result.overflowing_mul(self);
                 result = r;
                 overflow |= o | base_overflow;
@@ -59,12 +61,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
-    pub fn pow(self, exp: usize) -> Self {
+    pub fn pow(self, exp: Self) -> Self {
         self.wrapping_pow(exp)
     }
 
     #[must_use]
-    pub fn saturating_pow(self, exp: usize) -> Self {
+    pub fn saturating_pow(self, exp: Self) -> Self {
         match self.overflowing_pow(exp) {
             (x, false) => x,
             (_, true) => Self::MAX,
@@ -72,7 +74,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[must_use]
-    pub fn wrapping_pow(self, exp: usize) -> Self {
+    pub fn wrapping_pow(self, exp: Self) -> Self {
+        // TODO: Dedicated algorithm (avoiding overflowing squares and muls).
         self.overflowing_pow(exp).0
     }
 
@@ -150,7 +153,7 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(e in 0..=BITS+1)| {
-                assert_eq!(U::from(2).pow(e), U::from(1) << e);
+                assert_eq!(U::from(2).pow(U::from(e)), U::from(1) << e);
             });
         });
     }
@@ -163,7 +166,7 @@ mod tests {
             proptest!(|(b in 2_u64..100, e in 0_usize..100)| {
                 let b = U::from(b);
                 let prod = repeat(b).take(e).product();
-                assert_eq!(b.pow(e), prod);
+                assert_eq!(b.pow(U::from(e)), prod);
             });
         });
     }
@@ -189,7 +192,10 @@ pub mod bench {
     }
 
     fn bench_pow<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), usize::arbitrary());
+        let input = (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            Uint::<BITS, LIMBS>::arbitrary(),
+        );
         let mut runner = TestRunner::deterministic();
         criterion.bench_function(&format!("pow/{BITS}"), move |bencher| {
             bencher.iter_batched(

@@ -1,6 +1,9 @@
+// TODO: Make base arguments `Self`
+
 use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// ⚠️ The function type may change.
     #[must_use]
     pub fn checked_log(self, base: u64) -> Option<usize> {
         if base < 2 || self == Self::ZERO {
@@ -24,6 +27,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.checked_log(2)
     }
 
+    /// ⚠️ The function type may change.
+    ///
     /// # Panics
     ///
     /// Panics if the `base` is less than 2 or if the number is zero.
@@ -39,35 +44,34 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Find approximate result
-        #[allow(clippy::cast_precision_loss)] // Approximate is good enough.
-        #[allow(clippy::cast_possible_truncation)] // Approximate is good enough.
-        #[allow(clippy::cast_sign_loss)] // Negative results cast to zeros. (TODO: Do they?)
-        let mut result = self.approx_log(base as f64) as usize;
+        // TODO: Is this conversion guaranteed?
+        #[allow(clippy::cast_precision_loss)] // Casting base to `f64` is fine.
+        let mut result = self.approx_log(base as f64).try_into().unwrap();
 
         // Adjust result to get the exact value. At most one of these should happen, but
         // we loop regardless.
         loop {
             if let Some(value) = Self::from(base).checked_pow(result) {
                 if value > self {
-                    assert!(result >= 1);
-                    result -= 1;
+                    assert!(result != Self::ZERO);
+                    result -= Self::from(1);
                     continue;
                 }
             }
             break;
         }
-        loop {
-            if let Some(value) = Self::from(base).checked_pow(result + 1) {
+        while let Some(trial) = result.checked_add(Self::from(1)) {
+            if let Some(value) = Self::from(base).checked_pow(trial) {
                 if value <= self {
-                    assert!(result < usize::MAX);
-                    result += 1;
+                    result = trial;
                     continue;
                 }
             }
             break;
         }
 
-        result
+        // Should always be possible.
+        result.to()
     }
 
     #[must_use]
@@ -160,7 +164,7 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0..BITS)| {
-                if let Some(value) = U::from(b).checked_pow(e) {
+                if let Some(value) = U::from(b).checked_pow(U::from(e)) {
                     assert!(value > U::ZERO);
                     assert_eq!(value.log(b), e);
                     // assert_eq!(value.log(b + U::from(1)), e as u64);
@@ -177,8 +181,8 @@ mod tests {
             proptest!(|(b in 2_u64..100, n: U)| {
                 prop_assume!(n > U::ZERO);
                 let e = n.log(b);
-                assert!(U::from(b).pow(e) <= n);
-                if let Some(value) = U::from(b).checked_pow(e + 1) {
+                assert!(U::from(b).pow(U::from(e)) <= n);
+                if let Some(value) = U::from(b).checked_pow(U::from(e + 1)) {
                     assert!(value > n);
                 }
             });

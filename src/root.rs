@@ -48,6 +48,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         #[allow(clippy::cast_sign_loss)] // Result should be positive.
         let mut result = Self::approx_pow2(self.approx_log2() / degree as f64).unwrap();
 
+        let deg_m1 = Self::from(degree - 1);
+
         // Iterate using Newton's method
         // See <https://en.wikipedia.org/wiki/Integer_square_root#Algorithm_using_Newton's_method>
         // See <https://gmplib.org/manual/Nth-Root-Algorithm>
@@ -59,9 +61,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // OPT: The division can be turned into bit-shifts when the degree is a power of
             // two.
             let division = result
-                .checked_pow(degree - 1)
+                .checked_pow(deg_m1)
                 .map_or(Self::ZERO, |power| self / power);
-            let iter = (division + Self::from(degree - 1) * result) / Self::from(degree);
+            let iter = (division + deg_m1 * result) / Self::from(degree);
             match (decreasing, iter.cmp(&result)) {
                 // Stop when we hit fix point or stop decreasing.
                 (_, Ordering::Equal) | (true, Ordering::Greater) => break result,
@@ -99,11 +101,11 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U, degree in 1_usize..=5)| {
                 let root = value.root(degree);
-                let lower = root.pow(degree);
+                let lower = root.pow(U::from(degree));
                 assert!(value >= lower);
                 let upper = root
                     .checked_add(U::from(1))
-                    .and_then(|n| n.checked_pow(degree));
+                    .and_then(|n| n.checked_pow(U::from(degree)));
                 if let Some(upper) = upper {
                    assert!(value < upper);
                 }
@@ -120,11 +122,11 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(value: U, degree in 1_usize..=BITS)| {
                 let root = value.root(degree);
-                let lower = root.pow(degree);
+                let lower = root.pow(U::from(degree));
                 assert!(value >= lower);
                 let upper = root
                     .checked_add(U::from(1))
-                    .and_then(|n| n.checked_pow(degree));
+                    .and_then(|n| n.checked_pow(U::from(degree)));
                 if let Some(upper) = upper {
                    assert!(value < upper);
                 }
