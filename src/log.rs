@@ -57,6 +57,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                     result -= Self::from(1);
                     continue;
                 }
+            } else {
+                // Overflow, so definitely larger than `value`
+                result -= Self::from(1);
             }
             break;
         }
