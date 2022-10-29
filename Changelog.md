@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] — 2022-10-28
+
 ### Added
 
 - `TryFrom<Uint> for usize`
@@ -180,7 +182,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.5.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/recmo/uint/releases/tag/v1.6.0
 [1.5.1]: https://github.com/recmo/uint/releases/tag/v1.5.1
 [1.5.0]: https://github.com/recmo/uint/releases/tag/v1.5.0
 [1.4.1]: https://github.com/recmo/uint/releases/tag/v1.4.1
