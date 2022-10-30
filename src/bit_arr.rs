@@ -1,16 +1,17 @@
 // TODO: Forward `const fn` as `const fn`.
 #![allow(clippy::missing_const_for_fn)]
 
-use crate::Uint;
+use crate::{ParseError, Uint};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
     Shr, ShrAssign,
 };
+use derive_more::{From, FromStr, Into};
 use std::borrow::Cow;
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Default, Eq, From, FromStr, Into, PartialEq, Hash)]
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
@@ -43,18 +44,6 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for Bits<BITS, LIMBS> {
-    fn from(x: Uint<BITS, LIMBS>) -> Self {
-        Self(x)
-    }
-}
-
-impl<const BITS: usize, const LIMBS: usize> From<Bits<BITS, LIMBS>> for Uint<BITS, LIMBS> {
-    fn from(x: Bits<BITS, LIMBS>) -> Self {
-        x.0
-    }
-}
-
 // Limitations of declarative macro matching force us to break down on argument
 // patterns.
 macro_rules! forward {
@@ -69,13 +58,13 @@ macro_rules! forward {
             }
         )*
     };
-    ($(fn $fnname:ident$(<$(const $generic_arg:ident:$generic_ty:ty),+>)?(&self) -> $res:ty;)*) => {
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?(&self) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname$(<$(const $generic_arg:$generic_ty),+>)?(&self) -> $res {
+            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?(&self) -> $res {
                 Uint::$fnname(&self.0).into()
             }
         )*
@@ -91,41 +80,63 @@ macro_rules! forward {
             }
         )*
     };
-    ($(fn $fnname:ident(self, $arg:ty) -> Option<Self>;)*) => {
+    ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> Option<Self>;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname(self, a: $arg) -> Option<Self> {
-                Uint::$fnname(self.0, a).map(Bits::from)
+            pub fn $fnname(self, $arg: $arg_ty) -> Option<Self> {
+                Uint::$fnname(self.0, $arg).map(Bits::from)
             }
         )*
     };
-    ($(fn $fnname:ident(self, $arg:ty) -> (Self, bool);)*) => {
+    ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> (Self, bool);)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname(self, a: $arg) -> (Self, bool) {
-                let (value, flag) = Uint::$fnname(self.0, a);
+            pub fn $fnname(self, $arg: $arg_ty) -> (Self, bool) {
+                let (value, flag) = Uint::$fnname(self.0, $arg);
                 (value.into(), flag)
             }
         )*
     };
-    ($(fn $fnname:ident(self, $arg:ty) -> $res:ty;)*) => {
+    ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
             #[must_use]
-            pub fn $fnname(self, a: $arg) -> $res {
-                Uint::$fnname(self.0, a).into()
+            pub fn $fnname(self, $arg: $arg_ty) -> $res {
+                Uint::$fnname(self.0, $arg).into()
             }
         )*
     };
-    ($(fn $fnname:ident$(<$(const $generic_arg:ident:$generic_ty:ty),+>)?($($arg:ident:$arg_ty:ty),+) -> $res:ty;)*) => {
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> Option<Self>;)*) => {
+        $(
+            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            #[must_use]
+            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Option<Self> {
+                Uint::$fnname($($arg),+).map(Bits::from)
+            }
+        )*
+    };
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> Result<Self, $err_ty:ty>;)*) => {
+        $(
+            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+            #[allow(clippy::inline_always)]
+            #[inline(always)]
+            #[must_use]
+            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Result<Self, $err_ty> {
+                Uint::$fnname($($arg),+).map(Bits::from)
+            }
+        )*
+    };
+    ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> $res:ty;)*) => {
         $(
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
@@ -146,6 +157,7 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         fn as_le_bytes(&self) -> Cow<'_, [u8]>;
         fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
         fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
+        fn to_be_bytes_vec(&self) -> Vec<u8>;
         fn as_limbs(&self) -> &[u64; LIMBS];
         fn leading_zeros(&self) -> usize;
         fn leading_ones(&self) -> usize;
@@ -156,21 +168,29 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS];
     }
     forward! {
-        fn checked_shl(self, usize) -> Option<Self>;
-        fn checked_shr(self, usize) -> Option<Self>;
+        fn checked_shl(self, rhs: usize) -> Option<Self>;
+        fn checked_shr(self, rhs: usize) -> Option<Self>;
     }
     forward! {
-        fn overflowing_shl(self, usize) -> (Self, bool);
-        fn overflowing_shr(self, usize) -> (Self, bool);
+        fn overflowing_shl(self, rhs: usize) -> (Self, bool);
+        fn overflowing_shr(self, rhs: usize) -> (Self, bool);
     }
     forward! {
-        fn wrapping_shl(self, usize) -> Self;
-        fn wrapping_shr(self, usize) -> Self;
-        fn rotate_left(self, usize) -> Self;
-        fn rotate_right(self, usize) -> Self;
+        fn wrapping_shl(self, rhs: usize) -> Self;
+        fn wrapping_shr(self, rhs: usize) -> Self;
+        fn rotate_left(self, rhs: usize) -> Self;
+        fn rotate_right(self, rhs: usize) -> Self;
+    }
+    forward! {
+        fn try_from_be_slice(bytes: &[u8]) -> Option<Self>;
+        fn try_from_le_slice(bytes: &[u8]) -> Option<Self>;
+    }
+    forward! {
+        fn from_str_radix(src: &str, radix: u64) -> Result<Self, ParseError>;
     }
     forward! {
         fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self;
+        fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self;
     }
 }
 
