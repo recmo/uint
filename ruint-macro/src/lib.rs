@@ -110,7 +110,11 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
         }
 
         // Add digit to result
-        limbs[0] += digit; // Never carries
+        let (result, overflow) = limbs[0].overflowing_add(digit);
+        limbs[0] = result;
+        if overflow {
+            limbs[1] += 1;
+        }
     }
 
     // Remove trailing zeros, pad with zeros
