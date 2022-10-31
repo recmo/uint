@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support `rlp` for `Bits`
+
 ## [1.6.0] — 2022-10-28
 
 ### Added
