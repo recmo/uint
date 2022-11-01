@@ -2,7 +2,7 @@
 #![cfg(feature = "serde")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "serde")))]
 
-use crate::{nbytes, Uint};
+use crate::{nbytes, Bits, Uint};
 use core::fmt::{Formatter, Result as FmtResult};
 use serde::{
     de::{Error, Unexpected, Visitor},
@@ -32,7 +32,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     }
 }
 
-/// Deserialize human readable hex strings or byte arrays into hashes.
+/// Deserialize human readable hex strings or byte arrays into [`Uint`] value.
 /// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
 /// can be any length. They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
@@ -42,6 +42,24 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
         } else {
             deserializer.deserialize_bytes(ByteVisitor)
         }
+    }
+}
+
+/// Serialize a [`Bits`] value as big-endian bytes array.
+impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.to_be_bytes_vec()[..])
+    }
+}
+
+/// Deserialize byte arrays into [`Bits`] value.
+/// They are interpreted big-endian.
+impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS, LIMBS> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_bytes(ByteVisitor).map(Bits::from)
     }
 }
 
@@ -107,7 +125,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
     }
 }
 
-/// Helper function to remove  optionally `0x` prefix from hex strings.
+/// Helper function to remove optionally `0x` prefix from hex strings.
 #[allow(clippy::missing_const_for_fn)]
 fn trim_hex_prefix(str: &str) -> &str {
     if str.len() >= 2 && (&str[..2] == "0x" || &str[..2] == "0X") {
@@ -140,6 +158,11 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
+                let serialized = bincode::serialize(&value).unwrap();
+                let deserialized = bincode::deserialize(&serialized[..]).unwrap();
+                assert_eq!(value, deserialized);
+            });
+            proptest!(|(value: Bits<BITS, LIMBS>)| {
                 let serialized = bincode::serialize(&value).unwrap();
                 let deserialized = bincode::deserialize(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);
