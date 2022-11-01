@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support `rlp` for `Bits`
+
 ### Fixed
 
 - Edge case in which an overflow occurs when parsing a `Uint` with `uint!`.
