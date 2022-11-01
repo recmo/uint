@@ -96,8 +96,8 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
             ));
         }
 
-        // Multiply result by base
-        let mut carry = 0_u64;
+        // Multiply result by base and add digit
+        let mut carry = digit;
         #[allow(clippy::cast_lossless)]
         #[allow(clippy::cast_possible_truncation)]
         for limb in &mut limbs {
@@ -107,13 +107,6 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
         }
         if carry > 0 {
             limbs.push(carry);
-        }
-
-        // Add digit to result
-        let (result, overflow) = limbs[0].overflowing_add(digit);
-        limbs[0] = result;
-        if overflow {
-            limbs[1] += 1;
         }
     }
 
