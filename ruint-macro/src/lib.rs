@@ -2,10 +2,35 @@
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::fmt::{Display, Formatter};
 use std::{fmt::Write, str::FromStr};
 
-/// Construct a `Uint<{bits}>` literal from `limbs`.
-fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
+#[derive(Copy, Clone)]
+enum LiteralBaseType {
+    Uint,
+    Bits,
+}
+
+impl LiteralBaseType {
+    fn delimiter(self) -> &'static str {
+        match self {
+            LiteralBaseType::Uint => "U",
+            LiteralBaseType::Bits => "B",
+        }
+    }
+}
+
+impl Display for LiteralBaseType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LiteralBaseType::Uint => f.write_str("Uint"),
+            LiteralBaseType::Bits => f.write_str("Bits"),
+        }
+    }
+}
+
+/// Construct a `<{base_type}><{bits}>` literal from `limbs`.
+fn construct(bits: usize, limbs: &[u64], base_type: LiteralBaseType) -> TokenStream {
     let mut limbs_str = String::new();
     for limb in limbs {
         write!(&mut limbs_str, "{limb}u64,").unwrap();
@@ -14,7 +39,7 @@ fn construct(bits: usize, limbs: &[u64]) -> TokenStream {
     let limbs = (bits + 63) / 64;
 
     let source = format!(
-        "::ruint::Uint::<{}, {}>::from_limbs([{}])",
+        "::ruint::{base_type}::<{}, {}>::from_limbs([{}])",
         bits, limbs, limbs_str
     );
     TokenStream::from_str(&source).unwrap()
@@ -46,8 +71,8 @@ fn error(span: Span, message: &str) -> TokenStream {
     ])
 }
 
-/// Parse a value literal and bits suffix into a Uint literal.
-fn parse(value: &str, bits: &str) -> Result<(usize, Vec<u64>), String> {
+/// Parse a value literal and bits suffix into a `base_type` literal.
+fn parse(value: &str, bits: &str, base_type: LiteralBaseType) -> Result<(usize, Vec<u64>), String> {
     // Parse bit length
     let bits = bits
         .parse::<usize>()
@@ -120,19 +145,19 @@ fn parse(value: &str, bits: &str) -> Result<(usize, Vec<u64>), String> {
     // Check value range
     if limbs.len() > num_limbs || limbs.last().copied().unwrap_or(0) > mask {
         let value = value.trim_end_matches('_');
-        return Err(format!("Value too large for Uint<{bits}>: {value}"));
+        return Err(format!("Value too large for {base_type}<{bits}>: {value}"));
     }
 
     Ok((bits, limbs))
 }
 
 /// Transforms a [`Literal`] and returns the substitute [`TokenTree`]
-fn transform_literal(literal: Literal) -> TokenTree {
+fn transform_literal(literal: Literal, base_type: LiteralBaseType) -> TokenTree {
     let source = literal.to_string();
-    if let Some((value, bits)) = source.split_once('U') {
-        let tokens = parse(value, bits).map_or_else(
+    if let Some((value, bits)) = source.split_once(base_type.delimiter()) {
+        let tokens = parse(value, bits, base_type).map_or_else(
             |e| error(literal.span(), &e),
-            |(bits, limbs)| construct(bits, &limbs),
+            |(bits, limbs)| construct(bits, &limbs, base_type),
         );
 
         return TokenTree::Group(Group::new(Delimiter::None, tokens));
@@ -141,19 +166,19 @@ fn transform_literal(literal: Literal) -> TokenTree {
 }
 
 /// Recurse down tree and transform all literals.
-fn transform_tree(tree: TokenTree) -> TokenTree {
+fn transform_tree(tree: TokenTree, base_type: LiteralBaseType) -> TokenTree {
     match tree {
         TokenTree::Group(group) => {
             let delimiter = group.delimiter();
             let span = group.span();
-            let stream = transform_stream(group.stream());
+            let stream = transform_stream(group.stream(), base_type);
             let mut transformed = Group::new(delimiter, stream);
             transformed.set_span(span);
             TokenTree::Group(transformed)
         }
         TokenTree::Literal(a) => {
             let span = a.span();
-            let mut subs = transform_literal(a);
+            let mut subs = transform_literal(a, base_type);
             subs.set_span(span);
             subs
         }
@@ -162,15 +187,25 @@ fn transform_tree(tree: TokenTree) -> TokenTree {
 }
 
 /// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
-fn transform_stream(stream: TokenStream) -> TokenStream {
-    stream.into_iter().map(transform_tree).collect()
+fn transform_stream(stream: TokenStream, base_type: LiteralBaseType) -> TokenStream {
+    stream
+        .into_iter()
+        .map(|tree| transform_tree(tree, base_type))
+        .collect()
 }
 
 // Repeat the crate doc
 #[doc = include_str!("../Readme.md")]
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
-    transform_stream(stream)
+    transform_stream(stream, LiteralBaseType::Uint)
+}
+
+// Repeat the crate doc
+#[doc = include_str!("../Readme.md")]
+#[proc_macro]
+pub fn bits(stream: TokenStream) -> TokenStream {
+    transform_stream(stream, LiteralBaseType::Bits)
 }
 
 #[cfg(test)]
@@ -179,25 +214,37 @@ mod tests {
 
     #[test]
     fn test_zero_size() {
-        assert_eq!(parse("0", "0"), Ok((0, vec![])));
-        assert_eq!(parse("00000", "0"), Ok((0, vec![])));
-        assert_eq!(parse("0x00", "0"), Ok((0, vec![])));
-        assert_eq!(parse("0b0000", "0"), Ok((0, vec![])));
-        assert_eq!(parse("0b0000000", "0"), Ok((0, vec![])));
+        for base_type in [LiteralBaseType::Uint, LiteralBaseType::Bits] {
+            assert_eq!(parse("0", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("00000", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0x00", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0b0000", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0b0000000", "0", base_type), Ok((0, vec![])));
+
+            assert_eq!(parse("0", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("00000", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0x00", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0b0000", "0", base_type), Ok((0, vec![])));
+            assert_eq!(parse("0b0000000", "0", base_type), Ok((0, vec![])));
+        }
     }
 
     #[test]
     fn test_bases() {
-        assert_eq!(parse("10", "8"), Ok((8, vec![10])));
-        assert_eq!(parse("0x10", "8"), Ok((8, vec![16])));
-        assert_eq!(parse("0b10", "8"), Ok((8, vec![2])));
-        assert_eq!(parse("0o10", "8"), Ok((8, vec![8])));
+        for base_type in [LiteralBaseType::Uint, LiteralBaseType::Bits] {
+            assert_eq!(parse("10", "8", base_type), Ok((8, vec![10])));
+            assert_eq!(parse("0x10", "8", base_type), Ok((8, vec![16])));
+            assert_eq!(parse("0b10", "8", base_type), Ok((8, vec![2])));
+            assert_eq!(parse("0o10", "8", base_type), Ok((8, vec![8])));
+        }
     }
 
     #[test]
     #[allow(clippy::unreadable_literal)]
     fn test_overflow_during_parsing() {
-        assert_eq!(parse("258664426012969093929703085429980814127835149614277183275038967946009968870203535512256352201271898244626862047232", "384"), Ok((384, vec![0, 15125697203588300800, 6414901478162127871, 13296924585243691235, 13584922160258634318, 121098312706494698])));
-        assert_eq!(parse("2135987035920910082395021706169552114602704522356652769947041607822219725780640550022962086936576", "384"), Ok((384, vec![0, 0, 0, 0, 0, 1])));
+        for base_type in [LiteralBaseType::Uint, LiteralBaseType::Bits] {
+            assert_eq!(parse("258664426012969093929703085429980814127835149614277183275038967946009968870203535512256352201271898244626862047232", "384", base_type), Ok((384, vec![0, 15125697203588300800, 6414901478162127871, 13296924585243691235, 13584922160258634318, 121098312706494698])));
+            assert_eq!(parse("2135987035920910082395021706169552114602704522356652769947041607822219725780640550022962086936576", "384", base_type), Ok((384, vec![0, 0, 0, 0, 0, 1])));
+        }
     }
 }

@@ -1,4 +1,4 @@
-# The `uint!` macro for `Uint` literals
+# The `uint!` and `bits!` macros for `Uint` and `Bits` literals
 
 <!-- Fix linking to `Uint`. See https://github.com/rust-lang/rust/issues/74481 -->
 
@@ -62,6 +62,10 @@ error: Value too large for Uint<8>: 300
 1 | let sparta = 300_U8;
   |              ^^^^^^
 ```
+
+---
+
+Everything above applies to the `bits!` macro for constructing `Bits` literals as well.
 
 
 ## References

@@ -44,106 +44,128 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     }
 }
 
+macro_rules! forward_attributes {
+    ($fnname:ident, $item:item) => {
+        #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
+        #[allow(clippy::inline_always)]
+        #[inline(always)]
+        #[must_use]
+        $item
+    };
+}
+
 // Limitations of declarative macro matching force us to break down on argument
 // patterns.
 macro_rules! forward {
     ($(fn $fnname:ident(self) -> $res:ty;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname(self) -> $res {
-                Uint::$fnname(self.0).into()
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname(self) -> $res {
+                    Uint::$fnname(self.0).into()
+                }
+            );
         )*
     };
     ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?(&self) -> $res:ty;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?(&self) -> $res {
-                Uint::$fnname(&self.0).into()
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?(&self) -> $res {
+                    Uint::$fnname(&self.0).into()
+                }
+            );
         )*
     };
     ($(unsafe fn $fnname:ident(&mut self) -> $res:ty;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub unsafe fn $fnname(&mut self) -> $res {
-                Uint::$fnname(&mut self.0).into()
-            }
+            forward_attributes!(
+                $fnname,
+                pub unsafe fn $fnname(&mut self) -> $res {
+                    Uint::$fnname(&mut self.0).into()
+                }
+            );
         )*
     };
     ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> Option<Self>;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname(self, $arg: $arg_ty) -> Option<Self> {
-                Uint::$fnname(self.0, $arg).map(Bits::from)
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname(self, $arg: $arg_ty) -> Option<Self> {
+                    Uint::$fnname(self.0, $arg).map(Bits::from)
+                }
+            );
         )*
     };
     ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> (Self, bool);)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname(self, $arg: $arg_ty) -> (Self, bool) {
-                let (value, flag) = Uint::$fnname(self.0, $arg);
-                (value.into(), flag)
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname(self, $arg: $arg_ty) -> (Self, bool) {
+                    let (value, flag) = Uint::$fnname(self.0, $arg);
+                    (value.into(), flag)
+                }
+            );
         )*
     };
     ($(fn $fnname:ident(self, $arg:ident: $arg_ty:ty) -> $res:ty;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname(self, $arg: $arg_ty) -> $res {
-                Uint::$fnname(self.0, $arg).into()
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname(self, $arg: $arg_ty) -> $res {
+                    Uint::$fnname(self.0, $arg).into()
+                }
+            );
         )*
     };
     ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> Option<Self>;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Option<Self> {
-                Uint::$fnname($($arg),+).map(Bits::from)
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Option<Self> {
+                    Uint::$fnname($($arg),+).map(Bits::from)
+                }
+            );
         )*
     };
     ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> Result<Self, $err_ty:ty>;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Result<Self, $err_ty> {
-                Uint::$fnname($($arg),+).map(Bits::from)
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Result<Self, $err_ty> {
+                    Uint::$fnname($($arg),+).map(Bits::from)
+                }
+            );
         )*
     };
     ($(fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> $res:ty;)*) => {
         $(
-            #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-            #[allow(clippy::inline_always)]
-            #[inline(always)]
-            #[must_use]
-            pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> $res {
-                Uint::$fnname($($arg),+).into()
-            }
+            forward_attributes!(
+                $fnname,
+                pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> $res {
+                    Uint::$fnname($($arg),+).into()
+                }
+            );
+        )*
+    };
+    ($(const fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?($($arg:ident: $arg_ty:ty),+) -> Self;)*) => {
+        $(
+            forward_attributes!(
+                $fnname,
+                pub const fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Self {
+                    Bits(Uint::$fnname($($arg),+))
+                }
+            );
+        )*
+    };
+    ($(const fn $fnname:ident$(<$(const $generic_arg:ident: $generic_ty:ty),+>)?(&self) -> $res_ty:ty;)*) => {
+        $(
+            forward_attributes!(
+                $fnname,
+                pub const fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?(&self) -> $res_ty {
+                    Uint::$fnname(&self.0)
+                }
+            );
         )*
     };
 }
@@ -157,7 +179,6 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
         fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
         fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
         fn to_be_bytes_vec(&self) -> Vec<u8>;
-        fn as_limbs(&self) -> &[u64; LIMBS];
         fn leading_zeros(&self) -> usize;
         fn leading_ones(&self) -> usize;
         fn trailing_zeros(&self) -> usize;
@@ -190,6 +211,12 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     forward! {
         fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self;
         fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self;
+    }
+    forward! {
+        const fn from_limbs(limbs: [u64; LIMBS]) -> Self;
+    }
+    forward! {
+        const fn as_limbs(&self) -> &[u64; LIMBS];
     }
 }
 
