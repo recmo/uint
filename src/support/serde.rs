@@ -18,13 +18,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
-            // OPT: Allocation free method.
-            let mut result = String::with_capacity(2 * Self::BYTES + 2);
-            result.push_str("0x");
-            for byte in bytes {
-                write!(result, "{byte:02x}").unwrap();
-            }
-            serializer.serialize_str(&result)
+            Bits::from(self).serialize(serializer)
         } else {
             // Write as bytes directly
             serializer.serialize_bytes(&bytes[..])
@@ -45,21 +39,27 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
     }
 }
 
-/// Serialize a [`Bits`] value as big-endian bytes array.
+/// Serialize a [`Bits`] value as a `0x` prefixed lower case hex string.
 impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.to_be_bytes_vec()[..])
+        // OPT: Allocation free method.
+        let mut result = String::with_capacity(2 * Self::BYTES + 2);
+        result.push_str("0x");
+        for byte in self.to_be_bytes() {
+            write!(result, "{byte:02x}").unwrap();
+        }
+        serializer.serialize_str(&result)
     }
 }
 
-/// Deserialize byte arrays into [`Bits`] value.
+/// Deserialize a `0x` prefixed lower case hex string into [`Bits`] value.
 /// They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_bytes(ByteVisitor).map(Bits::from)
+        deserializer.deserialize_str(StrVisitor).map(Self::from)
     }
 }
 
