@@ -18,7 +18,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
-            Bits::from(self).serialize(serializer)
+            Bits::from(*self).serialize(serializer)
         } else {
             // Write as bytes directly
             serializer.serialize_bytes(&bytes[..])
@@ -48,7 +48,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
         // OPT: Allocation free method.
         let mut result = String::with_capacity(2 * Self::BYTES + 2);
         result.push_str("0x");
-        for byte in self.to_be_bytes() {
+        for byte in self.to_be_bytes_vec() {
             write!(result, "{byte:02x}").unwrap();
         }
         serializer.serialize_str(&result)
