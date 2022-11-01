@@ -9,13 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] — 2022-10-31
+
 ### Added
 
 - Support `rlp` for `Bits`
 
 ### Fixed
 
-- Edge case in which an overflow occurs when parsing a `Uint` with `uint!`.
+- Edge case in which an overflow occurs when parsing a `Uint` with `uint!` ([#199]).
+
+[#199]: https://github.com/recmo/uint/issues/199
 
 ## [1.6.0] — 2022-10-28
 
@@ -190,7 +194,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.6.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/recmo/uint/releases/tag/v1.6.0
 [1.6.0]: https://github.com/recmo/uint/releases/tag/v1.6.0
 [1.5.1]: https://github.com/recmo/uint/releases/tag/v1.5.1
 [1.5.0]: https://github.com/recmo/uint/releases/tag/v1.5.0
