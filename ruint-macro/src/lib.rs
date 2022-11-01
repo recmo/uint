@@ -2,8 +2,10 @@
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
-use std::fmt::{Display, Formatter};
-use std::{fmt::Write, str::FromStr};
+use std::{
+    fmt::{Display, Formatter, Write},
+    str::FromStr,
+};
 
 #[derive(Copy, Clone)]
 enum LiteralBaseType {

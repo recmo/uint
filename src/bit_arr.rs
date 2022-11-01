@@ -45,14 +45,14 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
 }
 
 macro_rules! forward_attributes {
-    ($fnname:ident, $item:item$(, must_use: true)?) => {
+    ($fnname:ident, $item:item $(,must_use: true)?) => {
         #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
         #[allow(clippy::inline_always)]
         #[inline(always)]
         #[must_use]
         $item
     };
-    ($fnname:ident, $item:item, must_use: false) => {
+    ($fnname:ident, $item:item,must_use: false) => {
         #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
         #[allow(clippy::inline_always)]
         #[inline(always)]
