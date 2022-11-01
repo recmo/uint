@@ -12,10 +12,10 @@ enum LiteralBaseType {
 }
 
 impl LiteralBaseType {
-    fn delimiter(self) -> &'static str {
+    const fn delimiter(self) -> &'static str {
         match self {
-            LiteralBaseType::Uint => "U",
-            LiteralBaseType::Bits => "B",
+            Self::Uint => "U",
+            Self::Bits => "B",
         }
     }
 }
@@ -23,8 +23,8 @@ impl LiteralBaseType {
 impl Display for LiteralBaseType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            LiteralBaseType::Uint => f.write_str("Uint"),
-            LiteralBaseType::Bits => f.write_str("Bits"),
+            Self::Uint => f.write_str("Uint"),
+            Self::Bits => f.write_str("Bits"),
         }
     }
 }
