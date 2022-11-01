@@ -65,7 +65,8 @@ error: Value too large for Uint<8>: 300
 
 ---
 
-Everything above applies to the `bits!` macro for constructing `Bits` literals as well.
+Everything above applies to the `bits!` macro for constructing `Bits` literals as well,
+but using a capital `B` in the suffix instead of `U`.
 
 
 ## References
