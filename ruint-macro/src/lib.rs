@@ -47,7 +47,7 @@ fn error(span: Span, message: &str) -> TokenStream {
 }
 
 /// Parse a value literal and bits suffix into a Uint literal.
-fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
+fn parse(value: &str, bits: &str) -> Result<(usize, Vec<u64>), String> {
     // Parse bit length
     let bits = bits
         .parse::<usize>()
@@ -91,8 +91,7 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
         #[allow(clippy::cast_lossless)]
         if digit > base as u64 {
             return Err(format!(
-                "Invalid digit {} in base {} (did you forget the `0x` prefix?)",
-                c, base
+                "Invalid digit {c} in base {base} (did you forget the `0x` prefix?)"
             ));
         }
 
@@ -124,16 +123,19 @@ fn parse(value: &str, bits: &str) -> Result<TokenStream, String> {
         return Err(format!("Value too large for Uint<{bits}>: {value}"));
     }
 
-    Ok(construct(bits, &limbs))
+    Ok((bits, limbs))
 }
 
 /// Transforms a [`Literal`] and returns the substitute [`TokenTree`]
 fn transform_literal(literal: Literal) -> TokenTree {
     let source = literal.to_string();
     if let Some((value, bits)) = source.split_once('U') {
-        let stream = parse(value, bits).unwrap_or_else(|e| error(literal.span(), &e));
+        let tokens = parse(value, bits).map_or_else(
+            |e| error(literal.span(), &e),
+            |(bits, limbs)| construct(bits, &limbs),
+        );
 
-        return TokenTree::Group(Group::new(Delimiter::None, stream));
+        return TokenTree::Group(Group::new(Delimiter::None, tokens));
     }
     TokenTree::Literal(literal)
 }
@@ -173,32 +175,29 @@ pub fn uint(stream: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use ruint::{uint, Uint};
+    use super::*;
 
     #[test]
     fn test_zero_size() {
-        uint! {
-            assert_eq!(0_U0, Uint::ZERO);
-            assert_eq!(0000_U0, Uint::ZERO);
-            assert_eq!(0x00_U0, Uint::ZERO);
-            assert_eq!(0b0000_U0, Uint::ZERO);
-            assert_eq!(0b0000000_U0, Uint::ZERO);
-        }
+        assert_eq!(parse("0", "0"), Ok((0, vec![])));
+        assert_eq!(parse("00000", "0"), Ok((0, vec![])));
+        assert_eq!(parse("0x00", "0"), Ok((0, vec![])));
+        assert_eq!(parse("0b0000", "0"), Ok((0, vec![])));
+        assert_eq!(parse("0b0000000", "0"), Ok((0, vec![])));
     }
 
     #[test]
     fn test_bases() {
-        uint! {
-            assert_eq!(10_U8, Uint::from(10));
-            assert_eq!(0x10_U8, 16_u64.try_into().unwrap());
-            assert_eq!(0b10_U8, 2_u64.try_into().unwrap());
-            assert_eq!(0o10_U8, 8_u64.try_into().unwrap());
-        }
+        assert_eq!(parse("10", "8"), Ok((8, vec![10])));
+        assert_eq!(parse("0x10", "8"), Ok((8, vec![16])));
+        assert_eq!(parse("0b10", "8"), Ok((8, vec![2])));
+        assert_eq!(parse("0o10", "8"), Ok((8, vec![8])));
     }
 
     #[test]
+    #[allow(clippy::unreadable_literal)]
     fn test_overflow_during_parsing() {
-        let _ = uint!(258664426012969093929703085429980814127835149614277183275038967946009968870203535512256352201271898244626862047232_U384);
-        let _ = uint!(2135987035920910082395021706169552114602704522356652769947041607822219725780640550022962086936576_U384);
+        assert_eq!(parse("258664426012969093929703085429980814127835149614277183275038967946009968870203535512256352201271898244626862047232", "384"), Ok((384, vec![0, 15125697203588300800, 6414901478162127871, 13296924585243691235, 13584922160258634318, 121098312706494698])));
+        assert_eq!(parse("2135987035920910082395021706169552114602704522356652769947041607822219725780640550022962086936576", "384"), Ok((384, vec![0, 0, 0, 0, 0, 1])));
     }
 }
