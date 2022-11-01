@@ -33,7 +33,8 @@ impl<const BITS: usize, const LIMBS: usize> MaxEncodedLen for Uint<BITS, LIMBS> 
 impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
         Decode::decode(input).and_then(|b: Vec<_>| {
-            Self::try_from_le_slice(&b).ok_or(Error::from("value is larger than fits the Uint"))
+            Self::try_from_le_slice(&b)
+                .ok_or_else(|| Error::from("value is larger than fits the Uint"))
         })
     }
 }
@@ -231,7 +232,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
                         .map(|_| input.read_byte())
                         .collect::<Result<Vec<_>, _>>()?;
                     let x = Uint::<BITS, LIMBS>::try_from_le_slice(&le_byte_slice)
-                        .ok_or(Error::from("value is larger than fits the Uint"))?;
+                        .ok_or_else(|| Error::from("value is larger than fits the Uint"))?;
                     let bits = bytes as usize * 8;
                     let limbs = (bits + 64 - 1) / 64;
 

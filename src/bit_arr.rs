@@ -130,7 +130,6 @@ macro_rules! forward {
             #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
             #[allow(clippy::inline_always)]
             #[inline(always)]
-            #[must_use]
             pub fn $fnname$(<$(const $generic_arg: $generic_ty),+>)?($($arg: $arg_ty),+) -> Result<Self, $err_ty> {
                 Uint::$fnname($($arg),+).map(Bits::from)
             }

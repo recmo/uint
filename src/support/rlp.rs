@@ -35,7 +35,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Encodable for Bits<BITS, LIMBS> {
     fn rlp_append(&self, s: &mut RlpStream) {
         let bytes = self.to_be_bytes_vec();
-        bytes.rlp_append(s)
+        bytes.rlp_append(s);
     }
 }
 
@@ -48,7 +48,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Bits<BITS, LIMBS> {
             .decode_value(|bytes| match bytes.len().cmp(&Self::BYTES) {
                 Ordering::Less => Err(DecoderError::RlpIsTooShort),
                 Ordering::Greater => Err(DecoderError::RlpIsTooBig),
-                Ordering::Equal => Bits::try_from_be_slice(bytes).ok_or(DecoderError::RlpIsTooBig),
+                Ordering::Equal => Self::try_from_be_slice(bytes).ok_or(DecoderError::RlpIsTooBig),
             })
     }
 }
