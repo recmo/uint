@@ -18,7 +18,13 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
-            Bits::from(*self).serialize(serializer)
+            // OPT: Allocation free method.
+            let mut result = String::with_capacity(2 * Self::BYTES + 2);
+            result.push_str("0x");
+            for byte in bytes {
+                write!(result, "{byte:02x}").unwrap();
+            }
+            serializer.serialize_str(&result)
         } else {
             // Write as bytes directly
             serializer.serialize_bytes(&bytes[..])
@@ -26,7 +32,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     }
 }
 
-/// Deserialize human readable hex strings or byte arrays into [`Uint`] value.
+/// Deserialize human readable hex strings or byte arrays into hashes.
 /// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
 /// can be any length. They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
@@ -39,27 +45,15 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
     }
 }
 
-/// Serialize a [`Bits`] value as a `0x` prefixed lower case hex string.
 impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // OPT: Allocation free method.
-        let mut result = String::with_capacity(2 * Self::BYTES + 2);
-        result.push_str("0x");
-        for byte in self.to_be_bytes_vec() {
-            write!(result, "{byte:02x}").unwrap();
-        }
-        serializer.serialize_str(&result)
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.as_uint().serialize(serializer)
     }
 }
 
-/// Deserialize a `0x` prefixed lower case hex string into [`Bits`] value.
-/// They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_str(StrVisitor).map(Self::from)
+        Uint::deserialize(deserializer).map(Self::from)
     }
 }
 
