@@ -90,7 +90,7 @@ macro_rules! impl_bits {
                 type Error = <Uint<BITS, LIMBS> as TryFrom<$ty>>::Error;
 
                 fn try_from(value: $ty) -> Result<Self, Self::Error> {
-                    Uint::<BITS, LIMBS>::try_from(value).map(Self::from)
+                    Uint::try_from(value).map(Self::from)
                 }
             }
 
@@ -98,7 +98,7 @@ macro_rules! impl_bits {
                 type Error = <Uint<BITS, LIMBS> as TryFrom<&'a $ty>>::Error;
 
                 fn try_from(value: &'a $ty) -> Result<Self, Self::Error> {
-                    Uint::<BITS, LIMBS>::try_from(value).map(Self::from)
+                    Uint::try_from(value).map(Self::from)
                 }
             }
 
