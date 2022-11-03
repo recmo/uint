@@ -2,7 +2,7 @@
 #![cfg(feature = "bn-rs")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "bn-rs")))]
 
-use crate::{from::ToUintError, BaseConvertError, ParseError, Uint};
+use crate::{from::ToUintError, BaseConvertError, Bits, ParseError, Uint};
 use bn_rs::{BigNumber, BN};
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&BN> for Uint<BITS, LIMBS> {
@@ -82,6 +82,42 @@ impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for BigNumbe
         (&value).into()
     }
 }
+
+macro_rules! impl_bits {
+    ($($ty:ty)*) => {
+        $(
+            impl<const BITS: usize, const LIMBS: usize> TryFrom<$ty> for Bits<BITS, LIMBS> {
+                type Error = <Uint<BITS, LIMBS> as TryFrom<$ty>>::Error;
+
+                fn try_from(value: $ty) -> Result<Self, Self::Error> {
+                    Uint::try_from(value).map(Self::from)
+                }
+            }
+
+            impl<'a, const BITS: usize, const LIMBS: usize> TryFrom<&'a $ty> for Bits<BITS, LIMBS> {
+                type Error = <Uint<BITS, LIMBS> as TryFrom<&'a $ty>>::Error;
+
+                fn try_from(value: &'a $ty) -> Result<Self, Self::Error> {
+                    Uint::try_from(value).map(Self::from)
+                }
+            }
+
+            impl<const BITS: usize, const LIMBS: usize> From<Bits<BITS, LIMBS>> for $ty {
+                fn from(value: Bits<BITS, LIMBS>) -> Self {
+                    Self::from(value.into_inner())
+                }
+            }
+
+            impl<const BITS: usize, const LIMBS: usize> From<&Bits<BITS, LIMBS>> for $ty {
+                fn from(value: &Bits<BITS, LIMBS>) -> Self {
+                    Self::from(value.as_uint())
+                }
+            }
+        )*
+    }
+}
+
+impl_bits!(BN BigNumber);
 
 #[cfg(test)]
 #[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))] // Tests require wasm
