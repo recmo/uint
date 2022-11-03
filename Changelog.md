@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support `bn-rs` and `serde` for `Bits`
-- `bits!` macro
+- Support `bn-rs`, `serde` and `uint!` for `Bits`
 
 ## [1.7.0] — 2022-10-31
 
