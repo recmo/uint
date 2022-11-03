@@ -198,10 +198,7 @@ fn transform_tree(tree: TokenTree) -> TokenTree {
 
 /// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
 fn transform_stream(stream: TokenStream) -> TokenStream {
-    stream
-        .into_iter()
-        .map(|tree| transform_tree(tree))
-        .collect()
+    stream.into_iter().map(transform_tree).collect()
 }
 
 // Repeat the crate doc
