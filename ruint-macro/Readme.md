@@ -4,7 +4,8 @@
 
 The above can also be written using the [`uint!`] macro. Within the macro arguments,
 you can write [`Uint`](../uint/struct.Uint.html) and [`Bits`](../uint/struct.Bits.html) literals using the [same syntax][rust-syntax] as Rust integer
-literals, but using a `_U` suffix for [`Uint`](../uint/struct.Uint.html) and `_B` suffix for [`Bits`](../uint/struct.Bits.html).
+literals, but using a capital `U` suffix for [`Uint`](../uint/struct.Uint.html) and capital `B` suffix for [`Bits`](../uint/struct.Bits.html)
+(with `_B` prefix as an exception for `0x` to solve confusion between hex `B` as a part of literal and `B` as a part of type).
 
 [rust-syntax]: https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals
 

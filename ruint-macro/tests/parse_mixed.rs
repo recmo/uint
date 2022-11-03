@@ -18,5 +18,7 @@ fn test_parse_mixed() {
 
         assert_eq!(0o10_B256, "0o10".parse::<B256>().unwrap());
         assert_eq!(0b10_B256, "0b10".parse::<B256>().unwrap());
+
+        assert_eq!(2, 2);
     }
 }

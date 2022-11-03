@@ -15,10 +15,14 @@ enum LiteralBaseType {
 
 impl LiteralBaseType {
     fn delimiter(self, source: &str) -> &'static str {
-        let prefix = source.split_at(2).0;
+        let prefix = if source.len() >= 2 {
+            Some(source.split_at(2).0)
+        } else {
+            None
+        };
         match (self, prefix) {
             (Self::Uint, _) => "U",
-            (Self::Bits, "0x") => "_B",
+            (Self::Bits, Some("0x")) => "_B",
             (Self::Bits, _) => "B",
         }
     }
