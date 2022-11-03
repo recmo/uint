@@ -1,6 +1,3 @@
-// TODO: Forward `const fn` as `const fn`.
-#![allow(clippy::missing_const_for_fn)]
-
 use crate::{ParseError, Uint};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
@@ -29,16 +26,19 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     pub const ZERO: Self = Self(Uint::<BITS, LIMBS>::ZERO);
 
     #[must_use]
+    #[inline(always)]
     pub const fn into_inner(self) -> Uint<BITS, LIMBS> {
         self.0
     }
 
     #[must_use]
+    #[inline(always)]
     pub const fn as_uint(&self) -> &Uint<BITS, LIMBS> {
         &self.0
     }
 
     #[must_use]
+    #[inline(always)]
     pub fn as_uint_mut(&mut self) -> &mut Uint<BITS, LIMBS> {
         &mut self.0
     }
