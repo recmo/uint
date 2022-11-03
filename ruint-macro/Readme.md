@@ -1,10 +1,10 @@
-# The `uint!` and `bits!` macros for `Uint` and `Bits` literals
+# The `uint!` macro for `Uint` and `Bits` literals
 
 <!-- Fix linking to `Uint`. See https://github.com/rust-lang/rust/issues/74481 -->
 
 The above can also be written using the [`uint!`] macro. Within the macro arguments,
-you can write [`Uint`](../uint/struct.Uint.html) literals using the [same syntax][rust-syntax] as Rust integer
-literals, but using a capital `U` in the suffix instead of lowercase.
+you can write [`Uint`](../uint/struct.Uint.html) and [`Bits`](../uint/struct.Bits.html) literals using the [same syntax][rust-syntax] as Rust integer
+literals, but using a `_U` suffix for [`Uint`](../uint/struct.Uint.html) and `_B` suffix for [`Bits`](../uint/struct.Bits.html).
 
 [rust-syntax]: https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals
 
@@ -62,11 +62,6 @@ error: Value too large for Uint<8>: 300
 1 | let sparta = 300_U8;
   |              ^^^^^^
 ```
-
----
-
-Everything above applies to the `bits!` macro for constructing `Bits` literals as well,
-but using a capital `B` in the suffix instead of `U`.
 
 
 ## References

@@ -14,10 +14,12 @@ enum LiteralBaseType {
 }
 
 impl LiteralBaseType {
-    const fn delimiter(self) -> &'static str {
-        match self {
-            Self::Uint => "U",
-            Self::Bits => "B",
+    fn delimiter(self, source: &str) -> &'static str {
+        let prefix = source.split_at(2).0;
+        match (self, prefix) {
+            (Self::Uint, _) => "U",
+            (Self::Bits, "0x") => "_B",
+            (Self::Bits, _) => "B",
         }
     }
 }
@@ -154,33 +156,35 @@ fn parse(value: &str, bits: &str, base_type: LiteralBaseType) -> Result<(usize, 
 }
 
 /// Transforms a [`Literal`] and returns the substitute [`TokenTree`]
-fn transform_literal(literal: Literal, base_type: LiteralBaseType) -> TokenTree {
+fn transform_literal(literal: Literal) -> TokenTree {
     let source = literal.to_string();
-    if let Some((value, bits)) = source.split_once(base_type.delimiter()) {
-        let tokens = parse(value, bits, base_type).map_or_else(
-            |e| error(literal.span(), &e),
-            |(bits, limbs)| construct(bits, &limbs, base_type),
-        );
+    for base_type in [LiteralBaseType::Uint, LiteralBaseType::Bits] {
+        if let Some((value, bits)) = source.rsplit_once(base_type.delimiter(&source)) {
+            let tokens = parse(value, bits, base_type).map_or_else(
+                |e| error(literal.span(), &e),
+                |(bits, limbs)| construct(bits, &limbs, base_type),
+            );
 
-        return TokenTree::Group(Group::new(Delimiter::None, tokens));
+            return TokenTree::Group(Group::new(Delimiter::None, tokens));
+        }
     }
     TokenTree::Literal(literal)
 }
 
 /// Recurse down tree and transform all literals.
-fn transform_tree(tree: TokenTree, base_type: LiteralBaseType) -> TokenTree {
+fn transform_tree(tree: TokenTree) -> TokenTree {
     match tree {
         TokenTree::Group(group) => {
             let delimiter = group.delimiter();
             let span = group.span();
-            let stream = transform_stream(group.stream(), base_type);
+            let stream = transform_stream(group.stream());
             let mut transformed = Group::new(delimiter, stream);
             transformed.set_span(span);
             TokenTree::Group(transformed)
         }
         TokenTree::Literal(a) => {
             let span = a.span();
-            let mut subs = transform_literal(a, base_type);
+            let mut subs = transform_literal(a);
             subs.set_span(span);
             subs
         }
@@ -189,10 +193,10 @@ fn transform_tree(tree: TokenTree, base_type: LiteralBaseType) -> TokenTree {
 }
 
 /// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
-fn transform_stream(stream: TokenStream, base_type: LiteralBaseType) -> TokenStream {
+fn transform_stream(stream: TokenStream) -> TokenStream {
     stream
         .into_iter()
-        .map(|tree| transform_tree(tree, base_type))
+        .map(|tree| transform_tree(tree))
         .collect()
 }
 
@@ -200,14 +204,7 @@ fn transform_stream(stream: TokenStream, base_type: LiteralBaseType) -> TokenStr
 #[doc = include_str!("../Readme.md")]
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
-    transform_stream(stream, LiteralBaseType::Uint)
-}
-
-// Repeat the crate doc
-#[doc = include_str!("../Readme.md")]
-#[proc_macro]
-pub fn bits(stream: TokenStream) -> TokenStream {
-    transform_stream(stream, LiteralBaseType::Bits)
+    transform_stream(stream)
 }
 
 #[cfg(test)]

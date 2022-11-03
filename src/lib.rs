@@ -69,7 +69,7 @@ pub use self::{
 };
 
 #[doc(inline)]
-pub use ruint_macro::{bits, uint};
+pub use ruint_macro::uint;
 
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
