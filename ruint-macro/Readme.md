@@ -1,11 +1,11 @@
-# The `uint!` macro for `Uint` literals
+# The `uint!` macro for `Uint` and `Bits` literals
+
+Within the [`uint!`] macro arguments, you can write [`Uint`] and [`Bits) literals using the [same syntax][rust-syntax] as Rust integer literals, but using a capital `U` or `B` suffix respectively. Note that there is ambiguity for hexadecimals with a `B` suffix, to lessen the impact an underscore is required in this case.
 
 <!-- Fix linking to `Uint`. See https://github.com/rust-lang/rust/issues/74481 -->
 
-The above can also be written using the [`uint!`] macro. Within the macro arguments,
-you can write [`Uint`](../uint/struct.Uint.html) literals using the [same syntax][rust-syntax] as Rust integer
-literals, but using a capital `U` in the suffix instead of lowercase.
-
+[`Uint`]: ../uint/struct.Uint.html
+[`Bits`]: ../uint/struct.Bits.html
 [rust-syntax]: https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals
 
 To use it simply import it in scope:

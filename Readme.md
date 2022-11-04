@@ -83,8 +83,8 @@ assert_eq!(c, Uint::from(0xf039_u64));
 
 There is a convenient macro [`uint!`] to create constants for you. It allows
 for arbitrary length constants using standard Rust integer syntax. The size of
-the [`Uint`] is specified with a `U` suffix followed by the number of bits.
-The standard Rust syntax of decimal, hexadecimal and even binary and octal is
+the [`Uint`] or [`Bits`] is specified with a `U` or `B` suffix followed by the
+number of bits. The standard Rust syntax of decimal, hexadecimal and even binary and octal is
 supported using their prefixes `0x`, `0b` and `0o`. Literals can have
 underscores `_` added for readability.
 
@@ -107,6 +107,8 @@ assert_eq!(c, 263947537596669_U256);
 
 }
 ```
+
+Note that since `B` is a valid hexadecimal digit there can be ambiguity. To lessen the impact an underscore separator `_B` is required in this case.
 
 ## Feature flags
 
