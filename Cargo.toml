@@ -35,7 +35,7 @@ bn-rs = { version = "0.2", optional = true }
 bytes = { version = "1.1", optional = true }
 criterion = { version = "0.4", optional = true } # Secretly dev-dependencies
 derive_more = "0.99.17"
-fastrlp = { version = "0.2.0", optional = true }
+fastrlp = { version = "0.2.2", optional = true }
 num-bigint = { version = "0.4.3", optional = true }
 parity-scale-codec = { version = "3.2.1", optional = true, features = [ "max-encoded-len" ] }
 postgres-types = { version = "0.2.3", optional = true }
