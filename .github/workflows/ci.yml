@@ -31,7 +31,7 @@ jobs:
           override: true
           components: rustfmt, clippy
       - name: Cache build
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
         with:
           key: cache-v1
       - name: Check formatting
@@ -67,7 +67,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
       - name: Cache build
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
         with:
           key: cache-v1
       - run:  npm install ganache-cli@latest --global
@@ -99,7 +99,7 @@ jobs:
           override: true
           components: llvm-tools-preview
       - name: Cache build
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
         with:
           key: cache-v1
       - name: Install cargo-llvm-cov
