@@ -13,22 +13,12 @@ use std::{fmt::Write, str};
 /// Serialize a [`Uint`] value.
 ///
 /// For human readable formats a `0x` prefixed lower case hex string is used.
-/// For binary formats a byte array is used. Leading zeros are included.
+/// For binary formats a byte array is used.
+/// Leading zeros are skipped in human-readable formats. If the uint consists
+/// entirely of zeros, `0x0` is serialized
 impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let bytes = self.to_be_bytes_vec();
-        if serializer.is_human_readable() {
-            // OPT: Allocation free method.
-            let mut result = String::with_capacity(2 * Self::BYTES + 2);
-            result.push_str("0x");
-            for byte in bytes {
-                write!(result, "{byte:02x}").unwrap();
-            }
-            serializer.serialize_str(&result)
-        } else {
-            // Write as bytes directly
-            serializer.serialize_bytes(&bytes[..])
-        }
+        serialize_uint::<true, BITS, LIMBS, _>(self, serializer)
     }
 }
 
@@ -47,7 +37,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
 
 impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.as_uint().serialize(serializer)
+        serialize_uint::<false, BITS, LIMBS, _>(self.as_uint(), serializer)
     }
 }
 
@@ -116,6 +106,44 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
                 &self,
             )
         })
+    }
+}
+
+/// serializes the [Uint] with the provided [Serializer]
+///
+/// If `SKIP_LEADING_ZEROS_HUMAN_READABLE` is true, then leading zeros are
+/// skipped if the serializer is human readable. If the uint consists entirely
+/// of zeros, `0x0` is serialized instead.
+fn serialize_uint<
+    const SKIP_LEADING_ZEROS_HUMAN_READABLE: bool,
+    const BITS: usize,
+    const LIMBS: usize,
+    S: Serializer,
+>(
+    value: &Uint<BITS, LIMBS>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let bytes = value.to_be_bytes_vec();
+    if serializer.is_human_readable() {
+        let mut b = bytes.as_slice();
+        if SKIP_LEADING_ZEROS_HUMAN_READABLE {
+            let non_zero = bytes.iter().take_while(|b| **b == 0).count();
+            b = &bytes[non_zero..];
+            if b.is_empty() {
+                return serializer.serialize_str("0x0");
+            }
+        }
+
+        // OPT: Allocation free method.
+        let mut result = String::with_capacity(2 * b.len() + 2);
+        result.push_str("0x");
+        for byte in b {
+            write!(result, "{byte:02x}").unwrap();
+        }
+        serializer.serialize_str(&result)
+    } else {
+        // Write as bytes directly
+        serializer.serialize_bytes(&bytes[..])
     }
 }
 
