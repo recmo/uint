@@ -70,7 +70,6 @@ jobs:
         uses: Swatinem/rust-cache@v1
         with:
           key: cache-v1
-      - run:  npm install ganache-cli@latest --global
       # Cargo doc test is not included in `--all-targets` so we call it separately.
       # See <https://github.com/rust-lang/cargo/issues/6669>
       # Cargo doc test also doesn't support `--no-run`, so we run it but

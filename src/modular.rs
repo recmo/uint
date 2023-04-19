@@ -247,6 +247,7 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             // TODO: Increase cases when perf is better.
             let mut config = Config::default();
+            // BUG: Proptest still runs 5 cases even if we set it to 1.
             config.cases = min(config.cases, if BITS > 500 { 1 } else { 3 });
             proptest!(config, |(a: U, b: U, c: U, m: U)| {
                 // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.

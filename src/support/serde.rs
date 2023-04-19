@@ -18,6 +18,10 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
+            // Special case for zero, which encodes as `0x0`.
+            if BITS == 0 {
+                return serializer.serialize_str("0x0");
+            }
             // OPT: Allocation free method.
             let mut result = String::with_capacity(2 * Self::BYTES + 2);
             result.push_str("0x");
@@ -78,12 +82,12 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
         if BITS == 0 {
             // special case, this class of ints has one member, zero.
             // zero is represented as "0x0" only
-            if value == "0" {
-                return Ok(Uint::<BITS, LIMBS>::ZERO);
-            } else {
+            if value != "0" {
                 return Err(Error::invalid_value(Unexpected::Str(value), &self));
             }
-        } else if nbytes(BITS) * 2 < value.len() {
+            return Ok(Uint::<BITS, LIMBS>::ZERO);
+        }
+        if nbytes(BITS) * 2 < value.len() {
             return Err(Error::invalid_length(value.len(), &self));
         }
 
