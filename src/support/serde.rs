@@ -36,9 +36,10 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     }
 }
 
-/// Deserialize human readable hex strings or byte arrays into hashes.
-/// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
-/// can be any length. They are interpreted big-endian.
+/// Deserialize human readable hex strings or byte arrays into uints.
+/// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix if
+/// the string is human-readable, and can be any length. They are interpreted
+/// big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         if deserializer.is_human_readable() {
@@ -55,9 +56,41 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
     }
 }
 
+/// Deserialize human readable hex strings or byte arrays into bits.
+/// Hex strings can be upper/lower/mixed case, have a `0x` prefix if the string
+/// is human-readable, and can be any length. They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Uint::deserialize(deserializer).map(Self::from)
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_str(PrefixedStrVisitor)
+        } else {
+            deserializer.deserialize_bytes(ByteVisitor).map(Self::from)
+        }
+    }
+}
+
+/// Serde Visitor for human readable 0x-prefixed formats
+///
+/// This visitor REQUIRES a 0x prefix on the string
+struct PrefixedStrVisitor<const BITS: usize, const LIMBS: usize>;
+
+impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for PrefixedStrVisitor<BITS, LIMBS> {
+    type Value = Bits<BITS, LIMBS>;
+
+    fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+        write!(formatter, "a {} byte hex string", nbytes(BITS))
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        // Bits MUST have a 0x prefix in human-readable strings
+        if value.len() < 2 || (&value[..2] != "0x" && &value[..2] != "0X") {
+            return Err(Error::invalid_value(Unexpected::Str(value), &self));
+        }
+
+        StrVisitor::visit_str(StrVisitor, &value).map(Self::Value::from)
     }
 }
 
@@ -227,6 +260,28 @@ mod tests {
             serialized.push('0');
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
+            assert!(deserialized.is_err());
+        });
+    }
+
+    #[test]
+    fn test_serde_non_prefixed_bits_error() {
+        // Test that if we do not have a `0x` prefix on a hex string that we attempt to
+        // deserialize into a `Bits`, we get an error.
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            let value = Uint::<BITS, LIMBS>::MAX;
+            let mut serialized = serde_json::to_string(&value).unwrap();
+
+            // ensure format of serialized value is correct ("0x...")
+            assert_eq!(&serialized[..3], "\"0x");
+            // last character should be a quote
+            assert_eq!(&serialized[serialized.len() - 1..], "\"");
+
+            // replace the leading `"0x` with `"`
+            let invalid_prefix = "\"";
+            serialized = invalid_prefix.to_string() + &serialized[3..];
+            let deserialized = serde_json::from_str::<Bits<BITS, LIMBS>>(&serialized);
             assert!(deserialized.is_err());
         });
     }
