@@ -72,6 +72,21 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
         E: Error,
     {
         let value = trim_hex_prefix(value);
+
+        // ensure the string is the correct length (two characters in the string per
+        // byte) exception: zero, for a Uint where BITS == 0
+        if BITS == 0 {
+            // special case, this class of ints has one member, zero.
+            // zero is represented as "0x0" only
+            if value == "0" {
+                return Ok(Uint::<BITS, LIMBS>::ZERO);
+            } else {
+                return Err(Error::invalid_value(Unexpected::Str(value), &self));
+            }
+        } else if nbytes(BITS) * 2 < value.len() {
+            return Err(Error::invalid_length(value.len(), &self));
+        }
+
         let mut limbs = [0; LIMBS];
         for (i, chunk) in value.as_bytes().rchunks(16).enumerate() {
             let chunk = str::from_utf8(chunk)
@@ -161,6 +176,54 @@ mod tests {
                 let deserialized = bincode::deserialize(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);
             });
+        });
+    }
+
+    #[test]
+    fn test_serde_invalid_size_error() {
+        // Test that if we add a character to a value that is already the max length for
+        // the given number of bits, we get an error.
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            let value = Uint::<BITS, LIMBS>::MAX;
+            let mut serialized = serde_json::to_string(&value).unwrap();
+
+            // ensure format of serialized value is correct ("0x...")
+            assert_eq!(&serialized[..3], "\"0x");
+            // last character should be a quote
+            assert_eq!(&serialized[serialized.len() - 1..], "\"");
+
+            // strip the last character, add a zero, and finish with a quote
+            serialized.pop();
+            serialized.push('0');
+            serialized.push('"');
+            let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
+            assert!(deserialized.is_err());
+        });
+    }
+
+    #[test]
+    fn test_serde_zero_invalid_size_error() {
+        // Test that if we add a zero to a large zero string, we get an error.
+        // This is done by replacing a max string `0xffff...` with zeros: `0x0000...`
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            let value = Uint::<BITS, LIMBS>::MAX;
+            let mut serialized = serde_json::to_string(&value).unwrap();
+
+            // replace `f`s with `0`s
+            serialized = serialized.replace('f', "0");
+            // ensure format of serialized value is correct ("0x...")
+            assert_eq!(&serialized[..3], "\"0x");
+            // last character should be a quote
+            assert_eq!(&serialized[serialized.len() - 1..], "\"");
+
+            // strip the last character, add a zero, and finish with a quote
+            serialized.pop();
+            serialized.push('0');
+            serialized.push('"');
+            let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
+            assert!(deserialized.is_err());
         });
     }
 }
