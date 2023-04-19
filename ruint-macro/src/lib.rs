@@ -165,9 +165,8 @@ fn parse_suffix(source: &str) -> Option<(LiteralBaseType, usize, &str)> {
 /// Transforms a [`Literal`] and returns the substitute [`TokenStream`].
 fn transform_literal(source: &str) -> Result<Option<TokenStream>, String> {
     // Check if literal has a suffix we accept
-    let (base_type, bits, value) = match parse_suffix(source) {
-        Some(x) => x,
-        None => return Ok(None),
+    let Some((base_type, bits, value)) = parse_suffix(source) else {
+        return Ok(None);
     };
 
     // Parse `value` into limbs.
@@ -175,9 +174,7 @@ fn transform_literal(source: &str) -> Result<Option<TokenStream>, String> {
     let limbs = parse_digits(value)?;
 
     // Pad limbs to the correct length.
-    let limbs = if let Some(limbs) = pad_limbs(bits, limbs) {
-        limbs
-    } else {
+    let Some(limbs) = pad_limbs(bits, limbs) else {
         let value = value.trim_end_matches('_');
         return Err(format!("Value too large for {base_type}<{bits}>: {value}"));
     };

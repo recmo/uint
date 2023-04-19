@@ -78,12 +78,12 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
         if BITS == 0 {
             // special case, this class of ints has one member, zero.
             // zero is represented as "0x0" only
-            if value == "0" {
-                return Ok(Uint::<BITS, LIMBS>::ZERO);
-            } else {
+            if value != "0" {
                 return Err(Error::invalid_value(Unexpected::Str(value), &self));
             }
-        } else if nbytes(BITS) * 2 < value.len() {
+            return Ok(Uint::<BITS, LIMBS>::ZERO);
+        }
+        if nbytes(BITS) * 2 < value.len() {
             return Err(Error::invalid_length(value.len(), &self));
         }
 

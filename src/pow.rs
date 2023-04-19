@@ -14,9 +14,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(36_U64.overflowing_pow(12_U64), (0x41c21cb8e1000000_U64, false));
-    /// assert_eq!(36_U64.overflowing_pow(13_U64), (0x3f4c09ffa4000000_U64, true));
-    /// assert_eq!(36_U68.overflowing_pow(13_U68), (0x093f4c09ffa4000000_U68, false));
+    /// assert_eq!(
+    ///     36_U64.overflowing_pow(12_U64),
+    ///     (0x41c21cb8e1000000_U64, false)
+    /// );
+    /// assert_eq!(
+    ///     36_U64.overflowing_pow(13_U64),
+    ///     (0x3f4c09ffa4000000_U64, true)
+    /// );
+    /// assert_eq!(
+    ///     36_U68.overflowing_pow(13_U68),
+    ///     (0x093f4c09ffa4000000_U68, false)
+    /// );
     /// assert_eq!(16_U65.overflowing_pow(32_U65), (0_U65, true));
     /// # }
     /// ```
