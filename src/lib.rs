@@ -155,7 +155,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
-    pub const ZERO: Self = Self { limbs: [0; LIMBS] };
+    pub const ZERO: Self = Self::from_limbs([0; LIMBS]);
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
@@ -164,7 +164,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS > 0 {
             limbs[LIMBS - 1] &= Self::MASK;
         }
-        Self { limbs }
+        Self::from_limbs(limbs)
     };
 
     /// View the array of limbs.
