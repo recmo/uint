@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated `ark` to `0.4`, `fastrlp` to `0.3` and `pyo3` to `0.18`.
+
 ## [1.8.0] — 2023-04-19
 
 ### Added
