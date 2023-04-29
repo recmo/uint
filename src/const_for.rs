@@ -19,7 +19,7 @@
 /// println!("{:?}", Uint::<100, 2>::MAX);
 /// ```
 ///
-/// It comes with two build-in lists: `NON_ZERO` which is equivalent to
+/// It comes with two built-in lists: `NON_ZERO` which is equivalent to
 ///
 /// ```text
 /// [1, 2, 63, 64, 65, 127, 128, 129, 256, 384, 512, 4096]

@@ -77,7 +77,7 @@ serde_json = "1.0"
 
 # Compilation profile for any non-workspace member.
 # Dependencies are optimized, even in a dev build. This improves dev performance
-# while having neglible impact on incremental build times.
+# while having negligible impact on incremental build times.
 [profile.dev.package."*"]
 opt-level = 3
 
