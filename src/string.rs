@@ -7,6 +7,8 @@ use thiserror::Error;
 
 // FEATURE: Respect width parameter in formatters.
 
+// TODO: Do we want to write `0` for `BITS == 0`.
+
 impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         // Base convert 19 digits at a time

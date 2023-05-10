@@ -29,7 +29,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # use ruint::{Uint, uint};
     /// # uint!{
     /// assert_eq!(1_U1.overflowing_mul(1_U1), (1_U1, false));
-    /// assert_eq!(0x010000000000000000_U65.overflowing_mul(0x010000000000000000_U65), (0x000000000000000000_U65, true));
+    /// assert_eq!(
+    ///     0x010000000000000000_U65.overflowing_mul(0x010000000000000000_U65),
+    ///     (0x000000000000000000_U65, true)
+    /// );
     /// # }
     /// ```
     #[must_use]

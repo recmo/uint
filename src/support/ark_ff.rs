@@ -3,93 +3,84 @@
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "ark-ff")))]
 
 use crate::{ToFieldError, Uint};
-use ark_ff::{biginteger::*, fields::models::*, PrimeField};
+use ark_ff::{
+    biginteger::BigInt,
+    fields::models::{Fp, FpConfig},
+    PrimeField,
+};
 
 // FEATURE: Implement the `BigInteger` trait.
 
-macro_rules! impl_from_ark {
-    ($ark:ty, $bits:expr, $limbs:expr) => {
-        impl From<$ark> for Uint<$bits, $limbs> {
-            fn from(value: $ark) -> Self {
-                Self::from_limbs(value.0)
-            }
-        }
+// BigInt
 
-        impl From<&$ark> for Uint<$bits, $limbs> {
-            fn from(value: &$ark) -> Self {
-                Self::from_limbs(value.0)
-            }
-        }
-
-        impl From<Uint<$bits, $limbs>> for $ark {
-            fn from(value: Uint<$bits, $limbs>) -> Self {
-                Self(value.into_limbs())
-            }
-        }
-
-        impl From<&Uint<$bits, $limbs>> for $ark {
-            fn from(value: &Uint<$bits, $limbs>) -> Self {
-                Self(value.into_limbs())
-            }
-        }
-    };
+impl<const BITS: usize, const LIMBS: usize> From<BigInt<LIMBS>> for Uint<BITS, LIMBS> {
+    fn from(value: BigInt<LIMBS>) -> Self {
+        Self::from_limbs(value.0)
+    }
 }
 
-impl_from_ark!(BigInteger64, 64, 1);
-impl_from_ark!(BigInteger128, 128, 2);
-impl_from_ark!(BigInteger256, 256, 4);
-impl_from_ark!(BigInteger320, 320, 5);
-impl_from_ark!(BigInteger384, 384, 6);
-impl_from_ark!(BigInteger448, 448, 7);
-impl_from_ark!(BigInteger768, 768, 12);
-impl_from_ark!(BigInteger832, 832, 13);
-
-macro_rules! impl_from_ark_field {
-    ($field:ident, $params:ident, $bits:expr, $limbs:expr) => {
-        impl<P: $params> From<$field<P>> for Uint<$bits, $limbs> {
-            fn from(value: $field<P>) -> Self {
-                value.into_repr().into()
-            }
-        }
-
-        impl<P: $params> From<&$field<P>> for Uint<$bits, $limbs> {
-            fn from(value: &$field<P>) -> Self {
-                value.into_repr().into()
-            }
-        }
-
-        impl<P: $params> TryFrom<Uint<$bits, $limbs>> for $field<P> {
-            type Error = ToFieldError;
-
-            fn try_from(value: Uint<$bits, $limbs>) -> Result<Self, ToFieldError> {
-                Self::from_repr(value.into()).ok_or(ToFieldError::NotInField)
-            }
-        }
-
-        impl<P: $params> TryFrom<&Uint<$bits, $limbs>> for $field<P> {
-            type Error = ToFieldError;
-
-            fn try_from(value: &Uint<$bits, $limbs>) -> Result<Self, ToFieldError> {
-                Self::from_repr(value.into()).ok_or(ToFieldError::NotInField)
-            }
-        }
-    };
+impl<const BITS: usize, const LIMBS: usize> From<&BigInt<LIMBS>> for Uint<BITS, LIMBS> {
+    fn from(value: &BigInt<LIMBS>) -> Self {
+        Self::from_limbs(value.0)
+    }
 }
 
-impl_from_ark_field!(Fp64, Fp64Parameters, 64, 1);
-impl_from_ark_field!(Fp256, Fp256Parameters, 256, 4);
-impl_from_ark_field!(Fp320, Fp320Parameters, 320, 5);
-impl_from_ark_field!(Fp384, Fp384Parameters, 384, 6);
-impl_from_ark_field!(Fp448, Fp448Parameters, 448, 7);
-impl_from_ark_field!(Fp768, Fp768Parameters, 768, 12);
-impl_from_ark_field!(Fp832, Fp832Parameters, 832, 13);
+impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for BigInt<LIMBS> {
+    fn from(value: Uint<BITS, LIMBS>) -> Self {
+        Self::new(value.into_limbs())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for BigInt<LIMBS> {
+    fn from(value: &Uint<BITS, LIMBS>) -> Self {
+        Self::new(value.into_limbs())
+    }
+}
+
+// Fp
+
+impl<P: FpConfig<LIMBS>, const BITS: usize, const LIMBS: usize> From<Fp<P, LIMBS>>
+    for Uint<BITS, LIMBS>
+{
+    fn from(value: Fp<P, LIMBS>) -> Self {
+        value.into_bigint().into()
+    }
+}
+
+impl<P: FpConfig<LIMBS>, const BITS: usize, const LIMBS: usize> From<&Fp<P, LIMBS>>
+    for Uint<BITS, LIMBS>
+{
+    fn from(value: &Fp<P, LIMBS>) -> Self {
+        value.into_bigint().into()
+    }
+}
+
+impl<P: FpConfig<LIMBS>, const BITS: usize, const LIMBS: usize> TryFrom<Uint<BITS, LIMBS>>
+    for Fp<P, LIMBS>
+{
+    type Error = ToFieldError;
+
+    fn try_from(value: Uint<BITS, LIMBS>) -> Result<Self, ToFieldError> {
+        Self::from_bigint(value.into()).ok_or(ToFieldError::NotInField)
+    }
+}
+
+impl<P: FpConfig<LIMBS>, const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>>
+    for Fp<P, LIMBS>
+{
+    type Error = ToFieldError;
+
+    fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, ToFieldError> {
+        Self::from_bigint(value.into()).ok_or(ToFieldError::NotInField)
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::aliases::U256;
-    use ark_bn254::{Fq, FqParameters, Fr, FrParameters};
-    use ark_ff::FpParameters;
+    use ark_bn254::{Fq, FqConfig, Fr, FrConfig};
+    use ark_ff::MontConfig;
     use proptest::proptest;
 
     macro_rules! test_roundtrip {
@@ -104,6 +95,7 @@ mod tests {
 
     #[test]
     fn test_roundtrip() {
+        use ark_ff::*;
         test_roundtrip!(BigInteger64, 64, 1);
         test_roundtrip!(BigInteger128, 128, 2);
         test_roundtrip!(BigInteger256, 256, 4);
@@ -116,7 +108,7 @@ mod tests {
 
     #[test]
     fn test_fq_roundtrip() {
-        let modulus: U256 = FqParameters::MODULUS.into();
+        let modulus: U256 = FqConfig::MODULUS.into();
         proptest!(|(value: U256)| {
             let value: U256 = value % modulus;
             let f: Fq = value.try_into().unwrap();
@@ -127,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_fr_roundtrip() {
-        let modulus: U256 = FrParameters::MODULUS.into();
+        let modulus: U256 = FrConfig::MODULUS.into();
         proptest!(|(value: U256)| {
             let value: U256 = value % modulus;
             let f: Fr = value.try_into().unwrap();

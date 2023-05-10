@@ -120,7 +120,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(U8::saturating_from(300_u16), 255_U8);
-    /// assert_eq!(U8::saturating_from(-10_i16),   0_U8);
+    /// assert_eq!(U8::saturating_from(-10_i16), 0_U8);
     /// assert_eq!(U32::saturating_from(0x7014b4c2d1f2_U256), U32::MAX);
     /// # }
     /// ```
@@ -147,7 +147,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
-    /// assert_eq!(U8::wrapping_from(300_u16),  44_U8);
+    /// assert_eq!(U8::wrapping_from(300_u16), 44_U8);
     /// assert_eq!(U8::wrapping_from(-10_i16), 246_U8);
     /// assert_eq!(U32::wrapping_from(0x7014b4c2d1f2_U256), 0xb4c2d1f2_U32);
     /// # }
