@@ -41,6 +41,7 @@ labels = {
 # GitHub users for emails
 users = {
     '<remco@wicked.ventures>': 'recmo',
+    '<james@prestwi.ch>': 'prestwich',
 }
 
 # Translation from labels to PyGitHub `Label`s

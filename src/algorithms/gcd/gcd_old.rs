@@ -17,7 +17,7 @@ impl Matrix {
 
 /// Computes a double linear combination efficiently in place.
 ///
-/// Simulataneously computes
+/// Simultaneously computes
 ///
 /// ```text
 ///   a' = q00 a - q01 b
@@ -122,7 +122,7 @@ fn lehmer_unroll(a2: u64, a3: &mut u64, k2: u64, k3: &mut u64) {
 
 /// Compute the Lehmer update matrix for small values.
 ///
-/// This is essentialy Euclids extended GCD algorithm for 64 bits.
+/// This is essentially Euclids extended GCD algorithm for 64 bits.
 // OPT: Would this be faster using extended binary gcd?
 // We shadow q for readability.
 #[allow(clippy::shadow_unrelated)]
@@ -200,7 +200,7 @@ fn lehmer_loop(a0: u64, mut a1: u64) -> Matrix {
     let mut a3 = a1 - q * a2;
     let mut k3 = k1 + q * k2;
 
-    // Loop until a3 < LIMIT, maintaing the last three values
+    // Loop until a3 < LIMIT, maintaining the last three values
     // of a and the last four values of k.
     while a3 >= LIMIT {
         a1 = a2;
@@ -275,7 +275,7 @@ fn lehmer_loop(a0: u64, mut a1: u64) -> Matrix {
 
 /// Compute the Lehmer update matrix in full 64 bit precision.
 ///
-/// Jebelean solves this by starting in double-precission followed
+/// Jebelean solves this by starting in double-precision followed
 /// by single precision once values are small enough.
 /// Cohen instead runs a single precision round, refreshes the r0 and r1
 /// values and continues with another single precision round on top.
@@ -327,7 +327,7 @@ fn lehmer_double(mut r0: U256, mut r1: U256) -> Matrix {
 
 //// Lehmer's GCD algorithms.
 /// See `gcd_extended` for documentation. This version maintains
-/// full precission cofactors.
+/// full precision cofactors.
 pub(crate) fn gcd(mut r0: U256, mut r1: U256) -> U256 {
     if r1 > r0 {
         core::mem::swap(&mut r0, &mut r1);
