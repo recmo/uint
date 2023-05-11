@@ -36,7 +36,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let lhs = self.reduce_mod(modulus);
         let rhs = rhs.reduce_mod(modulus);
 
-        // Compute the sum and conditionaly subtract modulus once.
+        // Compute the sum and conditionally subtract modulus once.
         let (mut result, overflow) = lhs.overflowing_add(rhs);
         if overflow || result >= modulus {
             result -= modulus;

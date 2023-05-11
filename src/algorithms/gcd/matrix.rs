@@ -112,7 +112,7 @@ impl Matrix {
 
     /// Compute the Lehmer update matrix for small values.
     ///
-    /// This is essentialy Euclids extended GCD algorithm for 64 bits.
+    /// This is essentially Euclids extended GCD algorithm for 64 bits.
     ///
     /// # Panics
     ///
@@ -203,7 +203,7 @@ impl Matrix {
         let mut a3 = a1 - q * a2;
         let mut k3 = k1 + q * k2;
 
-        // Loop until a3 < LIMIT, maintaing the last three values
+        // Loop until a3 < LIMIT, maintaining the last three values
         // of a and the last four values of k.
         while a3 >= LIMIT {
             a1 = a2;
