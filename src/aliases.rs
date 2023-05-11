@@ -50,7 +50,7 @@ macro_rules! alias {
 
 alias! {
     U160 B160 (160, 3);
-    U192 B192 (256, 3);
+    U192 B192 (192, 3);
     U256 B256 (256, 4);
     U320 B320 (320, 5);
     U384 B384 (384, 6);
@@ -62,3 +62,29 @@ alias! {
 }
 
 // TODO: I0, I1, I8, ... I4096
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[test]
+    fn instantiate_consts() {
+        let _ = (U0::ZERO, U0::MAX, B0::ZERO);
+        let _ = (U1::ZERO, U1::MAX, B1::ZERO);
+        let _ = (U8::ZERO, U8::MAX, B8::ZERO);
+        let _ = (U16::ZERO, U16::MAX, B16::ZERO);
+        let _ = (U32::ZERO, U32::MAX, B32::ZERO);
+        let _ = (U64::ZERO, U64::MAX, B64::ZERO);
+        let _ = (U128::ZERO, U128::MAX, B128::ZERO);
+        let _ = (U160::ZERO, U160::MAX, B160::ZERO);
+        let _ = (U192::ZERO, U192::MAX, B192::ZERO);
+        let _ = (U256::ZERO, U256::MAX, B256::ZERO);
+        let _ = (U320::ZERO, U320::MAX, B320::ZERO);
+        let _ = (U384::ZERO, U384::MAX, B384::ZERO);
+        let _ = (U448::ZERO, U448::MAX, B448::ZERO);
+        let _ = (U512::ZERO, U512::MAX, B512::ZERO);
+        let _ = (U1024::ZERO, U1024::MAX, B1024::ZERO);
+        let _ = (U2048::ZERO, U2048::MAX, B2048::ZERO);
+        let _ = (U4096::ZERO, U4096::MAX, B4096::ZERO);
+    }
+}
