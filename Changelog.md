@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added 
+
+- Introduce `ark-ff-04` feature flag for conversion to `ark-ff@0.4` types.
+
 ### Changed
 
-- Updated `ark` to `0.4`, `fastrlp` to `0.3` and `pyo3` to `0.18`.
+- Updated `fastrlp` to `0.3` and `pyo3` to `0.18`.
 
 ## [1.8.0] — 2023-04-19
 
