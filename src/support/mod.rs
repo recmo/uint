@@ -1,5 +1,6 @@
 mod arbitrary;
 mod ark_ff;
+mod ark_ff_04;
 mod bn_rs;
 mod fastrlp;
 mod num_bigint;
