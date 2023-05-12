@@ -10,28 +10,60 @@ use serde::{
 };
 use std::{fmt::Write, str};
 
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    fn serialize_human_full<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut result = String::with_capacity(2 + nbytes(BITS) * 2);
+        result.push_str("0x");
+
+        self.as_le_bytes()
+            .iter()
+            .rev()
+            .try_for_each(|byte| write!(result, "{byte:02x}"))
+            .unwrap();
+
+        s.serialize_str(&result)
+    }
+
+    fn serialize_human_minimal<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let le_bytes = self.as_le_bytes();
+        let mut bytes = le_bytes.iter().rev().skip_while(|b| **b == 0);
+
+        // We avoid String allocation if there is no non-0 byte
+        // If there is a first byte, we allocate a string, and write the prefix
+        // and first byte to it
+        let mut result = match bytes.next() {
+            Some(b) => {
+                let mut result = String::with_capacity(2 + nbytes(BITS) * 2);
+                write!(result, "0x{b:x}").unwrap();
+                result
+            }
+            None => return s.serialize_str("0x0"),
+        };
+        bytes
+            .try_for_each(|byte| write!(result, "{byte:02x}"))
+            .unwrap();
+
+        s.serialize_str(&result)
+    }
+
+    fn serialize_binary<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_bytes(&self.to_be_bytes_vec())
+    }
+}
+
 /// Serialize a [`Uint`] value.
 ///
 /// For human readable formats a `0x` prefixed lower case hex string is used.
 /// For binary formats a byte array is used. Leading zeros are included.
 impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let bytes = self.to_be_bytes_vec();
         if serializer.is_human_readable() {
-            // Special case for zero, which encodes as `0x0`.
             if BITS == 0 {
                 return serializer.serialize_str("0x0");
             }
-            // OPT: Allocation free method.
-            let mut result = String::with_capacity(2 * Self::BYTES + 2);
-            result.push_str("0x");
-            for byte in bytes {
-                write!(result, "{byte:02x}").unwrap();
-            }
-            serializer.serialize_str(&result)
+            self.serialize_human_minimal(serializer)
         } else {
-            // Write as bytes directly
-            serializer.serialize_bytes(&bytes[..])
+            self.serialize_binary(serializer)
         }
     }
 }
@@ -51,7 +83,11 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
 
 impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.as_uint().serialize(serializer)
+        if serializer.is_human_readable() {
+            self.as_uint().serialize_human_full(serializer)
+        } else {
+            self.as_uint().serialize_binary(serializer)
+        }
     }
 }
 
@@ -163,6 +199,11 @@ mod tests {
                 let deserialized = serde_json::from_str(&serialized).unwrap();
                 assert_eq!(value, deserialized);
             });
+            proptest!(|(value: Bits<BITS, LIMBS>)| {
+                let serialized = bincode::serialize(&value).unwrap();
+                let deserialized = bincode::deserialize(&serialized[..]).unwrap();
+                assert_eq!(value, deserialized);
+            });
         });
     }
 
@@ -210,7 +251,7 @@ mod tests {
     fn test_serde_zero_invalid_size_error() {
         // Test that if we add a zero to a large zero string, we get an error.
         // This is done by replacing a max string `0xffff...` with zeros: `0x0000...`
-        const_for!(BITS in SIZES {
+        const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             let value = Uint::<BITS, LIMBS>::MAX;
             let mut serialized = serde_json::to_string(&value).unwrap();
