@@ -120,15 +120,14 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
     where
         E: Error,
     {
-        // ensure the string is the correct length (two characters in the string per
-        // byte) exception: zero, for a Uint where BITS == 0
-        if BITS == 0 {
-            // special case, this class of ints has one member, zero.
-            // zero is represented as "0x0" only
-            if value != ZERO_STR {
-                return Err(Error::invalid_value(Unexpected::Str(value), &self));
-            }
+        // Shortcut for common case
+        if value == ZERO_STR {
             return Ok(Uint::<BITS, LIMBS>::ZERO);
+        }
+        // `ZERO_STR` is the only valid serialization of `Uint<0, 0>`, so if we
+        // have not shortcut, we are in an error case
+        if BITS == 0 {
+            return Err(Error::invalid_value(Unexpected::Str(value), &self));
         }
 
         let value = trim_hex_prefix(value);
@@ -150,7 +149,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
             }
             limbs[i] = limb;
         }
-        if BITS > 0 && limbs[LIMBS - 1] > Self::Value::MASK {
+        if limbs[LIMBS - 1] > Self::Value::MASK {
             return Err(Error::invalid_value(Unexpected::Str(value), &self));
         }
         Ok(Uint::from_limbs(limbs))
