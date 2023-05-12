@@ -24,30 +24,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
           components: rustfmt, clippy
       - name: Cache build
         uses: Swatinem/rust-cache@v1
         with:
           key: cache-v1
       - name: Check formatting
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --locked --workspace --all-features --all-targets
       - name: Check docs
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --locked --workspace --all-features --no-deps --document-private-items
+        run: cargo doc --locked --workspace --all-features --no-deps --document-private-items
 
   test:
     name: Test
@@ -61,11 +53,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
       - name: Cache build
         uses: Swatinem/rust-cache@v1
         with:
@@ -91,11 +81,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: nightly
-          override: true
           components: llvm-tools-preview
       - name: Cache build
         uses: Swatinem/rust-cache@v1
@@ -132,11 +120,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: nightly
-          default: true
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
