@@ -79,8 +79,8 @@ impl<P: FpConfig<LIMBS>, const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BI
 mod tests {
     use super::*;
     use crate::aliases::U256;
-    use ark_bn254::{Fq, FqConfig, Fr, FrConfig};
-    use ark_ff::MontConfig;
+    use ark_bn254_04::{Fq, FqConfig, Fr, FrConfig};
+    use ark_ff_04::MontConfig;
     use proptest::proptest;
 
     macro_rules! test_roundtrip {
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_roundtrip() {
-        use ark_ff::*;
+        use ark_ff_04::*;
         test_roundtrip!(BigInteger64, 64, 1);
         test_roundtrip!(BigInteger128, 128, 2);
         test_roundtrip!(BigInteger256, 256, 4);

@@ -89,8 +89,8 @@ impl_from_ark_field!(Fp832, Fp832Parameters, 832, 13);
 mod tests {
     use super::*;
     use crate::aliases::U256;
-    use ark_bn254::{Fq, FqParameters, Fr, FrParameters};
-    use ark_ff::FpParameters;
+    use ark_bn254_03::{Fq, FqParameters, Fr, FrParameters};
+    use ark_ff_03::FpParameters;
     use proptest::proptest;
 
     macro_rules! test_roundtrip {
