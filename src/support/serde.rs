@@ -10,8 +10,16 @@ use serde::{
 };
 use std::{fmt::Write, str};
 
+/// Canonical serialization for all human-readable instances of `Uint<0, 0>`,
+/// and minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
+const ZERO_STR: &str = "0x0";
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     fn serialize_human_full<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        if BITS == 0 {
+            return s.serialize_str(ZERO_STR);
+        }
+
         let mut result = String::with_capacity(2 + nbytes(BITS) * 2);
         result.push_str("0x");
 
@@ -25,6 +33,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     fn serialize_human_minimal<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        if BITS == 0 {
+            return s.serialize_str(ZERO_STR);
+        }
+
         let le_bytes = self.as_le_bytes();
         let mut bytes = le_bytes.iter().rev().skip_while(|b| **b == 0);
 
@@ -37,7 +49,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 write!(result, "0x{b:x}").unwrap();
                 result
             }
-            None => return s.serialize_str("0x0"),
+            None => return s.serialize_str(ZERO_STR),
         };
         bytes
             .try_for_each(|byte| write!(result, "{byte:02x}"))
@@ -58,9 +70,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            if BITS == 0 {
-                return serializer.serialize_str("0x0");
-            }
             self.serialize_human_minimal(serializer)
         } else {
             self.serialize_binary(serializer)
@@ -111,18 +120,18 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
     where
         E: Error,
     {
-        let value = trim_hex_prefix(value);
-
         // ensure the string is the correct length (two characters in the string per
         // byte) exception: zero, for a Uint where BITS == 0
         if BITS == 0 {
             // special case, this class of ints has one member, zero.
             // zero is represented as "0x0" only
-            if value != "0" {
+            if value != ZERO_STR {
                 return Err(Error::invalid_value(Unexpected::Str(value), &self));
             }
             return Ok(Uint::<BITS, LIMBS>::ZERO);
         }
+
+        let value = trim_hex_prefix(value);
         if nbytes(BITS) * 2 < value.len() {
             return Err(Error::invalid_length(value.len(), &self));
         }
