@@ -200,8 +200,8 @@ mod tests {
                 assert_eq!(value, deserialized);
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
-                let serialized = bincode::serialize(&value).unwrap();
-                let deserialized = bincode::deserialize(&serialized[..]).unwrap();
+                let serialized = serde_json::to_string(&value).unwrap();
+                let deserialized = serde_json::from_str(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);
             });
         });
