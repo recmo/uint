@@ -251,7 +251,7 @@ mod tests {
     fn test_serde_zero_invalid_size_error() {
         // Test that if we add a zero to a large zero string, we get an error.
         // This is done by replacing a max string `0xffff...` with zeros: `0x0000...`
-        const_for!(BITS in NON_ZERO {
+        const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             let value = Uint::<BITS, LIMBS>::MAX;
             let mut serialized = serde_json::to_string(&value).unwrap();
