@@ -107,7 +107,7 @@ jobs:
       - name: Merge profiles
         run: cargo llvm-cov --no-run --lcov --output-path lcov.info
       - name: Submit to codecov.io
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3.1.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
           files: lcov.info
