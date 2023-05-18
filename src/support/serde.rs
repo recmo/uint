@@ -83,7 +83,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         if deserializer.is_human_readable() {
-            deserializer.deserialize_any(HRVisitor)
+            deserializer.deserialize_any(HrVisitor)
         } else {
             deserializer.deserialize_bytes(ByteVisitor)
         }
@@ -109,9 +109,9 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS,
 /// Serde Visitor for human readable formats.
 ///
 /// Accepts either a primitive number, a decimal or a hexadecimal string.
-struct HRVisitor<const BITS: usize, const LIMBS: usize>;
+struct HrVisitor<const BITS: usize, const LIMBS: usize>;
 
-impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for HRVisitor<BITS, LIMBS> {
+impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for HrVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
     fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
@@ -201,6 +201,17 @@ mod tests {
         let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
         ruint_macro::uint! {
             assert_eq!(numbers, vec![1_U1, 1_U1, 1_U1, 1_U1]);
+        }
+
+        let jason = r#"[
+            "",
+            "0x",
+            "0o",
+            "0b"
+        ]"#;
+        let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
+        ruint_macro::uint! {
+            assert_eq!(numbers, vec![0_U1, 0_U1, 0_U1, 0_U1]);
         }
     }
 
