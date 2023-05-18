@@ -170,11 +170,12 @@ impl<const BITS: usize, const LIMBS: usize> FromStr for Uint<BITS, LIMBS> {
     type Err = ParseError;
 
     fn from_str(src: &str) -> Result<Self, Self::Err> {
-        if src.len() >= 2 {
-            match &src[..2] {
-                "0x" | "0X" => return Self::from_str_radix(&src[2..], 16),
-                "0o" | "0O" => return Self::from_str_radix(&src[2..], 8),
-                "0b" | "0B" => return Self::from_str_radix(&src[2..], 2),
+        if src.len() >= 2 && src.is_char_boundary(2) {
+            let (prefix, rest) = src.split_at(2);
+            match prefix {
+                "0x" | "0X" => return Self::from_str_radix(rest, 16),
+                "0o" | "0O" => return Self::from_str_radix(rest, 8),
+                "0b" | "0B" => return Self::from_str_radix(rest, 2),
                 _ => {}
             }
         }

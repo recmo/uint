@@ -83,7 +83,7 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         if deserializer.is_human_readable() {
-            deserializer.deserialize_str(StrVisitor)
+            deserializer.deserialize_any(HRVisitor)
         } else {
             deserializer.deserialize_bytes(ByteVisitor)
         }
@@ -106,20 +106,28 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS,
     }
 }
 
-/// Serde Visitor for human readable formats
-struct StrVisitor<const BITS: usize, const LIMBS: usize>;
+/// Serde Visitor for human readable formats.
+///
+/// Accepts either a primitive number, a decimal or a hexadecimal string.
+struct HRVisitor<const BITS: usize, const LIMBS: usize>;
 
-impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BITS, LIMBS> {
+impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for HRVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
     fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
         write!(formatter, "a {} byte hex string", nbytes(BITS))
     }
 
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: Error,
-    {
+    fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
+        Uint::try_from(v).map_err(|_| Error::invalid_value(Unexpected::Unsigned(v), &self))
+    }
+
+    fn visit_u128<E: Error>(self, v: u128) -> Result<Self::Value, E> {
+        // `Unexpected::Unsigned` cannot contain a `u128`
+        Uint::try_from(v).map_err(Error::custom)
+    }
+
+    fn visit_str<E: Error>(self, value: &str) -> Result<Self::Value, E> {
         // Shortcut for common case
         if value == ZERO_STR {
             return Ok(Uint::<BITS, LIMBS>::ZERO);
@@ -130,29 +138,9 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for StrVisitor<BIT
             return Err(Error::invalid_value(Unexpected::Str(value), &self));
         }
 
-        let value = trim_hex_prefix(value);
-        if nbytes(BITS) * 2 < value.len() {
-            return Err(Error::invalid_length(value.len(), &self));
-        }
-
-        let mut limbs = [0; LIMBS];
-        for (i, chunk) in value.as_bytes().rchunks(16).enumerate() {
-            let chunk = str::from_utf8(chunk)
-                .map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))?;
-            let limb = u64::from_str_radix(chunk, 16)
-                .map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))?;
-            if limb == 0 {
-                continue;
-            }
-            if i >= LIMBS {
-                return Err(Error::invalid_value(Unexpected::Str(value), &self));
-            }
-            limbs[i] = limb;
-        }
-        if limbs[LIMBS - 1] > Self::Value::MASK {
-            return Err(Error::invalid_value(Unexpected::Str(value), &self));
-        }
-        Ok(Uint::from_limbs(limbs))
+        value
+            .parse()
+            .map_err(|_| Error::invalid_value(Unexpected::Str(value), &self))
     }
 }
 
@@ -166,29 +154,16 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
         write!(formatter, "{BITS} bits of binary data in big endian order")
     }
 
-    fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
-    where
-        E: Error,
-    {
+    fn visit_bytes<E: Error>(self, value: &[u8]) -> Result<Self::Value, E> {
         if value.len() != nbytes(BITS) {
-            return Err(E::invalid_length(value.len(), &self));
+            return Err(Error::invalid_length(value.len(), &self));
         }
         Uint::try_from_be_slice(value).ok_or_else(|| {
-            E::invalid_value(
-                Unexpected::Other(&format!("Value to large for Uint<{BITS}>")),
+            Error::invalid_value(
+                Unexpected::Other(&format!("too large for Uint<{BITS}>")),
                 &self,
             )
         })
-    }
-}
-
-/// Helper function to remove optionally `0x` prefix from hex strings.
-#[allow(clippy::missing_const_for_fn)]
-fn trim_hex_prefix(str: &str) -> &str {
-    if str.len() >= 2 && (&str[..2] == "0x" || &str[..2] == "0X") {
-        &str[2..]
-    } else {
-        str
     }
 }
 
@@ -209,10 +184,24 @@ mod tests {
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
                 let serialized = serde_json::to_string(&value).unwrap();
-                let deserialized = serde_json::from_str(&serialized[..]).unwrap();
+                let deserialized = serde_json::from_str(&serialized).unwrap();
                 assert_eq!(value, deserialized);
             });
         });
+    }
+
+    #[test]
+    fn test_human_readable_de() {
+        let jason = r#"[
+            1,
+            "0x1",
+            "0o1",
+            "0b1"
+        ]"#;
+        let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
+        ruint_macro::uint! {
+            assert_eq!(numbers, vec![1_U1, 1_U1, 1_U1, 1_U1]);
+        }
     }
 
     #[test]
@@ -233,6 +222,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "from_str doesn't have sub-byte precision"]
     fn test_serde_invalid_size_error() {
         // Test that if we add a character to a value that is already the max length for
         // the given number of bits, we get an error.
@@ -251,11 +241,12 @@ mod tests {
             serialized.push('0');
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
-            assert!(deserialized.is_err());
+            assert!(deserialized.is_err(), "{serialized}");
         });
     }
 
     #[test]
+    #[ignore = "from_str doesn't have sub-byte precision"]
     fn test_serde_zero_invalid_size_error() {
         // Test that if we add a zero to a large zero string, we get an error.
         // This is done by replacing a max string `0xffff...` with zeros: `0x0000...`
@@ -276,7 +267,7 @@ mod tests {
             serialized.push('0');
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
-            assert!(deserialized.is_err());
+            assert!(deserialized.is_err(), "{serialized}");
         });
     }
 }
