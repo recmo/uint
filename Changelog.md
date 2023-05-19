@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Make `serde::Deserialize` impl more permissive
 - Use Ethereum `Quantity` encoding for serde serialization when human-readable
 - Fix error in `from_base_be` that allowed instantiation of overflowing `Uint`.
 - Updated `ark` to `0.4`, `fastrlp` to `0.3` and `pyo3` to `0.18`.
