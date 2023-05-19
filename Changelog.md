@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fix error in `from_base_be` that allowed instantiation of overflowing `Uint`.
 - Updated `ark` to `0.4`, `fastrlp` to `0.3` and `pyo3` to `0.18`.
 
 ## [1.8.0] — 2023-04-19
