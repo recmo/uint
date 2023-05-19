@@ -233,7 +233,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "from_str doesn't have sub-byte precision"]
     fn test_serde_invalid_size_error() {
         // Test that if we add a character to a value that is already the max length for
         // the given number of bits, we get an error.
@@ -252,33 +251,7 @@ mod tests {
             serialized.push('0');
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
-            assert!(deserialized.is_err(), "{serialized}");
-        });
-    }
-
-    #[test]
-    #[ignore = "from_str doesn't have sub-byte precision"]
-    fn test_serde_zero_invalid_size_error() {
-        // Test that if we add a zero to a large zero string, we get an error.
-        // This is done by replacing a max string `0xffff...` with zeros: `0x0000...`
-        const_for!(BITS in SIZES {
-            const LIMBS: usize = nlimbs(BITS);
-            let value = Uint::<BITS, LIMBS>::MAX;
-            let mut serialized = serde_json::to_string(&value).unwrap();
-
-            // replace `f`s with `0`s
-            serialized = serialized.replace('f', "0");
-            // ensure format of serialized value is correct ("0x...")
-            assert_eq!(&serialized[..3], "\"0x");
-            // last character should be a quote
-            assert_eq!(&serialized[serialized.len() - 1..], "\"");
-
-            // strip the last character, add a zero, and finish with a quote
-            serialized.pop();
-            serialized.push('0');
-            serialized.push('"');
-            let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
-            assert!(deserialized.is_err(), "{serialized}");
+            assert!(deserialized.is_err(), "{BITS} {serialized}");
         });
     }
 }
