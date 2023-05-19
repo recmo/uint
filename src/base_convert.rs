@@ -105,10 +105,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 *limb = carry as u64;
                 carry >>= 64;
             }
-            if carry > 0 {
+            if carry > 0 || result.limbs[LIMBS - 1] > Self::MASK {
                 return Err(BaseConvertError::Overflow);
             }
         }
+
         Ok(result)
     }
 }
@@ -205,5 +206,13 @@ mod tests {
                 2372330524102404852
             ]
         );
+    }
+
+    #[test]
+    fn test_from_base_be_overflow() {
+        assert_eq!(
+            Uint::<1, 1>::from_base_be(10, [1, 0, 0u64].into_iter()),
+            Err(BaseConvertError::Overflow)
+        )
     }
 }
