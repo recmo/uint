@@ -91,7 +91,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if base < 2 {
             return Err(BaseConvertError::InvalidBase(base));
         }
-        let mut result = Uint::<BITS, LIMBS>::ZERO;
+        let mut result = Self::ZERO;
         for digit in digits {
             if digit >= base {
                 return Err(BaseConvertError::InvalidDigit(digit, base));
