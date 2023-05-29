@@ -40,7 +40,7 @@ num-bigint = { version = "0.4.3", optional = true }
 parity-scale-codec = { version = "3.2.1", optional = true, features = [ "max-encoded-len" ] }
 postgres-types = { version = "0.2.3", optional = true }
 primitive-types = { version = "<1", optional = true }
-proptest = { version = "1.0", optional = true }
+proptest = { version = "1.2", optional = true }
 pyo3 = { version = "0.18.3", optional = true }
 quickcheck = { version = "1.0", optional = true }
 rand = { version = "0.8.5", optional = true }
@@ -72,7 +72,7 @@ coverage-helper = "0.1"
 hex = "0.4.3"
 hex-literal = "0.4.1"
 postgres = "0.19.3"
-proptest = { version = "1.0" }
+proptest = { version = "1.2" }
 serde_json = "1.0"
 
 # Compilation profile for any non-workspace member.
