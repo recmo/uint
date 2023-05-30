@@ -264,6 +264,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 /// specifically in the [`to_be_bytes()`][Uint::to_be_bytes] and related
 /// functions.
 #[must_use]
+#[inline]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8
 }
