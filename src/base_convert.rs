@@ -68,7 +68,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         base: u64,
         digits: I,
     ) -> Result<Self, BaseConvertError> {
-        let digits: Vec<_> = digits.into_iter().collect();
+        let mut digits: Vec<_> = digits.into_iter().collect();
+        digits.reverse();
         Self::from_base_be(base, digits)
     }
 
@@ -170,7 +171,7 @@ mod tests {
     ]);
 
     #[test]
-    fn test_base_le() {
+    fn test_to_base_le() {
         assert_eq!(
             Uint::<64, 1>::from(123456789)
                 .to_base_le(10)
@@ -188,8 +189,28 @@ mod tests {
             ]
         );
     }
+
     #[test]
-    fn test_base_be() {
+    fn test_from_base_le() {
+        assert_eq!(
+            Uint::<64, 1>::from_base_le(10, [9, 8, 7, 6, 5, 4, 3, 2, 1]),
+            Ok(Uint::<64, 1>::from(123456789))
+        );
+        assert_eq!(
+            Uint::<256, 4>::from_base_le(10000000000000000000_u64, [
+                2372330524102404852,
+                0534330209902435677,
+                7066324924582287843,
+                0630363884335538722,
+                9
+            ])
+            .unwrap(),
+            N
+        );
+    }
+
+    #[test]
+    fn test_to_base_be() {
         assert_eq!(
             Uint::<64, 1>::from(123456789)
                 .to_base_be(10)
@@ -205,6 +226,25 @@ mod tests {
                 0534330209902435677,
                 2372330524102404852
             ]
+        );
+    }
+
+    #[test]
+    fn test_from_base_be() {
+        assert_eq!(
+            Uint::<64, 1>::from_base_be(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Ok(Uint::<64, 1>::from(123456789))
+        );
+        assert_eq!(
+            Uint::<256, 4>::from_base_be(10000000000000000000_u64, [
+                9,
+                0630363884335538722,
+                7066324924582287843,
+                0534330209902435677,
+                2372330524102404852
+            ])
+            .unwrap(),
+            N
         );
     }
 
