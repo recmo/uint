@@ -46,7 +46,7 @@ fn construct(base_type: LiteralBaseType, bits: usize, limbs: &[u64]) -> TokenStr
     }
     let limbs_str = limbs_str.trim_end_matches(", ");
     let limbs = (bits + 63) / 64;
-    let source = format!("::ruint::{base_type}::<{bits}, {limbs}>::from_limbs([{limbs_str}])");
+    let source = format!("::ruint2::{base_type}::<{bits}, {limbs}>::from_limbs([{limbs_str}])");
     TokenStream::from_str(&source).unwrap()
 }
 

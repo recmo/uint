@@ -2,7 +2,7 @@
 name = "ruint2-macro"
 description = "The `uint!` macro for `Uint` literals"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"
@@ -15,7 +15,7 @@ license-file = "../mit-license.md"
 proc-macro = true
 
 [dev-dependencies]
-ruint = { package = "ruint2", path = ".." }
+ruint2 = { path = ".." }
 
 [package.metadata.release]
 tag = false

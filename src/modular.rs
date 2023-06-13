@@ -133,7 +133,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// computed using [`inv_ring`](Self::inv_ring) from `U64`.
     ///
     /// ```
-    /// # use ruint::{uint, Uint, aliases::*};
+    /// # use ruint2::{uint, Uint, aliases::*};
     /// # uint!{
     /// # let modulus = 21888242871839275222246405745257275088548364400416034343698204186575808495617_U256;
     /// let inv = U64::wrapping_from(modulus).inv_ring().unwrap().wrapping_neg().to();

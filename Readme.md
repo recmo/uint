@@ -11,7 +11,7 @@ Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathsf{BITS}}$
 generic arguments: the number of bits and the number of 64-bit 'limbs' required to store those bits.
 
 ```rust
-# use ruint::Uint;
+# use ruint2::Uint;
 let answer: Uint<256, 4> = Uint::from(42);
 ```
 
@@ -26,15 +26,15 @@ A more convenient method on stable is to use the [`uint!`] macro, which construc
 [`Uint`] for you.
 
 ```rust
-# use ruint::{Uint, uint};
+# use ruint2::{Uint, uint};
 let answer = uint!(42_U256);
 ```
 
 You can also use one of the pre-computed type [`aliases`]:
 
 ```rust
-# use ruint::Uint;
-use ruint::aliases::*;
+# use ruint2::Uint;
+use ruint2::aliases::*;
 
 let answer: U256 = Uint::from(42);
 ```
@@ -42,7 +42,7 @@ let answer: U256 = Uint::from(42);
 You can of course also create your own type alias if you need a funny size:
 
 ```rust
-# use ruint::Uint;
+# use ruint2::Uint;
 type U1337 = Uint<1337, 21>;
 
 let answer: U1337 = Uint::from(42);
@@ -58,7 +58,7 @@ without `generic_const_exprs` support (Rust issue [#76560][r76560]).
 
 ```rust
 # #[cfg(has_generic_const_exprs)] {
-use ruint::nightly::Uint;
+use ruint2::nightly::Uint;
 
 let answer: Uint<256> = Uint::<256>::from(42);
 # }
@@ -73,7 +73,7 @@ these nightly features are stabilized.
 ## Examples
 
 ```rust
-use ruint::Uint;
+use ruint2::Uint;
 
 let a: Uint<256, 4> = Uint::from(0xf00f_u64);
 let b: Uint<256, 4> = Uint::from(42_u64);
@@ -89,7 +89,7 @@ supported using their prefixes `0x`, `0b` and `0o`. Literals can have
 underscores `_` added for readability.
 
 ```rust
-# use ruint::uint;
+# use ruint2::uint;
 let cow = uint!(0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4_U256);
 ```
 
@@ -97,7 +97,7 @@ In fact, this macro recurses down the parse tree, so you can apply it to entire
 source files:
 
 ```rust
-# use ruint::uint;
+# use ruint2::uint;
 uint!{
 
 let a = 42_U256;

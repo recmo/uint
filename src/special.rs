@@ -40,7 +40,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::U64};
+    /// # use ruint2::{Uint, uint, aliases::U64};
     /// # uint!{
     /// assert_eq!(0_U64.checked_next_power_of_two(), Some(1_U64));
     /// assert_eq!(1_U64.checked_next_power_of_two(), Some(1_U64));
@@ -83,7 +83,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::U64};
+    /// # use ruint2::{Uint, uint, aliases::U64};
     /// # uint!{
     /// assert_eq!(16_U64.checked_next_multiple_of(8_U64), Some(16_U64));
     /// assert_eq!(23_U64.checked_next_multiple_of(8_U64), Some(24_U64));
@@ -93,7 +93,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     ///
     /// ```
-    /// # use ruint::{Uint, uint};
+    /// # use ruint2::{Uint, uint};
     /// # uint!{
     /// assert_eq!(0_U0.checked_next_multiple_of(0_U0), None);
     /// assert_eq!(0_U1.checked_next_multiple_of(0_U1), None);

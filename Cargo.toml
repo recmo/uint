@@ -2,7 +2,7 @@
 name = "ruint2"
 description = "Unsigned integer type with cont-generic bit length"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
-version = "1.8.0"
+version = "1.9.0"
 edition = "2021"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"
@@ -46,7 +46,7 @@ pyo3 = { version = "0.18.3", optional = true }
 quickcheck = { version = "1.0", optional = true }
 rand = { version = "0.8.5", optional = true }
 rlp = { version = "0.5.1", optional = true }
-ruint-macro = { package = "ruint2-macro", version = "1.0.2", path = "./ruint-macro" }
+ruint2-macro = { version = "1.0.3", path = "./ruint-macro" }
 serde = { version = "1.0", optional = true }
 smallvec = { version = "1.8.0", optional = true, features = [ "union" ] } # for UintDyn
 # HACK: (BLOCKED) sqlx requires a runtime to be specified.
@@ -64,7 +64,7 @@ zeroize = { version = "1.5", optional = true }
 rustc_version = "0.4.0"
 
 [dev-dependencies]
-ruint = { package = "ruint2", path = ".", features = ["arbitrary", "proptest"] }
+ruint2 = { path = ".", features = ["arbitrary", "proptest"] }
 
 approx = "0.5.1"
 ark-bn254 = "0.4.0"

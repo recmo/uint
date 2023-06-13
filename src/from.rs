@@ -89,7 +89,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(U8::from(142_u16), 142_U8);
     /// assert_eq!(U64::from(0x7014b4c2d1f2_U256), 0x7014b4c2d1f2_U64);
@@ -117,7 +117,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(U8::saturating_from(300_u16), 255_U8);
     /// assert_eq!(U8::saturating_from(-10_i16), 0_U8);
@@ -145,7 +145,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(U8::wrapping_from(300_u16), 44_U8);
     /// assert_eq!(U8::wrapping_from(-10_i16), 246_U8);
@@ -171,7 +171,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(300_U12.to::<i16>(), 300_i16);
     /// assert_eq!(300_U12.to::<U256>(), 300_U256);
@@ -190,7 +190,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(300_U12.wrapping_to::<i8>(), 44_i8);
     /// assert_eq!(255_U32.wrapping_to::<i8>(), -1_i8);
@@ -210,7 +210,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(300_U12.saturating_to::<i16>(), 300_i16);
     /// assert_eq!(255_U32.saturating_to::<i8>(), 127);

@@ -95,7 +95,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(0_U64.approx_log2(), f64::NEG_INFINITY);
     /// assert_eq!(1_U64.approx_log2(), 0.0);

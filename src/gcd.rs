@@ -6,7 +6,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint::{Uint, uint, aliases::*};
+    /// # use ruint2::{Uint, uint, aliases::*};
     /// # uint! {
     /// assert_eq!(0_U128.gcd(0_U128), 0_U128);
     /// # }

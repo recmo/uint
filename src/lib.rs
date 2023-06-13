@@ -28,7 +28,7 @@
 
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
-extern crate self as ruint;
+// extern crate self as ruint;
 
 mod add;
 pub mod algorithms;
@@ -69,7 +69,7 @@ pub use self::{
 };
 
 #[doc(inline)]
-pub use ruint_macro::uint;
+pub use ruint2_macro::uint;
 
 #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
 pub mod nightly {
