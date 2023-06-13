@@ -1,5 +1,5 @@
 [package]
-name = "ruint-macro"
+name = "ruint2-macro"
 description = "The `uint!` macro for `Uint` literals"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
 version = "1.0.2"
