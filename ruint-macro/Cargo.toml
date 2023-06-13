@@ -15,7 +15,7 @@ license-file = "../mit-license.md"
 proc-macro = true
 
 [dev-dependencies]
-ruint = { path = ".." }
+ruint = { package = "ruint2", path = ".." }
 
 [package.metadata.release]
 tag = false

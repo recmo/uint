@@ -34,6 +34,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-rlp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1735b2db0470f8fa299dfbbb16606a93241354a533132610f511cd4fa36a27f"
+dependencies = [
+ "alloy-rlp-derive",
+ "arrayvec",
+ "bytes",
+]
+
+[[package]]
+name = "alloy-rlp-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98d157647d80c41cf6b938c3ae1d146d9bd82d5111d258d24d5ab4bc11316c70"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.15",
+]
+
+[[package]]
 name = "anes"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,9 +1676,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "ruint"
+name = "ruint2"
 version = "1.8.0"
 dependencies = [
+ "alloy-rlp",
  "approx",
  "arbitrary",
  "ark-bn254",
@@ -1680,8 +1703,8 @@ dependencies = [
  "quickcheck",
  "rand",
  "rlp",
- "ruint",
- "ruint-macro",
+ "ruint2",
+ "ruint2-macro",
  "rustc_version",
  "serde",
  "serde_json",
@@ -1693,10 +1716,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "ruint-macro"
+name = "ruint2-macro"
 version = "1.0.2"
 dependencies = [
- "ruint",
+ "ruint2",
 ]
 
 [[package]]
