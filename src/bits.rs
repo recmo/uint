@@ -1,5 +1,4 @@
 use crate::Uint;
-
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
     ShrAssign,
@@ -389,7 +388,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
         if BITS == 0 {
             return Self::ZERO;
         }
-        for limb in self.limbs.iter_mut() {
+        for limb in &mut self.limbs {
             *limb = u64::not(*limb);
         }
         self.limbs[LIMBS - 1] &= Self::MASK;

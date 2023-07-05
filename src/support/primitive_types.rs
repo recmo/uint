@@ -1,4 +1,5 @@
 //! Support for the [`primitive-types`](https://crates.io/crates/primitive-types) crate.
+
 #![cfg(feature = "primitive-types")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "primitive-types")))]
 

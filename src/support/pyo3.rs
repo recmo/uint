@@ -19,6 +19,7 @@
 //!
 //! [num]: https://github.com/PyO3/pyo3/blob/caaf7bbda74f873297d277733c157338f5492580/src/types/num.rs#L81
 //! [bigint]: https://github.com/PyO3/pyo3/blob/4a68273b173ef86dac059106cc0b5b3c2c9830e2/src/conversions/num_bigint.rs#L80
+
 #![cfg(feature = "pyo3")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "pyo3")))]
 

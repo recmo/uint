@@ -1,50 +1,45 @@
 //! Support for the [`proptest`](https://crates.io/crates/proptest) crate.
+
 #![cfg(feature = "proptest")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "proptest")))]
 
-use crate::{nlimbs, Bits, Uint};
-use proptest::{
-    arbitrary::Arbitrary,
-    collection::{vec, VecStrategy},
-    num::u64::Any,
-    strategy::{BoxedStrategy, Strategy},
-};
+use crate::{Bits, Uint};
+use proptest::{arbitrary::Mapped, prelude::*};
 
 impl<const BITS: usize, const LIMBS: usize> Arbitrary for Uint<BITS, LIMBS> {
     // FEATURE: Would be nice to have a value range as parameter
     // and/or a choice between uniform and 'exponential' distribution.
     type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
+    type Strategy = Mapped<[u64; LIMBS], Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> BoxedStrategy<Self> {
-        // OPT: Copy [`UniformArrayStrategy`] to avoid heap allocations
-        let limbs: VecStrategy<Any> = vec(u64::arbitrary(), nlimbs(BITS));
-        limbs
-            .prop_map(|mut limbs| {
-                if Self::LIMBS > 0 {
-                    limbs[Self::LIMBS - 1] &= Self::MASK;
-                }
-                Self::from_limbs_slice(&limbs)
-            })
-            .boxed()
+    #[inline]
+    fn arbitrary() -> Self::Strategy {
+        Self::arbitrary_with(())
+    }
+
+    fn arbitrary_with((): Self::Parameters) -> Self::Strategy {
+        any::<[u64; LIMBS]>().prop_map(|mut limbs| {
+            if LIMBS > 0 {
+                limbs[LIMBS - 1] &= Self::MASK;
+            }
+            Self::from_limbs(limbs)
+        })
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Arbitrary for Bits<BITS, LIMBS> {
     type Parameters = <Uint<BITS, LIMBS> as Arbitrary>::Parameters;
-    type Strategy = BoxedStrategy<Self>;
+    type Strategy = Mapped<Uint<BITS, LIMBS>, Self>;
 
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-        Uint::<BITS, LIMBS>::arbitrary_with(args)
-            .prop_map(Self::from)
-            .boxed()
+        Uint::<BITS, LIMBS>::arbitrary_with(args).prop_map(Self::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::const_for;
+    use crate::{const_for, nlimbs};
     use proptest::proptest;
 
     #[test]

@@ -1,4 +1,5 @@
 //! Support for the [`serde`](https://crates.io/crates/serde) crate.
+
 #![cfg(feature = "serde")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "serde")))]
 

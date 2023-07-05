@@ -65,7 +65,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         let mut carry = 0_u128;
         #[allow(clippy::cast_possible_truncation)] // Intentional
-        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
+        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs) {
             carry += u128::from(*lhs) + u128::from(rhs);
             *lhs = carry as u64;
             carry >>= 64;
@@ -102,7 +102,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut carry = 0_i128;
         #[allow(clippy::cast_possible_truncation)] // Intentional
         #[allow(clippy::cast_sign_loss)] // Intentional
-        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs.into_iter()) {
+        for (lhs, rhs) in self.limbs.iter_mut().zip(rhs.limbs) {
             carry += i128::from(*lhs) - i128::from(rhs);
             *lhs = carry as u64;
             carry >>= 64; // Sign extending shift

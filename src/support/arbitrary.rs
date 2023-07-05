@@ -1,6 +1,8 @@
 //! Support for the [`arbitrary`](https://crates.io/crates/arbitrary) crate.
+
 #![cfg(feature = "arbitrary")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "arbitrary")))]
+
 use crate::Uint;
 use arbitrary::{Arbitrary, Result, Unstructured};
 
@@ -14,7 +16,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIM
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
         let mut limbs = [0; LIMBS];
         if let Some((last, rest)) = limbs.split_last_mut() {
-            for limb in rest.iter_mut() {
+            for limb in rest {
                 *limb = u64::arbitrary(u)?;
             }
             *last = u.int_in_range(0..=Self::MASK)?;

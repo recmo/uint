@@ -1,4 +1,5 @@
 //! Support for the [`parity-scale-codec`](https://crates.io/crates/parity-scale-codec) crate.
+
 #![cfg(feature = "parity-scale-codec")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "parity-scale-codec")))]
 
