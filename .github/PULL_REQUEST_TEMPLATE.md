@@ -2,10 +2,10 @@
 Thank you for your Pull Request. Please provide a description above and review
 the requirements below.
 
-Bug fixes and new features should (ideally) include tests.
+Bug fixes and new features should include tests.
 
-The readme includes instructions for formatting, linting, building, testing and
-building the documentation.
+The contributors guide includes instructions for running rustfmt and building the
+documentation.
 -->
 
 ## Motivation
@@ -27,6 +27,4 @@ the code change.
 
 - [ ] Added Tests
 - [ ] Added Documentation
-- [ ] Updated the changelog
-
-<!-- This template is based on https://github.com/tokio-rs/tokio/blob/tokio-1.13.0/.github/PULL_REQUEST_TEMPLATE.md and https://github.com/gakonst/ethers-rs/blob/0.5.3/.github/PULL_REQUEST_TEMPLATE.md -->
+- [ ] Breaking changes
