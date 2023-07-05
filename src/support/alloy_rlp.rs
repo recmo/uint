@@ -3,8 +3,8 @@
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "alloy-rlp")))]
 
 use crate::Uint;
-use core::mem::size_of;
 use alloy_rlp::{BufMut, Decodable, DecodeError, Encodable, Header};
+use core::mem::size_of;
 
 /// Allows a [`Uint`] to be serialized as RLP.
 ///
@@ -70,6 +70,8 @@ fn trim_leading_zeros(bytes: &[u8]) -> &[u8] {
     let zeros = bytes.iter().position(|&b| b != 0).unwrap_or(bytes.len());
     &bytes[zeros..]
 }
+
+alloy_rlp::impl_max_encoded_len!(crate::aliases::U256, alloy_rlp::length_of_length(32) + 32);
 
 #[cfg(test)]
 mod test {

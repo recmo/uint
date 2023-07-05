@@ -99,7 +99,7 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
 
     // Iterate over limbs of `b` and add partial products to `lhs`.
     let mut overflow = false;
-    for &b in b.iter() {
+    for &b in b {
         if lhs.len() >= a.len() {
             let (target, rest) = lhs.split_at_mut(a.len());
             let carry = addmul_nx1(target, a, b);
@@ -123,7 +123,7 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
     if a == 0 {
         return 0;
     }
-    for lhs in lhs.iter_mut() {
+    for lhs in lhs {
         let sum = u128::add(*lhs, a);
         *lhs = sum.low();
         a = sum.high();

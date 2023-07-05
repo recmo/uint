@@ -1,4 +1,5 @@
 //! Support for the [`bn-rs`](https://crates.io/crates/bn-rs) crate.
+
 #![cfg(feature = "bn-rs")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "bn-rs")))]
 

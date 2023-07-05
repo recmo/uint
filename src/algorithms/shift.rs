@@ -2,7 +2,7 @@
 pub fn shift_left_small(limbs: &mut [u64], amount: usize) -> u64 {
     debug_assert!(amount < 64);
     let mut overflow = 0;
-    for limb in limbs.iter_mut() {
+    for limb in limbs {
         let value = (*limb << amount) | overflow;
         overflow = *limb >> (64 - amount);
         *limb = value;

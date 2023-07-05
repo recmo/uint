@@ -1,4 +1,5 @@
 //! Support for the [`fastrlp`](https://crates.io/crates/fastrlp) crate.
+
 #![cfg(feature = "fastrlp")]
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "fastrlp")))]
 

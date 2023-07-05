@@ -1,6 +1,6 @@
 #![doc = include_str!("../Readme.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![allow(
     clippy::module_name_repetitions,
     clippy::inline_always,
@@ -28,7 +28,8 @@
 
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
-// extern crate self as ruint;
+extern crate self as ruint;
+extern crate self as ruint2;
 
 mod add;
 pub mod algorithms;
@@ -49,9 +50,10 @@ mod pow;
 mod root;
 mod special;
 mod string;
-mod support;
 mod uint_dyn;
 mod utils;
+
+pub mod support;
 
 #[cfg(all(feature = "dyn", feature = "unstable"))]
 #[doc(inline)]
