@@ -6,7 +6,7 @@
 //! [new]: https://gmplib.org/list-archives/gmp-devel/2019-October/005590.html
 #![allow(dead_code, clippy::cast_possible_truncation, clippy::cast_lossless)]
 
-use std::num::Wrapping;
+use core::num::Wrapping;
 
 pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
 

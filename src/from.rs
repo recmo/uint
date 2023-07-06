@@ -415,6 +415,7 @@ impl_from_signed_int!(i64, u64);
 impl_from_signed_int!(i128, u128);
 impl_from_signed_int!(isize, usize);
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
@@ -483,6 +484,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
@@ -601,12 +603,14 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
 // Convert Uint to floating point
 //
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     /// Approximate single precision float.
     ///
@@ -618,12 +622,14 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
     /// Approximate double precision float.
     ///

@@ -333,12 +333,12 @@ impl Matrix {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
+    use alloc::str::FromStr;
     use core::{
         cmp::{max, min},
         mem::swap,
     };
     use proptest::{proptest, test_runner::Config};
-    use std::str::FromStr;
 
     fn gcd(mut a: u128, mut b: u128) -> u128 {
         while b != 0 {

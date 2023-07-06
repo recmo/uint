@@ -1,8 +1,8 @@
 use crate::{base_convert::BaseConvertError, utils::rem_up, Uint};
-use core::fmt::{
-    Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
+use core::{
+    fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex},
+    str::FromStr,
 };
-use std::str::FromStr;
 use thiserror::Error;
 
 // FEATURE: Respect width parameter in formatters.
@@ -186,6 +186,7 @@ impl<const BITS: usize, const LIMBS: usize> FromStr for Uint<BITS, LIMBS> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::{format, string::ToString};
     use proptest::proptest;
 
     #[allow(clippy::unreadable_literal)]

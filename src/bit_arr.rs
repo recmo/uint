@@ -1,10 +1,10 @@
 use crate::{ParseError, Uint};
+use alloc::{borrow::Cow, vec::Vec};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
     Shr, ShrAssign,
 };
 use derive_more::{From, FromStr, Into};
-use std::borrow::Cow;
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.

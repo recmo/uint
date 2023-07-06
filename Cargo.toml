@@ -15,12 +15,14 @@ license = "MIT"
 members = ["ruint-macro"]
 
 [features]
-default = []
+default = ["std"]
 bench = ["dep:criterion", "proptest", "rand"]
 dyn = ["dep:smallvec"]
 generic_const_exprs = []
 postgres = ["dep:postgres-types", "dep:bytes"]
 sqlx = ["dep:sqlx-core"]
+# no_std requires nightly rust due to use of #![feature(error_in_core)] (issue #103765)
+std = ["thiserror/std"] 
 
 [[bench]]
 name = "criterion"
@@ -51,7 +53,11 @@ smallvec = { version = "1.8.0", optional = true, features = [ "union" ] } # for 
 # HACK: (BLOCKED) sqlx requires a runtime to be specified.
 # <https://github.com/launchbadge/sqlx/issues/1627>
 sqlx-core = { version = "0.6", optional = true, features = [ "runtime-tokio-native-tls" ] }
-thiserror = "1.0"
+# thiserror does not support no-std, the PR to support it is
+# https://github.com/dtolnay/thiserror/pull/211, but I don't think it will be
+# merged until https://github.com/rust-lang/rust/issues/103765 is stabilized.
+# So, the forked thiserror with no-std support is being used instead.
+thiserror = { version = "1.0", default-features = false, package = "thiserror-core" }
 valuable = { version = "0.1.0", optional = true }
 zeroize = { version = "1.5", optional = true }
 

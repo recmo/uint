@@ -82,6 +82,7 @@ impl_bin_op!(Rem, rem, RemAssign, rem_assign, wrapping_rem);
 pub mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
+    use alloc::format;
     use proptest::{prop_assume, proptest};
 
     #[test]

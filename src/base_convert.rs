@@ -1,4 +1,5 @@
 use crate::Uint;
+use alloc::vec::Vec;
 use thiserror::Error;
 
 /// Error for [`from_base_le`][Uint::from_base_le] and

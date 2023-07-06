@@ -281,6 +281,7 @@ pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
     use proptest::{collection, num::u64, proptest};
 
     #[test]

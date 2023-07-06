@@ -1,4 +1,5 @@
 use super::addmul;
+use alloc::vec;
 use core::iter::zip;
 
 /// See Handbook of Applied Cryptography, Algorithm 14.32, p. 601.

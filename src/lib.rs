@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std, feature(error_in_core))]
 #![doc = include_str!("../Readme.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
@@ -26,6 +27,8 @@
 // Nightly only feature flag to enable the `unlikely` compiler hint.
 #![cfg_attr(has_core_intrinsics, feature(core_intrinsics))]
 
+extern crate alloc;
+
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
@@ -42,16 +45,21 @@ mod const_for;
 mod div;
 mod from;
 mod gcd;
-mod log;
 mod modular;
 mod mul;
-mod pow;
-mod root;
 mod special;
 mod string;
 mod support;
 mod uint_dyn;
 mod utils;
+// The following math operations are disable due to lack of some floating point
+// functions in core. See issue https://github.com/rust-lang/rust/issues/50145
+#[cfg(feature = "std")]
+mod log;
+#[cfg(feature = "std")]
+mod pow;
+#[cfg(feature = "std")]
+mod root;
 
 #[cfg(all(feature = "dyn", feature = "unstable"))]
 #[doc(inline)]

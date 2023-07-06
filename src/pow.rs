@@ -166,8 +166,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
+    use core::iter::repeat;
     use proptest::proptest;
-    use std::iter::repeat;
 
     #[test]
     fn test_pow2_shl() {

@@ -280,6 +280,7 @@ pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
 mod tests {
     use super::*;
     use crate::algorithms::addmul;
+    use alloc::{format, vec};
     use proptest::{
         collection,
         num::{u128, u64},

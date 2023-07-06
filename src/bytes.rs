@@ -5,12 +5,12 @@ use crate::{
     utils::{trim_end_slice, trim_end_vec},
     Uint,
 };
+use alloc::{borrow::Cow, vec::Vec};
 use core::{
     mem::size_of_val,
     ptr::{addr_of, addr_of_mut},
     slice,
 };
-use std::borrow::Cow;
 
 // OPT: *_to_smallvec to avoid allocation.
 

@@ -1,4 +1,5 @@
 use crate::{algorithms, nlimbs, Uint};
+use alloc::vec;
 
 // FEATURE: sub_mod, neg_mod, inv_mod, div_mod, root_mod
 // See <https://en.wikipedia.org/wiki/Cipolla's_algorithm>
@@ -169,6 +170,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U64, const_for, nlimbs};
+    use alloc::format;
     use core::cmp::min;
     use proptest::{prop_assume, proptest, test_runner::Config};
 
@@ -289,7 +291,6 @@ mod tests {
                     // TODO: Test for larger (>= m) values of a, b.
 
                     let expected = a.mul_mod(b, m).mul_mod(r, m);
-
                     assert_eq!(ar.mul_redc(br, m, inv), expected);
                 }
             });
