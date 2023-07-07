@@ -3,8 +3,8 @@
 #![cfg_attr(has_doc_cfg, doc(cfg(feature = "rlp")))]
 
 use crate::{Bits, Uint};
+use core::cmp::Ordering;
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-use std::cmp::Ordering;
 
 /// Allows a [`Uint`] to be serialized as RLP.
 ///
