@@ -70,6 +70,12 @@ it in the stable version. There are a few more subtle issues that make this
 less ideal than it appears. It also looks like it may take some time before
 these nightly features are stabilized.
 
+Also, on nightly you may disable the `std` feature for `#![no_std]` support.
+Nightly is required until the stabilization of `error_in_core` (Rust issue
+[#103765][r103765]), moving the standard `Error` trait to `core`.
+
+[r103765]: https://github.com/rust-lang/rust/issues/103765
+
 ## Examples
 
 ```rust
@@ -112,8 +118,21 @@ Note that since `B` is a valid hexadecimal digit there can be ambiguity. To less
 
 ## Feature flags
 
-There is support for a number of crates. These are enabled by setting the identically
-named feature flag.
+The only feature enabled by default is `std`. Disabling it is only supported on
+nightly, and removes the dependency on the `std` crate, allowing this crate to
+be used on `#![no_std]` projects. Due to limited support for floating point
+operations in `core` (see Rust issue [#50145][r50145]), without `std` the
+following functionalities are disabled:
+ * module `log`
+ * module `pow`
+ * module `root`
+ * trait implementation `From<f32>`
+ * trait implementation `From<f64>`
+
+[r50145]: https://github.com/rust-lang/rust/issues/50145
+
+There is optional support for a number of crates. These are enabled by setting
+the identically named feature flag.
 
 * `unstable` Enable sem-ver unstable features.
 * [`rand`](https://docs.rs/rand): Implements sampling from the [`Standard`](https://docs.rs/rand/latest/rand/distributions/struct.Standard.html) distribution, i.e. [`rng.gen()`](https://docs.rs/rand/latest/rand/trait.Rng.html#method.gen).

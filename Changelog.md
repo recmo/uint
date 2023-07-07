@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support for `#![no_std]` builds with the new `std` feature.
 - Support `bn-rs`, `serde` and `uint!` for `Bits`
 
 ### Fixed
