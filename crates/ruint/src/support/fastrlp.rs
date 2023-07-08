@@ -5,48 +5,72 @@
 
 use crate::Uint;
 use core::mem::size_of;
-use fastrlp::{BufMut, Decodable, DecodeError, Encodable, Header};
+use fastrlp::{
+    length_of_length, BufMut, Decodable, DecodeError, Encodable, Header, MaxEncodedLen,
+    MaxEncodedLenAssoc, EMPTY_STRING_CODE,
+};
+
+const MAX_BITS: usize = 55 * 8;
 
 /// Allows a [`Uint`] to be serialized as RLP.
 ///
 /// See <https://eth.wiki/en/fundamentals/rlp>
 impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
+    #[inline]
     fn length(&self) -> usize {
         let bits = self.bit_len();
-        match bits {
-            n if n <= 7 => 1,
-            n if n <= 55 * 8 => 1 + (n + 7) / 8,
-            n => {
-                let bytes = (n + 7) / 8;
-                let len_bytes = size_of::<usize>() - bytes.leading_zeros() as usize / 8;
-                1 + len_bytes + bytes
-            }
+        if bits <= 7 {
+            1
+        } else {
+            let bytes = (bits + 7) / 8;
+            let len_bytes = if bits > MAX_BITS {
+                size_of::<usize>() - bytes.leading_zeros() as usize / 8
+            } else {
+                0
+            };
+            1 + bytes + len_bytes
         }
     }
 
+    #[inline]
     fn encode(&self, out: &mut dyn BufMut) {
+        // fast paths, avoiding allocation due to `to_be_bytes_vec`
+        match LIMBS {
+            0 => return out.put_u8(EMPTY_STRING_CODE),
+            1 => return self.limbs[0].encode(out),
+            2 => return (self.limbs[0] as u128 | ((self.limbs[1] as u128) << 64)).encode(out),
+            _ => {}
+        }
+
         match self.bit_len() {
-            0 => out.put_u8(0x80),
-            n if n <= 7 => {
+            0 => out.put_u8(EMPTY_STRING_CODE),
+            1..=7 => {
                 #[allow(clippy::cast_possible_truncation)] // self < 128
-                out.put_u8(self.as_limbs()[0] as u8);
+                out.put_u8(self.limbs[0] as u8);
             }
-            n if n <= 55 * 8 => {
+            bits => {
+                let leading_zero_bytes = Self::BYTES - (bits + 7) / 8;
+
+                // avoid heap allocation in `to_be_bytes_vec`
+                // SAFETY: we don't re-use `copy`
+                #[cfg(target_endian = "little")]
+                let mut copy = *self;
+                #[cfg(target_endian = "little")]
+                let bytes = unsafe { copy.as_le_slice_mut() };
+                #[cfg(target_endian = "little")]
+                bytes.reverse();
+
+                #[cfg(target_endian = "big")]
                 let bytes = self.to_be_bytes_vec();
-                let bytes = trim_leading_zeros(&bytes);
-                #[allow(clippy::cast_possible_truncation)] // bytes.len() < 56 < 256
-                out.put_u8(0x80 + bytes.len() as u8);
-                out.put_slice(bytes);
-            }
-            _ => {
-                let bytes = self.to_be_bytes_vec();
-                let bytes = trim_leading_zeros(&bytes);
-                let length_bytes = bytes.len().to_be_bytes();
-                let length_bytes = trim_leading_zeros(&length_bytes);
-                #[allow(clippy::cast_possible_truncation)] // length_bytes.len() <= 8
-                out.put_u8(0xb7 + length_bytes.len() as u8);
-                out.put_slice(length_bytes);
-                out.put_slice(bytes);
+
+                let trimmed = &bytes[leading_zero_bytes..];
+                if bits > MAX_BITS {
+                    trimmed.encode(out);
+                } else {
+                    #[allow(clippy::cast_possible_truncation)] // bytes.len() < 56 < 256
+                    out.put_u8(EMPTY_STRING_CODE + trimmed.len() as u8);
+                    out.put_slice(trimmed);
+                }
             }
         }
     }
@@ -56,6 +80,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
 ///
 /// See <https://eth.wiki/en/fundamentals/rlp>
 impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
+    #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, DecodeError> {
         let header = Header::decode(buf)?;
         if header.list {
@@ -67,9 +92,24 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     }
 }
 
-fn trim_leading_zeros(bytes: &[u8]) -> &[u8] {
-    let zeros = bytes.iter().position(|&b| b != 0).unwrap_or(bytes.len());
-    &bytes[zeros..]
+#[cfg(feature = "generic_const_exprs")]
+unsafe impl<const BITS: usize, const LIMBS: usize>
+    MaxEncodedLen<{ <Uint<BITS, LIMBS>>::BYTES + length_of_length(<Uint<BITS, LIMBS>>::BYTES) }>
+    for Uint<BITS, LIMBS>
+{
+}
+
+#[cfg(not(feature = "generic_const_exprs"))]
+const _: () = {
+    crate::const_for!(BITS in [0, 1, 2, 8, 16, 32, 64, 128, 192, 256, 384, 512, 4096] {
+        const LIMBS: usize = crate::nlimbs(BITS);
+        const BYTES: usize = Uint::<BITS, LIMBS>::BYTES;
+        unsafe impl MaxEncodedLen<{ BYTES + length_of_length(BYTES) }> for Uint<BITS, LIMBS> {}
+    });
+};
+
+unsafe impl<const BITS: usize, const LIMBS: usize> MaxEncodedLenAssoc for Uint<BITS, LIMBS> {
+    const LEN: usize = Self::BYTES + length_of_length(Self::BYTES);
 }
 
 #[cfg(test)]
@@ -104,27 +144,19 @@ mod test {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let serialized = encode(value);
+
+                #[cfg(feature = "rlp")]
+                {
+                    use rlp::Encodable as _;
+                    let serialized_rlp = value.rlp_bytes();
+                    assert_eq!(serialized, serialized_rlp.freeze()[..]);
+                }
+
                 assert_eq!(serialized.len(), value.length());
                 let mut reader = &serialized[..];
                 let deserialized = Uint::decode(&mut reader).unwrap();
                 assert_eq!(reader.len(), 0);
                 assert_eq!(value, deserialized);
-            });
-        });
-    }
-
-    #[test]
-    #[cfg(feature = "rlp")]
-    fn test_rlp_fastrlp_compat() {
-        use rlp::Encodable;
-
-        const_for!(BITS in SIZES {
-            const LIMBS: usize = nlimbs(BITS);
-            proptest!(|(value: Uint<BITS, LIMBS>)| {
-                let serialized = encode(value);
-                let serialized_rlp = value.rlp_bytes();
-                assert_eq!(serialized, serialized_rlp);
-                // We already test that they can deserialize from this.
             });
         });
     }

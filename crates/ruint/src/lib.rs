@@ -135,19 +135,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
     pub const LIMBS: usize = nlimbs(BITS);
 
+    const ASSERT_LIMBS: () = assert!(
+        LIMBS == Self::LIMBS,
+        "Can not construct Uint<BITS, LIMBS> with incorrect LIMBS"
+    );
+
     /// Bit mask for the last limb.
     pub const MASK: u64 = mask(BITS);
 
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
 
-    /// The smallest value that can be represented by this integer type.
-    /// Synonym for [`Self::ZERO`].
-    pub const MIN: Self = Self::ZERO;
-
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
     pub const ZERO: Self = Self::from_limbs([0; LIMBS]);
+
+    /// The smallest value that can be represented by this integer type.
+    /// Synonym for [`Self::ZERO`].
+    pub const MIN: Self = Self::ZERO;
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
@@ -198,8 +203,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline(always)]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
-        Self::assert_valid();
-        if BITS > 0 && Self::MASK < u64::MAX {
+        let _ = Self::ASSERT_LIMBS;
+        if BITS > 0 && Self::MASK != u64::MAX {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
                 limbs[Self::LIMBS - 1] <= Self::MASK,
@@ -243,7 +248,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// was truncated.
     #[must_use]
     pub fn overflowing_from_limbs_slice(slice: &[u64]) -> (Self, bool) {
-        Self::assert_valid();
+        let _ = Self::ASSERT_LIMBS;
         if slice.len() < LIMBS {
             let mut limbs = [0; LIMBS];
             limbs[..slice.len()].copy_from_slice(slice);
@@ -268,19 +273,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (_, true) => Self::MAX,
         }
     }
-
-    #[inline(always)]
-    const fn assert_valid() {
-        // REFACTOR: (BLOCKED) Replace with `assert_eq!` when it is made `const`.
-        // Blocked on Rust, not issue known.
-        #[allow(clippy::manual_assert)]
-        if LIMBS != Self::LIMBS {
-            panic!("Can not construct Uint<BITS, LIMBS> with incorrect LIMBS");
-        }
-    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
+    #[inline]
     fn default() -> Self {
         Self::ZERO
     }
@@ -289,12 +285,14 @@ impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
 /// Number of `u64` limbs required to represent the given number of bits.
 /// This needs to be public because it is used in the `Uint` type.
 #[must_use]
+#[inline]
 pub const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.
 #[must_use]
+#[inline]
 pub const fn mask(bits: usize) -> u64 {
     if bits == 0 {
         return 0;

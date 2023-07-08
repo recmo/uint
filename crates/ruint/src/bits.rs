@@ -108,18 +108,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of zeros in the binary representation of `self`.
     #[must_use]
+    #[inline]
     pub fn count_zeros(&self) -> usize {
         BITS - self.count_ones()
     }
 
     /// Length of the number in bits ignoring leading zeros.
     #[must_use]
+    #[inline]
     pub fn bit_len(&self) -> usize {
         BITS - self.leading_zeros()
     }
 
     /// Length of the number in bytes ignoring leading zeros.
     #[must_use]
+    #[inline]
     pub fn byte_len(&self) -> usize {
         (self.bit_len() + 7) / 8
     }
