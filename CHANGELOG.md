@@ -9,12 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for [`alloy-rlp`](https://github.com/alloy-rs/rlp)
+
 ### Changed
 
 - Make `serde::Deserialize` impl more permissive
 - Use Ethereum `Quantity` encoding for serde serialization when human-readable
 - Fix error in `from_base_be` that allowed instantiation of overflowing `Uint`.
-- Updated `ark` to `0.4`, `fastrlp` to `0.3` and `pyo3` to `0.18`.
+- Updated `ark` to `0.4`, `fastrlp` to `0.3`, `pyo3` to `0.18`, and `sqlx-core` to `0.7`.
+- Improved `fastrlp` perfomance
+- Improved `proptest` performance
+- Made `support` module and its modules public
+- Made more `algorithm` functions public
+
+### Removed
+
+- Automatic detection of nightly features. Enable them instead with the `nightly` cargo feature.
+- Dependency on `derive_more`
 
 ### Fixed
 

@@ -12,7 +12,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint2::{Uint, uint};
+    /// # use ruint::{Uint, uint};
     /// # uint!{
     /// assert_eq!(
     ///     36_U64.overflowing_pow(12_U64),
@@ -31,7 +31,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// Small cases:
     /// ```
-    /// # use ruint2::{Uint, uint};
+    /// # use ruint::{Uint, uint};
     /// # uint!{
     /// assert_eq!(0_U0.overflowing_pow(0_U0), (0_U0, false));
     /// assert_eq!(0_U1.overflowing_pow(0_U1), (1_U1, false));
@@ -106,7 +106,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint2::{Uint, uint, aliases::*};
+    /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(U64::approx_pow2(-2.0), Some(0_U64));
     /// assert_eq!(U64::approx_pow2(-1.0), Some(1_U64));

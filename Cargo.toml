@@ -7,9 +7,9 @@ edition = "2021"
 rust-version = "1.65"
 authors = ["Remco Bloemen <remco@wicked.ventures>", "Alloy Contributors"]
 license = "MIT"
-homepage = "https://github.com/alloy-rs/core"
-repository = "https://github.com/alloy-rs/core"
+homepage = "https://github.com/recmo/uint"
+repository = "https://github.com/recmo/uint"
 
 [workspace.dependencies]
-ruint2 = { version = "1.9.0", path = "crates/ruint" }
-ruint2-macro = { version = "1.0.3", path = "crates/ruint-macro" }
+ruint = { version = "1.9.0", path = "crates/ruint" }
+ruint-macro = { version = "1.0.3", path = "crates/ruint-macro" }

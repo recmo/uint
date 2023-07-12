@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use ruint2::algorithms::addmul_n;
+use ruint::algorithms::addmul_n;
 
 pub fn group(criterion: &mut Criterion) {
     bench_addmul_nnn(criterion);

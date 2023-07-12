@@ -1,5 +1,5 @@
 [package]
-name = "ruint2"
+name = "ruint"
 description = "Unsigned integer type with const-generic bit length"
 version = "1.9.0"
 keywords = ["uint"]
@@ -23,12 +23,12 @@ harness = false
 path = "benches/bench.rs"
 
 [dependencies]
-ruint2-macro.workspace = true
+ruint-macro.workspace = true
 
 thiserror = "1.0"
 
 # support
-alloy-rlp = { version = "0", optional = true }
+alloy-rlp = { version = "0.3", optional = true }
 arbitrary = { version = "1", optional = true }
 ark-ff = { version = "0.4", optional = true }
 bn-rs = { version = "0.2", optional = true }
@@ -53,7 +53,7 @@ postgres-types = { version = "0.2", optional = true }
 sqlx-core = { version = "0.7", optional = true }
 
 [dev-dependencies]
-ruint2 = { workspace = true, features = ["arbitrary", "proptest"] }
+ruint = { workspace = true, features = ["arbitrary", "proptest"] }
 
 criterion = "0.5"
 rand = "0.8"

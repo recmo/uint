@@ -55,7 +55,7 @@ pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
 /// # Examples
 ///
 /// ```
-/// # use ruint2::algorithms::addmul;
+/// # use ruint::algorithms::addmul;
 /// let mut result = [0];
 /// let overflow = addmul(&mut result, &[3], &[4]);
 /// assert_eq!(overflow, false);

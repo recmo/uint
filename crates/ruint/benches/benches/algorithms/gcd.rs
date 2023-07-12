@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use ruint2::algorithms::LehmerMatrix as Matrix;
+use ruint::algorithms::LehmerMatrix as Matrix;
 use std::cmp::{max, min};
 
 pub fn group(criterion: &mut Criterion) {

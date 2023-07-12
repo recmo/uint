@@ -8,7 +8,7 @@ mod prelude {
         test_runner::TestRunner,
     };
     pub use rand::prelude::*;
-    pub use ruint2::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
+    pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
     pub use std::hint::black_box;
 }
 

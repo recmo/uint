@@ -26,7 +26,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint2::{Uint, uint};
+    /// # use ruint::{Uint, uint};
     /// # uint!{
     /// assert_eq!(1_U1.overflowing_mul(1_U1), (1_U1, false));
     /// assert_eq!(
@@ -119,7 +119,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint2::{Uint, uint};
+    /// # use ruint::{Uint, uint};
     /// # uint!{
     /// assert_eq!(0_U0.widening_mul(0_U0), 0_U0);
     /// assert_eq!(1_U1.widening_mul(1_U1), 1_U2);

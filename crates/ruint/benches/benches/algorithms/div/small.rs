@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use ruint2::algorithms::div::*;
+use ruint::algorithms::div::*;
 
 pub fn group(criterion: &mut Criterion) {
     bench_div_2x1_ref(criterion);

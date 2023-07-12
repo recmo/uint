@@ -1,17 +1,17 @@
 # Rust `uint` crate using const-generics
 
-[![crates.io](https://buildstats.info/crate/ruint)](https://crates.io/crates/ruint2)
-[![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint2)
-[![MIT License](https://img.shields.io/github/license/alloy-rs/uint)](https://github.com/alloy-rs/uint/blob/main/LICENSE)
-[![dependency status](https://deps.rs/repo/github/alloy-rs/uint/status.svg)](https://deps.rs/repo/github/alloy-rs/uint)
-[![codecov](https://codecov.io/gh/alloy-rs/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/alloy-rs/uint)
-[![CI](https://github.com/alloy-rs/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/alloy-rs/uint/actions/workflows/ci.yml)
+[![crates.io](https://buildstats.info/crate/ruint)](https://crates.io/crates/ruint)
+[![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint)
+[![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/LICENSE)
+[![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
+[![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
+[![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
 
 Implements [`Uint<BITS, LIMBS>`], the ring of numbers modulo $2^{\mathsf{BITS}}$. It requires two
 generic arguments: the number of bits and the number of 64-bit 'limbs' required to store those bits.
 
 ```rust
-# use ruint2::Uint;
+# use ruint::Uint;
 let answer: Uint<256, 4> = Uint::from(42);
 ```
 
@@ -26,15 +26,15 @@ A more convenient method on stable is to use the [`uint!`] macro, which construc
 [`Uint`] for you.
 
 ```rust
-# use ruint2::{Uint, uint};
+# use ruint::{Uint, uint};
 let answer = uint!(42_U256);
 ```
 
 You can also use one of the pre-computed type [`aliases`]:
 
 ```rust
-# use ruint2::Uint;
-use ruint2::aliases::*;
+# use ruint::Uint;
+use ruint::aliases::*;
 
 let answer: U256 = Uint::from(42);
 ```
@@ -42,7 +42,7 @@ let answer: U256 = Uint::from(42);
 You can of course also create your own type alias if you need a funny size:
 
 ```rust
-# use ruint2::Uint;
+# use ruint::Uint;
 type U1337 = Uint<1337, 21>;
 
 let answer: U1337 = Uint::from(42);
@@ -57,8 +57,8 @@ without `generic_const_exprs` support (Rust issue [#76560][r76560]).
 [r76560]: https://github.com/rust-lang/rust/issues/76560
 
 ```rust
-# #[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))] {
-use ruint2::nightly::Uint;
+# #[cfg(feature = "generic_const_exprs")] {
+use ruint::nightly::Uint;
 
 let answer: Uint<256> = Uint::<256>::from(42);
 # }
@@ -73,7 +73,7 @@ these nightly features are stabilized.
 ## Examples
 
 ```rust
-use ruint2::Uint;
+use ruint::Uint;
 
 let a: Uint<256, 4> = Uint::from(0xf00f_u64);
 let b: Uint<256, 4> = Uint::from(42_u64);
@@ -89,7 +89,7 @@ supported using their prefixes `0x`, `0b` and `0o`. Literals can have
 underscores `_` added for readability.
 
 ```rust
-# use ruint2::uint;
+# use ruint::uint;
 let cow = uint!(0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4_U256);
 ```
 
@@ -97,7 +97,7 @@ In fact, this macro recurses down the parse tree, so you can apply it to entire
 source files:
 
 ```rust
-# use ruint2::uint;
+# use ruint::uint;
 uint!{
 
 let a = 42_U256;
@@ -192,9 +192,9 @@ RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --workspace --all-
 
 ---
 
-[![lines of code](https://img.shields.io/tokei/lines/github/alloy-rs/uint)](https://github.com/alloy-rs/uint)
-[![GitHub contributors](https://img.shields.io/github/contributors/alloy-rs/uint)](https://github.com/alloy-rs/uint/graphs/contributors)
-[![GitHub issues](https://img.shields.io/github/issues/alloy-rs/uint)](https://github.com/alloy-rs/uint/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/alloy-rs/uint?label=PRs)](https://github.com/alloy-rs/uint/pulls)
-[![GitHub Repo stars](https://img.shields.io/github/stars/alloy-rs/uint)](https://star-history.com/#alloy-rs/uint&Date)
-[![crates.io](https://img.shields.io/crates/d/ruint2)](https://crates.io/crates/ruint2)
+[![lines of code](https://img.shields.io/tokei/lines/github/recmo/uint)](https://github.com/recmo/uint)
+[![GitHub contributors](https://img.shields.io/github/contributors/recmo/uint)](https://github.com/recmo/uint/graphs/contributors)
+[![GitHub issues](https://img.shields.io/github/issues/recmo/uint)](https://github.com/recmo/uint/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/recmo/uint?label=PRs)](https://github.com/recmo/uint/pulls)
+[![GitHub Repo stars](https://img.shields.io/github/stars/recmo/uint)](https://star-history.com/#recmo/uint&Date)
+[![crates.io](https://img.shields.io/crates/d/ruint)](https://crates.io/crates/ruint)

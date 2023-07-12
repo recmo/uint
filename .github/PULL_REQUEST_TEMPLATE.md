@@ -28,3 +28,4 @@ the code change.
 - [ ] Added Tests
 - [ ] Added Documentation
 - [ ] Breaking changes
+- [ ] Updated CHANGELOG.md

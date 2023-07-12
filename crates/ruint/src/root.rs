@@ -15,7 +15,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Examples
     ///
     /// ```
-    /// # use ruint2::{Uint, uint, aliases::*};
+    /// # use ruint::{Uint, uint, aliases::*};
     /// # uint!{
     /// assert_eq!(0_U64.root(2), 0_U64);
     /// assert_eq!(1_U64.root(63), 1_U64);

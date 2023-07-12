@@ -200,7 +200,7 @@ mod tests {
             "0b1"
         ]"#;
         let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
-        ruint2_macro::uint! {
+        ruint_macro::uint! {
             assert_eq!(numbers, vec![1_U1, 1_U1, 1_U1, 1_U1]);
         }
 
@@ -211,7 +211,7 @@ mod tests {
             "0b"
         ]"#;
         let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
-        ruint2_macro::uint! {
+        ruint_macro::uint! {
             assert_eq!(numbers, vec![0_U1, 0_U1, 0_U1, 0_U1]);
         }
     }
