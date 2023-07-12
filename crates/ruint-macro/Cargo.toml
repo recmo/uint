@@ -1,0 +1,22 @@
+[package]
+name = "ruint2-macro"
+description = "The `uint!` macro for `Uint` literals"
+version = "1.0.3"
+keywords = ["uint", "macro"]
+categories = ["mathematics"]
+
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[package.metadata.release]
+tag = false
+
+[dev-dependencies]
+ruint2.workspace = true

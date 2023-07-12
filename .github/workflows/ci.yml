@@ -22,14 +22,14 @@ jobs:
             - uses: dtolnay/rust-toolchain@master
               with:
                   toolchain: ${{ matrix.rust }}
-            # - name: exclude nightly features
-            #   if: ${{ matrix.rust }} != 'nightly'
-            #   run: |
-            #       sed -i 's/nightly = \[\]//g' crates/ruint/Cargo.toml
-            #       sed -i 's/generic_const_exprs = \["nightly"\]//g' crates/ruint/Cargo.toml
+            - name: exclude nightly features
+              if: ${{ matrix.rust }} != 'nightly'
+              run: |
+                  sed -i 's/nightly = \[\]//g' crates/ruint/Cargo.toml
+                  sed -i 's/generic_const_exprs = \["nightly"\]//g' crates/ruint/Cargo.toml
             - uses: Swatinem/rust-cache@v2
             - name: test
-              run: cargo test --workspace
+              run: cargo test --workspace --all-features
 
     feature-checks:
         name: feature checks
