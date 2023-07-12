@@ -7,6 +7,7 @@
     clippy::module_name_repetitions,
     clippy::redundant_pub_crate,
     clippy::unreadable_literal,
+    clippy::let_unit_value,
 )]
 #![cfg_attr(
     any(test, feature = "bench"),
@@ -203,7 +204,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline(always)]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
-        let _ = Self::ASSERT_LIMBS;
+        let () = Self::ASSERT_LIMBS;
         if BITS > 0 && Self::MASK != u64::MAX {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
@@ -248,7 +249,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// was truncated.
     #[must_use]
     pub fn overflowing_from_limbs_slice(slice: &[u64]) -> (Self, bool) {
-        let _ = Self::ASSERT_LIMBS;
+        let () = Self::ASSERT_LIMBS;
         if slice.len() < LIMBS {
             let mut limbs = [0; LIMBS];
             limbs[..slice.len()].copy_from_slice(slice);

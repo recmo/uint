@@ -26,7 +26,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[cfg(target_endian = "little")]
     #[must_use]
     #[inline(always)]
-    pub fn as_le_slice(&self) -> &[u8] {
+    pub const fn as_le_slice(&self) -> &[u8] {
         let data = addr_of!(self.limbs).cast();
         unsafe { slice::from_raw_parts(data, Self::BYTES) }
     }
@@ -53,7 +53,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Uses an optimized implementation on little-endian targets.
     #[must_use]
     #[inline(always)]
-    pub fn as_le_bytes(&self) -> Cow<'_, [u8]> {
+    pub const fn as_le_bytes(&self) -> Cow<'_, [u8]> {
         // On little endian platforms this is a no-op.
         #[cfg(target_endian = "little")]
         return Cow::Borrowed(self.as_le_slice());

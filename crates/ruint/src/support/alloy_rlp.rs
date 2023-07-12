@@ -38,6 +38,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
         match LIMBS {
             0 => return out.put_u8(EMPTY_STRING_CODE),
             1 => return self.limbs[0].encode(out),
+            #[allow(clippy::cast_lossless)]
             2 => return (self.limbs[0] as u128 | ((self.limbs[1] as u128) << 64)).encode(out),
             _ => {}
         }
@@ -89,8 +90,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
 
 #[cfg(feature = "generic_const_exprs")]
 unsafe impl<const BITS: usize, const LIMBS: usize>
-    MaxEncodedLen<{ <Uint<BITS, LIMBS>>::BYTES + length_of_length(<Uint<BITS, LIMBS>>::BYTES) }>
-    for Uint<BITS, LIMBS>
+    MaxEncodedLen<{ Self::BYTES + length_of_length(Self::BYTES) }> for Uint<BITS, LIMBS>
 {
 }
 
