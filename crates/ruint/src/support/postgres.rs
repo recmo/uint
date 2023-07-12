@@ -19,7 +19,7 @@ use thiserror::Error;
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;
 
 #[derive(Clone, PartialEq, Eq, Debug, Error)]
-enum ToSqlError {
+pub enum ToSqlError {
     #[error("Uint<{0}> value too large to fit target type {1}")]
     Overflow(usize, Type),
 }
@@ -175,7 +175,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Error)]
-enum FromSqlError {
+pub enum FromSqlError {
     #[error("The value is too large for the Uint type")]
     Overflow,
 

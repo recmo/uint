@@ -16,7 +16,7 @@ use sqlx_core::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-enum DecodeError {
+pub enum DecodeError {
     #[error("Value too large for target type")]
     Overflow,
 }

@@ -5,7 +5,7 @@
 
 use crate::Uint;
 use alloy_rlp::{
-    length_of_length, BufMut, Decodable, DecodeError, Encodable, Header, MaxEncodedLen,
+    length_of_length, BufMut, Decodable, Encodable, Error, Header, MaxEncodedLen,
     MaxEncodedLenAssoc, EMPTY_STRING_CODE,
 };
 use core::mem::size_of;
@@ -81,14 +81,14 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
 /// See <https://eth.wiki/en/fundamentals/rlp>
 impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
-    fn decode(buf: &mut &[u8]) -> Result<Self, DecodeError> {
+    fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
         let header = Header::decode(buf)?;
         if header.list {
-            return Err(DecodeError::UnexpectedList);
+            return Err(Error::UnexpectedList);
         }
         let bytes = &buf[..header.payload_length];
         *buf = &buf[header.payload_length..];
-        Self::try_from_be_slice(bytes).ok_or(DecodeError::Overflow)
+        Self::try_from_be_slice(bytes).ok_or(Error::Overflow)
     }
 }
 
