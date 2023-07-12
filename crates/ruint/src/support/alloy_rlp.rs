@@ -82,12 +82,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
-        let header = Header::decode(buf)?;
-        if header.list {
-            return Err(Error::UnexpectedList);
-        }
-        let bytes = &buf[..header.payload_length];
-        *buf = &buf[header.payload_length..];
+        let bytes = Header::decode_bytes(buf, false)?;
         Self::try_from_be_slice(bytes).ok_or(Error::Overflow)
     }
 }
