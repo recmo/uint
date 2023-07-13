@@ -8,7 +8,6 @@ use alloy_rlp::{
     length_of_length, BufMut, Decodable, Encodable, Error, Header, MaxEncodedLen,
     MaxEncodedLenAssoc, EMPTY_STRING_CODE,
 };
-use core::mem::size_of;
 
 const MAX_BITS: usize = 55 * 8;
 
@@ -24,7 +23,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
         } else {
             let bytes = (bits + 7) / 8;
             let len_bytes = if bits > MAX_BITS {
-                size_of::<usize>() - bytes.leading_zeros() as usize / 8
+                length_of_length(bytes)
             } else {
                 0
             };
@@ -50,8 +49,6 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
                 out.put_u8(self.limbs[0] as u8);
             }
             bits => {
-                let leading_zero_bytes = Self::BYTES - (bits + 7) / 8;
-
                 // avoid heap allocation in `to_be_bytes_vec`
                 // SAFETY: we don't re-use `copy`
                 #[cfg(target_endian = "little")]
@@ -64,6 +61,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
                 #[cfg(target_endian = "big")]
                 let bytes = self.to_be_bytes_vec();
 
+                let leading_zero_bytes = Self::BYTES - (bits + 7) / 8;
                 let trimmed = &bytes[leading_zero_bytes..];
                 if bits > MAX_BITS {
                     trimmed.encode(out);
@@ -96,7 +94,7 @@ unsafe impl<const BITS: usize, const LIMBS: usize>
 
 #[cfg(not(feature = "generic_const_exprs"))]
 const _: () = {
-    crate::const_for!(BITS in [0, 1, 2, 8, 16, 32, 64, 128, 192, 256, 384, 512, 4096] {
+    crate::const_for!(BITS in [0, 1, 2, 8, 16, 32, 64, 128, 160, 192, 256, 384, 512, 4096] {
         const LIMBS: usize = crate::nlimbs(BITS);
         const BYTES: usize = Uint::<BITS, LIMBS>::BYTES;
         unsafe impl MaxEncodedLen<{ BYTES + length_of_length(BYTES) }> for Uint<BITS, LIMBS> {}
