@@ -496,7 +496,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
 }
 
 // Convert Uint to integer types
-//
 
 // Required because a generic rule violates the orphan rule
 macro_rules! to_value_to_ref {
@@ -604,7 +603,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
 }
 
 // Convert Uint to floating point
-//
 
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
     fn from(value: Uint<BITS, LIMBS>) -> Self {
