@@ -1,100 +1,86 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 env:
   CARGO_TERM_COLOR: always
-  # Skip incremental build and debug info generation in CI
-  CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
 
 jobs:
   accept:
     name: Accept
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [test, feature-checks, clippy, docs, fmt]
     steps:
       - name: Accept
-        run: true
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
-          components: rustfmt, clippy
-      - name: Cache build
-        uses: Swatinem/rust-cache@v1
-        with:
-          key: cache-v1
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --workspace --all-features --all-targets
-      - name: Check docs
-        run: cargo doc --locked --workspace --all-features --no-deps --document-private-items
+        run: "true"
 
   test:
-    name: Test
+    name: Test ${{ matrix.rust }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
-        rust:
-          - stable
-          - nightly
+        rust: [stable, beta, nightly, 1.65] # MSRV
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - name: Cache build
-        uses: Swatinem/rust-cache@v1
-        with:
-          key: cache-v1
+      - name: exclude nightly features
+        if: ${{ matrix.rust }} != 'nightly'
+        run: |
+          sed -i 's/nightly = \[\]//g' Cargo.toml
+          sed -i 's/generic_const_exprs = \["nightly"\]//g' Cargo.toml
+      - uses: Swatinem/rust-cache@v2
       # Cargo doc test is not included in `--all-targets` so we call it separately.
       # See <https://github.com/rust-lang/cargo/issues/6669>
       # Cargo doc test also doesn't support `--no-run`, so we run it but
       # have it just print `--help`.
       - name: Build tests
         run: |
-          cargo test --locked --workspace --all-features --all-targets --no-run
-          cargo test --locked --workspace --all-features --doc -- --help
+          cargo test --workspace --all-features --all-targets --no-run
+          cargo test --workspace --all-features --doc -- --help
       - name: Run tests
         run: |
-          cargo test --locked --workspace --all-features --all-targets -- --nocapture
-          cargo test --locked --workspace --all-features --doc -- --nocapture
+          cargo test --workspace --all-features --all-targets -- --nocapture
+          cargo test --workspace --all-features --doc -- --nocapture
+
+  feature-checks:
+    name: Feature checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo hack
+        run: |
+          cargo hack check \
+          --feature-powerset --exclude-features nightly,generic_const_exprs \
+          --depth 1 \
+          --all-targets
 
   codecov:
     # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
     name: Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: llvm-tools-preview
-      - name: Cache build
-        uses: Swatinem/rust-cache@v1
-        with:
-          key: cache-v1
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Build with code coverage
         run: |
-          cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --help
-          cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --help
+          cargo llvm-cov --no-report --workspace --all-features --all-targets
+          cargo llvm-cov --no-report --workspace --all-features --doc
       - name: Generate code coverage
         env:
           # Covered tests are slower, so reduce the test load. (We also shouldn't
@@ -102,8 +88,8 @@ jobs:
           PROPTEST_CASES: 5
         run: |
           # Generate profiles, but do not merge them
-          cargo llvm-cov --no-report --locked --workspace --all-features --all-targets -- --nocapture
-          cargo llvm-cov --no-report --locked --workspace --all-features --doc -- --nocapture
+          cargo llvm-cov --no-report --workspace --all-features --all-targets -- --nocapture
+          cargo llvm-cov --no-report --workspace --all-features --doc -- --nocapture
       - name: Merge profiles
         run: cargo llvm-cov --no-run --lcov --output-path lcov.info
       - name: Submit to codecov.io
@@ -114,15 +100,46 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
-  security_audit:
-    name: Dependency Security Audit
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@clippy
+      - run: cargo clippy --workspace --all-features
+        env:
+          RUSTFLAGS: -Dwarnings
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-docs
+      - run: cargo doc --workspace --all-features --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "--cfg doc_cfg -D warnings"
+
+  fmt:
+    name: Fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  cargo-deny:
+    name: Cargo deny check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: EmbarkStudios/cargo-deny-action@v1
         with:
-          toolchain: nightly
-      - uses: actions-rs/audit-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          command: check all
