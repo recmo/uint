@@ -1,4 +1,4 @@
-use crate::{algorithms, impl_bin_op, Uint};
+use crate::{algorithms, Uint};
 use core::ops::{Div, DivAssign, Rem, RemAssign};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -79,7 +79,7 @@ impl_bin_op!(Div, div, DivAssign, div_assign, wrapping_div);
 impl_bin_op!(Rem, rem, RemAssign, rem_assign, wrapping_rem);
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
     use proptest::{prop_assume, proptest};
@@ -133,98 +133,6 @@ pub mod tests {
                 assert!(r < d);
                 assert_eq!(q * d + r, n);
             });
-        });
-    }
-}
-
-#[cfg(feature = "bench")]
-#[doc(hidden)]
-pub mod bench {
-    use super::*;
-    use crate::{const_for, nlimbs};
-    use ::proptest::{
-        arbitrary::Arbitrary,
-        strategy::{Strategy, ValueTree},
-        test_runner::TestRunner,
-    };
-    use criterion::{black_box, BatchSize, Criterion};
-
-    pub fn group(criterion: &mut Criterion) {
-        const_for!(BITS in BENCH {
-            const LIMBS: usize = nlimbs(BITS);
-            bench_div_rem_small::<BITS, LIMBS>(criterion);
-            bench_div_rem_half::<BITS, LIMBS>(criterion);
-            bench_div_rem_full::<BITS, LIMBS>(criterion);
-        });
-    }
-
-    fn bench_div_rem_small<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        if BITS == 0 {
-            return;
-        }
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), u64::arbitrary());
-        let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{BITS}/64"), move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
-                    if BITS < 64 {
-                        d &= Uint::<BITS, LIMBS>::MASK;
-                    }
-                    if d == 0 {
-                        d = 1;
-                    }
-                    (n, Uint::from(d))
-                },
-                |(a, b)| black_box(black_box(a).div_rem(black_box(b))),
-                BatchSize::SmallInput,
-            );
-        });
-    }
-
-    fn bench_div_rem_half<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        if BITS == 0 {
-            return;
-        }
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
-        let mut runner = TestRunner::deterministic();
-        criterion.bench_function(
-            &format!("div_rem/{BITS}/{}", BITS - BITS / 2),
-            move |bencher| {
-                bencher.iter_batched(
-                    || {
-                        let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
-                        d >>= BITS / 2; // make d half size
-                        if d == Uint::ZERO {
-                            d = Uint::from(1);
-                        }
-                        (n, d)
-                    },
-                    |(a, b)| black_box(black_box(a).div_rem(black_box(b))),
-                    BatchSize::SmallInput,
-                );
-            },
-        );
-    }
-
-    fn bench_div_rem_full<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
-        if BITS == 0 {
-            return;
-        }
-        let input = (Uint::<BITS, LIMBS>::arbitrary(), Uint::arbitrary());
-        let mut runner = TestRunner::deterministic();
-        criterion.bench_function(&format!("div_rem/{BITS}/{BITS}"), move |bencher| {
-            bencher.iter_batched(
-                || {
-                    let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
-                    if d == Uint::ZERO {
-                        d = Uint::from(1);
-                    }
-                    (n, d)
-                },
-                |(a, b)| black_box(black_box(a).div_rem(black_box(b))),
-                BatchSize::SmallInput,
-            );
         });
     }
 }

@@ -12,10 +12,12 @@ mod ops;
 mod shift;
 
 pub use self::{
+    add::{adc_n, cmp, sbb_n},
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
-    mul::{addmul, addmul_n, addmul_nx1, submul_nx1},
+    mul::{add_nx1, addmul, addmul_n, addmul_nx1, addmul_ref, submul_nx1},
     mul_redc::mul_redc,
+    ops::{adc, sbb},
     shift::{shift_left_small, shift_right_small},
 };
 
@@ -77,18 +79,5 @@ impl DoubleWord<u64> for u128 {
     #[inline(always)]
     fn split(self) -> (u64, u64) {
         (self.low(), self.high())
-    }
-}
-
-#[cfg(feature = "bench")]
-#[doc(hidden)]
-pub mod bench {
-    use super::*;
-    use criterion::Criterion;
-
-    pub fn group(criterion: &mut Criterion) {
-        mul::bench::group(criterion);
-        div::bench::group(criterion);
-        gcd::bench::group(criterion);
     }
 }

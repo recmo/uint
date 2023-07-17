@@ -20,8 +20,11 @@ mod small;
 
 pub use self::{
     knuth::{div_nxm, div_nxm_normalized},
-    reciprocal::{reciprocal, reciprocal_2},
-    small::{div_2x1, div_3x2, div_nx1, div_nx1_normalized, div_nx2, div_nx2_normalized},
+    reciprocal::{reciprocal, reciprocal_2, reciprocal_2_mg10, reciprocal_mg10, reciprocal_ref},
+    small::{
+        div_2x1, div_2x1_mg10, div_2x1_ref, div_3x2, div_3x2_mg10, div_3x2_ref, div_nx1,
+        div_nx1_normalized, div_nx2, div_nx2_normalized,
+    },
 };
 use crate::algorithms::DoubleWord;
 
@@ -454,17 +457,5 @@ mod tests {
         div(&mut numerator, &mut divisor);
         assert_eq!(numerator[..5], expected_quotient);
         assert_eq!(divisor, expected_remainder);
-    }
-}
-
-#[cfg(feature = "bench")]
-#[doc(hidden)]
-pub mod bench {
-    use super::*;
-    use criterion::Criterion;
-
-    pub fn group(criterion: &mut Criterion) {
-        reciprocal::bench::group(criterion);
-        small::bench::group(criterion);
     }
 }
