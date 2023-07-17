@@ -1,6 +1,7 @@
 //! Support for the [`valuable`](https://crates.io/crates/valuable) crate.
+
 #![cfg(feature = "valuable")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "valuable")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "valuable")))]
 
 use crate::Uint;
 use valuable::{Fields, NamedField, NamedValues, StructDef, Structable, Valuable, Value, Visit};

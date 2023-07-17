@@ -1,8 +1,9 @@
 //! Support for the [`sqlx`](https://crates.io/crates/sqlx) crate.
 //!
 //! Currently only encodes to/from a big-endian byte array.
+
 #![cfg(feature = "sqlx")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "sqlx")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "sqlx")))]
 
 use crate::Uint;
 use sqlx_core::{
@@ -15,7 +16,7 @@ use sqlx_core::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-enum DecodeError {
+pub enum DecodeError {
     #[error("Value too large for target type")]
     Overflow,
 }
