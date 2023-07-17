@@ -22,12 +22,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
             1
         } else {
             let bytes = (bits + 7) / 8;
-            let len_bytes = if bits > MAX_BITS {
-                length_of_length(bytes)
-            } else {
-                0
-            };
-            1 + bytes + len_bytes
+            bytes + length_of_length(bytes)
         }
     }
 
