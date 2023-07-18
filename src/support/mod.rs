@@ -1,18 +1,21 @@
+//! Support for external crates.
+
+mod alloy_rlp;
 mod arbitrary;
 mod ark_ff;
 mod bn_rs;
 mod fastrlp;
 mod num_bigint;
-mod postgres;
+pub mod postgres;
 mod primitive_types;
 mod proptest;
 mod pyo3;
 mod quickcheck;
 mod rand;
 mod rlp;
-mod scale;
+pub mod scale;
 mod serde;
-mod sqlx;
+pub mod sqlx;
 mod valuable;
 mod zeroize;
 

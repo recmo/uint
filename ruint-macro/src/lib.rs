@@ -1,4 +1,4 @@
-#![doc = include_str!("../Readme.md")]
+#![doc = include_str!("../README.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
@@ -218,7 +218,7 @@ fn transform_stream(stream: TokenStream) -> TokenStream {
 }
 
 // Repeat the crate doc
-#[doc = include_str!("../Readme.md")]
+#[doc = include_str!("../README.md")]
 #[proc_macro]
 pub fn uint(stream: TokenStream) -> TokenStream {
     transform_stream(stream)

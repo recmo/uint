@@ -1,6 +1,7 @@
 //! Support for the [`parity-scale-codec`](https://crates.io/crates/parity-scale-codec) crate.
+
 #![cfg(feature = "parity-scale-codec")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "parity-scale-codec")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "parity-scale-codec")))]
 
 use crate::Uint;
 use parity_scale_codec::{
@@ -266,13 +267,8 @@ fn assert_compact_supported<const BITS: usize>() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        aliases::U256,
-        const_for, nlimbs,
-        support::scale::{CompactRefUint, CompactUint},
-        Uint,
-    };
-    use parity_scale_codec::{Compact, Decode, Encode};
+    use super::*;
+    use crate::{aliases::U256, const_for, nlimbs, Uint};
     use proptest::proptest;
 
     #[test]

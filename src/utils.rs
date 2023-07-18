@@ -25,17 +25,31 @@ pub(crate) fn trim_end_vec<T: PartialEq>(vec: &mut Vec<T>, value: &T) {
     }
 }
 
-#[cfg(has_core_intrinsics)]
-pub use core::intrinsics::{likely, unlikely};
+// Branch prediction hints.
+#[cfg(feature = "nightly")]
+pub(crate) use core::intrinsics::{likely, unlikely};
 
-#[cfg(not(has_core_intrinsics))]
+// On stable we can use #[cold] to get a equivalent effect: this attribute
+// suggests that the function is unlikely to be called
+#[cfg(not(feature = "nightly"))]
 #[inline(always)]
-pub const fn unlikely(b: bool) -> bool {
+#[cold]
+const fn cold() {}
+
+#[cfg(not(feature = "nightly"))]
+#[inline(always)]
+pub(crate) const fn likely(b: bool) -> bool {
+    if !b {
+        cold();
+    }
     b
 }
 
-#[cfg(not(has_core_intrinsics))]
+#[cfg(not(feature = "nightly"))]
 #[inline(always)]
-pub const fn likely(b: bool) -> bool {
+pub(crate) const fn unlikely(b: bool) -> bool {
+    if b {
+        cold();
+    }
     b
 }

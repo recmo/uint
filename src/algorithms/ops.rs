@@ -15,5 +15,3 @@ pub fn sbb(lhs: u64, rhs: u64, borrow: u64) -> (u64, u64) {
         .wrapping_sub(u128::from(borrow));
     (result.low(), result.high().wrapping_neg())
 }
-
-//
