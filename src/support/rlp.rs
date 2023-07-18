@@ -34,6 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
 /// See <https://eth.wiki/en/fundamentals/rlp>
 impl<const BITS: usize, const LIMBS: usize> Encodable for Bits<BITS, LIMBS> {
     fn rlp_append(&self, s: &mut RlpStream) {
+        #[allow(clippy::collection_is_never_read)]
         let bytes = self.to_be_bytes_vec();
         bytes.rlp_append(s);
     }

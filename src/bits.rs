@@ -1,5 +1,4 @@
 use crate::Uint;
-
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
     ShrAssign,
@@ -109,18 +108,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of zeros in the binary representation of `self`.
     #[must_use]
+    #[inline]
     pub fn count_zeros(&self) -> usize {
         BITS - self.count_ones()
     }
 
     /// Length of the number in bits ignoring leading zeros.
     #[must_use]
+    #[inline]
     pub fn bit_len(&self) -> usize {
         BITS - self.leading_zeros()
     }
 
     /// Length of the number in bytes ignoring leading zeros.
     #[must_use]
+    #[inline]
     pub fn byte_len(&self) -> usize {
         (self.bit_len() + 7) / 8
     }
@@ -389,7 +391,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
         if BITS == 0 {
             return Self::ZERO;
         }
-        for limb in self.limbs.iter_mut() {
+        for limb in &mut self.limbs {
             *limb = u64::not(*limb);
         }
         self.limbs[LIMBS - 1] &= Self::MASK;

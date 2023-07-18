@@ -101,7 +101,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // OPT: keep track of non-zero limbs and mul the minimum.
             let mut carry: u128 = u128::from(digit);
             #[allow(clippy::cast_possible_truncation)]
-            for limb in result.limbs.iter_mut() {
+            for limb in &mut result.limbs {
                 carry += u128::from(*limb) * u128::from(base);
                 *limb = carry as u64;
                 carry >>= 64;

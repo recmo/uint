@@ -1,11 +1,14 @@
 #![doc = include_str!("../Readme.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![allow(
-    clippy::module_name_repetitions,
+    clippy::doc_markdown, // Unfortunately many false positives on Latex.
     clippy::inline_always,
+    clippy::module_name_repetitions,
+    clippy::module_name_repetitions,
+    clippy::redundant_pub_crate,
     clippy::unreadable_literal,
-    clippy::doc_markdown // Unfortunately many false positives on Latex.
+    clippy::let_unit_value,
 )]
 #![cfg_attr(
     any(test, feature = "bench"),
@@ -29,6 +32,9 @@
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
+
+#[macro_use]
+mod macros;
 
 mod add;
 pub mod algorithms;
@@ -144,7 +150,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const LIMBS: usize = nlimbs(BITS);
 
     /// Bit mask for the last limb.
-    const MASK: u64 = mask(BITS);
+    pub const MASK: u64 = mask(BITS);
 
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
@@ -347,23 +353,5 @@ mod test {
             assert_eq!(Uint::<BITS, LIMBS>::MIN, Uint::<BITS, LIMBS>::ZERO);
             let _ = Uint::<BITS, LIMBS>::MAX;
         });
-    }
-}
-
-#[cfg(feature = "bench")]
-#[doc(hidden)]
-pub mod bench {
-    use super::*;
-    use criterion::Criterion;
-
-    pub fn group(criterion: &mut Criterion) {
-        add::bench::group(criterion);
-        mul::bench::group(criterion);
-        div::bench::group(criterion);
-        pow::bench::group(criterion);
-        log::bench::group(criterion);
-        root::bench::group(criterion);
-        modular::bench::group(criterion);
-        algorithms::bench::group(criterion);
     }
 }
