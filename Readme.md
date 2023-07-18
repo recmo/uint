@@ -57,7 +57,7 @@ without `generic_const_exprs` support (Rust issue [#76560][r76560]).
 [r76560]: https://github.com/rust-lang/rust/issues/76560
 
 ```rust
-# #[cfg(has_generic_const_exprs)] {
+# #[cfg(feature = "generic_const_exprs")] {
 use ruint::nightly::Uint;
 
 let answer: Uint<256> = Uint::<256>::from(42);
