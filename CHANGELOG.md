@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved `proptest` performance
 - Made `support` module and its modules public
 - Made more `algorithm` functions public
+- Constified `as_le_slice` and `as_le_bytes`
 
 ### Removed
 
