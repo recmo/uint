@@ -1,23 +1,23 @@
 //! Support for external crates.
 
-pub mod alloy_rlp;
-pub mod arbitrary;
-pub mod ark_ff;
-pub mod bn_rs;
-pub mod fastrlp;
-pub mod num_bigint;
+mod alloy_rlp;
+mod arbitrary;
+mod ark_ff;
+mod bn_rs;
+mod fastrlp;
+mod num_bigint;
 pub mod postgres;
-pub mod primitive_types;
-pub mod proptest;
-pub mod pyo3;
-pub mod quickcheck;
-pub mod rand;
-pub mod rlp;
+mod primitive_types;
+mod proptest;
+mod pyo3;
+mod quickcheck;
+mod rand;
+mod rlp;
 pub mod scale;
-pub mod serde;
+mod serde;
 pub mod sqlx;
-pub mod valuable;
-pub mod zeroize;
+mod valuable;
+mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
 // * https://crates.io/crates/num-traits
