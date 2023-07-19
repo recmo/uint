@@ -2,7 +2,7 @@
 
 [![crates.io](https://buildstats.info/crate/ruint)](https://crates.io/crates/ruint)
 [![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint)
-[![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/mit-license.md)
+[![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/LICENSE)
 [![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
@@ -109,6 +109,22 @@ assert_eq!(c, 263947537596669_U256);
 ```
 
 Note that since `B` is a valid hexadecimal digit there can be ambiguity. To lessen the impact an underscore separator `_B` is required in this case.
+
+## Supported Rust Versions
+
+<!--
+When updating this, also update:
+- .clippy.toml
+- Cargo.toml
+- .github/workflows/ci.yml
+-->
+
+Uint will keep a rolling MSRV (minimum supported rust version) policy of **at
+least** 6 months. When increasing the MSRV, the new Rust version must have been
+released at least six months ago. The current MSRV is 1.65.0.
+
+Note that the MSRV is not increased automatically, and only as part of a minor
+release.
 
 ## Feature flags
 

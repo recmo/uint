@@ -1,6 +1,6 @@
-#![doc = include_str!("../Readme.md")]
+#![doc = include_str!("../README.md")]
+#![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, unreachable_pub)]
-#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![allow(
     clippy::doc_markdown, // Unfortunately many false positives on Latex.
     clippy::inline_always,
@@ -16,8 +16,11 @@
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "nightly", feature(no_coverage, core_intrinsics))]
-#![cfg_attr(feature = "generic_const_exprs", feature(generic_const_exprs))]
-#![cfg_attr(feature = "generic_const_exprs", allow(incomplete_features))]
+#![cfg_attr(
+    feature = "generic_const_exprs",
+    feature(generic_const_exprs),
+    allow(incomplete_features)
+)]
 
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
