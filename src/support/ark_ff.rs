@@ -1,7 +1,7 @@
 //! Support for the [`ark-ff`](https://crates.io/crates/ark-ff) crate 0.3
-//! versions.
+//! version.
 #![cfg(feature = "ark-ff")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "ark-ff")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "ark-ff")))]
 
 use crate::{ToFieldError, Uint};
 use ark_ff_03::{biginteger::*, fields::models::*, PrimeField};

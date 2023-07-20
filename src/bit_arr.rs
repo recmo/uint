@@ -3,13 +3,35 @@ use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
     Shr, ShrAssign,
 };
-use derive_more::{From, FromStr, Into};
-use std::borrow::Cow;
+use std::{borrow::Cow, str::FromStr};
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
-#[derive(Clone, Copy, Debug, Default, Eq, From, FromStr, Into, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
+
+impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for Bits<BITS, LIMBS> {
+    #[inline]
+    fn from(value: Uint<BITS, LIMBS>) -> Self {
+        Self(value)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<Bits<BITS, LIMBS>> for Uint<BITS, LIMBS> {
+    #[inline]
+    fn from(value: Bits<BITS, LIMBS>) -> Self {
+        value.0
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> FromStr for Bits<BITS, LIMBS> {
+    type Err = <Uint<BITS, LIMBS> as FromStr>::Err;
+
+    #[inline]
+    fn from_str(src: &str) -> Result<Self, Self::Err> {
+        src.parse().map(Self)
+    }
+}
 
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.

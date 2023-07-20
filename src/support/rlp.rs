@@ -1,6 +1,7 @@
 //! Support for the [`rlp`](https://crates.io/crates/rlp) crate.
+
 #![cfg(feature = "rlp")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "rlp")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "rlp")))]
 
 use crate::{Bits, Uint};
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
@@ -33,7 +34,9 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
 ///
 /// See <https://eth.wiki/en/fundamentals/rlp>
 impl<const BITS: usize, const LIMBS: usize> Encodable for Bits<BITS, LIMBS> {
+    #[allow(clippy::collection_is_never_read)] // have to use vec
     fn rlp_append(&self, s: &mut RlpStream) {
+        #[allow(clippy::collection_is_never_read)]
         let bytes = self.to_be_bytes_vec();
         bytes.rlp_append(s);
     }

@@ -1,34 +1,33 @@
-#![doc = include_str!("../Readme.md")]
+#![doc = include_str!("../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, unreachable_pub)]
 #![allow(
-    clippy::module_name_repetitions,
+    clippy::doc_markdown, // Unfortunately many false positives on Latex.
     clippy::inline_always,
+    clippy::module_name_repetitions,
+    clippy::redundant_pub_crate,
     clippy::unreadable_literal,
-    clippy::doc_markdown // Unfortunately many false positives on Latex.
+    clippy::let_unit_value,
 )]
 #![cfg_attr(
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
 )]
+// Unstable features
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(feature = "nightly", feature(no_coverage, core_intrinsics))]
 #![cfg_attr(
-    all(has_generic_const_exprs, feature = "generic_const_exprs"),
+    feature = "generic_const_exprs",
+    feature(generic_const_exprs),
     allow(incomplete_features)
 )]
-#![cfg_attr(
-    all(has_generic_const_exprs, feature = "generic_const_exprs"),
-    feature(generic_const_exprs)
-)]
-// See <https://github.com/taiki-e/coverage-helper>
-#![cfg_attr(coverage_nightly, feature(no_coverage))]
-// See <https://stackoverflow.com/questions/61417452/how-to-get-a-feature-requirement-tag-in-the-documentation-generated-by-cargo-do>
-#![cfg_attr(has_doc_cfg, feature(doc_cfg))]
-// Nightly only feature flag to enable the `unlikely` compiler hint.
-#![cfg_attr(has_core_intrinsics, feature(core_intrinsics))]
 
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
+
+#[macro_use]
+mod macros;
 
 mod add;
 pub mod algorithms;
@@ -49,13 +48,9 @@ mod pow;
 mod root;
 mod special;
 mod string;
-mod support;
-mod uint_dyn;
 mod utils;
 
-#[cfg(all(feature = "dyn", feature = "unstable"))]
-#[doc(inline)]
-pub use uint_dyn::UintDyn;
+pub mod support;
 
 #[doc(inline)]
 pub use bit_arr::Bits;
@@ -71,7 +66,7 @@ pub use self::{
 #[doc(inline)]
 pub use ruint_macro::uint;
 
-#[cfg(all(has_generic_const_exprs, feature = "generic_const_exprs"))]
+#[cfg(feature = "generic_const_exprs")]
 pub mod nightly {
     //! Extra features that are nightly only.
 
@@ -143,19 +138,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
     pub const LIMBS: usize = nlimbs(BITS);
 
+    const ASSERT_LIMBS: () = assert!(
+        LIMBS == Self::LIMBS,
+        "Can not construct Uint<BITS, LIMBS> with incorrect LIMBS"
+    );
+
     /// Bit mask for the last limb.
-    const MASK: u64 = mask(BITS);
+    pub const MASK: u64 = mask(BITS);
 
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
 
-    /// The smallest value that can be represented by this integer type.
-    /// Synonym for [`Self::ZERO`].
-    pub const MIN: Self = Self::ZERO;
-
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
     pub const ZERO: Self = Self::from_limbs([0; LIMBS]);
+
+    /// The smallest value that can be represented by this integer type.
+    /// Synonym for [`Self::ZERO`].
+    pub const MIN: Self = Self::ZERO;
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
@@ -206,8 +206,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline(always)]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
-        Self::assert_valid();
-        if BITS > 0 && Self::MASK < u64::MAX {
+        let () = Self::ASSERT_LIMBS;
+        if BITS > 0 && Self::MASK != u64::MAX {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
                 limbs[Self::LIMBS - 1] <= Self::MASK,
@@ -251,7 +251,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// was truncated.
     #[must_use]
     pub fn overflowing_from_limbs_slice(slice: &[u64]) -> (Self, bool) {
-        Self::assert_valid();
+        let () = Self::ASSERT_LIMBS;
         if slice.len() < LIMBS {
             let mut limbs = [0; LIMBS];
             limbs[..slice.len()].copy_from_slice(slice);
@@ -276,19 +276,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (_, true) => Self::MAX,
         }
     }
-
-    #[inline(always)]
-    const fn assert_valid() {
-        // REFACTOR: (BLOCKED) Replace with `assert_eq!` when it is made `const`.
-        // Blocked on Rust, not issue known.
-        #[allow(clippy::manual_assert)]
-        if LIMBS != Self::LIMBS {
-            panic!("Can not construct Uint<BITS, LIMBS> with incorrect LIMBS");
-        }
-    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
+    #[inline]
     fn default() -> Self {
         Self::ZERO
     }
@@ -297,13 +288,15 @@ impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
 /// Number of `u64` limbs required to represent the given number of bits.
 /// This needs to be public because it is used in the `Uint` type.
 #[must_use]
+#[inline]
 pub const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.
 #[must_use]
-const fn mask(bits: usize) -> u64 {
+#[inline]
+pub const fn mask(bits: usize) -> u64 {
     if bits == 0 {
         return 0;
     }
@@ -347,23 +340,5 @@ mod test {
             assert_eq!(Uint::<BITS, LIMBS>::MIN, Uint::<BITS, LIMBS>::ZERO);
             let _ = Uint::<BITS, LIMBS>::MAX;
         });
-    }
-}
-
-#[cfg(feature = "bench")]
-#[doc(hidden)]
-pub mod bench {
-    use super::*;
-    use criterion::Criterion;
-
-    pub fn group(criterion: &mut Criterion) {
-        add::bench::group(criterion);
-        mul::bench::group(criterion);
-        div::bench::group(criterion);
-        pow::bench::group(criterion);
-        log::bench::group(criterion);
-        root::bench::group(criterion);
-        modular::bench::group(criterion);
-        algorithms::bench::group(criterion);
     }
 }

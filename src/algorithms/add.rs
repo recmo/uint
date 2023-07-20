@@ -4,6 +4,7 @@ use super::ops::{adc, sbb};
 use core::cmp::Ordering;
 
 #[inline(always)]
+#[must_use]
 pub fn cmp(lhs: &[u64], rhs: &[u64]) -> Ordering {
     debug_assert_eq!(lhs.len(), rhs.len());
     for (l, r) in lhs.iter().rev().zip(rhs.iter().rev()) {

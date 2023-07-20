@@ -1,6 +1,7 @@
 //! Support for the [`bn-rs`](https://crates.io/crates/bn-rs) crate.
+
 #![cfg(feature = "bn-rs")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "bn-rs")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "bn-rs")))]
 
 use crate::{from::ToUintError, BaseConvertError, Bits, ParseError, Uint};
 use bn_rs::{BigNumber, BN};

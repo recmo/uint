@@ -6,14 +6,12 @@ use crate::{
     Uint,
 };
 use core::{
-    mem::size_of_val,
     ptr::{addr_of, addr_of_mut},
     slice,
 };
 use std::borrow::Cow;
 
 // OPT: *_to_smallvec to avoid allocation.
-
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.
@@ -28,8 +26,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[cfg(target_endian = "little")]
     #[must_use]
     #[inline(always)]
-    pub fn as_le_slice(&self) -> &[u8] {
-        debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
+    pub const fn as_le_slice(&self) -> &[u8] {
         let data = addr_of!(self.limbs).cast();
         unsafe { slice::from_raw_parts(data, Self::BYTES) }
     }
@@ -47,7 +44,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline(always)]
     pub unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
-        debug_assert!(Self::BYTES <= size_of_val(&self.limbs));
         let data = addr_of_mut!(self.limbs).cast();
         slice::from_raw_parts_mut(data, Self::BYTES)
     }
@@ -57,7 +53,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Uses an optimized implementation on little-endian targets.
     #[must_use]
     #[inline(always)]
-    pub fn as_le_bytes(&self) -> Cow<'_, [u8]> {
+    pub const fn as_le_bytes(&self) -> Cow<'_, [u8]> {
         // On little endian platforms this is a no-op.
         #[cfg(target_endian = "little")]
         return Cow::Borrowed(self.as_le_slice());
@@ -101,7 +97,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         bytes.copy_from_slice(self.as_le_slice());
 
         #[cfg(not(target_endian = "little"))]
-        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs().iter()) {
+        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs()) {
             chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
         }
 
@@ -264,6 +260,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 /// specifically in the [`to_be_bytes()`][Uint::to_be_bytes] and related
 /// functions.
 #[must_use]
+#[inline]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8
 }

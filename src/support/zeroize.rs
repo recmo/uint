@@ -1,8 +1,9 @@
 //! Support for the [`zeroize`](https://crates.io/crates/zeroize) crate.
 //!
 //! Currently only encodes to/from a big-endian byte array.
+
 #![cfg(feature = "zeroize")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "zeroize")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
 
 use crate::{Bits, Uint};
 use zeroize::Zeroize;

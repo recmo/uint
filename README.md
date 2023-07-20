@@ -2,7 +2,7 @@
 
 [![crates.io](https://buildstats.info/crate/ruint)](https://crates.io/crates/ruint)
 [![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint)
-[![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/mit-license.md)
+[![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/LICENSE)
 [![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
 [![codecov](https://codecov.io/gh/recmo/uint/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/recmo/uint)
 [![CI](https://github.com/recmo/uint/actions/workflows/ci.yml/badge.svg)](https://github.com/recmo/uint/actions/workflows/ci.yml)
@@ -57,7 +57,7 @@ without `generic_const_exprs` support (Rust issue [#76560][r76560]).
 [r76560]: https://github.com/rust-lang/rust/issues/76560
 
 ```rust
-# #[cfg(has_generic_const_exprs)] {
+# #[cfg(feature = "generic_const_exprs")] {
 use ruint::nightly::Uint;
 
 let answer: Uint<256> = Uint::<256>::from(42);
@@ -110,6 +110,22 @@ assert_eq!(c, 263947537596669_U256);
 
 Note that since `B` is a valid hexadecimal digit there can be ambiguity. To lessen the impact an underscore separator `_B` is required in this case.
 
+## Supported Rust Versions
+
+<!--
+When updating this, also update:
+- .clippy.toml
+- Cargo.toml
+- .github/workflows/ci.yml
+-->
+
+Uint will keep a rolling MSRV (minimum supported rust version) policy of **at
+least** 6 months. When increasing the MSRV, the new Rust version must have been
+released at least six months ago. The current MSRV is 1.65.0.
+
+Note that the MSRV is not increased automatically, and only as part of a minor
+release.
+
 ## Feature flags
 
 There is support for a number of crates. These are enabled by setting the identically
@@ -120,7 +136,7 @@ named feature flag.
 * [`arbitrary`](https://docs.rs/arbitrary): Implements the [`Arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for fuzz testing.
 * [`quickcheck`](https://docs.rs/quickcheck): Implements the [`Arbitrary`](https://docs.rs/quickcheck/latest/quickcheck/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing.
 * [`proptest`](https://docs.rs/proptest): Implements the [`Arbitrary`](https://docs.rs/proptest/latest/proptest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing. Proptest is used for the `uint`s own test suite.
-* [`serde`](https://docs.rs/serde): Implements the [`Serialize`](https://docs.rs/serde/latest/serde/trait.Serialize.html) and [`Deserialize`](https://docs.rs/serde/latest/serde/trait.Deserialize.html) traits for [`Uint`] using big-endian hex in human readable formats and big-endian byte strings in machine readable formats.
+* [`serde`](https://docs.rs/serde): Implements the [`Serialize`](https://docs.rs/serde/latest/serde/trait.Serialize.html) and [`Deserialize`](https://docs.rs/serde/latest/serde/trait.Deserialize.html) traits for [`Uint`] and [`Bits`].Serialization uses big-endian hex in human readable formats and big-endian byte strings in machine readable formats. [`Uint`] uses ethereum `Quantity` format (0x-prefixed minimal string) when serializing in a human readable format.
 * [`rlp`](https://docs.rs/rlp): Implements the [`Encodable`](https://docs.rs/rlp/latest/rlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/rlp/latest/rlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 * [`fastrlp`](https://docs.rs/fastrlp): Implements the [`Encodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Encodable.html) and [`Decodable`](https://docs.rs/fastrlp/latest/fastrlp/trait.Decodable.html) traits for [`Uint`] to allow serialization to/from RLP.
 * [`primitive-types`](https://docs.rs/primitive-types): Implements the [`From<_>`] conversions between corresponding types.
