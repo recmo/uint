@@ -4,7 +4,17 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "ark-ff")))]
 
 use crate::{ToFieldError, Uint};
-use ark_ff_03::{biginteger::*, fields::models::*, PrimeField};
+use ark_ff_03::{
+    biginteger::{
+        BigInteger128, BigInteger256, BigInteger320, BigInteger384, BigInteger448, BigInteger64,
+        BigInteger768, BigInteger832,
+    },
+    fields::models::{
+        Fp256, Fp256Parameters, Fp320, Fp320Parameters, Fp384, Fp384Parameters, Fp448,
+        Fp448Parameters, Fp64, Fp64Parameters, Fp768, Fp768Parameters, Fp832, Fp832Parameters,
+    },
+    PrimeField,
+};
 
 // FEATURE: Implement the `BigInteger` trait.
 
