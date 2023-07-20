@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `from_base_le` implementation by reversing the input iterator
->>>>>>> main:CHANGELOG.md
+
 ## [1.8.0] — 2023-04-19
 
 ### Added
