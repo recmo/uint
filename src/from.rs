@@ -382,6 +382,7 @@ macro_rules! impl_from_unsigned_int {
     };
 }
 
+impl_from_unsigned_int!(bool);
 impl_from_unsigned_int!(u8);
 impl_from_unsigned_int!(u16);
 impl_from_unsigned_int!(u32);
