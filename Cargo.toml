@@ -47,7 +47,8 @@ thiserror = "1.0"
 # support
 alloy-rlp = { version = "0.3", optional = true }
 arbitrary = { version = "1", optional = true }
-ark-ff = { version = "0.4", optional = true }
+ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true }
+ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true }
 bn-rs = { version = "0.2", optional = true }
 fastrlp = { version = "0.3", optional = true }
 num-bigint = { version = "0.4", optional = true }
@@ -72,11 +73,13 @@ sqlx-core = { version = "0.7", optional = true }
 [dev-dependencies]
 ruint = { workspace = true, features = ["arbitrary", "proptest"] }
 
+ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
+ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
+
 criterion = "0.5"
 rand = "0.8"
 
 approx = "0.5"
-ark-bn254 = "0.4"
 bincode = "1.3"
 coverage-helper = "0.1"
 hex = "0.4"
@@ -93,7 +96,8 @@ generic_const_exprs = ["nightly"]
 # support
 alloy-rlp = ["dep:alloy-rlp"]
 arbitrary = ["dep:arbitrary"]
-ark-ff = ["dep:ark-ff"]
+ark-ff = ["dep:ark-ff-03"]
+ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs"]
 fastrlp = ["dep:fastrlp"]
 num-bigint = ["dep:num-bigint"]

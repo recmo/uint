@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
+- Introduce `ark-ff-04` feature flag for conversion to `ark-ff@0.4` types.
 - Support for [`alloy-rlp`](https://github.com/alloy-rs/rlp)
 - MSRV (Minimum Supported Rust Version) is now set at 1.65.0, from previously undefined.
 
@@ -19,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make `serde::Deserialize` impl more permissive
 - Use Ethereum `Quantity` encoding for serde serialization when human-readable
 - Fix error in `from_base_be` that allowed instantiation of overflowing `Uint`.
-- Updated `ark` to `0.4`, `fastrlp` to `0.3`, `pyo3` to `0.19`, and `sqlx-core` to `0.7`.
+- Updated `fastrlp` to `0.3`, `pyo3` to `0.19`, and `sqlx-core` to `0.7`.
 - Improved `fastrlp` perfomance
 - Improved `proptest` performance
 - Made `support` module and its modules public

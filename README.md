@@ -142,7 +142,8 @@ named feature flag.
 * [`primitive-types`](https://docs.rs/primitive-types): Implements the [`From<_>`] conversions between corresponding types.
 * [`postgres`](https://docs.rs/postgres): Implements the [`ToSql`](https://docs.rs/postgres/latest/postgres/types/trait.ToSql.html) trait supporting many column types.
 * [`num-bigint`](https://docs.rs/num-bigint): Implements conversion to/from [`BigUint`](https://docs.rs/num-bigint/latest/num_bigint/struct.BigUint.html) and [`BigInt`](https://docs.rs/num-bigint/latest/num_bigint/struct.BigInt.html).
-* [`ark-ff`](https://docs.rs/ark-ff): Implements conversion to/from [`BigInt`](https://docs.rs/ark-ff/0.4.2/ark_ff/biginteger/struct.BigInt.html) and [`Fp`](https://docs.rs/ark-ff/0.4.2/ark_ff/fields/models/fp/struct.Fp.html) types.
+* [`ark-ff`](https://docs.rs/ark-ff): Implements conversion to/from the [`BigInteger*`](https://docs.rs/ark-ff/0.3.0/ark_ff/biginteger/index.html) types and the [`Fp*`](https://docs.rs/ark-ff/0.3.0/ark_ff/fields/models/index.html) types from `ark-ff@0.3`.
+* [`ark-ff-04`](https://docs.rs/ark-ff): Implements conversion to/from [`BigInt`](https://docs.rs/ark-ff/0.4.2/ark_ff/biginteger/struct.BigInt.html) and [`Fp`](https://docs.rs/ark-ff/0.4.2/ark_ff/fields/models/fp/struct.Fp.html) types from `ark-ff@0.4`.
 * [`sqlx`](https://docs.rs/sqlx): Implements database agnostic storage as byte array. Requires
   `sqlx` to be used with the `tokio-native-tls` runtime, due to issue [sqlx#1627](https://github.com/launchbadge/sqlx/issues/1627).
 * [`zeroize`](https://docs.rs/zeroize): Implements the [`Zeroize`](https://docs.rs/zeroize/latest/zeroize/trait.Zeroize.html) trait. This makes [`Uint`] and [`Bits`] compatible with the [`secrecy`](https://crates.io/crates/secrecy) crate.
