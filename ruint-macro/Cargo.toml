@@ -19,5 +19,3 @@ proc-macro = true
 [package.metadata.release]
 tag = false
 
-[dev-dependencies]
-ruint.workspace = true

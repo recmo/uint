@@ -1,5 +1,7 @@
-use ruint::aliases::{B256, U256};
-use ruint_macro::uint;
+use ruint::{
+    aliases::{B256, U256},
+    uint,
+};
 
 #[test]
 fn test_non_literal() {
