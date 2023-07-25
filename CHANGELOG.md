@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce `ark-ff-04` feature flag for conversion to `ark-ff@0.4` types.
 - Support for [`alloy-rlp`](https://github.com/alloy-rs/rlp)
 - MSRV (Minimum Supported Rust Version) is now set at 1.65.0, from previously undefined.
+- Implement `TryFrom<bool>` for `Uint`
 
 ### Changed
 
