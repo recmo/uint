@@ -27,7 +27,7 @@ The [`uint!`] macro recurses through the parse tree, so the above can equivalent
 
 ```rust
 # use ruint::uint;
-uint!{
+uint! {
 let avogadro = 602_214_076_000_000_000_000_000_U256;
 let cow_key = 0xee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82_U256;
 let bender = 0b1010011010_U10;
@@ -50,7 +50,7 @@ does not fit the type:
 
 ```rust,compile_fail
 # use ruint::uint;
-# uint!{
+# uint! {
 let sparta = 300_U8;
 # }
 ```
