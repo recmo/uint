@@ -5,7 +5,11 @@ use core::ops::{
 };
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Returns whether a specific bit is set.
+    ///
+    /// Returns `false` if `index` exceeds the bit width of the number.
     #[must_use]
+    #[inline]
     pub const fn bit(&self, index: usize) -> bool {
         if index >= BITS {
             return false;
@@ -14,6 +18,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.limbs[limbs] & (1 << bits) != 0
     }
 
+    /// Sets a specific bit to a value.
+    #[inline]
     pub fn set_bit(&mut self, index: usize, value: bool) {
         if index >= BITS {
             return;
@@ -24,6 +30,46 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         } else {
             self.limbs[limbs] &= !(1 << bits);
         }
+    }
+
+    /// Returns a specific byte. The byte at index `0` is the least significant
+    /// byte (little endian).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index` exceeds the byte width of the number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::uint;
+    /// let x = uint!(0x1234567890_U64);
+    /// let bytes = [
+    ///     x.byte(0), // 0x90
+    ///     x.byte(1), // 0x78
+    ///     x.byte(2), // 0x56
+    ///     x.byte(3), // 0x34
+    ///     x.byte(4), // 0x12
+    ///     x.byte(5), // 0x00
+    ///     x.byte(6), // 0x00
+    ///     x.byte(7), // 0x00
+    /// ];
+    /// assert_eq!(bytes, x.to_le_bytes());
+    /// ```
+    ///
+    /// Panics if out of range.
+    ///
+    /// ```should_panic
+    /// # use ruint::uint;
+    /// let x = uint!(0x1234567890_U64);
+    /// let _ = x.byte(8);
+    /// ```
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    #[allow(clippy::cast_possible_truncation)] // intentional
+    pub const fn byte(&self, index: usize) -> u8 {
+        (self.limbs[index / 8] >> ((index % 8) * 8)) as u8
     }
 
     /// Reverses the order of bits in the integer. The least significant bit
@@ -660,8 +706,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::cast_lossless)]
-    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_lossless, clippy::cast_possible_truncation)]
     fn test_small() {
         const_for!(BITS in [1, 2, 8, 16, 32, 63, 64] {
             type U = Uint::<BITS, 1>;
