@@ -95,7 +95,6 @@ serde_json = "1.0"
 [features]
 default = ["std"]
 std = [
-    "thiserror",
     "alloy-rlp?/std",
     "ark-ff-03?/std",
     "ark-ff-04?/std",
@@ -135,5 +134,5 @@ serde = ["dep:serde"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
 
-postgres = ["dep:postgres-types", "dep:bytes", "std"]
-sqlx = ["dep:sqlx-core", "std"]
+postgres = ["dep:postgres-types", "dep:bytes", "std", "dep:thiserror"]
+sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
