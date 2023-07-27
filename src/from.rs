@@ -59,10 +59,13 @@ impl<T> fmt::Display for ToUintError<T> {
         match self {
             Self::ValueTooLarge(bits, _) => write!(f, "Value is too large for Uint<{bits}>"),
             Self::ValueNegative(bits, _) => {
-                write!(f, "Negative values can not be represented as Uint<{bits}>")
+                write!(f, "Negative values cannot be represented as Uint<{bits}>")
             }
             Self::NotANumber(bits) => {
-                write!(f, "'Not a number' (NaN) not be represented as Uint<{bits}>")
+                write!(
+                    f,
+                    "'Not a number' (NaN) cannot be represented as Uint<{bits}>"
+                )
             }
         }
     }
