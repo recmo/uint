@@ -1,22 +1,37 @@
 use crate::Uint;
-use thiserror::Error;
+use alloc::vec::Vec;
+use core::fmt;
 
 /// Error for [`from_base_le`][Uint::from_base_le] and
 /// [`from_base_be`][Uint::from_base_be].
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BaseConvertError {
     /// The value is too large to fit the target type.
-    #[error("The value is too large to fit the target type")]
     Overflow,
 
     /// The requested number base `.0` is less than two.
-    #[error("The requested number base {0} is less than two")]
     InvalidBase(u64),
 
     /// The provided digit `.0` is out of range for requested base `.1`.
-    #[error("digit {0} is out of range for base {1}")]
     InvalidDigit(u64, u64),
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BaseConvertError {}
+
+impl fmt::Display for BaseConvertError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Overflow => write!(f, "The value is too large to fit the target type"),
+            Self::InvalidBase(base) => {
+                write!(f, "The requested number base {base} is less than two")
+            }
+            Self::InvalidDigit(digit, base) => {
+                write!(f, "digit {digit} is out of range for base {base}")
+            }
+        }
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -68,6 +83,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         base: u64,
         digits: I,
     ) -> Result<Self, BaseConvertError> {
+        // TODO: Do not allocate.
         let mut digits: Vec<_> = digits.into_iter().collect();
         digits.reverse();
         Self::from_base_be(base, digits)

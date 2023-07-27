@@ -1,11 +1,11 @@
 #![doc = include_str!("../README.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 
-use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
-use std::{
+use core::{
     fmt::{Display, Formatter, Write},
     str::FromStr,
 };
+use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum LiteralBaseType {

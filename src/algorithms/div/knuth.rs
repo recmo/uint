@@ -194,11 +194,12 @@ mod tests {
         add::{cmp, sbb_n},
         addmul,
     };
+    use alloc::vec::Vec;
+    use core::cmp::Ordering;
     use proptest::{
         collection, num, proptest,
         strategy::{Just, Strategy},
     };
-    use std::cmp::Ordering;
 
     // Basic test without exceptional paths
     #[test]

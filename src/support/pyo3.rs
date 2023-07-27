@@ -24,11 +24,11 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "pyo3")))]
 
 use crate::Uint;
+use core::ffi::c_uchar;
 use pyo3::{
     exceptions::PyOverflowError, ffi, AsPyPointer, FromPyObject, IntoPy, PyAny, PyErr, PyObject,
     PyResult, Python, ToPyObject,
 };
-use std::ffi::c_uchar;
 
 impl<const BITS: usize, const LIMBS: usize> ToPyObject for Uint<BITS, LIMBS> {
     fn to_object(&self, py: Python<'_>) -> PyObject {

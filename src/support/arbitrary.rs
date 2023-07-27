@@ -34,7 +34,8 @@ impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIM
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use std::iter::repeat;
+    use alloc::vec::Vec;
+    use core::iter::repeat;
 
     #[test]
     fn test_arbitrary() {

@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// Like `a % b` but returns `b` instead of `0`.
 #[must_use]
 pub(crate) const fn rem_up(a: usize, b: usize) -> usize {

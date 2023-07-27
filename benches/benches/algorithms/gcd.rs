@@ -1,6 +1,6 @@
 use crate::prelude::*;
+use core::cmp::{max, min};
 use ruint::algorithms::LehmerMatrix as Matrix;
-use std::cmp::{max, min};
 
 pub fn group(criterion: &mut Criterion) {
     bench_from_u64(criterion);

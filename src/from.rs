@@ -32,49 +32,91 @@
 // }
 
 use crate::Uint;
-use core::{any::type_name, fmt::Debug};
-use thiserror::Error;
+use core::{fmt, fmt::Debug};
 
 /// Error for [`TryFrom<T>`][TryFrom] for [`Uint`].
-#[derive(Clone, Copy, Debug, Error, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ToUintError<T> {
     /// Value is too large to fit the Uint.
     ///
     /// `.0` is `BITS` and `.1` is the wrapped value.
-    #[error("Value is too large for Uint<{0}>")]
     ValueTooLarge(usize, T),
 
     /// Negative values can not be represented as Uint.
     ///
     /// `.0` is `BITS` and `.1` is the wrapped value.
-    #[error("Negative values can not be represented as Uint<{0}>")]
     ValueNegative(usize, T),
 
     /// 'Not a number' (NaN) can not be represented as Uint
-    #[error("'Not a number' (NaN) not be represented as Uint<{0}>")]
     NotANumber(usize),
+}
+
+#[cfg(feature = "std")]
+impl<T: fmt::Debug> std::error::Error for ToUintError<T> {}
+
+impl<T> fmt::Display for ToUintError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ValueTooLarge(bits, _) => write!(f, "Value is too large for Uint<{bits}>"),
+            Self::ValueNegative(bits, _) => {
+                write!(f, "Negative values cannot be represented as Uint<{bits}>")
+            }
+            Self::NotANumber(bits) => {
+                write!(
+                    f,
+                    "'Not a number' (NaN) cannot be represented as Uint<{bits}>"
+                )
+            }
+        }
+    }
 }
 
 /// Error for [`TryFrom<Uint>`][TryFrom].
 #[allow(clippy::derive_partial_eq_without_eq)] // False positive
-#[derive(Clone, Copy, Debug, Error, PartialEq, Eq, Hash)]
 #[allow(clippy::module_name_repetitions)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum FromUintError<T> {
     /// The Uint value is too large for the target type.
     ///
     /// `.0` number of `BITS` in the Uint, `.1` is the wrapped value and
     /// `.2` is the maximum representable value in the target type.
-    #[error("Uint<{0}> value is too large for {}", type_name::<T>())]
     Overflow(usize, T, T),
+}
+
+#[cfg(feature = "std")]
+impl<T: fmt::Debug> std::error::Error for FromUintError<T> {}
+
+impl<T> fmt::Display for FromUintError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Overflow(bits, ..) => write!(
+                f,
+                "Uint<{bits}> value is too large for {}",
+                core::any::type_name::<T>()
+            ),
+        }
+    }
 }
 
 /// Error for [`TryFrom<Uint>`][TryFrom] for [`ark_ff`](https://docs.rs/ark-ff) and others.
 #[allow(dead_code)] // This is used by some support features.
-#[derive(Debug, Clone, Copy, Error)]
+#[derive(Debug, Clone, Copy)]
 pub enum ToFieldError {
     /// Number is equal or larger than the target field modulus.
-    #[error("Number is equal or larger than the target field modulus.")]
     NotInField,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ToFieldError {}
+
+impl fmt::Display for ToFieldError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotInField => {
+                f.write_str("Number is equal or larger than the target field modulus.")
+            }
+        }
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -418,6 +460,7 @@ impl_from_signed_int!(i64, u64);
 impl_from_signed_int!(i128, u128);
 impl_from_signed_int!(isize, usize);
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
@@ -486,6 +529,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
@@ -605,12 +649,14 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
 
 // Convert Uint to floating point
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     /// Approximate single precision float.
     ///
@@ -622,12 +668,14 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
 }
 
+#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
     /// Approximate double precision float.
     ///
@@ -659,6 +707,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn test_f64() {
         assert_eq!(Uint::<0, 0>::try_from(0.0_f64), Ok(Uint::ZERO));
         const_for!(BITS in NON_ZERO {

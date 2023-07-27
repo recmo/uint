@@ -1,9 +1,8 @@
 use crate::{base_convert::BaseConvertError, utils::rem_up, Uint};
-use core::fmt::{
-    Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex,
+use core::{
+    fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex},
+    str::FromStr,
 };
-use std::str::FromStr;
-use thiserror::Error;
 
 // FEATURE: Respect width parameter in formatters.
 
@@ -93,19 +92,42 @@ impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
 }
 
 /// Error for [`from_str_radix`](Uint::from_str_radix).
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Error)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ParseError {
     /// Invalid digit in string.
-    #[error("invalid digit")]
     InvalidDigit(char),
 
     /// Invalid radix, up to base 64 is supported.
-    #[error("invalid radix, up to 64 is supported")]
     InvalidRadix(u64),
 
     /// Error from [`Uint::from_base_be`].
-    #[error(transparent)]
-    BaseConvertError(#[from] BaseConvertError),
+    BaseConvertError(BaseConvertError),
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::BaseConvertError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<BaseConvertError> for ParseError {
+    fn from(value: BaseConvertError) -> Self {
+        Self::BaseConvertError(value)
+    }
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::BaseConvertError(e) => Display::fmt(e, f),
+            Self::InvalidDigit(c) => write!(f, "Invalid digit: {c}"),
+            Self::InvalidRadix(r) => write!(f, "Invalid radix {r}, up to 64 is supported"),
+        }
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -186,6 +208,7 @@ impl<const BITS: usize, const LIMBS: usize> FromStr for Uint<BITS, LIMBS> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
     use proptest::proptest;
 
     #[allow(clippy::unreadable_literal)]

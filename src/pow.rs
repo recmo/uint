@@ -118,6 +118,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U64::approx_pow2(10.385), Some(1337_U64));
     /// # }
     /// ```
+    #[cfg(feature = "std")]
     #[must_use]
     pub fn approx_pow2(exp: f64) -> Option<Self> {
         const LN2_1P5: f64 = 0.584_962_500_721_156_2_f64;
@@ -166,8 +167,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
+    use core::iter::repeat;
     use proptest::proptest;
-    use std::iter::repeat;
 
     #[test]
     fn test_pow2_shl() {
