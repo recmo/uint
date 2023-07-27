@@ -1,5 +1,4 @@
 use crate::{ParseError, Uint};
-use alloc::{borrow::Cow, vec::Vec};
 use core::{
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
@@ -7,6 +6,9 @@ use core::{
     },
     str::FromStr,
 };
+
+#[cfg(feature = "alloc")]
+use alloc::{borrow::Cow, vec::Vec};
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
@@ -206,11 +208,14 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     forward! {
         fn reverse_bits(self) -> Self;
     }
+    #[cfg(feature = "alloc")]
     forward! {
         fn as_le_bytes(&self) -> Cow<'_, [u8]>;
+        fn to_be_bytes_vec(&self) -> Vec<u8>;
+    }
+    forward! {
         fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
         fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES];
-        fn to_be_bytes_vec(&self) -> Vec<u8>;
         fn leading_zeros(&self) -> usize;
         fn leading_ones(&self) -> usize;
         fn trailing_zeros(&self) -> usize;

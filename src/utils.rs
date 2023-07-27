@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 /// Like `a % b` but returns `b` instead of `0`.
 #[must_use]
 pub(crate) const fn rem_up(a: usize, b: usize) -> usize {
@@ -11,20 +9,19 @@ pub(crate) const fn rem_up(a: usize, b: usize) -> usize {
     }
 }
 
-#[must_use]
-pub(crate) fn trim_end_slice<'a, T: PartialEq>(slice: &'a [T], value: &T) -> &'a [T] {
-    slice
-        .iter()
-        .rposition(|b| b != value)
-        .map_or_else(|| &slice[..0], |len| &slice[..=len])
+fn last_idx<T: PartialEq>(x: &[T], value: &T) -> Option<usize> {
+    x.iter().rposition(|b| b != value)
 }
 
+#[must_use]
+#[inline]
+pub(crate) fn trim_end_slice<'a, T: PartialEq>(slice: &'a [T], value: &T) -> &'a [T] {
+    &slice[..last_idx(slice, value).unwrap_or(0)]
+}
+
+#[inline]
 pub(crate) fn trim_end_vec<T: PartialEq>(vec: &mut Vec<T>, value: &T) {
-    if let Some(last) = vec.iter().rposition(|b| b != value) {
-        vec.truncate(last + 1);
-    } else {
-        vec.clear();
-    }
+    vec.truncate(last_idx(vec, value).map_or(0, |idx| idx + 1));
 }
 
 // Branch prediction hints.

@@ -1,5 +1,4 @@
 use crate::Uint;
-use alloc::vec::Vec;
 use core::fmt;
 
 /// Error for [`from_base_le`][Uint::from_base_le] and
@@ -45,6 +44,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if the base is less than 2.
+    #[inline]
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
         assert!(base > 1);
         SpigotLittle {
@@ -63,9 +63,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if the base is less than 2.
+    #[inline]
+    #[cfg(feature = "alloc")] // OPT: Find an allocation free method. Maybe extract from the top?
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
+        struct OwnedVecIterator {
+            vec: alloc::vec::Vec<u64>,
+        }
+
+        impl Iterator for OwnedVecIterator {
+            type Item = u64;
+
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                self.vec.pop()
+            }
+        }
+
         assert!(base > 1);
-        // OPT: Find an allocation free method. Maybe extract from the top?
         OwnedVecIterator {
             vec: self.to_base_le(base).collect(),
         }
@@ -79,14 +93,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
     /// * [`BaseConvertError::Overflow`] if the number is too large to
     /// fit.
-    pub fn from_base_le<I: IntoIterator<Item = u64>>(
-        base: u64,
-        digits: I,
-    ) -> Result<Self, BaseConvertError> {
-        // TODO: Do not allocate.
-        let mut digits: Vec<_> = digits.into_iter().collect();
-        digits.reverse();
-        Self::from_base_be(base, digits)
+    #[inline]
+    pub fn from_base_le<I>(base: u64, digits: I) -> Result<Self, BaseConvertError>
+    where
+        I: IntoIterator<Item = u64>,
+        I::IntoIter: DoubleEndedIterator,
+    {
+        Self::from_base_be(base, digits.into_iter().rev())
     }
 
     /// Constructs the [`Uint`] from digits in the base `base` in big-endian.
@@ -139,6 +152,7 @@ struct SpigotLittle<const LIMBS: usize> {
 impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     type Item = u64;
 
+    #[inline]
     #[allow(clippy::cast_possible_truncation)] // Doesn't truncate
     fn next(&mut self) -> Option<Self::Item> {
         // Knuth Algorithm S.
@@ -147,8 +161,7 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
         // OPT: If we keep track of leading zero limbs we can half iterations.
         for limb in self.limbs.iter_mut().rev() {
             zero |= *limb;
-            remainder <<= 64;
-            remainder |= u128::from(*limb);
+            remainder = (remainder << 64) | u128::from(*limb);
             *limb = (remainder / u128::from(self.base)) as u64;
             remainder %= u128::from(self.base);
         }
@@ -157,18 +170,6 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
         } else {
             Some(remainder as u64)
         }
-    }
-}
-
-struct OwnedVecIterator {
-    vec: Vec<u64>,
-}
-
-impl Iterator for OwnedVecIterator {
-    type Item = u64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.vec.pop()
     }
 }
 

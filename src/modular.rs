@@ -1,4 +1,4 @@
-use crate::{algorithms, nlimbs, Uint};
+use crate::{algorithms, Uint};
 
 // FEATURE: sub_mod, neg_mod, inv_mod, div_mod, root_mod
 // See <https://en.wikipedia.org/wiki/Cipolla's_algorithm>
@@ -8,7 +8,6 @@ use crate::{algorithms, nlimbs, Uint};
 // FEATURE: Modular wrapper class, like Wrapping.
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    #[allow(clippy::doc_markdown)] // False positive
     /// ⚠️ Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
     ///
     /// **Warning.** This function is not part of the stable API.
@@ -26,7 +25,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self
     }
 
-    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self} + \mathtt{rhs}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
@@ -44,7 +42,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         result
     }
 
-    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self} ⋅ \mathtt{rhs}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
@@ -52,6 +49,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// See [`mul_redc`](Self::mul_redc) for a faster variant at the cost of
     /// some pre-computation.
     #[must_use]
+    #[cfg(feature = "alloc")] // see comments below
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
         if modulus == Self::ZERO {
             return Self::ZERO;
@@ -62,7 +60,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // we could just use a `widening_mul`. So instead we allocate from heap.
         // Alternatively we could use `alloca`, but that is blocked on
         // See <https://github.com/rust-lang/rust/issues/48055>
-        let mut product = vec![0; nlimbs(2 * BITS)];
+        let mut product = vec![0; crate::nlimbs(2 * BITS)];
         let overflow = algorithms::addmul(&mut product, &self.limbs, &rhs.limbs);
         debug_assert!(!overflow);
 
@@ -73,11 +71,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         modulus
     }
 
-    #[allow(clippy::doc_markdown)] // False positive
     /// Compute $\mod{\mathtt{self}^{\mathtt{rhs}}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
     #[must_use]
+    #[cfg(feature = "alloc")] // see comments in mul_mod
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
         if modulus == Self::ZERO || modulus <= Self::from(1) {
             // Also covers Self::BITS == 0
@@ -107,7 +105,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         algorithms::inv_mod(self, modulus)
     }
 
-    #[allow(clippy::doc_markdown)] // False positive
     /// Montgomery multiplication.
     ///
     /// Computes
@@ -147,6 +144,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if `inv` is not correct.
     #[must_use]
+    #[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
     pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {
         if BITS == 0 {
             return Self::ZERO;

@@ -27,7 +27,7 @@
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
 
-// TODO: alloc feature flag
+#[cfg(feature = "alloc")]
 #[macro_use]
 extern crate alloc;
 

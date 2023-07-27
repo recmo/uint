@@ -248,7 +248,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
-    #[allow(clippy::doc_markdown)]
     /// Left shift by `rhs` bits with overflow detection.
     ///
     /// Returns $\mod{\mathtt{value} ⋅ 2^{\mathtt{rhs}}}_{2^{\mathtt{BITS}}}$.
@@ -309,7 +308,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         (self, overflow)
     }
 
-    #[allow(clippy::doc_markdown)]
     /// Left shift by `rhs` bits.
     ///
     /// Returns $\mod{\mathtt{value} ⋅ 2^{\mathtt{rhs}}}_{2^{\mathtt{BITS}}}$.

@@ -51,7 +51,7 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
-fastrlp = { version = "0.3", optional = true, default-features = false }
+fastrlp = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
 parity-scale-codec = { version = "3", optional = true, features = [
     "derive",
@@ -95,6 +95,7 @@ serde_json = "1.0"
 [features]
 default = ["std"]
 std = [
+    "alloc",
     "alloy-rlp?/std",
     "ark-ff-03?/std",
     "ark-ff-04?/std",
@@ -110,22 +111,23 @@ std = [
     "valuable?/std",
     "zeroize?/std",
 ]
+alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
 
 # nightly-only features
 nightly = []
 generic_const_exprs = ["nightly"]
 
 # support
-alloy-rlp = ["dep:alloy-rlp"]
+alloy-rlp = ["dep:alloy-rlp", "alloc"]
 arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
-fastrlp = ["dep:fastrlp"]
-num-bigint = ["dep:num-bigint"]
-parity-scale-codec = ["dep:parity-scale-codec"]
+fastrlp = ["dep:fastrlp", "alloc"]
+num-bigint = ["dep:num-bigint", "alloc"]
+parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
-proptest = ["dep:proptest"]
+proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]

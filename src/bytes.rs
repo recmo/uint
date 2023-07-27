@@ -1,12 +1,11 @@
 // OPT: Use u64::from_{be/le}_bytes() to work 8 bytes at a time.
 // FEATURE: (BLOCKED) Make `const fn`s when `const_for` is stable.
 
-use crate::{
-    utils::{trim_end_slice, trim_end_vec},
-    Uint,
-};
-use alloc::{borrow::Cow, vec::Vec};
+use crate::Uint;
 use core::slice;
+
+#[cfg(feature = "alloc")]
+use alloc::{borrow::Cow, vec::Vec};
 
 // OPT: *_to_smallvec to avoid allocation.
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -46,28 +45,35 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Access the underlying store as a little-endian bytes.
     ///
     /// Uses an optimized implementation on little-endian targets.
+    #[cfg(feature = "alloc")]
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub const fn as_le_bytes(&self) -> Cow<'_, [u8]> {
         // On little endian platforms this is a no-op.
         #[cfg(target_endian = "little")]
         return Cow::Borrowed(self.as_le_slice());
 
-        // In others it's a bit more complicated.
-        #[cfg(not(target_endian = "little"))]
-        return Cow::Owned(self.to_le_bytes_vec());
+        // In others, reverse each limb and return a copy.
+        #[cfg(target_endian = "big")]
+        return Cow::Owned({
+            let mut cpy = *self;
+            cpy.limbs.iter_mut().for_each(|limb| limb.reverse_bits());
+            slice::from_raw_parts(cpy.limbs.as_ptr().cast(), Self::BYTES).to_vec()
+        });
     }
 
     /// Access the underlying store as a little-endian bytes with trailing zeros
     /// removed.
     ///
     /// Uses an optimized implementation on little-endian targets.
+    #[cfg(feature = "alloc")]
     #[must_use]
+    #[inline]
     pub fn as_le_bytes_trimmed(&self) -> Cow<'_, [u8]> {
         match self.as_le_bytes() {
-            Cow::Borrowed(slice) => Cow::Borrowed(trim_end_slice(slice, &0)),
+            Cow::Borrowed(slice) => Cow::Borrowed(crate::utils::trim_end_slice(slice, &0)),
             Cow::Owned(mut vec) => {
-                trim_end_vec(&mut vec, &0);
+                crate::utils::trim_end_vec(&mut vec, &0);
                 Cow::Owned(vec)
             }
         }
@@ -85,15 +91,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
     pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
-        assert_eq!(BYTES, Self::BYTES);
+        // TODO: Use a `const {}` block for this assertion
+        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+
         let mut bytes = [0; BYTES];
 
         #[cfg(target_endian = "little")]
         bytes.copy_from_slice(self.as_le_slice());
 
-        #[cfg(not(target_endian = "little"))]
+        #[cfg(target_endian = "big")]
         for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs()) {
-            chunk.copy_from_slice(&limb.to_le_bytes()[..chunk.len()]);
+            chunk.copy_from_slice(&limb.to_le_bytes());
         }
 
         bytes
@@ -104,14 +112,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// This method is useful when [`Self::to_le_bytes`] can not be used because
     /// byte size is not known compile time.
+    #[cfg(feature = "alloc")]
     #[must_use]
+    #[inline]
     pub fn to_le_bytes_vec(&self) -> Vec<u8> {
         self.as_le_bytes().into_owned()
     }
 
     /// Converts the [`Uint`] to a little-endian byte vector with trailing zeros
     /// bytes removed.
+    #[cfg(feature = "alloc")]
     #[must_use]
+    #[inline]
     pub fn to_le_bytes_trimmed_vec(&self) -> Vec<u8> {
         self.as_le_bytes_trimmed().into_owned()
     }
@@ -127,6 +139,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
+    #[inline]
     pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
         let mut bytes = self.to_le_bytes();
         bytes.reverse();
@@ -138,7 +151,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// This method is useful when [`Self::to_be_bytes`] can not be used because
     /// byte size is not known compile time.
+    #[cfg(feature = "alloc")]
     #[must_use]
+    #[inline]
     pub fn to_be_bytes_vec(&self) -> Vec<u8> {
         let mut bytes = self.to_le_bytes_vec();
         bytes.reverse();
@@ -147,7 +162,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Converts the [`Uint`] to a big-endian byte vector with leading zeros
     /// bytes removed.
+    #[cfg(feature = "alloc")]
     #[must_use]
+    #[inline]
     pub fn to_be_bytes_trimmed_vec(&self) -> Vec<u8> {
         let mut bytes = self.to_le_bytes_trimmed_vec();
         bytes.reverse();
@@ -157,6 +174,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Creates a new integer from a little endian stream of bytes.
     #[must_use]
     #[allow(clippy::cast_lossless)]
+    #[inline]
     fn try_from_le_byte_iter<I>(iter: I) -> Option<Self>
     where
         I: Iterator<Item = u8>,
@@ -186,6 +204,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
+    #[inline]
     pub fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
         Self::try_from_le_byte_iter(bytes.iter().copied().rev())
     }
@@ -197,6 +216,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
+    #[inline]
     pub fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
         Self::try_from_le_byte_iter(bytes.iter().copied())
     }
@@ -215,8 +235,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the value is too large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
+    #[inline]
     pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        assert_eq!(BYTES, Self::BYTES);
+        // TODO: Use a `const {}` block for this assertion
+        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+
         if BYTES % 8 == 0 {
             // Optimized implementation for full-limb types.
             let mut limbs = [0_u64; LIMBS];
@@ -243,8 +266,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the value is too large for the bit-size of the Uint.
     #[must_use]
     #[track_caller]
+    #[inline]
     pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        assert_eq!(BYTES, Self::BYTES);
+        // TODO: Use a `const {}` block for this assertion
+        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+
         Self::try_from_le_slice(&bytes).expect("Value too large for Uint")
     }
 }
