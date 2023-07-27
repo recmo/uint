@@ -13,6 +13,7 @@
     any(test, feature = "bench"),
     allow(clippy::wildcard_imports, clippy::cognitive_complexity)
 )]
+#![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "nightly", feature(no_coverage, core_intrinsics))]
@@ -25,6 +26,10 @@
 // Workaround for proc-macro `uint!` in this crate.
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
+
+// TODO: alloc feature flag
+#[macro_use]
+extern crate alloc;
 
 #[macro_use]
 mod macros;

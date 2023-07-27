@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_gcd_one() {
-        use std::str::FromStr;
+        use core::str::FromStr;
         const BITS: usize = 129;
         const LIMBS: usize = nlimbs(BITS);
         type U = Uint<BITS, LIMBS>;

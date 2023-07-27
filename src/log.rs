@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {

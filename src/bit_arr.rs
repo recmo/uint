@@ -1,9 +1,12 @@
 use crate::{ParseError, Uint};
-use core::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
-    Shr, ShrAssign,
+use alloc::{borrow::Cow, vec::Vec};
+use core::{
+    ops::{
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Index, Not, Shl, ShlAssign,
+        Shr, ShrAssign,
+    },
+    str::FromStr,
 };
-use std::{borrow::Cow, str::FromStr};
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.

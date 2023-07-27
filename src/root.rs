@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 use crate::Uint;
 use core::cmp::{min, Ordering};
 

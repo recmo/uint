@@ -336,9 +336,9 @@ mod tests {
     use core::{
         cmp::{max, min},
         mem::swap,
+        str::FromStr,
     };
     use proptest::{proptest, test_runner::Config};
-    use std::str::FromStr;
 
     fn gcd(mut a: u128, mut b: u128) -> u128 {
         while b != 0 {

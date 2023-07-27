@@ -4,12 +4,14 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 
 use crate::{nbytes, Bits, Uint};
-use core::fmt::{Formatter, Result as FmtResult};
+use core::{
+    fmt::{Formatter, Result as FmtResult, Write},
+    str,
+};
 use serde::{
     de::{Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::{fmt::Write, str};
 
 /// Canonical serialization for all human-readable instances of `Uint<0, 0>`,
 /// and minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
