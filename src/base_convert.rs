@@ -203,6 +203,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             result.add_digit(digit, base)?;
         }
 
+        // If the iterator still contains digits, we have overflowed.
         if iter.next().is_some() {
             return Err(BaseConvertError::Overflow);
         }
