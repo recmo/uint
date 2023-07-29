@@ -125,9 +125,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Err(BaseConvertError::InvalidBase(base));
         }
 
-        let mut tail = digits.into_iter();
-        match tail.next() {
-            Some(digit) => Self::from_base_le_recurse(digit, base, &mut tail),
+        // we compute this by dividing the number of bits in the Uint by the
+        // number of bits in each word, rounding up.
+        let max_digits: usize = BITS / (usize::BITS - base.leading_zeros()) as usize + 1;
+
+        let mut iter = digits.into_iter();
+        let mut digits = iter.by_ref().take(max_digits);
+
+        match digits.next() {
+            Some(digit) => {
+                let res = Self::from_base_le_recurse::<I::IntoIter>(digit, base, digits)?;
+
+                // if the iter was not drained during the recursion process,
+                // then we have overflowed
+                if iter.next().is_some() {
+                    return Err(BaseConvertError::Overflow);
+                }
+                Ok(res)
+            }
             None => Ok(Self::ZERO),
         }
     }
@@ -141,7 +156,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     fn from_base_le_recurse<I: Iterator<Item = u64>>(
         digit: u64,
         base: u64,
-        tail: &mut I,
+        mut tail: core::iter::Take<&mut I>,
     ) -> Result<Self, BaseConvertError> {
         if digit > base {
             return Err(BaseConvertError::InvalidDigit(digit, base));
@@ -176,9 +191,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Err(BaseConvertError::InvalidBase(base));
         }
 
+        // we compute this by dividing the number of bits in the Uint by the
+        // number of bits in each word, rounding up.
+        let max_digits: usize = BITS / (usize::BITS - base.leading_zeros()) as usize + 1;
+
+        let mut iter = digits.into_iter();
+        let digits = iter.by_ref().take(max_digits);
+
         let mut result = Self::ZERO;
         for digit in digits {
             result.add_digit(digit, base)?;
+        }
+
+        if iter.next().is_some() {
+            return Err(BaseConvertError::Overflow);
         }
 
         Ok(result)
@@ -265,6 +291,19 @@ mod tests {
             .unwrap(),
             N
         );
+
+        assert_eq!(
+            Uint::<4, 1>::from_base_le(10, [6, 1]),
+            Err(BaseConvertError::Overflow),
+        );
+        assert_eq!(
+            Uint::<4, 1>::from_base_le(10, [5, 1, 318]),
+            Err(BaseConvertError::Overflow),
+        );
+        assert_eq!(
+            Uint::<4, 1>::from_base_le(10, [5, 1]),
+            Ok(Uint::<4, 1>::from(15)),
+        );
     }
 
     #[test]
@@ -308,6 +347,10 @@ mod tests {
 
     #[test]
     fn test_from_base_be_overflow() {
+        assert_eq!(
+            Uint::<1, 1>::from_base_be(10, std::iter::repeat(0)),
+            Err(BaseConvertError::Overflow)
+        );
         assert_eq!(
             Uint::<0, 0>::from_base_be(10, [].into_iter()),
             Ok(Uint::<0, 0>::ZERO)

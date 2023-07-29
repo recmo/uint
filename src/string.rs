@@ -255,4 +255,9 @@ mod tests {
             assert_eq!(format!("{n:#b}"), format!("{value:#066b}"));
         });
     }
+
+    #[test]
+    fn test_from_hex_extra_zeroes() {
+        Uint::<16, 1>::from_str("0x00000000000001").unwrap();
+    }
 }
