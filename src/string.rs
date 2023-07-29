@@ -1,15 +1,13 @@
 use crate::{base_convert::BaseConvertError, utils::rem_up, Uint};
-use core::{
-    fmt::{Binary, Debug, Display, Formatter, LowerHex, Octal, Result as FmtResult, UpperHex},
-    str::FromStr,
-};
+use core::{fmt, str::FromStr};
 
 // FEATURE: Respect width parameter in formatters.
 
 // TODO: Do we want to write `0` for `BITS == 0`.
 
-impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+#[cfg(feature = "alloc")]
+impl<const BITS: usize, const LIMBS: usize> fmt::Display for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Base convert 19 digits at a time
         const BASE: u64 = 10_000_000_000_000_000_000_u64;
         let mut spigot = self.to_base_be(BASE);
@@ -21,71 +19,75 @@ impl<const BITS: usize, const LIMBS: usize> Display for Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> Debug for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:#x}_U{BITS}")
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> LowerHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        if f.alternate() {
-            write!(f, "0x")?;
-        }
-        let mut limbs = self.as_limbs().iter().rev();
-        if let Some(first) = limbs.next() {
-            let width = 2 * rem_up(Self::BYTES, 8);
-            write!(f, "{first:0width$x}")?;
-        }
-        for limb in limbs {
-            write!(f, "{limb:016x}")?;
-        }
-        Ok(())
+impl<const BITS: usize, const LIMBS: usize> fmt::LowerHex for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_hex::<false>(f)
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> UpperHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        if f.alternate() {
-            write!(f, "0x")?;
-        }
-        let mut limbs = self.as_limbs().iter().rev();
-        if let Some(first) = limbs.next() {
-            let width = 2 * rem_up(Self::BYTES, 8);
-            write!(f, "{first:0width$X}")?;
-        }
-        for limb in limbs {
-            write!(f, "{limb:016X}")?;
-        }
-        Ok(())
+impl<const BITS: usize, const LIMBS: usize> fmt::UpperHex for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_hex::<true>(f)
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> Binary for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl<const BITS: usize, const LIMBS: usize> fmt::Binary for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(f, "0b")?;
         }
-        let mut limbs = self.as_limbs().iter().rev();
-        if let Some(first) = limbs.next() {
-            let width = rem_up(Self::BITS, 64);
-            write!(f, "{first:0width$b}")?;
+        if LIMBS == 0 || *self == Self::ZERO {
+            return f.write_str("0");
         }
-        for limb in limbs {
-            write!(f, "{limb:064b}")?;
+
+        for (i, &limb) in self.limbs.iter().rev().enumerate() {
+            let width = if i == 0 { rem_up(Self::BITS, 64) } else { 64 };
+            write!(f, "{limb:0width$b}")?;
         }
         Ok(())
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> Octal for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+#[cfg(feature = "alloc")]
+impl<const BITS: usize, const LIMBS: usize> fmt::Octal for Uint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Base convert 21 digits at a time
         const BASE: u64 = 0x8000_0000_0000_0000_u64;
         let mut spigot = self.to_base_be(BASE);
         write!(f, "{:o}", spigot.next().unwrap_or(0))?;
         for digits in spigot {
             write!(f, "{digits:021o}")?;
+        }
+        Ok(())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    fn fmt_hex<const UPPER: bool>(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "0x")?;
+        }
+        if LIMBS == 0 || *self == Self::ZERO {
+            return f.write_str("0");
+        }
+
+        for (i, &limb) in self.limbs.iter().rev().enumerate() {
+            let width = if i == 0 {
+                2 * rem_up(Self::BITS, 8)
+            } else {
+                16
+            };
+            if UPPER {
+                write!(f, "{limb:0width$X}")?;
+            } else {
+                write!(f, "{limb:0width$x}")?;
+            }
         }
         Ok(())
     }
@@ -106,6 +108,7 @@ pub enum ParseError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
+    #[inline]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::BaseConvertError(e) => Some(e),
@@ -115,15 +118,16 @@ impl std::error::Error for ParseError {
 }
 
 impl From<BaseConvertError> for ParseError {
+    #[inline]
     fn from(value: BaseConvertError) -> Self {
         Self::BaseConvertError(value)
     }
 }
 
-impl Display for ParseError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::BaseConvertError(e) => Display::fmt(e, f),
+            Self::BaseConvertError(e) => fmt::Display::fmt(e, f),
             Self::InvalidDigit(c) => write!(f, "Invalid digit: {c}"),
             Self::InvalidRadix(r) => write!(f, "Invalid radix {r}, up to 64 is supported"),
         }

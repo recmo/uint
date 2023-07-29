@@ -8,6 +8,7 @@
     clippy::redundant_pub_crate,
     clippy::unreadable_literal,
     clippy::let_unit_value,
+    clippy::option_if_let_else,
 )]
 #![cfg_attr(
     any(test, feature = "bench"),
@@ -27,7 +28,7 @@
 // See <https://github.com/rust-lang/rust/pull/55275>
 extern crate self as ruint;
 
-// TODO: alloc feature flag
+#[cfg(feature = "alloc")]
 #[macro_use]
 extern crate alloc;
 

@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for `no_std` environments (#274)
+- Support for `no_std` environments ([#274])
+- `alloc` feature ([#277])
 
 [#274]: https://github.com/recmo/uint/pulls/274
+[#277]: https://github.com/recmo/uint/pulls/277
 
 ## [1.9.0] - 2023-07-25
 

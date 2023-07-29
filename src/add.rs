@@ -52,7 +52,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
-    #[allow(clippy::doc_markdown)]
     /// Calculates $\mod{\mathtt{self} + \mathtt{rhs}}_{2^{BITS}}$.
     ///
     /// Returns a tuple of the addition along with a boolean indicating whether
@@ -88,7 +87,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::ZERO.overflowing_sub(self)
     }
 
-    #[allow(clippy::doc_markdown)]
     /// Calculates $\mod{\mathtt{self} - \mathtt{rhs}}_{2^{BITS}}$.
     ///
     /// Returns a tuple of the subtraction along with a boolean indicating
