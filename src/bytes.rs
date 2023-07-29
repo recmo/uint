@@ -6,10 +6,7 @@ use crate::{
     Uint,
 };
 use alloc::{borrow::Cow, vec::Vec};
-use core::{
-    ptr::{addr_of, addr_of_mut},
-    slice,
-};
+use core::slice;
 
 // OPT: *_to_smallvec to avoid allocation.
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -27,8 +24,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline(always)]
     pub const fn as_le_slice(&self) -> &[u8] {
-        let data = addr_of!(self.limbs).cast();
-        unsafe { slice::from_raw_parts(data, Self::BYTES) }
+        unsafe { slice::from_raw_parts(self.limbs.as_ptr().cast(), Self::BYTES) }
     }
 
     /// Access the underlying store as a mutable little-endian slice of bytes.
@@ -44,8 +40,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline(always)]
     pub unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
-        let data = addr_of_mut!(self.limbs).cast();
-        slice::from_raw_parts_mut(data, Self::BYTES)
+        unsafe { slice::from_raw_parts_mut(self.limbs.as_mut_ptr().cast(), Self::BYTES) }
     }
 
     /// Access the underlying store as a little-endian bytes.

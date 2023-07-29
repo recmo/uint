@@ -67,9 +67,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     #[track_caller]
-    #[allow(clippy::cast_possible_truncation)] // intentional
     pub const fn byte(&self, index: usize) -> u8 {
-        (self.limbs[index / 8] >> ((index % 8) * 8)) as u8
+        #[cfg(target_endian = "little")]
+        {
+            self.as_le_slice()[index]
+        }
+
+        #[cfg(target_endian = "big")]
+        #[allow(clippy::cast_possible_truncation)] // intentional
+        {
+            (self.limbs[index / 8] >> ((index % 8) * 8)) as u8
+        }
     }
 
     /// Reverses the order of bits in the integer. The least significant bit
