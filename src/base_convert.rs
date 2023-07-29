@@ -127,7 +127,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         let mut tail = digits.into_iter();
         match tail.next() {
-            Some(digit) => Self::from_base_le_recurse::<I>(digit, base, tail),
+            Some(digit) => Self::from_base_le_recurse(digit, base, &mut tail),
             None => Ok(Self::ZERO),
         }
     }
@@ -138,10 +138,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// same construction loop as [`Uint::from_base_be`] while exiting the
     /// recursive callstack.
     #[inline]
-    fn from_base_le_recurse<I: IntoIterator<Item = u64>>(
+    fn from_base_le_recurse<I: Iterator<Item = u64>>(
         digit: u64,
         base: u64,
-        mut tail: I::IntoIter,
+        tail: &mut I,
     ) -> Result<Self, BaseConvertError> {
         if digit > base {
             return Err(BaseConvertError::InvalidDigit(digit, base));
@@ -184,6 +184,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Ok(result)
     }
 }
+
 struct SpigotLittle<const LIMBS: usize> {
     base:  u64,
     limbs: [u64; LIMBS],
