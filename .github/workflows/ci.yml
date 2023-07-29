@@ -77,10 +77,6 @@ jobs:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Build with code coverage
-        run: |
-          cargo llvm-cov --no-report --workspace --all-features --all-targets
-          cargo llvm-cov --no-report --workspace --all-features --doc
       - name: Generate code coverage
         env:
           # Covered tests are slower, so reduce the test load. (We also shouldn't
