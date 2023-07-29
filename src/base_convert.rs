@@ -85,6 +85,29 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Adds a digit in base `base` to the number. This is used internally by
+    /// [`Uint::from_base_le`] and [`Uint::from_base_be`].
+    #[inline]
+    fn add_digit(&mut self, digit: u64, base: u64) -> Result<(), BaseConvertError> {
+        if digit >= base {
+            return Err(BaseConvertError::InvalidDigit(digit, base));
+        }
+        // Multiply by base.
+        // OPT: keep track of non-zero limbs and mul the minimum.
+        let mut carry: u128 = u128::from(digit);
+        #[allow(clippy::cast_possible_truncation)]
+        for limb in &mut self.limbs {
+            carry += u128::from(*limb) * u128::from(base);
+            *limb = carry as u64;
+            carry >>= 64;
+        }
+        if carry > 0 || (LIMBS != 0 && self.limbs[LIMBS - 1] > Self::MASK) {
+            return Err(BaseConvertError::Overflow);
+        }
+
+        Ok(())
+    }
+
     /// Constructs the [`Uint`] from digits in the base `base` in little-endian.
     ///
     /// # Errors
@@ -97,9 +120,40 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn from_base_le<I>(base: u64, digits: I) -> Result<Self, BaseConvertError>
     where
         I: IntoIterator<Item = u64>,
-        I::IntoIter: DoubleEndedIterator,
     {
-        Self::from_base_be(base, digits.into_iter().rev())
+        if base < 2 {
+            return Err(BaseConvertError::InvalidBase(base));
+        }
+
+        let mut tail = digits.into_iter();
+        match tail.next() {
+            Some(digit) => Self::from_base_le_recurse::<I>(digit, base, tail),
+            None => Ok(Self::ZERO),
+        }
+    }
+
+    /// This is the recursive part of [`Uint::from_base_le`].
+    ///
+    /// We drain the iterator via the recursive calls, and then perform the
+    /// same construction loop as [`Uint::from_base_be`] while exiting the
+    /// recursive callstack.
+    #[inline]
+    fn from_base_le_recurse<I: IntoIterator<Item = u64>>(
+        digit: u64,
+        base: u64,
+        mut tail: I::IntoIter,
+    ) -> Result<Self, BaseConvertError> {
+        if digit > base {
+            return Err(BaseConvertError::InvalidDigit(digit, base));
+        }
+
+        let mut acc = match tail.next() {
+            Some(digit) => Self::from_base_le_recurse::<I>(digit, base, tail)?,
+            None => Self::ZERO,
+        };
+
+        acc.add_digit(digit, base)?;
+        Ok(acc)
     }
 
     /// Constructs the [`Uint`] from digits in the base `base` in big-endian.
@@ -121,29 +175,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if base < 2 {
             return Err(BaseConvertError::InvalidBase(base));
         }
+
         let mut result = Self::ZERO;
         for digit in digits {
-            if digit >= base {
-                return Err(BaseConvertError::InvalidDigit(digit, base));
-            }
-            // Multiply by base.
-            // OPT: keep track of non-zero limbs and mul the minimum.
-            let mut carry: u128 = u128::from(digit);
-            #[allow(clippy::cast_possible_truncation)]
-            for limb in &mut result.limbs {
-                carry += u128::from(*limb) * u128::from(base);
-                *limb = carry as u64;
-                carry >>= 64;
-            }
-            if carry > 0 || (LIMBS != 0 && result.limbs[LIMBS - 1] > Self::MASK) {
-                return Err(BaseConvertError::Overflow);
-            }
+            result.add_digit(digit, base)?;
         }
 
         Ok(result)
     }
 }
-
 struct SpigotLittle<const LIMBS: usize> {
     base:  u64,
     limbs: [u64; LIMBS],
