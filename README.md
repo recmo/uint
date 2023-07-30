@@ -128,9 +128,9 @@ release.
 
 ## `std` and other Feature flags
 
-Uint enables the `std` feature by default, and can be used in `no_std` 
-environments by disabling default features. For environments with allocators 
-but without `std`, the `alloc` feature flag enables use of collections, `String`, and `Vec` without `std`.
+Uint enables the `std` feature by default. It can be used in `no_std`
+environments by disabling default features. For environments with allocators
+but without `std`, the `alloc` feature flag enables use of collections,`String`, and `Vec` without `std`.
 
 In addition to `std` and `alloc`, feature flags enable support for a number of 
 crates. These are enabled by setting the identically named feature flag. 
