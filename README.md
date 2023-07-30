@@ -126,12 +126,17 @@ released at least six months ago. The current MSRV is 1.65.0.
 Note that the MSRV is not increased automatically, and only as part of a minor
 release.
 
-## Feature flags
+## `std` and other Feature flags
 
-There is support for a number of crates. These are enabled by setting the identically
-named feature flag.
+Uint enables the `std` feature by default, and can be used in `no_std` 
+environments by disabling default features. For environments with allocators 
+but without `std`, the `alloc` feature flag enables use of collections, `String`, and `Vec` without `std`.
+
+In addition to `std` and `alloc`, feature flags enable support for a number of 
+crates. These are enabled by setting the identically named feature flag. 
 
 * `unstable` Enable sem-ver unstable features.
+* `std`: 
 * [`rand`](https://docs.rs/rand): Implements sampling from the [`Standard`](https://docs.rs/rand/latest/rand/distributions/struct.Standard.html) distribution, i.e. [`rng.gen()`](https://docs.rs/rand/latest/rand/trait.Rng.html#method.gen).
 * [`arbitrary`](https://docs.rs/arbitrary): Implements the [`Arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for fuzz testing.
 * [`quickcheck`](https://docs.rs/quickcheck): Implements the [`Arbitrary`](https://docs.rs/quickcheck/latest/quickcheck/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for property based testing.
