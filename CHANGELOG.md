@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2023-07-30
+
 ### Added
 
 - Support for `no_std` environments ([#274])
@@ -243,8 +245,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.8.0...HEAD
-[1.8.0]: https://github.com/recmo/uint/releases/tag/v1.6.0
+[unreleased]: https://github.com/recmo/uint/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/recmo/uint/releases/tag/v1.10.0
+[1.9.0]: https://github.com/recmo/uint/releases/tag/v1.9.0
+[1.8.0]: https://github.com/recmo/uint/releases/tag/v1.8.0
+[1.7.0]: https://github.com/recmo/uint/releases/tag/v1.7.0
 [1.6.0]: https://github.com/recmo/uint/releases/tag/v1.6.0
 [1.5.1]: https://github.com/recmo/uint/releases/tag/v1.5.1
 [1.5.0]: https://github.com/recmo/uint/releases/tag/v1.5.0
