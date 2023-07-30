@@ -123,12 +123,12 @@ fastrlp = ["dep:fastrlp", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
-proptest = ["dep:proptest", "alloc"]
+proptest = ["dep:proptest", "std"] # TODO: change to "alloc" on the next proptest release (>1.2.0)
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
-rlp = ["dep:rlp"]
-serde = ["dep:serde"]
+rlp = ["dep:rlp", "alloc"]
+serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
 

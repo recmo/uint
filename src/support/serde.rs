@@ -4,6 +4,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 
 use crate::{nbytes, Bits, Uint};
+use alloc::string::String;
 use core::{
     fmt::{Formatter, Result as FmtResult, Write},
     str,
@@ -174,6 +175,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
+    use alloc::vec::Vec;
     use proptest::proptest;
 
     #[test]
