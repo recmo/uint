@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed some support features ([#289])
+
+[#289]: https://github.com/recmo/uint/pulls/289
+
 ## [1.10.0] - 2023-07-30
 
 ### Added

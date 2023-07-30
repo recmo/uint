@@ -4,6 +4,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "parity-scale-codec")))]
 
 use crate::Uint;
+use alloc::vec::Vec;
 use parity_scale_codec::{
     Compact, CompactAs, Decode, Encode, EncodeAsRef, EncodeLike, Error, HasCompact, Input,
     MaxEncodedLen, Output,

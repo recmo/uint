@@ -62,8 +62,7 @@ jobs:
         run: |
           cargo hack check \
           --feature-powerset --exclude-features nightly,generic_const_exprs \
-          --depth 1 \
-          --all-targets
+          --depth 1
 
   codecov:
     # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
