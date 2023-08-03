@@ -1,9 +1,11 @@
+//! Support for the [`bytemuck`](https://crates.io/crates/bytemuck) crate.
 #![cfg(feature = "bytemuck")]
 #![cfg_attr(docsrs, doc(cfg(feature = "bytemuck")))]
 
 use bytemuck::Pod;
 use ruint::Uint;
 
+// Implement the `Pod` trait for `Uint` types with a size that is a multiple of 64, up to 1024.
 macro_rules! impl_pod {
     ($($bits:expr),+ $(,)?) => {
         $(
