@@ -2,17 +2,17 @@
 #![cfg(feature = "bytemuck")]
 #![cfg_attr(docsrs, doc(cfg(feature = "bytemuck")))]
 
-use bytemuck::Pod;
+use bytemuck::{Pod, Zeroable};
 use ruint::Uint;
+
+// Implement Zeroable for all `Uint` types.
+unsafe impl<const BITS: usize, const LIMBS: usize> Zeroable for Uint<{ BITS }, { LIMBS }> {}
 
 // Implement the `Pod` trait for `Uint` types with a size that is a multiple of 64, up to 1024.
 macro_rules! impl_pod {
-    ($($bits:expr),+ $(,)?) => {
+    ($(($bits:expr, $limbs:expr)),+ $(,)?) => {
         $(
-            unsafe impl<const LIMBS: usize> bytemuck::Zeroable for Uint<{$bits}, LIMBS> {}
-            unsafe impl<const LIMBS: usize> Pod for Uint<{$bits}, LIMBS> where
-                [(); {$bits % 64}]: ,
-                [(); LIMBS]: ,
+            unsafe impl Pod for Uint<{$bits}, $limbs> where
             {
             }
         )+
@@ -20,7 +20,22 @@ macro_rules! impl_pod {
 }
 
 impl_pod! {
-    64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024,
+    (64, 1),
+    (128, 2),
+    (192, 3),
+    (256, 4),
+    (320, 5),
+    (384, 6),
+    (448, 7),
+    (512, 8),
+    (576, 9),
+    (640, 10),
+    (704, 11),
+    (768, 12),
+    (832, 13),
+    (896, 14),
+    (960, 15),
+    (1024, 16),
 }
 
 #[cfg(test)]
