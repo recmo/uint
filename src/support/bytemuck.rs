@@ -1,3 +1,6 @@
+#![cfg(feature = "bytemuck")]
+#![cfg_attr(docsrs, doc(cfg(feature = "bytemuck")))]
+
 use bytemuck::Pod;
 use ruint::Uint;
 
