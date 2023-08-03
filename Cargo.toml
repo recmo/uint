@@ -69,6 +69,7 @@ postgres-types = { version = "0.2", optional = true }
 
 # sqlx
 sqlx-core = { version = "0.7", optional = true }
+bytemuck = "1.13.1"
 
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
@@ -90,23 +91,7 @@ serde_json = "1.0"
 
 [features]
 default = ["std"]
-std = [
-    "alloc",
-    "alloy-rlp?/std",
-    "ark-ff-03?/std",
-    "ark-ff-04?/std",
-    "bytes?/std",
-    "fastrlp?/std",
-    "num-bigint?/std",
-    "parity-scale-codec?/std",
-    "primitive-types?/std",
-    "proptest?/std",
-    "rand?/std",
-    "rlp?/std",
-    "serde?/std",
-    "valuable?/std",
-    "zeroize?/std",
-]
+std = ["alloc", "alloy-rlp?/std", "ark-ff-03?/std", "ark-ff-04?/std", "bytes?/std", "fastrlp?/std", "num-bigint?/std", "parity-scale-codec?/std", "primitive-types?/std", "proptest?/std", "rand?/std", "rlp?/std", "serde?/std", "valuable?/std", "zeroize?/std"]
 alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
 
 # nightly-only features
