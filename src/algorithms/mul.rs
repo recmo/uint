@@ -224,7 +224,7 @@ fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
     prod.high()
 }
 
-/// Computes `lhs *= a` and returns the borrow.
+/// Computes `lhs *= a` and returns the carry.
 pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     let mut carry = 0;
     for lhs in lhs.iter_mut() {
