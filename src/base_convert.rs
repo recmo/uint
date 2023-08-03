@@ -1,4 +1,4 @@
-use crate::Uint;
+use crate::{Uint, algorithms::{mul_nx1, addmul_nx1}};
 use core::fmt;
 
 /// Error for [`from_base_le`][Uint::from_base_le] and
@@ -120,11 +120,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             if digit >= base {
                 return Err(BaseConvertError::InvalidDigit(digit, base));
             }
-            let term = power.checked_mul(Self::from(digit)).ok_or(BaseConvertError::Overflow)?;
-            result = result.checked_add(term).ok_or(BaseConvertError::Overflow)?;
-            if let Some(next_power) = power.checked_mul(Self::from(base)) {
-                power = next_power;
-            } else {
+
+            // Add digit to result
+            let overflow = addmul_nx1(&mut result.limbs, &power.limbs, digit);
+            if overflow != 0 || result.limbs[LIMBS - 1] > Self::MASK {
+                return Err(BaseConvertError::Overflow);
+            }
+
+            // Update power
+            let overflow = mul_nx1(&mut power.limbs, base);
+            if overflow != 0 || power.limbs[LIMBS - 1] > Self::MASK {
+                // Following digits must be zero
                 break;
             }
         }
