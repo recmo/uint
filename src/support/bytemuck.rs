@@ -12,9 +12,7 @@ unsafe impl<const BITS: usize, const LIMBS: usize> Zeroable for Uint<{ BITS }, {
 macro_rules! impl_pod {
     ($(($bits:expr, $limbs:expr)),+ $(,)?) => {
         $(
-            unsafe impl Pod for Uint<{$bits}, $limbs> where
-            {
-            }
+            unsafe impl Pod for Uint<{$bits}, $limbs> {}
         )+
     };
 }
