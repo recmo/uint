@@ -8,7 +8,10 @@ use ruint::Uint;
 // Implement Zeroable for all `Uint` types.
 unsafe impl<const BITS: usize, const LIMBS: usize> Zeroable for Uint<{ BITS }, { LIMBS }> {}
 
-// Implement the `Pod` trait for `Uint` types with a size that is a multiple of 64, up to 1024.
+// Implement the `Pod` trait for `Uint` types with a size that is a multiple of
+// 64, up to 1024. Note that implementors must have a size that is divisible by
+// 64, and using `Uint` sizes not divisible by 64 would violate Pod's
+// guarantees potentially leading to undefined behavior.
 macro_rules! impl_pod {
     ($(($bits:expr, $limbs:expr)),+ $(,)?) => {
         $(
