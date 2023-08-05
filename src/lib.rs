@@ -136,6 +136,7 @@ pub mod nightly {
 ///
 /// [std-overflow]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {
     limbs: [u64; LIMBS],
 }
