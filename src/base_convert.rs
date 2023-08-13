@@ -1,4 +1,7 @@
-use crate::{Uint, algorithms::{mul_nx1, addmul_nx1}};
+use crate::{
+    algorithms::{addmul_nx1, mul_nx1},
+    Uint,
+};
 use core::fmt;
 
 /// Error for [`from_base_le`][Uint::from_base_le] and
