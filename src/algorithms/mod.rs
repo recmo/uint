@@ -16,7 +16,7 @@ pub use self::{
     add::{adc_n, cmp, sbb_n},
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
-    mul::{add_nx1, addmul, addmul_n, addmul_nx1, addmul_ref, submul_nx1},
+    mul::{add_nx1, addmul, addmul_n, addmul_nx1, addmul_ref, mul_nx1, submul_nx1},
     ops::{adc, sbb},
     shift::{shift_left_small, shift_right_small},
 };
