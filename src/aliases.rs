@@ -68,7 +68,7 @@ pub mod tests {
     use super::*;
 
     #[test]
-    fn instantiate_consts() {
+    const fn instantiate_consts() {
         let _ = (U0::ZERO, U0::MAX, B0::ZERO);
         let _ = (U1::ZERO, U1::MAX, B1::ZERO);
         let _ = (U8::ZERO, U8::MAX, B8::ZERO);
