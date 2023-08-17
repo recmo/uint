@@ -352,7 +352,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// it was rounded down. This is the same as non-zero bits being shifted
     /// out.
     ///
-    /// Note: This differs from [`u64::overflowing_shl`] which returns `true` if
+    /// Note: This differs from [`u64::overflowing_shr`] which returns `true` if
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[must_use]
     pub fn overflowing_shr(mut self, rhs: usize) -> (Self, bool) {
