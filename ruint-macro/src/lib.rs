@@ -14,7 +14,7 @@ enum LiteralBaseType {
 }
 
 impl LiteralBaseType {
-    const PATTERN: &[char] = &['U', 'B'];
+    const PATTERN: &'static [char] = &['U', 'B'];
 }
 
 impl Display for LiteralBaseType {

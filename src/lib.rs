@@ -285,6 +285,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Check if this uint is zero
+    #[must_use]
     pub fn is_zero(&self) -> bool {
         self.limbs.iter().all(|&limb| limb == 0)
     }
