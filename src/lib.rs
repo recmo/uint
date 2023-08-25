@@ -360,5 +360,9 @@ mod test {
         assert!(Uint::<1, 1>::ZERO.is_zero());
         assert!(Uint::<7, 1>::ZERO.is_zero());
         assert!(Uint::<64, 1>::ZERO.is_zero());
+
+        assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
+        assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
+        assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
     }
 }
