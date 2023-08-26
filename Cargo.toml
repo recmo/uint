@@ -49,6 +49,7 @@ ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-fe
 bn-rs = { version = "0.2", optional = true, default-features = true }
 fastrlp = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
+num-traits = { version = "0.2.16", optional = true, default-features = false }
 parity-scale-codec = { version = "3", optional = true, features = [
     "derive",
     "max-encoded-len",
@@ -99,6 +100,7 @@ std = [
     "bytes?/std",
     "fastrlp?/std",
     "num-bigint?/std",
+    "num-traits?/std",
     "parity-scale-codec?/std",
     "primitive-types?/std",
     "proptest?/std",
