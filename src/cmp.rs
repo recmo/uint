@@ -23,3 +23,23 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
         Some(self.cmp(other))
     }
 }
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Check if this uint is zero
+    #[must_use]
+    pub fn is_zero(&self) -> bool {
+        self == &Self::ZERO
+    }
+}
+
+#[test]
+fn test_is_zero() {
+    assert!(Uint::<0, 0>::ZERO.is_zero());
+    assert!(Uint::<1, 1>::ZERO.is_zero());
+    assert!(Uint::<7, 1>::ZERO.is_zero());
+    assert!(Uint::<64, 1>::ZERO.is_zero());
+
+    assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
+    assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
+    assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+}

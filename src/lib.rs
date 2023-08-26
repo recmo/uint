@@ -283,12 +283,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (_, true) => Self::MAX,
         }
     }
-
-    /// Check if this uint is zero
-    #[must_use]
-    pub fn is_zero(&self) -> bool {
-        self.limbs.iter().all(|&limb| limb == 0)
-    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
@@ -353,17 +347,5 @@ mod test {
             assert_eq!(Uint::<BITS, LIMBS>::MIN, Uint::<BITS, LIMBS>::ZERO);
             let _ = Uint::<BITS, LIMBS>::MAX;
         });
-    }
-
-    #[test]
-    fn test_is_zero() {
-        assert!(Uint::<0, 0>::ZERO.is_zero());
-        assert!(Uint::<1, 1>::ZERO.is_zero());
-        assert!(Uint::<7, 1>::ZERO.is_zero());
-        assert!(Uint::<64, 1>::ZERO.is_zero());
-
-        assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
-        assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
-        assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
     }
 }
