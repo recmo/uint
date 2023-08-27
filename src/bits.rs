@@ -654,6 +654,8 @@ mod tests {
     #[test]
     fn test_leading_zeros() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
+        assert_eq!(Uint::<1, 1>::ZERO.leading_zeros(), 1);
+        assert_eq!(Uint::<1, 1>::from(1).leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint::<BITS, LIMBS>;
@@ -677,6 +679,13 @@ mod tests {
             let uint = U128::from(value);
             assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
         });
+    }
+
+    #[test]
+    fn test_leading_ones() {
+        assert_eq!(Uint::<0, 0>::ZERO.leading_ones(), 0);
+        assert_eq!(Uint::<1, 1>::ZERO.leading_ones(), 0);
+        assert_eq!(Uint::<1, 1>::from(1).leading_ones(), 1);
     }
 
     #[test]
@@ -730,11 +739,19 @@ mod tests {
             assert_eq!(a.reverse_bits(), Uint::from((a.limbs[0] as u32).reverse_bits() as u64));
             assert_eq!(a.rotate_left(s), Uint::from((a.limbs[0] as u32).rotate_left(s as u32) as u64));
             assert_eq!(a.rotate_right(s), Uint::from((a.limbs[0] as u32).rotate_right(s as u32) as u64));
+            if s < 32 {
+                let arr_shifted = (((a.limbs[0] as i32) >> s) as u32) as u64;
+                assert_eq!(a.arithmetic_shr(s), Uint::from_limbs([arr_shifted]));
+            }
         });
         proptest!(|(a: Uint::<64, 1>, s in 0_usize..=66)| {
             assert_eq!(a.reverse_bits(), Uint::from(a.limbs[0].reverse_bits()));
             assert_eq!(a.rotate_left(s), Uint::from(a.limbs[0].rotate_left(s as u32)));
             assert_eq!(a.rotate_right(s), Uint::from(a.limbs[0].rotate_right(s as u32)));
+            if s < 64 {
+                let arr_shifted = ((a.limbs[0] as i64) >> s) as u64;
+                assert_eq!(a.arithmetic_shr(s), Uint::from_limbs([arr_shifted]));
+            }
         });
     }
 
