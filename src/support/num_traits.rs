@@ -12,7 +12,7 @@ use num_traits::{
     *,
 };
 
-// TODO: cast::* PrimInt
+// TODO: AsPrimitive PrimInt
 
 // Note. We can not implement `NumBytes` as it requires T to be `AsMut<[u8]>`.
 // This is not safe for `Uint` when `BITS % 8 != 0`.
@@ -257,6 +257,7 @@ impl<const BITS: usize, const LIMBS: usize> WrappingShr for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Num for Uint<BITS, LIMBS> {
     type FromStrRadixErr = crate::ParseError;
 
+    #[inline(always)]
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
         <Self>::from_str_radix(str, radix as u64)
     }
@@ -265,6 +266,7 @@ impl<const BITS: usize, const LIMBS: usize> Num for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Pow<Self> for Uint<BITS, LIMBS> {
     type Output = Self;
 
+    #[inline(always)]
     fn pow(self, rhs: Self) -> Self::Output {
         <Self>::pow(self, rhs)
     }
@@ -272,10 +274,174 @@ impl<const BITS: usize, const LIMBS: usize> Pow<Self> for Uint<BITS, LIMBS> {
 
 impl<const BITS: usize, const LIMBS: usize> Unsigned for Uint<BITS, LIMBS> {}
 
+impl<const BITS: usize, const LIMBS: usize> ToPrimitive for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn to_i64(&self) -> Option<i64> {
+        self.try_into().ok()
+    }
+
+    #[inline(always)]
+    fn to_u64(&self) -> Option<u64> {
+        self.try_into().ok()
+    }
+
+    #[inline(always)]
+    fn to_i128(&self) -> Option<i128> {
+        self.try_into().ok()
+    }
+
+    #[inline(always)]
+    fn to_u128(&self) -> Option<u128> {
+        self.try_into().ok()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> FromPrimitive for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn from_i64(n: i64) -> Option<Self> {
+        Self::try_from(n).ok()
+    }
+
+    #[inline(always)]
+    fn from_u64(n: u64) -> Option<Self> {
+        Self::try_from(n).ok()
+    }
+
+    #[inline(always)]
+    fn from_i128(n: i128) -> Option<Self> {
+        Self::try_from(n).ok()
+    }
+
+    #[inline(always)]
+    fn from_u128(n: u128) -> Option<Self> {
+        Self::try_from(n).ok()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> NumCast for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn from<T: ToPrimitive>(n: T) -> Option<Self> {
+        <Self>::try_from(n.to_u128()?).ok()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn count_ones(self) -> u32 {
+        <Self>::count_ones(&self) as u32
+    }
+
+    #[inline(always)]
+    fn count_zeros(self) -> u32 {
+        <Self>::count_zeros(&self) as u32
+    }
+
+    #[inline(always)]
+    fn leading_zeros(self) -> u32 {
+        <Self>::leading_zeros(&self) as u32
+    }
+
+    #[inline(always)]
+    fn leading_ones(self) -> u32 {
+        <Self>::leading_ones(&self) as u32
+    }
+
+    #[inline(always)]
+    fn trailing_zeros(self) -> u32 {
+        <Self>::trailing_zeros(&self) as u32
+    }
+    #[inline(always)]
+    fn trailing_ones(self) -> u32 {
+        <Self>::trailing_ones(&self) as u32
+    }
+
+    #[inline(always)]
+    fn rotate_left(self, n: u32) -> Self {
+        <Self>::rotate_left(self, n as usize)
+    }
+
+    #[inline(always)]
+    fn rotate_right(self, n: u32) -> Self {
+        <Self>::rotate_right(self, n as usize)
+    }
+
+    #[inline(always)]
+    fn signed_shl(self, n: u32) -> Self {
+        <Self>::shl(self, n as usize)
+    }
+
+    #[inline(always)]
+    fn signed_shr(self, n: u32) -> Self {
+        // TODO
+        todo!() // <Self>::shr(self, n as usize)
+    }
+
+    #[inline(always)]
+    fn unsigned_shl(self, n: u32) -> Self {
+        <Self>::shl(self, n as usize)
+    }
+
+    #[inline(always)]
+    fn unsigned_shr(self, n: u32) -> Self {
+        <Self>::shr(self, n as usize)
+    }
+
+    /// Note: This is not well-defined when `BITS % 8 != 0`.
+    fn swap_bytes(self) -> Self {
+        // TODO
+        todo!()
+    }
+
+    fn reverse_bits(self) -> Self {
+        <Self>::reverse_bits(self)
+    }
+
+    #[inline(always)]
+    fn from_be(x: Self) -> Self {
+        if cfg!(target_endian = "big") {
+            x
+        } else {
+            x.swap_bytes()
+        }
+    }
+
+    #[inline(always)]
+    fn from_le(x: Self) -> Self {
+        if cfg!(target_endian = "little") {
+            x
+        } else {
+            x.swap_bytes()
+        }
+    }
+
+    #[inline(always)]
+    fn to_be(self) -> Self {
+        if cfg!(target_endian = "big") {
+            self
+        } else {
+            self.swap_bytes()
+        }
+    }
+
+    #[inline(always)]
+    fn to_le(self) -> Self {
+        if cfg!(target_endian = "little") {
+            self
+        } else {
+            self.swap_bytes()
+        }
+    }
+
+    #[inline(always)]
+    fn pow(self, exp: u32) -> Self {
+        self.pow(Self::from(exp))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::aliases::U256;
+    use crate::aliases::{U256, U64};
 
     macro_rules! assert_impl{
         ($type:ident, $($trait:tt),*) => {
@@ -290,7 +456,13 @@ mod tests {
     fn test_assert_impl() {
         // All applicable traits from num-traits
         assert_impl!(U256, Bounded, LowerBounded, UpperBounded);
-        // assert_impl!(U256, AsPrimitive, FromPrimitive, NumCast, ToPrimitive);
+        assert_impl!(
+            U256,
+            // AsPrimitive,
+            FromPrimitive,
+            NumCast,
+            ToPrimitive
+        );
         assert_impl!(U256, One, Zero);
         // assert_impl!(U256, PrimInt);
         assert_impl!(U256, FromBytes, ToBytes);
@@ -320,5 +492,21 @@ mod tests {
         );
         assert_impl!(U256, (Pow<U256>));
         assert_impl!(U256, Unsigned);
+    }
+
+    #[test]
+    fn test_signed_shl() {
+        // Example from num-traits docs.
+        let n = U64::from(0x0123456789abcdefu64);
+        let m = U64::from(0x3456789abcdef000u64);
+        assert_eq!(n.signed_shl(12), m);
+    }
+
+    #[test]
+    fn test_signed_shr() {
+        // Example from num-traits docs.
+        let n = U64::from(0xfedcba9876543210u64);
+        let m = U64::from(0xffffedcba9876543u64);
+        assert_eq!(n.signed_shr(12), m);
     }
 }
