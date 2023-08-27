@@ -403,6 +403,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.overflowing_shr(rhs).0
     }
 
+    /// Arithmetic shift right by `rhs` bits.
+    #[must_use]
+    pub fn arithmetic_shr(self, rhs: usize) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        let sign = self.bit(BITS - 1);
+        let mut r = self >> rhs;
+        if sign {
+            r |= Self::MAX << BITS.checked_sub(rhs).unwrap_or(0);
+        }
+        r
+    }
+
     /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
     /// truncated bits to the end of the resulting integer.
     #[must_use]
@@ -640,7 +654,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for &Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U128, const_for, nlimbs};
-    use core::cmp::max;
+    use core::cmp::min;
     use proptest::proptest;
 
     #[test]
@@ -768,6 +782,22 @@ mod tests {
             proptest!(|(value: U, shift in  0..=BITS + 2)| {
                 let rotated = value.rotate_left(shift).rotate_right(shift);
                 assert_eq!(value, rotated);
+            });
+        });
+    }
+
+    #[test]
+    fn test_arithmetic_shr() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U, shift in  0..=BITS + 2)| {
+                let shifted = value.arithmetic_shr(shift);
+                dbg!(value, shifted, shift);
+                assert_eq!(shifted.leading_ones(), match value.leading_ones() {
+                    0 => 0,
+                    n => min(BITS, n + shift)
+                });
             });
         });
     }
