@@ -111,20 +111,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             })
     }
 
-    /// Returns the number of leading zeros in the binary representation of
+    /// Returns the number of leading ones in the binary representation of
     /// `self`.
     #[must_use]
     pub fn leading_ones(&self) -> usize {
-        self.as_limbs()
-            .iter()
-            .rev()
-            .position(|&limb| limb != u64::MAX)
-            .map_or(BITS, |n| {
-                let fixed = Self::MASK.leading_zeros() as usize;
-                let skipped = n * 64;
-                let top = self.as_limbs()[LIMBS - n - 1].leading_ones() as usize;
-                skipped + top - fixed
-            })
+        (self.not()).leading_zeros()
     }
 
     /// Returns the number of trailing zeros in the binary representation of
@@ -649,6 +640,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for &Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U128, const_for, nlimbs};
+    use core::cmp::max;
     use proptest::proptest;
 
     #[test]
