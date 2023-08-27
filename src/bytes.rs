@@ -15,7 +15,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Access the underlying store as a little-endian slice of bytes.
     ///
-    /// Only available on litte-endian targets.
+    /// Only available on little-endian targets.
     ///
     /// If `BITS` does not evenly divide 8, it is padded with zero bits in the
     /// most significant position.

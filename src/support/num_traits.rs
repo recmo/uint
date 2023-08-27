@@ -12,7 +12,7 @@ use num_traits::{
     *,
 };
 
-// TODO: AsPrimitive PrimInt
+// TODO: AsPrimitive
 
 // Note. We can not implement `NumBytes` as it requires T to be `AsMut<[u8]>`.
 // This is not safe for `Uint` when `BITS % 8 != 0`.
@@ -254,6 +254,27 @@ impl<const BITS: usize, const LIMBS: usize> WrappingShr for Uint<BITS, LIMBS> {
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> OverflowingAdd for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn overflowing_add(&self, v: &Self) -> (Self, bool) {
+        <Self>::overflowing_add(*self, *v)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> OverflowingSub for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn overflowing_sub(&self, v: &Self) -> (Self, bool) {
+        <Self>::overflowing_sub(*self, *v)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> OverflowingMul for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn overflowing_mul(&self, v: &Self) -> (Self, bool) {
+        <Self>::overflowing_mul(*self, *v)
+    }
+}
+
 impl<const BITS: usize, const LIMBS: usize> Num for Uint<BITS, LIMBS> {
     type FromStrRadixErr = crate::ParseError;
 
@@ -372,8 +393,7 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
 
     #[inline(always)]
     fn signed_shr(self, n: u32) -> Self {
-        // TODO
-        todo!() // <Self>::shr(self, n as usize)
+        <Self>::arithmetic_shr(self, n as usize)
     }
 
     #[inline(always)]
@@ -388,8 +408,9 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
 
     /// Note: This is not well-defined when `BITS % 8 != 0`.
     fn swap_bytes(self) -> Self {
-        // TODO
-        todo!()
+        let mut bytes = self.to_be_bytes_vec();
+        bytes.reverse();
+        Self::try_from_be_slice(&bytes).unwrap()
     }
 
     fn reverse_bits(self) -> Self {
@@ -454,17 +475,11 @@ mod tests {
 
     #[test]
     fn test_assert_impl() {
-        // All applicable traits from num-traits
+        // All applicable traits from num-traits (except AsPrimitive).
         assert_impl!(U256, Bounded, LowerBounded, UpperBounded);
-        assert_impl!(
-            U256,
-            // AsPrimitive,
-            FromPrimitive,
-            NumCast,
-            ToPrimitive
-        );
+        assert_impl!(U256, FromPrimitive, NumCast, ToPrimitive);
         assert_impl!(U256, One, Zero);
-        // assert_impl!(U256, PrimInt);
+        assert_impl!(U256, PrimInt);
         assert_impl!(U256, FromBytes, ToBytes);
         assert_impl!(
             U256, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedSub,
@@ -473,7 +488,7 @@ mod tests {
         assert_impl!(U256, CheckedEuclid, Euclid);
         assert_impl!(U256, Inv);
         assert_impl!(U256, MulAdd, MulAddAssign);
-        // assert_impl!(U256, OverflowingAdd, OverflowingMul, OverflowingSub);
+        assert_impl!(U256, OverflowingAdd, OverflowingMul, OverflowingSub);
         assert_impl!(
             U256,
             Saturating,
