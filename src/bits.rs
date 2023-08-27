@@ -412,7 +412,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let sign = self.bit(BITS - 1);
         let mut r = self >> rhs;
         if sign {
-            r |= Self::MAX << BITS.checked_sub(rhs).unwrap_or(0);
+            r |= Self::MAX << BITS.saturating_sub(rhs);
         }
         r
     }
