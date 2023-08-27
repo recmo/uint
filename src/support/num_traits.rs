@@ -5,13 +5,17 @@
 // to call functions on the `Uint::` type.
 #![deny(unconditional_recursion)]
 use crate::Uint;
+use core::ops::{Shl, Shr};
 use num_traits::{
     bounds::*,
     ops::{bytes::*, checked::*, overflowing::*, saturating::*, wrapping::*, *},
     *,
 };
 
-// TODO: PrimInt, Unsigned
+// TODO: cast::* PrimInt
+
+// Note. We can not implement `NumBytes` as it requires T to be `AsMut<[u8]>`.
+// This is not safe for `Uint` when `BITS % 8 != 0`.
 
 impl<const BITS: usize, const LIMBS: usize> Zero for Uint<BITS, LIMBS> {
     #[inline(always)]
@@ -107,17 +111,37 @@ impl<const BITS: usize, const LIMBS: usize> CheckedRem for Uint<BITS, LIMBS> {
     }
 }
 
-// impl<const BITS: usize, const LIMBS: usize> CheckedShl for Uint<BITS, LIMBS>
-// {     fn checked_shl(&self, other: u32) -> Option<Self> {
-//         Uint::checked_shl(self, other as usize)
-//     }
-// }
+// TODO: Move out of support.
+impl<const BITS: usize, const LIMBS: usize> Shl<u32> for Uint<BITS, LIMBS> {
+    type Output = Self;
 
-// impl<const BITS: usize, const LIMBS: usize> CheckedShr for Uint<BITS, LIMBS>
-// {     fn checked_shr(&self, other: u32) -> Option<Self> {
-//         Uint::checked_shr(self, other as usize)
-//     }
-// }
+    #[inline(always)]
+    fn shl(self, rhs: u32) -> Self::Output {
+        <Self>::shl(self, rhs as usize)
+    }
+}
+
+// TODO: Move out of support lib into.
+impl<const BITS: usize, const LIMBS: usize> Shr<u32> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn shr(self, rhs: u32) -> Self::Output {
+        <Self>::shr(self, rhs as usize)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> CheckedShl for Uint<BITS, LIMBS> {
+    fn checked_shl(&self, other: u32) -> Option<Self> {
+        Uint::checked_shl(*self, other as usize)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> CheckedShr for Uint<BITS, LIMBS> {
+    fn checked_shr(&self, other: u32) -> Option<Self> {
+        Uint::checked_shr(*self, other as usize)
+    }
+}
 
 impl<const BITS: usize, const LIMBS: usize> CheckedSub for Uint<BITS, LIMBS> {
     #[inline(always)]
@@ -189,24 +213,44 @@ impl<const BITS: usize, const LIMBS: usize> Saturating for Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> SaturatingAdd for Uint<BITS, LIMBS> {
+macro_rules! binary_op {
+    ($($trait:ident $fn:ident)*) => {$(
+        impl<const BITS: usize, const LIMBS: usize> $trait for Uint<BITS, LIMBS> {
+            #[inline(always)]
+            fn $fn(&self, v: &Self) -> Self {
+                <Self>::$fn(*self, *v)
+            }
+        }
+    )*};
+}
+
+binary_op! {
+    SaturatingAdd saturating_add
+    SaturatingSub saturating_sub
+    SaturatingMul saturating_mul
+    WrappingAdd wrapping_add
+    WrappingSub wrapping_sub
+    WrappingMul wrapping_mul
+}
+
+impl<const BITS: usize, const LIMBS: usize> WrappingNeg for Uint<BITS, LIMBS> {
     #[inline(always)]
-    fn saturating_add(&self, v: &Self) -> Self {
-        <Self>::saturating_add(*self, *v)
+    fn wrapping_neg(&self) -> Self {
+        <Self>::wrapping_neg(*self)
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> SaturatingSub for Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> WrappingShl for Uint<BITS, LIMBS> {
     #[inline(always)]
-    fn saturating_sub(&self, v: &Self) -> Self {
-        <Self>::saturating_sub(*self, *v)
+    fn wrapping_shl(&self, rhs: u32) -> Self {
+        <Self>::wrapping_shl(*self, rhs as usize)
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> SaturatingMul for Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> WrappingShr for Uint<BITS, LIMBS> {
     #[inline(always)]
-    fn saturating_mul(&self, v: &Self) -> Self {
-        <Self>::saturating_mul(*self, *v)
+    fn wrapping_shr(&self, rhs: u32) -> Self {
+        <Self>::wrapping_shr(*self, rhs as usize)
     }
 }
 
@@ -218,6 +262,14 @@ impl<const BITS: usize, const LIMBS: usize> Num for Uint<BITS, LIMBS> {
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> Pow<Self> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    fn pow(self, rhs: Self) -> Self::Output {
+        <Self>::pow(self, rhs)
+    }
+}
+
 impl<const BITS: usize, const LIMBS: usize> Unsigned for Uint<BITS, LIMBS> {}
 
 #[cfg(test)]
@@ -225,10 +277,48 @@ mod tests {
     use super::*;
     use crate::aliases::U256;
 
+    macro_rules! assert_impl{
+        ($type:ident, $($trait:tt),*) => {
+            $({
+                fn assert_impl<T: $trait>() {}
+                assert_impl::<$type>();
+            })*
+        }
+    }
+
     #[test]
     fn test_assert_impl() {
-        fn assert_impl<T: Num + NumOps + NumAssign + NumAssignOps + NumAssignRef + NumRef>() {}
-
-        assert_impl::<U256>();
+        // All applicable traits from num-traits
+        assert_impl!(U256, Bounded, LowerBounded, UpperBounded);
+        // assert_impl!(U256, AsPrimitive, FromPrimitive, NumCast, ToPrimitive);
+        assert_impl!(U256, One, Zero);
+        // assert_impl!(U256, PrimInt);
+        assert_impl!(U256, FromBytes, ToBytes);
+        assert_impl!(
+            U256, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedSub,
+            CheckedShl, CheckedShr, CheckedSub
+        );
+        assert_impl!(U256, CheckedEuclid, Euclid);
+        assert_impl!(U256, Inv);
+        assert_impl!(U256, MulAdd, MulAddAssign);
+        // assert_impl!(U256, OverflowingAdd, OverflowingMul, OverflowingSub);
+        assert_impl!(
+            U256,
+            Saturating,
+            SaturatingAdd,
+            SaturatingMul,
+            SaturatingSub
+        );
+        assert_impl!(
+            U256,
+            WrappingAdd,
+            WrappingMul,
+            WrappingNeg,
+            WrappingShl,
+            WrappingShr,
+            WrappingSub
+        );
+        assert_impl!(U256, (Pow<U256>));
+        assert_impl!(U256, Unsigned);
     }
 }
