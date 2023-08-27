@@ -23,7 +23,6 @@ mod valuable;
 mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
-// * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
 // * https://crates.io/crates/bitvec
 

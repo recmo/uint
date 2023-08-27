@@ -132,12 +132,14 @@ impl<const BITS: usize, const LIMBS: usize> Shr<u32> for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> CheckedShl for Uint<BITS, LIMBS> {
+    #[inline(always)]
     fn checked_shl(&self, other: u32) -> Option<Self> {
         Uint::checked_shl(*self, other as usize)
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> CheckedShr for Uint<BITS, LIMBS> {
+    #[inline(always)]
     fn checked_shr(&self, other: u32) -> Option<Self> {
         Uint::checked_shr(*self, other as usize)
     }
@@ -413,6 +415,7 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
         Self::try_from_be_slice(&bytes).unwrap()
     }
 
+    #[inline(always)]
     fn reverse_bits(self) -> Self {
         <Self>::reverse_bits(self)
     }
