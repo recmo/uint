@@ -7,9 +7,23 @@
 use crate::Uint;
 use core::ops::{Shl, Shr};
 use num_traits::{
-    bounds::*,
-    ops::{bytes::*, checked::*, overflowing::*, saturating::*, wrapping::*, *},
-    *,
+    bounds::Bounded,
+    cast::{FromPrimitive, ToPrimitive},
+    identities::{One, Zero},
+    int::PrimInt,
+    ops::{
+        bytes::{FromBytes, ToBytes},
+        checked::{
+            CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr,
+            CheckedSub,
+        },
+        overflowing::{OverflowingAdd, OverflowingMul, OverflowingSub},
+        saturating::{Saturating, SaturatingAdd, SaturatingMul, SaturatingSub},
+        wrapping::{WrappingAdd, WrappingMul, WrappingNeg, WrappingShl, WrappingShr, WrappingSub},
+    },
+    pow::Pow,
+    sign::Unsigned,
+    CheckedEuclid, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
 };
 
 // TODO: AsPrimitive
@@ -32,7 +46,7 @@ impl<const BITS: usize, const LIMBS: usize> Zero for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> One for Uint<BITS, LIMBS> {
     #[inline(always)]
     fn one() -> Self {
-        Uint::from(1)
+        Self::from(1)
     }
 }
 
@@ -134,14 +148,14 @@ impl<const BITS: usize, const LIMBS: usize> Shr<u32> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> CheckedShl for Uint<BITS, LIMBS> {
     #[inline(always)]
     fn checked_shl(&self, other: u32) -> Option<Self> {
-        Uint::checked_shl(*self, other as usize)
+        <Self>::checked_shl(*self, other as usize)
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> CheckedShr for Uint<BITS, LIMBS> {
     #[inline(always)]
     fn checked_shr(&self, other: u32) -> Option<Self> {
-        Uint::checked_shr(*self, other as usize)
+        <Self>::checked_shr(*self, other as usize)
     }
 }
 
@@ -282,6 +296,7 @@ impl<const BITS: usize, const LIMBS: usize> Num for Uint<BITS, LIMBS> {
 
     #[inline(always)]
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+        #[allow(clippy::cast_lossless)]
         <Self>::from_str_radix(str, radix as u64)
     }
 }
@@ -350,30 +365,36 @@ impl<const BITS: usize, const LIMBS: usize> NumCast for Uint<BITS, LIMBS> {
 
 impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn count_ones(self) -> u32 {
         <Self>::count_ones(&self) as u32
     }
 
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn count_zeros(self) -> u32 {
         <Self>::count_zeros(&self) as u32
     }
 
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn leading_zeros(self) -> u32 {
         <Self>::leading_zeros(&self) as u32
     }
 
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn leading_ones(self) -> u32 {
         <Self>::leading_ones(&self) as u32
     }
 
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn trailing_zeros(self) -> u32 {
         <Self>::trailing_zeros(&self) as u32
     }
     #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)] // Requires BITS > 2^32
     fn trailing_ones(self) -> u32 {
         <Self>::trailing_ones(&self) as u32
     }
@@ -466,6 +487,7 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::aliases::{U256, U64};
+    use num_traits::bounds::{LowerBounded, UpperBounded};
 
     macro_rules! assert_impl{
         ($type:ident, $($trait:tt),*) => {
