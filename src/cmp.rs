@@ -32,14 +32,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
-#[test]
-fn test_is_zero() {
-    assert!(Uint::<0, 0>::ZERO.is_zero());
-    assert!(Uint::<1, 1>::ZERO.is_zero());
-    assert!(Uint::<7, 1>::ZERO.is_zero());
-    assert!(Uint::<64, 1>::ZERO.is_zero());
+#[cfg(test)]
+mod tests {
+    use crate::Uint;
 
-    assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
-    assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
-    assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+    #[test]
+    fn test_is_zero() {
+        assert!(Uint::<0, 0>::ZERO.is_zero());
+        assert!(Uint::<1, 1>::ZERO.is_zero());
+        assert!(Uint::<7, 1>::ZERO.is_zero());
+        assert!(Uint::<64, 1>::ZERO.is_zero());
+
+        assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
+        assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
+        assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+    }
 }
