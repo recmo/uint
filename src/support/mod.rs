@@ -8,6 +8,7 @@ mod bn_rs;
 mod bytemuck;
 mod fastrlp;
 mod num_bigint;
+mod num_traits;
 pub mod postgres;
 mod primitive_types;
 mod proptest;
@@ -22,7 +23,6 @@ mod valuable;
 mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
-// * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
 // * https://crates.io/crates/bitvec
 
@@ -40,4 +40,3 @@ mod zeroize;
 
 // More databases:
 // * https://crates.io/crates/diesel
-

@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `bytemuck` feature ([#292])
 - `Uint::is_zero() -> bool` ([#296])
+- `num-traits` features ([#298])
+
+[#292]: https://github.com/recmo/uint/pulls/292
+[#298]: https://github.com/recmo/uint/pulls/298
+
+### Fixed
+
+- `leading_ones` failed for non-aligned sizes.
 
 ## [1.10.1] - 2023-07-30
 
