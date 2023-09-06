@@ -8,6 +8,7 @@ mod bn_rs;
 mod bytemuck;
 mod fastrlp;
 mod num_bigint;
+mod num_traits;
 pub mod postgres;
 mod primitive_types;
 mod proptest;
@@ -22,14 +23,10 @@ mod valuable;
 mod zeroize;
 
 // FEATURE: Support for many more traits and crates.
-// * https://crates.io/crates/num-traits
 // * https://crates.io/crates/der
 // * https://crates.io/crates/bitvec
 
 // * open-fastrlp
-
-// * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Zeroable.html
-// * https://docs.rs/bytemuck/1.9.1/bytemuck/trait.Pod.html
 
 // Big int types:
 // * https://crates.io/crates/crypto-bigint
@@ -43,7 +40,3 @@ mod zeroize;
 
 // More databases:
 // * https://crates.io/crates/diesel
-
-// FEATURE: Make sure `Bits` has the same level of support.
-
-// TODO: Add more support for `Bits`, for example `rand` and `quickcheck`.

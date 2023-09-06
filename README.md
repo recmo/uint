@@ -152,7 +152,7 @@ named feature flag.
 * [`parity-scale-codec`](https://docs.rs/parity-scale-codec): Implements the [`Encode`](https://docs.rs/parity-scale-codec/latest/parity_scale_codec/trait.Encode.html), [`Decode`](https://docs.rs/parity-scale-codec/latest/parity_scale_codec/trait.Decode.html), [`MaxEncodedLen`](https://github.com/paritytech/parity-scale-codec/blob/47d98a1c23dabc890fdb548d115a18070082c66e/src/max_encoded_len.rs) and [`HasCompact`](https://docs.rs/parity-scale-codec/latest/parity_scale_codec/trait.HasCompact.html) traits.
 * [`bn-rs`](https://docs.rs/bn-rs/latest/bn_rs/): Implements conversion to/from the [`BN`](https://docs.rs/bn-rs/latest/bn_rs/struct.BN.html) and [`BigNumber`](https://docs.rs/bn-rs/latest/bn_rs/struct.BigNumber.html).
 * [`bytemuck`](https://docs.rs/bytemuck): Implements the [`Pod`](https://docs.rs/bytemuck/latest/bytemuck/trait.Pod.html) and [`Zeroable`](https://docs.rs/bytemuck/latest/bytemuck/trait.Zeroable.html) traits for [`Uint`] where the size is a multiple of 64, up to 1024. This allows `Uint` to be used where a `Pod` trait bound exists.
-
+* [`num-traits`](https://docs.rs/num-traits): Implements about forty applicable traits.
 
 ## Building and testing
 

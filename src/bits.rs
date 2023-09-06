@@ -111,20 +111,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             })
     }
 
-    /// Returns the number of leading zeros in the binary representation of
+    /// Returns the number of leading ones in the binary representation of
     /// `self`.
     #[must_use]
     pub fn leading_ones(&self) -> usize {
-        self.as_limbs()
-            .iter()
-            .rev()
-            .position(|&limb| limb != u64::MAX)
-            .map_or(BITS, |n| {
-                let fixed = Self::MASK.leading_zeros() as usize;
-                let skipped = n * 64;
-                let top = self.as_limbs()[LIMBS - n - 1].leading_ones() as usize;
-                skipped + top - fixed
-            })
+        (self.not()).leading_zeros()
     }
 
     /// Returns the number of trailing zeros in the binary representation of
@@ -412,6 +403,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.overflowing_shr(rhs).0
     }
 
+    /// Arithmetic shift right by `rhs` bits.
+    #[must_use]
+    pub fn arithmetic_shr(self, rhs: usize) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        let sign = self.bit(BITS - 1);
+        let mut r = self >> rhs;
+        if sign {
+            r |= Self::MAX << BITS.saturating_sub(rhs);
+        }
+        r
+    }
+
     /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
     /// truncated bits to the end of the resulting integer.
     #[must_use]
@@ -649,11 +654,14 @@ impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for &Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U128, const_for, nlimbs};
+    use core::cmp::min;
     use proptest::proptest;
 
     #[test]
     fn test_leading_zeros() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
+        assert_eq!(Uint::<1, 1>::ZERO.leading_zeros(), 1);
+        assert_eq!(Uint::<1, 1>::from(1).leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint::<BITS, LIMBS>;
@@ -677,6 +685,13 @@ mod tests {
             let uint = U128::from(value);
             assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
         });
+    }
+
+    #[test]
+    fn test_leading_ones() {
+        assert_eq!(Uint::<0, 0>::ZERO.leading_ones(), 0);
+        assert_eq!(Uint::<1, 1>::ZERO.leading_ones(), 0);
+        assert_eq!(Uint::<1, 1>::from(1).leading_ones(), 1);
     }
 
     #[test]
@@ -730,11 +745,19 @@ mod tests {
             assert_eq!(a.reverse_bits(), Uint::from((a.limbs[0] as u32).reverse_bits() as u64));
             assert_eq!(a.rotate_left(s), Uint::from((a.limbs[0] as u32).rotate_left(s as u32) as u64));
             assert_eq!(a.rotate_right(s), Uint::from((a.limbs[0] as u32).rotate_right(s as u32) as u64));
+            if s < 32 {
+                let arr_shifted = (((a.limbs[0] as i32) >> s) as u32) as u64;
+                assert_eq!(a.arithmetic_shr(s), Uint::from_limbs([arr_shifted]));
+            }
         });
         proptest!(|(a: Uint::<64, 1>, s in 0_usize..=66)| {
             assert_eq!(a.reverse_bits(), Uint::from(a.limbs[0].reverse_bits()));
             assert_eq!(a.rotate_left(s), Uint::from(a.limbs[0].rotate_left(s as u32)));
             assert_eq!(a.rotate_right(s), Uint::from(a.limbs[0].rotate_right(s as u32)));
+            if s < 64 {
+                let arr_shifted = ((a.limbs[0] as i64) >> s) as u64;
+                assert_eq!(a.arithmetic_shr(s), Uint::from_limbs([arr_shifted]));
+            }
         });
     }
 
@@ -759,6 +782,22 @@ mod tests {
             proptest!(|(value: U, shift in  0..=BITS + 2)| {
                 let rotated = value.rotate_left(shift).rotate_right(shift);
                 assert_eq!(value, rotated);
+            });
+        });
+    }
+
+    #[test]
+    fn test_arithmetic_shr() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U, shift in  0..=BITS + 2)| {
+                let shifted = value.arithmetic_shr(shift);
+                dbg!(value, shifted, shift);
+                assert_eq!(shifted.leading_ones(), match value.leading_ones() {
+                    0 => 0,
+                    n => min(BITS, n + shift)
+                });
             });
         });
     }
