@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `bytemuck` feature ([#292])
+- `Uint::is_zero() -> bool` ([#296])
 - `num-traits` features ([#298])
 
 [#292]: https://github.com/recmo/uint/pulls/292
