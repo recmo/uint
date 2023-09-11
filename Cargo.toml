@@ -82,7 +82,7 @@ criterion = "0.5"
 # clap and clap_lex, referred by criterion, have higher a MSRV (clap@4.4.0, clap_lex@0.5.1),
 # but are only used by dev-dependencies so we can just pin them
 clap = "~4.3"
-clap_lex = "<=0.5.0"
+clap_lex = "<=0.6.0"
 
 rand = "0.8"
 
