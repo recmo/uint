@@ -56,6 +56,7 @@ alias! {
     U384 B384 (384, 6);
     U448 B448 (448, 7);
     U512 B512 (512, 8);
+    U768 B768 (768, 12);
     U1024 B1024 (1024, 16);
     U2048 B2048 (2048, 32);
     U4096 B4096 (4096, 64);
@@ -83,6 +84,7 @@ pub mod tests {
         let _ = (U384::ZERO, U384::MAX, B384::ZERO);
         let _ = (U448::ZERO, U448::MAX, B448::ZERO);
         let _ = (U512::ZERO, U512::MAX, B512::ZERO);
+        let _ = (U768::ZERO, U768::MAX, B768::ZERO);
         let _ = (U1024::ZERO, U1024::MAX, B1024::ZERO);
         let _ = (U2048::ZERO, U2048::MAX, B2048::ZERO);
         let _ = (U4096::ZERO, U4096::MAX, B4096::ZERO);
