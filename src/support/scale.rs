@@ -81,7 +81,12 @@ impl<const BITS: usize, const LIMBS: usize> MaxEncodedLen for CompactUint<BITS, 
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> Encode for CompactUint<BITS, LIMBS> {}
+impl<const BITS: usize, const LIMBS: usize> Encode for CompactUint<BITS, LIMBS> {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        let v: CompactRefUint<BITS, LIMBS> = (&self.0).into();
+        v.encode_to(dest)
+    }
+}
 
 impl<const BITS: usize, const LIMBS: usize> HasCompact for Uint<BITS, LIMBS> {
     type Type = CompactUint<BITS, LIMBS>;
