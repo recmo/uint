@@ -75,6 +75,14 @@ impl<const BITS: usize, const LIMBS: usize> CompactAs for CompactUint<BITS, LIMB
     }
 }
 
+impl<const BITS: usize, const LIMBS: usize> MaxEncodedLen for CompactUint<BITS, LIMBS> {
+    fn max_encoded_len() -> usize {
+        Uint::<BITS, LIMBS>::max_encoded_len()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Encode for CompactUint<BITS, LIMBS> {}
+
 impl<const BITS: usize, const LIMBS: usize> HasCompact for Uint<BITS, LIMBS> {
     type Type = CompactUint<BITS, LIMBS>;
 }
