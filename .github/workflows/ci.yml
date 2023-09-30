@@ -25,6 +25,10 @@ jobs:
       matrix:
         rust: ["stable", "beta", "nightly", "1.65"] # MSRV
         flags: ["--no-default-features", "", "--all-features"]
+        exclude:
+          # Skip because some features have higher MSRV.
+          - rust: "1.65" # MSRV
+            flags: "--all-features"
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
