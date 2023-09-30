@@ -7,7 +7,6 @@ use core::{
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self * rhs`, returning [`None`] if overflow occurred.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_mul(self, rhs: Self) -> Option<Self> {
@@ -48,7 +47,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes `self * rhs`, saturating at the numeric bounds instead of
     /// overflowing.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn saturating_mul(self, rhs: Self) -> Self {
@@ -59,7 +57,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self * rhs`, wrapping around at the boundary of the type.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_mul(self, rhs: Self) -> Self {
@@ -140,7 +137,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert_eq!(BITS_RES, BITS + BITS_RHS);
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
-        algorithms::addmul(&mut result.limbs, &self.limbs, &rhs.limbs);
+        algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if LIMBS_RES > 0 {
             debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
         }

@@ -125,7 +125,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             }
 
             // Add digit to result
-            let overflow = addmul_nx1(&mut result.limbs, &power.limbs, digit);
+            let overflow = addmul_nx1(&mut result.limbs, power.as_limbs(), digit);
             if overflow != 0 || result.limbs[LIMBS - 1] > Self::MASK {
                 return Err(BaseConvertError::Overflow);
             }
