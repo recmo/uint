@@ -3,6 +3,10 @@
 use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Returns the logarithm of the number, rounded down.
+    ///
+    /// Returns None if the base is less than two, or this number is zero.
+    #[inline]
     #[must_use]
     pub fn checked_log(self, base: Self) -> Option<usize> {
         if base < Self::from(2) || self == Self::ZERO {
@@ -11,6 +15,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Some(self.log(base))
     }
 
+    /// Returns the base 10 logarithm of the number, rounded down.
+    ///
+    /// Returns None if the number is zero.
+    #[inline]
     #[must_use]
     pub fn checked_log10(self) -> Option<usize> {
         self.checked_log(Self::from(10))
@@ -21,14 +29,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// This is equivalent to the index of the highest set bit.
     ///
     /// Returns None if the number is zero.
+    #[inline]
     #[must_use]
     pub fn checked_log2(self) -> Option<usize> {
         self.checked_log(Self::from(2))
     }
 
+    /// Returns the logarithm of the number, rounded down.
+    ///
     /// # Panics
     ///
     /// Panics if the `base` is less than 2 or if the number is zero.
+    #[inline]
     #[must_use]
     pub fn log(self, base: Self) -> usize {
         assert!(self != Self::ZERO);
@@ -76,17 +88,30 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         result.to()
     }
 
+    /// Returns the base 10 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `base` if the number is zero.
+    #[inline]
     #[must_use]
     pub fn log10(self) -> usize {
         self.log(Self::from(10))
     }
 
+    /// Returns the base 2 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `base` if the number is zero.
+    #[inline]
     #[must_use]
     pub fn log2(self) -> usize {
         self.log(Self::from(2))
     }
 
     /// Double precision logarithm.
+    #[inline]
     #[must_use]
     pub fn approx_log(self, base: f64) -> f64 {
         self.approx_log2() / base.log2()
@@ -105,6 +130,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U64::MAX.approx_log2(), 64.0);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     #[allow(clippy::cast_precision_loss)]
     pub fn approx_log2(self) -> f64 {
@@ -120,6 +146,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Double precision decimal logarithm.
+    #[inline]
     #[must_use]
     pub fn approx_log10(self) -> f64 {
         self.approx_log2() / core::f64::consts::LOG2_10

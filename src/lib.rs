@@ -1,6 +1,13 @@
 #![doc = include_str!("../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(clippy::all, clippy::pedantic, clippy::nursery, unreachable_pub)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::missing_inline_in_public_items,
+    missing_docs,
+    unreachable_pub
+)]
 #![allow(
     clippy::doc_markdown, // Unfortunately many false positives on Latex.
     clippy::inline_always,
@@ -143,12 +150,14 @@ pub struct Uint<const BITS: usize, const LIMBS: usize> {
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
-    pub const LIMBS: usize = nlimbs(BITS);
-
-    const ASSERT_LIMBS: () = assert!(
-        LIMBS == Self::LIMBS,
-        "Can not construct Uint<BITS, LIMBS> with incorrect LIMBS"
-    );
+    pub const LIMBS: usize = {
+        let limbs = nlimbs(BITS);
+        assert!(
+            LIMBS == limbs,
+            "Can not construct Uint<BITS, LIMBS> with incorrect LIMBS"
+        );
+        limbs
+    };
 
     /// Bit mask for the last limb.
     pub const MASK: u64 = mask(BITS);
@@ -175,8 +184,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     };
 
     /// View the array of limbs.
-    #[must_use]
     #[inline(always)]
+    #[must_use]
     pub const fn as_limbs(&self) -> &[u64; LIMBS] {
         &self.limbs
     }
@@ -187,8 +196,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// This function is unsafe because it allows setting a bit outside the bit
     /// size if the bit-size is not limb-aligned.
-    #[must_use]
     #[inline(always)]
+    #[must_use]
     pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
@@ -196,8 +205,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Convert to a array of limbs.
     ///
     /// Limbs are least significant first.
-    #[must_use]
     #[inline(always)]
+    #[must_use]
     pub const fn into_limbs(self) -> [u64; LIMBS] {
         self.limbs
     }
@@ -209,11 +218,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
     ///
     /// Panics if the value is to large for the bit-size of the Uint.
+    #[inline(always)]
     #[must_use]
     #[track_caller]
-    #[inline(always)]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
-        let () = Self::ASSERT_LIMBS;
         if BITS > 0 && Self::MASK != u64::MAX {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
@@ -229,6 +237,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if the value is to large for the bit-size of the Uint.
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn from_limbs_slice(slice: &[u64]) -> Self {
@@ -240,6 +249,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Construct a new integer from little-endian a slice of limbs, or `None`
     /// if the value is too large for the [`Uint`].
+    #[inline]
     #[must_use]
     pub fn checked_from_limbs_slice(slice: &[u64]) -> Option<Self> {
         match Self::overflowing_from_limbs_slice(slice) {
@@ -248,6 +258,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Construct a new [`Uint`] from a little-endian slice of limbs. Returns
+    /// a potentially truncated value.
+    #[inline]
     #[must_use]
     pub fn wrapping_from_limbs_slice(slice: &[u64]) -> Self {
         Self::overflowing_from_limbs_slice(slice).0
@@ -256,9 +269,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Construct a new [`Uint`] from a little-endian slice of limbs. Returns
     /// a potentially truncated value and a boolean indicating whether the value
     /// was truncated.
+    #[inline]
     #[must_use]
     pub fn overflowing_from_limbs_slice(slice: &[u64]) -> (Self, bool) {
-        let () = Self::ASSERT_LIMBS;
         if slice.len() < LIMBS {
             let mut limbs = [0; LIMBS];
             limbs[..slice.len()].copy_from_slice(slice);
@@ -276,6 +289,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Construct a new [`Uint`] from a little-endian slice of limbs. Returns
+    /// the maximum value if the value is too large for the [`Uint`].
+    #[inline]
     #[must_use]
     pub fn saturating_from_limbs_slice(slice: &[u64]) -> Self {
         match Self::overflowing_from_limbs_slice(slice) {
@@ -294,15 +310,15 @@ impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
 
 /// Number of `u64` limbs required to represent the given number of bits.
 /// This needs to be public because it is used in the `Uint` type.
-#[must_use]
 #[inline]
+#[must_use]
 pub const fn nlimbs(bits: usize) -> usize {
     (bits + 63) / 64
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.
-#[must_use]
 #[inline]
+#[must_use]
 pub const fn mask(bits: usize) -> u64 {
     if bits == 0 {
         return 0;

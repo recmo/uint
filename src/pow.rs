@@ -1,6 +1,10 @@
 use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Raises self to the power of `exp`.
+    ///
+    /// Returns None if the result would overflow.
+    #[inline]
     #[must_use]
     pub fn checked_pow(self, exp: Self) -> Option<Self> {
         match self.overflowing_pow(exp) {
@@ -9,6 +13,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Raises self to the power of `exp` and if the result would overflow.
+    ///
     /// # Examples
     ///
     /// ```
@@ -40,6 +46,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(1_U1.overflowing_pow(1_U1), (1_U1, false));
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn overflowing_pow(mut self, mut exp: Self) -> (Self, bool) {
         if BITS == 0 {
@@ -67,11 +74,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         (result, overflow)
     }
 
+    /// Raises self to the power of `exp`, wrapping around on overflow.
+    #[inline]
     #[must_use]
     pub fn pow(self, exp: Self) -> Self {
         self.wrapping_pow(exp)
     }
 
+    /// Raises self to the power of `exp`, saturating on overflow.
+    #[inline]
     #[must_use]
     pub fn saturating_pow(self, exp: Self) -> Self {
         match self.overflowing_pow(exp) {
@@ -80,6 +91,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
     }
 
+    /// Raises self to the power of `exp`, wrapping around on overflow.
+    #[inline]
     #[must_use]
     pub fn wrapping_pow(mut self, mut exp: Self) -> Self {
         if BITS == 0 {
@@ -120,6 +133,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     #[cfg(feature = "std")]
     #[must_use]
+    #[allow(clippy::missing_inline_in_public_items)]
     pub fn approx_pow2(exp: f64) -> Option<Self> {
         const LN2_1P5: f64 = 0.584_962_500_721_156_2_f64;
         const EXP2_63: f64 = 9_223_372_036_854_775_808_f64;

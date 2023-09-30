@@ -17,6 +17,7 @@ use core::u64;
 /// # Panics
 ///
 /// May panic if the above requirements are not met.
+#[inline]
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
@@ -83,6 +84,7 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 /// # Panics
 ///
 /// May panic if the above requirements are not met.
+#[inline]
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 3);

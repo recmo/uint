@@ -2,6 +2,7 @@
 
 use crate::algorithms::{ops::sbb, DoubleWord};
 
+#[inline]
 #[allow(clippy::cast_possible_truncation)] // Intentional truncation.
 #[allow(dead_code)] // Used for testing
 pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
@@ -225,6 +226,7 @@ fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
 }
 
 /// Computes `lhs *= a` and returns the carry.
+#[inline]
 pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     let mut carry = 0;
     for lhs in &mut *lhs {

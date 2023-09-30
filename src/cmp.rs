@@ -2,23 +2,14 @@ use crate::Uint;
 use core::cmp::{Ord, Ordering, PartialOrd};
 
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
+    #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
-        for (lhs, rhs) in self
-            .as_limbs()
-            .iter()
-            .rev()
-            .zip(rhs.as_limbs().iter().rev())
-        {
-            match lhs.cmp(rhs) {
-                Ordering::Equal => continue,
-                other => return other,
-            }
-        }
-        Ordering::Equal
+        crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -26,6 +17,7 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Check if this uint is zero
+    #[inline]
     #[must_use]
     pub fn is_zero(&self) -> bool {
         self == &Self::ZERO

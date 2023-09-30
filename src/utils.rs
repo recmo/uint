@@ -19,8 +19,8 @@ fn last_idx<T: PartialEq>(x: &[T], value: &T) -> usize {
 }
 
 #[allow(dead_code)]
-#[must_use]
 #[inline]
+#[must_use]
 pub(crate) fn trim_end_slice<'a, T: PartialEq>(slice: &'a [T], value: &T) -> &'a [T] {
     &slice[..last_idx(slice, value)]
 }

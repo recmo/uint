@@ -17,6 +17,7 @@ use crate::Uint;
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if and only if `self == 2^k` for some `k`.
+    #[inline]
     #[must_use]
     pub fn is_power_of_two(self) -> bool {
         self.count_ones() == 1
@@ -27,6 +28,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if the value overlfows.
+    #[inline]
     #[must_use]
     pub fn next_power_of_two(self) -> Self {
         self.checked_next_power_of_two().unwrap()
@@ -49,6 +51,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U64::MAX.checked_next_power_of_two(), None);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn checked_next_power_of_two(self) -> Option<Self> {
         if self.is_power_of_two() {
@@ -70,6 +73,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// This function will panic if `rhs` is 0 or the operation results in
     /// overflow.
+    #[inline]
     #[must_use]
     pub fn next_multiple_of(self, rhs: Self) -> Self {
         self.checked_next_multiple_of(rhs).unwrap();
@@ -102,6 +106,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(1_U1.checked_next_multiple_of(1_U1), Some(1_U1));
     /// }
     /// ```
+    #[inline]
     #[must_use]
     pub fn checked_next_multiple_of(self, rhs: Self) -> Option<Self> {
         if rhs == Self::ZERO {

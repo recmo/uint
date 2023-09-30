@@ -34,6 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// );
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut result = Self::ZERO;
@@ -70,6 +71,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning
     /// [`None`] if the inverse does not exist.
+    #[inline]
     #[must_use]
     pub fn inv_ring(self) -> Option<Self> {
         if BITS == 0 || self.limbs[0] & 1 == 0 {
@@ -123,6 +125,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(3_U2.widening_mul(7_U3), 21_U5);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     #[allow(clippy::similar_names)] // Don't confuse `res` and `rhs`.
     pub fn widening_mul<
@@ -147,6 +150,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> {
+    #[inline]
     fn product<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
@@ -159,6 +163,7 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> 
 }
 
 impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS, LIMBS> {
+    #[inline]
     fn product<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,

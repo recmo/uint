@@ -21,6 +21,7 @@ impl Matrix {
     pub const IDENTITY: Self = Self(1, 0, 0, 1, true);
 
     /// Returns the matrix product `self * other`.
+    #[inline]
     #[allow(clippy::suspicious_operation_groupings)]
     #[must_use]
     pub const fn compose(self, other: Self) -> Self {
@@ -34,6 +35,7 @@ impl Matrix {
     }
 
     /// Applies the matrix to a `Uint`.
+    #[inline]
     pub fn apply<const BITS: usize, const LIMBS: usize>(
         &self,
         a: &mut Uint<BITS, LIMBS>,
@@ -60,6 +62,7 @@ impl Matrix {
     }
 
     /// Applies the matrix to a `u128`.
+    #[inline]
     #[must_use]
     pub const fn apply_u128(&self, a: u128, b: u128) -> (u128, u128) {
         // Intermediate values can overflow but the final result will fit, so we
@@ -90,6 +93,7 @@ impl Matrix {
     /// # Panics
     ///
     /// Panics if `b > a`.
+    #[inline]
     #[must_use]
     pub fn from<const BITS: usize, const LIMBS: usize>(
         a: Uint<BITS, LIMBS>,
@@ -119,6 +123,7 @@ impl Matrix {
     /// Panics if `r1 < r0`.
     // OPT: Would this be faster using extended binary gcd?
     // See <https://en.algorithmica.org/hpc/algorithms/gcd>
+    #[inline]
     #[must_use]
     pub fn from_u64(mut r0: u64, mut r1: u64) -> Self {
         debug_assert!(r0 >= r1);
@@ -162,6 +167,7 @@ impl Matrix {
     ///
     /// Panics if `a0` does not have the highest bit set.
     /// Panics if `a0 < a1`.
+    #[inline]
     #[must_use]
     #[allow(clippy::redundant_else)]
     #[allow(clippy::cognitive_complexity)] // REFACTOR: Improve
@@ -299,6 +305,7 @@ impl Matrix {
     /// simplest out of these solutions.
     // OPT: We can update r0 and r1 in place. This won't remove the partially
     // redundant call to lehmer_update, but it reduces memory usage.
+    #[inline]
     #[must_use]
     pub fn from_u128_prefix(r0: u128, r1: u128) -> Self {
         debug_assert!(r0 >= r1);
