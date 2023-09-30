@@ -214,7 +214,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::checked_shl`] which returns `None` if the
     /// shift is larger than BITS (which is IMHO not very useful).
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_shl(self, rhs: usize) -> Option<Self> {
@@ -229,7 +228,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns $\mathtt{self} ⋅ 2^{\mathtt{rhs}}$ or [`Uint::MAX`] if the
     /// result would $≥ 2^{\mathtt{BITS}}$. That is, it returns
     /// [`Uint::MAX`] if the bits shifted out would be non-zero.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn saturating_shl(self, rhs: usize) -> Self {
@@ -305,7 +303,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::wrapping_shl`] which first reduces `rhs`
     /// by `BITS` (which is IMHO not very useful).
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_shl(self, rhs: usize) -> Self {
@@ -323,7 +320,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::checked_shr`] which returns `None` if the
     /// shift is larger than BITS (which is IMHO not very useful).
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_shr(self, rhs: usize) -> Option<Self> {
@@ -396,7 +392,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::wrapping_shr`] which first reduces `rhs`
     /// by `BITS` (which is IMHO not very useful).
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_shr(self, rhs: usize) -> Self {
@@ -429,7 +424,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self << rhs | self >> (BITS - rhs)
     }
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn rotate_right(self, rhs: usize) -> Self {
@@ -469,7 +463,6 @@ macro_rules! impl_bit_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn_assign(&mut self, rhs: Uint<BITS, LIMBS>) {
                 self.$fn_assign(&rhs);
@@ -489,7 +482,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(mut self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fn_assign(rhs);
@@ -501,7 +493,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(mut self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
                 self.$fn_assign(rhs);
@@ -513,7 +504,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, mut rhs: Uint<BITS, LIMBS>) -> Self::Output {
                 rhs.$fn_assign(self);
@@ -525,7 +515,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
                 self.clone().$fn(rhs)
@@ -539,7 +528,6 @@ impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
 impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
 
 impl<const BITS: usize, const LIMBS: usize> ShlAssign<usize> for Uint<BITS, LIMBS> {
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl_assign(&mut self, rhs: usize) {
         *self = self.wrapping_shl(rhs);
@@ -547,7 +535,6 @@ impl<const BITS: usize, const LIMBS: usize> ShlAssign<usize> for Uint<BITS, LIMB
 }
 
 impl<const BITS: usize, const LIMBS: usize> ShlAssign<&usize> for Uint<BITS, LIMBS> {
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl_assign(&mut self, rhs: &usize) {
         *self = self.wrapping_shl(*rhs);
@@ -557,7 +544,6 @@ impl<const BITS: usize, const LIMBS: usize> ShlAssign<&usize> for Uint<BITS, LIM
 impl<const BITS: usize, const LIMBS: usize> Shl<usize> for Uint<BITS, LIMBS> {
     type Output = Self;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl(self, rhs: usize) -> Self {
         self.wrapping_shl(rhs)
@@ -567,7 +553,6 @@ impl<const BITS: usize, const LIMBS: usize> Shl<usize> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shl<usize> for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl(self, rhs: usize) -> Self::Output {
         self.wrapping_shl(rhs)
@@ -577,7 +562,6 @@ impl<const BITS: usize, const LIMBS: usize> Shl<usize> for &Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shl<&usize> for Uint<BITS, LIMBS> {
     type Output = Self;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl(self, rhs: &usize) -> Self {
         self.wrapping_shl(*rhs)
@@ -587,7 +571,6 @@ impl<const BITS: usize, const LIMBS: usize> Shl<&usize> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shl<&usize> for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shl(self, rhs: &usize) -> Self::Output {
         self.wrapping_shl(*rhs)
@@ -595,7 +578,6 @@ impl<const BITS: usize, const LIMBS: usize> Shl<&usize> for &Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> ShrAssign<usize> for Uint<BITS, LIMBS> {
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr_assign(&mut self, rhs: usize) {
         *self = self.wrapping_shr(rhs);
@@ -603,7 +585,6 @@ impl<const BITS: usize, const LIMBS: usize> ShrAssign<usize> for Uint<BITS, LIMB
 }
 
 impl<const BITS: usize, const LIMBS: usize> ShrAssign<&usize> for Uint<BITS, LIMBS> {
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr_assign(&mut self, rhs: &usize) {
         *self = self.wrapping_shr(*rhs);
@@ -613,7 +594,6 @@ impl<const BITS: usize, const LIMBS: usize> ShrAssign<&usize> for Uint<BITS, LIM
 impl<const BITS: usize, const LIMBS: usize> Shr<usize> for Uint<BITS, LIMBS> {
     type Output = Self;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr(self, rhs: usize) -> Self {
         self.wrapping_shr(rhs)
@@ -623,7 +603,6 @@ impl<const BITS: usize, const LIMBS: usize> Shr<usize> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shr<usize> for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr(self, rhs: usize) -> Self::Output {
         self.wrapping_shr(rhs)
@@ -633,7 +612,6 @@ impl<const BITS: usize, const LIMBS: usize> Shr<usize> for &Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for Uint<BITS, LIMBS> {
     type Output = Self;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr(self, rhs: &usize) -> Self {
         self.wrapping_shr(*rhs)
@@ -643,7 +621,6 @@ impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Shr<&usize> for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn shr(self, rhs: &usize) -> Self::Output {
         self.wrapping_shr(*rhs)

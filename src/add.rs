@@ -8,7 +8,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the absolute difference between `self` and `other`.
     ///
     /// Returns $\left\vert \mathtt{self} - \mathtt{other} \right\vert$.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn abs_diff(self, other: Self) -> Self {
@@ -20,7 +19,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self + rhs`, returning [`None`] if overflow occurred.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_add(self, rhs: Self) -> Option<Self> {
@@ -31,7 +29,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `-self`, returning [`None`] unless `self == 0`.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_neg(self) -> Option<Self> {
@@ -42,7 +39,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self - rhs`, returning [`None`] if overflow occurred.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn checked_sub(self, rhs: Self) -> Option<Self> {
@@ -80,7 +76,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// represents the negation of this unsigned value. Note that for positive
     /// unsigned values overflow always occurs, but negating 0 does not
     /// overflow.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn overflowing_neg(self) -> (Self, bool) {
@@ -112,7 +107,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes `self + rhs`, saturating at the numeric bounds instead of
     /// overflowing.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn saturating_add(self, rhs: Self) -> Self {
@@ -124,7 +118,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Computes `self - rhs`, saturating at the numeric bounds instead of
     /// overflowing
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn saturating_sub(self, rhs: Self) -> Self {
@@ -135,7 +128,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self + rhs`, wrapping around at the boundary of the type.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_add(self, rhs: Self) -> Self {
@@ -143,7 +135,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `-self`, wrapping around at the boundary of the type.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_neg(self) -> Self {
@@ -151,7 +142,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self - rhs`, wrapping around at the boundary of the type.
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     #[must_use]
     pub fn wrapping_sub(self, rhs: Self) -> Self {
@@ -162,7 +152,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Neg for Uint<BITS, LIMBS> {
     type Output = Self;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn neg(self) -> Self::Output {
         self.wrapping_neg()
@@ -172,7 +161,6 @@ impl<const BITS: usize, const LIMBS: usize> Neg for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Neg for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
-    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn neg(self) -> Self::Output {
         self.wrapping_neg()

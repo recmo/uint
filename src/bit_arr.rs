@@ -74,14 +74,12 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
 macro_rules! forward_attributes {
     ($fnname:ident, $item:item $(,must_use: true)?) => {
         #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-        #[allow(clippy::inline_always)]
         #[inline(always)]
         #[must_use]
         $item
     };
     ($fnname:ident, $item:item,must_use: false) => {
         #[doc = concat!("See [`Uint::", stringify!($fnname),"`] for documentation.")]
-        #[allow(clippy::inline_always)]
         #[inline(always)]
         $item
     };
@@ -291,7 +289,6 @@ macro_rules! impl_bit_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Bits<BITS, LIMBS>>
             for Bits<BITS, LIMBS>
         {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn_assign(&mut self, rhs: Bits<BITS, LIMBS>) {
                 self.0.$fn_assign(&rhs.0);
@@ -300,7 +297,6 @@ macro_rules! impl_bit_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Bits<BITS, LIMBS>>
             for Bits<BITS, LIMBS>
         {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn_assign(&mut self, rhs: &Bits<BITS, LIMBS>) {
                 self.0.$fn_assign(rhs.0);
@@ -311,7 +307,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(mut self, rhs: Bits<BITS, LIMBS>) -> Self::Output {
                 self.0.$fn_assign(rhs.0);
@@ -323,7 +318,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(mut self, rhs: &Bits<BITS, LIMBS>) -> Self::Output {
                 self.0.$fn_assign(rhs.0);
@@ -335,7 +329,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, mut rhs: Bits<BITS, LIMBS>) -> Self::Output {
                 rhs.0.$fn_assign(self.0);
@@ -347,7 +340,6 @@ macro_rules! impl_bit_op {
         {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: &Bits<BITS, LIMBS>) -> Self::Output {
                 self.0.clone().$fn(rhs.0).into()
@@ -363,7 +355,6 @@ impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
 macro_rules! impl_shift {
     ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<usize> for Bits<BITS, LIMBS> {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn_assign(&mut self, rhs: usize) {
                 self.0.$fn_assign(rhs);
@@ -371,7 +362,6 @@ macro_rules! impl_shift {
         }
 
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&usize> for Bits<BITS, LIMBS> {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn_assign(&mut self, rhs: &usize) {
                 self.0.$fn_assign(rhs);
@@ -381,7 +371,6 @@ macro_rules! impl_shift {
         impl<const BITS: usize, const LIMBS: usize> $trait<usize> for Bits<BITS, LIMBS> {
             type Output = Self;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: usize) -> Self {
                 self.0.$fn(rhs).into()
@@ -391,7 +380,6 @@ macro_rules! impl_shift {
         impl<const BITS: usize, const LIMBS: usize> $trait<usize> for &Bits<BITS, LIMBS> {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: usize) -> Self::Output {
                 self.0.$fn(rhs).into()
@@ -401,7 +389,6 @@ macro_rules! impl_shift {
         impl<const BITS: usize, const LIMBS: usize> $trait<&usize> for Bits<BITS, LIMBS> {
             type Output = Self;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: &usize) -> Self {
                 self.0.$fn(rhs).into()
@@ -411,7 +398,6 @@ macro_rules! impl_shift {
         impl<const BITS: usize, const LIMBS: usize> $trait<&usize> for &Bits<BITS, LIMBS> {
             type Output = Bits<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn $fn(self, rhs: &usize) -> Self::Output {
                 self.0.$fn(rhs).into()

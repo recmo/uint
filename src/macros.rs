@@ -3,7 +3,6 @@ macro_rules! impl_bin_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn_assign(&mut self, rhs: Uint<BITS, LIMBS>) {
@@ -13,7 +12,6 @@ macro_rules! impl_bin_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
@@ -25,7 +23,6 @@ macro_rules! impl_bin_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
@@ -37,7 +34,6 @@ macro_rules! impl_bin_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
@@ -49,7 +45,6 @@ macro_rules! impl_bin_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
@@ -61,7 +56,6 @@ macro_rules! impl_bin_op {
         {
             type Output = Uint<BITS, LIMBS>;
 
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             #[track_caller]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
