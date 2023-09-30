@@ -21,7 +21,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self + rhs`, returning [`None`] if overflow occurred.
     #[inline(always)]
     #[must_use]
-    pub fn checked_add(self, rhs: Self) -> Option<Self> {
+    pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         match self.overflowing_add(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -31,7 +31,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `-self`, returning [`None`] unless `self == 0`.
     #[inline(always)]
     #[must_use]
-    pub fn checked_neg(self) -> Option<Self> {
+    pub const fn checked_neg(self) -> Option<Self> {
         match self.overflowing_neg() {
             (value, false) => Some(value),
             _ => None,
@@ -41,7 +41,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self - rhs`, returning [`None`] if overflow occurred.
     #[inline(always)]
     #[must_use]
-    pub fn checked_sub(self, rhs: Self) -> Option<Self> {
+    pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         match self.overflowing_sub(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -55,16 +55,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// then the wrapped value is returned.
     #[inline]
     #[must_use]
-    pub fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
+    pub const fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
         if BITS == 0 {
             return (Self::ZERO, false);
         }
         let mut carry = 0_u128;
+        let mut i = 0;
         #[allow(clippy::cast_possible_truncation)] // Intentional
-        for (lhs, &rhs) in self.limbs.iter_mut().zip(rhs.as_limbs()) {
-            carry += u128::from(*lhs) + u128::from(rhs);
-            *lhs = carry as u64;
+        while i < LIMBS {
+            carry += self.limbs[i] as u128 + rhs.limbs[i] as u128;
+            self.limbs[i] = carry as u64;
             carry >>= 64;
+            i += 1;
         }
         let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
         self.limbs[LIMBS - 1] &= Self::MASK;
@@ -79,7 +81,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// overflow.
     #[inline(always)]
     #[must_use]
-    pub fn overflowing_neg(self) -> (Self, bool) {
+    pub const fn overflowing_neg(self) -> (Self, bool) {
         Self::ZERO.overflowing_sub(self)
     }
 
@@ -90,17 +92,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// occurred then the wrapped value is returned.
     #[inline]
     #[must_use]
-    pub fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
+    pub const fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
         if BITS == 0 {
             return (Self::ZERO, false);
         }
         let mut carry = 0_i128;
+        let mut i = 0;
         #[allow(clippy::cast_possible_truncation)] // Intentional
         #[allow(clippy::cast_sign_loss)] // Intentional
-        for (lhs, &rhs) in self.limbs.iter_mut().zip(rhs.as_limbs()) {
-            carry += i128::from(*lhs) - i128::from(rhs);
-            *lhs = carry as u64;
-            carry >>= 64; // Sign extending shift
+        while i < LIMBS {
+            carry += self.limbs[i] as i128 - rhs.limbs[i] as i128;
+            self.limbs[i] = carry as u64;
+            carry >>= 64;
+            i += 1;
         }
         let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
         self.limbs[LIMBS - 1] &= Self::MASK;
@@ -111,7 +115,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// overflowing.
     #[inline(always)]
     #[must_use]
-    pub fn saturating_add(self, rhs: Self) -> Self {
+    pub const fn saturating_add(self, rhs: Self) -> Self {
         match self.overflowing_add(rhs) {
             (value, false) => value,
             _ => Self::MAX,
@@ -122,7 +126,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// overflowing
     #[inline(always)]
     #[must_use]
-    pub fn saturating_sub(self, rhs: Self) -> Self {
+    pub const fn saturating_sub(self, rhs: Self) -> Self {
         match self.overflowing_sub(rhs) {
             (value, false) => value,
             _ => Self::ZERO,
@@ -132,21 +136,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self + rhs`, wrapping around at the boundary of the type.
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_add(self, rhs: Self) -> Self {
+    pub const fn wrapping_add(self, rhs: Self) -> Self {
         self.overflowing_add(rhs).0
     }
 
     /// Computes `-self`, wrapping around at the boundary of the type.
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_neg(self) -> Self {
+    pub const fn wrapping_neg(self) -> Self {
         self.overflowing_neg().0
     }
 
     /// Computes `self - rhs`, wrapping around at the boundary of the type.
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_sub(self, rhs: Self) -> Self {
+    pub const fn wrapping_sub(self, rhs: Self) -> Self {
         self.overflowing_sub(rhs).0
     }
 }

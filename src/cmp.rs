@@ -16,7 +16,7 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    /// Check if this uint is zero
+    /// Returns true if the value is zero.
     #[inline]
     #[must_use]
     pub fn is_zero(&self) -> bool {
