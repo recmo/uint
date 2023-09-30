@@ -137,7 +137,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert_eq!(BITS_RES, BITS + BITS_RHS);
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
-        algorithms::addmul(&mut result.limbs, &self.limbs, &rhs.limbs);
+        algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if LIMBS_RES > 0 {
             debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
         }

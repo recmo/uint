@@ -472,7 +472,7 @@ macro_rules! impl_bit_op {
             for Uint<BITS, LIMBS>
         {
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
-                for (limb, rhs) in self.limbs.iter_mut().zip(rhs.limbs) {
+                for (limb, &rhs) in self.limbs.iter_mut().zip(rhs.as_limbs()) {
                     u64::$fn_assign(limb, rhs);
                 }
             }
