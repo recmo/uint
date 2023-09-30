@@ -204,6 +204,7 @@ macro_rules! forward {
     };
 }
 
+#[allow(clippy::missing_safety_doc, clippy::missing_errors_doc)]
 impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     forward! {
         fn reverse_bits(self) -> Self;
