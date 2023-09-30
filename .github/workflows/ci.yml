@@ -18,13 +18,13 @@ jobs:
         run: "true"
 
   test:
-    name: Test ${{ matrix.rust }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable, beta, nightly, 1.65] # MSRV
+        rust: ["stable", "beta", "nightly", "1.65"] # MSRV
+        flags: ["--no-default-features", "", "--all-features"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
@@ -36,18 +36,25 @@ jobs:
           sed -i 's/nightly = \[\]//g' Cargo.toml
           sed -i 's/generic_const_exprs = \["nightly"\]//g' Cargo.toml
       - uses: Swatinem/rust-cache@v2
+      # Only run tests on latest stable and above
+      - name: Check
+        if: ${{ matrix.rust == '1.65' }} # MSRV
+        run: cargo check ${{ matrix.flags }}
+
       # Cargo doc test is not included in `--all-targets` so we call it separately.
       # See <https://github.com/rust-lang/cargo/issues/6669>
       # Cargo doc test also doesn't support `--no-run`, so we run it but
       # have it just print `--help`.
       - name: Build tests
+        if: ${{ matrix.rust != '1.65' }} # MSRV
         run: |
-          cargo test --workspace --all-features --all-targets --no-run
-          cargo test --workspace --all-features --doc -- --help
+          cargo test --workspace ${{ matrix.flags }} --all-targets --no-run
+          cargo test --workspace ${{ matrix.flags }} --doc -- --help
       - name: Run tests
+        if: ${{ matrix.rust != '1.65' }} # MSRV
         run: |
-          cargo test --workspace --all-features --all-targets -- --nocapture
-          cargo test --workspace --all-features --doc -- --nocapture
+          cargo test --workspace ${{ matrix.flags }} --all-targets -- --nocapture
+          cargo test --workspace ${{ matrix.flags }} --doc -- --nocapture
 
   feature-checks:
     name: Feature checks

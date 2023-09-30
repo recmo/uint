@@ -55,7 +55,7 @@ parity-scale-codec = { version = "3", optional = true, features = [
     "max-encoded-len",
 ], default-features = false }
 primitive-types = { version = "0.12", optional = true, default-features = false }
-proptest = { version = "1", optional = true, default-features = false }
+proptest = { version = "1.2", optional = true, default-features = false }
 pyo3 = { version = "0.19", optional = true, default-features = false }
 quickcheck = { version = "1", optional = true, default-features = false }
 rand = { version = "0.8", optional = true, default-features = false }
@@ -79,16 +79,10 @@ ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
 ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
 
 criterion = "0.5"
-# clap and clap_lex, referred by criterion, have higher a MSRV (clap@4.4.0, clap_lex@0.5.1),
-# but are only used by dev-dependencies so we can just pin them
-clap = "~4.3"
-clap_lex = "<=0.5.0"
-
 rand = "0.8"
 
 approx = "0.5"
 bincode = "1.3"
-coverage-helper = "0.1"
 hex = "0.4"
 hex-literal = "0.4"
 postgres = "0.19"
@@ -131,7 +125,7 @@ fastrlp = ["dep:fastrlp", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
-proptest = ["dep:proptest", "std"] # TODO: change to "alloc" on the next proptest release (>1.2.0)
+proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
