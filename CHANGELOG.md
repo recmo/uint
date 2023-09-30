@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `U768` alias ([#310])
 - `bytemuck` feature ([#292])
 - `Uint::is_zero() -> bool` ([#296])
 - `num-traits` features ([#298])
