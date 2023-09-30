@@ -14,6 +14,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Returns zero if the modulus is zero.
     // FEATURE: Reduce larger bit-sizes to smaller ones.
+    #[inline]
     #[must_use]
     pub fn reduce_mod(mut self, modulus: Self) -> Self {
         if modulus == Self::ZERO {
@@ -28,6 +29,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute $\mod{\mathtt{self} + \mathtt{rhs}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
+    #[inline]
     #[must_use]
     pub fn add_mod(self, rhs: Self, modulus: Self) -> Self {
         // Reduce inputs
@@ -48,6 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// See [`mul_redc`](Self::mul_redc) for a faster variant at the cost of
     /// some pre-computation.
+    #[inline]
     #[must_use]
     #[cfg(feature = "alloc")] // see comments below
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
@@ -74,6 +77,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute $\mod{\mathtt{self}^{\mathtt{rhs}}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
+    #[inline]
     #[must_use]
     #[cfg(feature = "alloc")] // see comments in mul_mod
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
@@ -100,6 +104,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute $\mod{\mathtt{self}^{-1}}_{\mathtt{modulus}}$.
     ///
     /// Returns `None` if the inverse does not exist.
+    #[inline]
     #[must_use]
     pub fn inv_mod(self, modulus: Self) -> Option<Self> {
         algorithms::inv_mod(self, modulus)
@@ -143,6 +148,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `inv` is not correct.
+    #[inline]
     #[must_use]
     #[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
     pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {

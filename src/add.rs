@@ -53,6 +53,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns a tuple of the addition along with a boolean indicating whether
     /// an arithmetic overflow would occur. If an overflow would have occurred
     /// then the wrapped value is returned.
+    #[inline]
     #[must_use]
     pub fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
         if BITS == 0 {
@@ -87,6 +88,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns a tuple of the subtraction along with a boolean indicating
     /// whether an arithmetic overflow would occur. If an overflow would have
     /// occurred then the wrapped value is returned.
+    #[inline]
     #[must_use]
     pub fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
         if BITS == 0 {
@@ -168,6 +170,7 @@ impl<const BITS: usize, const LIMBS: usize> Neg for &Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Sum<Self> for Uint<BITS, LIMBS> {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
@@ -177,6 +180,7 @@ impl<const BITS: usize, const LIMBS: usize> Sum<Self> for Uint<BITS, LIMBS> {
 }
 
 impl<'a, const BITS: usize, const LIMBS: usize> Sum<&'a Self> for Uint<BITS, LIMBS> {
+    #[inline]
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,

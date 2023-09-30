@@ -3,6 +3,7 @@ use core::ops::{Div, DivAssign, Rem, RemAssign};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self / rhs`, returning [`None`] if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_div(self, rhs: Self) -> Option<Self> {
@@ -13,6 +14,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Computes `self % rhs`, returning [`None`] if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
@@ -27,6 +29,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
@@ -44,6 +47,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
@@ -57,6 +61,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn wrapping_div(self, rhs: Self) -> Self {
@@ -68,6 +73,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn wrapping_rem(self, rhs: Self) -> Self {

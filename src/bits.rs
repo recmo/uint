@@ -83,6 +83,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Reverses the order of bits in the integer. The least significant bit
     /// becomes the most significant bit, second least-significant bit becomes
     /// second most-significant bit, etc.
+    #[inline]
     #[must_use]
     pub fn reverse_bits(mut self) -> Self {
         self.limbs.reverse();
@@ -97,6 +98,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of leading zeros in the binary representation of
     /// `self`.
+    #[inline]
     #[must_use]
     pub fn leading_zeros(&self) -> usize {
         self.as_limbs()
@@ -113,6 +115,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of leading ones in the binary representation of
     /// `self`.
+    #[inline]
     #[must_use]
     pub fn leading_ones(&self) -> usize {
         (self.not()).leading_zeros()
@@ -120,6 +123,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of trailing zeros in the binary representation of
     /// `self`.
+    #[inline]
     #[must_use]
     pub fn trailing_zeros(&self) -> usize {
         self.as_limbs()
@@ -132,6 +136,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of trailing ones in the binary representation of
     /// `self`.
+    #[inline]
     #[must_use]
     pub fn trailing_ones(&self) -> usize {
         self.as_limbs()
@@ -143,6 +148,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Returns the number of ones in the binary representation of `self`.
+    #[inline]
     #[must_use]
     pub fn count_ones(&self) -> usize {
         self.as_limbs()
@@ -183,6 +189,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// If `self` is $<≥> 2^{63}$, then `exponent` will be zero and `bits` will
     /// have leading zeros.
+    #[inline]
     #[must_use]
     pub fn most_significant_bits(&self) -> (u64, usize) {
         let first_set_limb = self
@@ -245,6 +252,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::overflowing_shl`] which returns `true` if
     /// the shift is larger than `BITS` (which is IMHO not very useful).
+    #[inline]
     #[must_use]
     pub fn overflowing_shl(mut self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
@@ -341,6 +349,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note: This differs from [`u64::overflowing_shr`] which returns `true` if
     /// the shift is larger than `BITS` (which is IMHO not very useful).
+    #[inline]
     #[must_use]
     pub fn overflowing_shr(mut self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
@@ -399,6 +408,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     /// Arithmetic shift right by `rhs` bits.
+    #[inline]
     #[must_use]
     pub fn arithmetic_shr(self, rhs: usize) -> Self {
         if BITS == 0 {
@@ -414,6 +424,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Shifts the bits to the left by a specified amount, `rhs`, wrapping the
     /// truncated bits to the end of the resulting integer.
+    #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn rotate_left(self, rhs: usize) -> Self {
@@ -424,6 +435,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self << rhs | self >> (BITS - rhs)
     }
 
+    /// Shifts the bits to the right by a specified amount, `rhs`, wrapping the
+    /// truncated bits to the beginning of the resulting integer.
     #[inline(always)]
     #[must_use]
     pub fn rotate_right(self, rhs: usize) -> Self {
@@ -438,6 +451,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
     type Output = Self;
 
+    #[inline]
     fn not(mut self) -> Self::Output {
         if BITS == 0 {
             return Self::ZERO;
@@ -453,6 +467,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Not for &Uint<BITS, LIMBS> {
     type Output = Uint<BITS, LIMBS>;
 
+    #[inline]
     fn not(self) -> Self::Output {
         (*self).not()
     }
@@ -471,6 +486,7 @@ macro_rules! impl_bit_op {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
+            #[inline]
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
                 for (limb, &rhs) in self.limbs.iter_mut().zip(rhs.as_limbs()) {
                     u64::$fn_assign(limb, rhs);

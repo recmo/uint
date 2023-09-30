@@ -1,5 +1,7 @@
 //! Support for external crates.
 
+#![allow(missing_docs, clippy::missing_inline_in_public_items)]
+
 mod alloy_rlp;
 mod arbitrary;
 mod ark_ff;

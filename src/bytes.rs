@@ -89,6 +89,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Rust issue [#60551].
     ///
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    #[inline]
     #[must_use]
     pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
         // TODO: Use a `const {}` block for this assertion
@@ -280,8 +281,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 /// This needs to be public because it is used in the `Uint` type,
 /// specifically in the [`to_be_bytes()`][Uint::to_be_bytes] and related
 /// functions.
-#[must_use]
 #[inline]
+#[must_use]
 pub const fn nbytes(bits: usize) -> usize {
     (bits + 7) / 8
 }

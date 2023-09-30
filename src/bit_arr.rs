@@ -52,18 +52,21 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     /// types.
     pub const ZERO: Self = Self(Uint::<BITS, LIMBS>::ZERO);
 
+    /// Returns the inner [Uint].
     #[must_use]
     #[inline(always)]
     pub const fn into_inner(self) -> Uint<BITS, LIMBS> {
         self.0
     }
 
+    /// Returns a reference to the inner [Uint].
     #[must_use]
     #[inline(always)]
     pub const fn as_uint(&self) -> &Uint<BITS, LIMBS> {
         &self.0
     }
 
+    /// Returns a mutable reference to the inner [Uint].
     #[must_use]
     #[inline(always)]
     pub fn as_uint_mut(&mut self) -> &mut Uint<BITS, LIMBS> {
@@ -259,6 +262,7 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Index<usize> for Bits<BITS, LIMBS> {
     type Output = bool;
 
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         if self.0.bit(index) {
             &true
@@ -271,6 +275,7 @@ impl<const BITS: usize, const LIMBS: usize> Index<usize> for Bits<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Not for Bits<BITS, LIMBS> {
     type Output = Self;
 
+    #[inline]
     fn not(self) -> Self {
         self.0.not().into()
     }
@@ -279,6 +284,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Bits<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Not for &Bits<BITS, LIMBS> {
     type Output = Bits<BITS, LIMBS>;
 
+    #[inline]
     fn not(self) -> Bits<BITS, LIMBS> {
         self.0.not().into()
     }
