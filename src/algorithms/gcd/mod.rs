@@ -12,6 +12,7 @@ use core::mem::swap;
 /// **Warning.** This struct is not part of the stable API.
 ///
 /// See [`gcd_extended`] for documentation.
+#[inline]
 #[must_use]
 pub fn gcd<const BITS: usize, const LIMBS: usize>(
     mut a: Uint<BITS, LIMBS>,
@@ -58,6 +59,7 @@ pub fn gcd<const BITS: usize, const LIMBS: usize>(
 ///
 /// See also `mpn_gcdext_lehmer_n` in GMP.
 /// <https://gmplib.org/repo/gmp-6.1/file/tip/mpn/generic/gcdext_lehmer.c#l146>
+#[inline]
 #[must_use]
 pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
     mut a: Uint<BITS, LIMBS>,
@@ -136,6 +138,7 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
 /// It differs from `gcd_extended` in that it only computes the required
 /// cofactor, and returns `None` if the GCD is not one (i.e. when `num` does
 /// not have an inverse).
+#[inline]
 #[must_use]
 pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
     num: Uint<BITS, LIMBS>,

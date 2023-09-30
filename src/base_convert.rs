@@ -23,9 +23,10 @@ pub enum BaseConvertError {
 impl std::error::Error for BaseConvertError {}
 
 impl fmt::Display for BaseConvertError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Overflow => write!(f, "The value is too large to fit the target type"),
+            Self::Overflow => f.write_str("The value is too large to fit the target type"),
             Self::InvalidBase(base) => {
                 write!(f, "The requested number base {base} is less than two")
             }
@@ -156,6 +157,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
     /// * [`BaseConvertError::Overflow`] if the number is too large to
     /// fit.
+    #[inline]
     pub fn from_base_be<I: IntoIterator<Item = u64>>(
         base: u64,
         digits: I,

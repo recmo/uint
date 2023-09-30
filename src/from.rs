@@ -55,6 +55,7 @@ pub enum ToUintError<T> {
 impl<T: fmt::Debug> std::error::Error for ToUintError<T> {}
 
 impl<T> fmt::Display for ToUintError<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ValueTooLarge(bits, _) => write!(f, "Value is too large for Uint<{bits}>"),
@@ -87,6 +88,7 @@ pub enum FromUintError<T> {
 impl<T: fmt::Debug> std::error::Error for FromUintError<T> {}
 
 impl<T> fmt::Display for FromUintError<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Overflow(bits, ..) => write!(
@@ -110,6 +112,7 @@ pub enum ToFieldError {
 impl std::error::Error for ToFieldError {}
 
 impl fmt::Display for ToFieldError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotInField => {
@@ -138,6 +141,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U64::from(3.145), 3_U64);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn from<T>(value: T) -> Self
@@ -166,6 +170,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U32::saturating_from(0x7014b4c2d1f2_U256), U32::MAX);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn saturating_from<T>(value: T) -> Self
     where
@@ -194,6 +199,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(U32::wrapping_from(0x7014b4c2d1f2_U256), 0xb4c2d1f2_U32);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn wrapping_from<T>(value: T) -> Self
     where
@@ -219,6 +225,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(300_U12.to::<U256>(), 300_U256);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     #[track_caller]
     pub fn to<T>(&self) -> T
@@ -239,6 +246,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0x1337cafec0d3_U256.wrapping_to::<U32>(), 0xcafec0d3_U32);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn wrapping_to<T>(&self) -> T
     where
@@ -259,6 +267,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0x1337cafec0d3_U256.saturating_to::<U32>(), U32::MAX);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn saturating_to<T>(&self) -> T
     where
@@ -274,6 +283,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if the value is too large for the target type.
+    #[inline]
+    #[doc(hidden)]
     #[must_use]
     #[track_caller]
     #[deprecated(since = "1.4.0", note = "Use `::from()` instead.")]
@@ -283,6 +294,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::from_limbs_slice(value.as_limbs())
     }
 
+    #[inline]
+    #[doc(hidden)]
     #[must_use]
     #[deprecated(since = "1.4.0", note = "Use `::checked_from()` instead.")]
     pub fn checked_from_uint<const BITS_SRC: usize, const LIMBS_SRC: usize>(
@@ -301,7 +314,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 /// implementations.
 #[allow(clippy::module_name_repetitions)]
 pub trait UintTryFrom<T>: Sized {
-    #[allow(clippy::missing_errors_doc)]
+    #[doc(hidden)]
     fn uint_try_from(value: T) -> Result<Self, ToUintError<Self>>;
 }
 
@@ -319,6 +332,7 @@ where
 impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_SRC: usize>
     UintTryFrom<Uint<BITS_SRC, LIMBS_SRC>> for Uint<BITS, LIMBS>
 {
+    #[inline]
     fn uint_try_from(value: Uint<BITS_SRC, LIMBS_SRC>) -> Result<Self, ToUintError<Self>> {
         let (n, overflow) = Self::overflowing_from_limbs_slice(value.as_limbs());
         if overflow {
@@ -332,7 +346,7 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_SRC: usize, const LIMBS_S
 /// ⚠️ Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
 /// Use [`TryFrom`] instead.
 pub trait UintTryTo<T>: Sized {
-    #[allow(clippy::missing_errors_doc)]
+    #[doc(hidden)]
     fn uint_try_to(&self) -> Result<T, FromUintError<T>>;
 }
 
@@ -340,6 +354,7 @@ impl<const BITS: usize, const LIMBS: usize, T> UintTryTo<T> for Uint<BITS, LIMBS
 where
     T: for<'a> TryFrom<&'a Self, Error = FromUintError<T>>,
 {
+    #[inline]
     fn uint_try_to(&self) -> Result<T, FromUintError<T>> {
         T::try_from(self)
     }
@@ -348,6 +363,7 @@ where
 impl<const BITS: usize, const LIMBS: usize, const BITS_DST: usize, const LIMBS_DST: usize>
     UintTryTo<Uint<BITS_DST, LIMBS_DST>> for Uint<BITS, LIMBS>
 {
+    #[inline]
     fn uint_try_to(
         &self,
     ) -> Result<Uint<BITS_DST, LIMBS_DST>, FromUintError<Uint<BITS_DST, LIMBS_DST>>> {
@@ -364,6 +380,7 @@ impl<const BITS: usize, const LIMBS: usize, const BITS_DST: usize, const LIMBS_D
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
+    #[inline]
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         if LIMBS <= 1 {
             if value > Self::MASK {
@@ -388,6 +405,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
+    #[inline]
     #[allow(clippy::cast_lossless)]
     #[allow(clippy::cast_possible_truncation)]
     fn try_from(value: u128) -> Result<Self, Self::Error> {
@@ -437,6 +455,7 @@ macro_rules! impl_from_signed_int {
         impl<const BITS: usize, const LIMBS: usize> TryFrom<$int> for Uint<BITS, LIMBS> {
             type Error = ToUintError<Self>;
 
+            #[inline]
             fn try_from(value: $int) -> Result<Self, Self::Error> {
                 if value.is_negative() {
                     Err(match Self::try_from(value as $uint) {
@@ -465,6 +484,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
     // TODO: Correctly implement wrapping.
+    #[inline]
     fn try_from(value: f64) -> Result<Self, Self::Error> {
         if value.is_nan() {
             return Err(ToUintError::NotANumber(BITS));
@@ -561,6 +581,7 @@ to_value_to_ref!(bool);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool {
     type Error = FromUintError<Self>;
 
+    #[inline]
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
         if BITS == 0 {
             return Ok(false);
@@ -606,6 +627,7 @@ to_value_to_ref!(i128);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128 {
     type Error = FromUintError<Self>;
 
+    #[inline]
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
@@ -629,6 +651,7 @@ to_value_to_ref!(u128);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128 {
     type Error = FromUintError<Self>;
 
+    #[inline]
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
@@ -651,6 +674,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
 
 #[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
+    #[inline]
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
@@ -661,6 +685,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     /// Approximate single precision float.
     ///
     /// Returns `f32::INFINITY` if the value is too large to represent.
+    #[inline]
     #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
         let (bits, exponent) = value.most_significant_bits();
@@ -670,6 +695,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
 
 #[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
+    #[inline]
     fn from(value: Uint<BITS, LIMBS>) -> Self {
         Self::from(&value)
     }
@@ -680,6 +706,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
     /// Approximate double precision float.
     ///
     /// Returns `f64::INFINITY` if the value is too large to represent.
+    #[inline]
     #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
         let (bits, exponent) = value.most_significant_bits();

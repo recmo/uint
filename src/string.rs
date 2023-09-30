@@ -1,3 +1,5 @@
+#![allow(clippy::missing_inline_in_public_items)] // allow format functions
+
 use crate::{base_convert::BaseConvertError, utils::rem_up, Uint};
 use core::{fmt, str::FromStr};
 

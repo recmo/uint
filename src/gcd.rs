@@ -11,6 +11,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0_U128.gcd(0_U128), 0_U128);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn gcd(self, other: Self) -> Self {
         algorithms::gcd(self, other)
@@ -18,6 +19,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Compute the least common multiple of two [`Uint`]s or [`None`] if the
     /// result would be too large.
+    #[inline]
     #[must_use]
     pub fn lcm(self, other: Self) -> Option<Self> {
         let other = other.checked_div(self.gcd(other)).unwrap_or_default();
@@ -40,6 +42,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Note that the intermediate products may overflow, even though the result
     /// after subtraction will fit in the bit size of the [`Uint`].
+    #[inline]
     #[must_use]
     pub fn gcd_extended(self, other: Self) -> (Self, Self, Self, bool) {
         algorithms::gcd_extended(self, other)

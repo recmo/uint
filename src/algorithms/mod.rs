@@ -3,6 +3,8 @@
 //! **Warning.** Most functions in this module are currently not considered part
 //! of the stable API and may be changed or removed in future minor releases.
 
+#![allow(missing_docs)] // TODO: document algorithms
+
 mod add;
 pub mod div;
 mod gcd;

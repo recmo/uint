@@ -25,6 +25,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0x1756800000000000_U63.root(34), 3_U63);
     /// # }
     /// ```
+    #[inline]
     #[must_use]
     pub fn root(self, degree: usize) -> Self {
         assert!(degree > 0, "degree must be greater than zero");
