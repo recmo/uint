@@ -483,16 +483,18 @@ macro_rules! impl_bit_op {
                 self.$fn_assign(&rhs);
             }
         }
+
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<&Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
             #[inline]
             fn $fn_assign(&mut self, rhs: &Uint<BITS, LIMBS>) {
-                for (limb, &rhs) in self.limbs.iter_mut().zip(rhs.as_limbs()) {
-                    u64::$fn_assign(limb, rhs);
+                for i in 0..LIMBS {
+                    u64::$fn_assign(&mut self.limbs[i], rhs.limbs[i]);
                 }
             }
         }
+
         impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
@@ -504,6 +506,7 @@ macro_rules! impl_bit_op {
                 self
             }
         }
+
         impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
@@ -515,6 +518,7 @@ macro_rules! impl_bit_op {
                 self
             }
         }
+
         impl<const BITS: usize, const LIMBS: usize> $trait<Uint<BITS, LIMBS>>
             for &Uint<BITS, LIMBS>
         {
@@ -526,6 +530,7 @@ macro_rules! impl_bit_op {
                 rhs
             }
         }
+
         impl<const BITS: usize, const LIMBS: usize> $trait<&Uint<BITS, LIMBS>>
             for &Uint<BITS, LIMBS>
         {
