@@ -63,40 +63,37 @@ pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
 /// assert_eq!(result, [12]);
 /// ```
 #[inline(always)]
-#[allow(clippy::missing_panics_doc)] // False positive; never panics.
 pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
-    // Trim zeros from `a` and `b`
-    while a.first() == Some(&0) {
-        a = &a[1..];
-        if !lhs.is_empty() {
-            lhs = &mut lhs[1..];
+    // Trim zeros from `a`
+    while let [0, rest @ ..] = a {
+        a = rest;
+        if let [_, rest @ ..] = lhs {
+            lhs = rest;
         }
     }
-    while a.last() == Some(&0) {
-        a = &a[..a.len() - 1];
+    while let [rest @ .., 0] = a {
+        a = rest;
     }
-    while b.first() == Some(&0) {
-        b = &b[1..];
-        if !lhs.is_empty() {
-            lhs = &mut lhs[1..];
+
+    // Trim zeros from `b`
+    while let [0, rest @ ..] = b {
+        b = rest;
+        if let [_, rest @ ..] = lhs {
+            lhs = rest;
         }
     }
-    while b.last() == Some(&0) {
-        b = &b[..b.len() - 1];
+    while let [rest @ .., 0] = b {
+        b = rest;
     }
+
     if a.is_empty() || b.is_empty() {
         return false;
     }
     if lhs.is_empty() {
         return true;
     }
+
     let (a, b) = if b.len() > a.len() { (b, a) } else { (a, b) };
-    debug_assert!(!b.is_empty());
-    debug_assert!(a.len() >= b.len());
-    debug_assert!(*a.first().unwrap() != 0);
-    debug_assert!(*a.last().unwrap() != 0);
-    debug_assert!(*b.first().unwrap() != 0);
-    debug_assert!(*b.last().unwrap() != 0);
 
     // Iterate over limbs of `b` and add partial products to `lhs`.
     let mut overflow = false;
