@@ -6,7 +6,6 @@
 #![allow(clippy::many_single_char_names, clippy::similar_names)]
 // Truncation is intentional
 #![allow(clippy::cast_possible_truncation)]
-#![allow(dead_code)] // TODO
 
 use super::reciprocal::{reciprocal, reciprocal_2};
 use crate::{algorithms::DoubleWord, utils::unlikely};

@@ -5,6 +5,8 @@
 
 #![allow(missing_docs)] // TODO: document algorithms
 
+use core::cmp::Ordering;
+
 mod add;
 pub mod div;
 mod gcd;
@@ -15,7 +17,7 @@ mod ops;
 mod shift;
 
 pub use self::{
-    add::{adc_n, cmp, sbb_n},
+    add::{adc_n, sbb_n},
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{add_nx1, addmul, addmul_n, addmul_nx1, addmul_ref, mul_nx1, submul_nx1},
@@ -84,4 +86,33 @@ impl DoubleWord<u64> for u128 {
     fn split(self) -> (u64, u64) {
         (self.low(), self.high())
     }
+}
+
+/// Compare two `u64` slices in reverse order.
+#[inline(always)]
+#[must_use]
+pub fn cmp(left: &[u64], right: &[u64]) -> Ordering {
+    let l = core::cmp::min(left.len(), right.len());
+
+    // Slice to the loop iteration range to enable bound check
+    // elimination in the compiler
+    let lhs = &left[..l];
+    let rhs = &right[..l];
+
+    for i in (0..l).rev() {
+        match i8::from(lhs[i] > rhs[i]) - i8::from(lhs[i] < rhs[i]) {
+            -1 => return Ordering::Less,
+            0 => {}
+            1 => return Ordering::Greater,
+            _ => unsafe { core::hint::unreachable_unchecked() },
+        }
+
+        // Equivalent to:
+        // match lhs[i].cmp(&rhs[i]) {
+        //     Ordering::Equal => {}
+        //     non_eq => return non_eq,
+        // }
+    }
+
+    left.len().cmp(&right.len())
 }

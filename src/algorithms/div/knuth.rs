@@ -192,10 +192,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::{
-        add::{cmp, sbb_n},
-        addmul,
-    };
+    use crate::algorithms::{addmul, cmp, sbb_n};
     use alloc::vec::Vec;
     use core::cmp::Ordering;
     use proptest::{

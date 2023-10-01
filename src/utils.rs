@@ -12,13 +12,13 @@ pub(crate) const fn rem_up(a: usize, b: usize) -> usize {
     }
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] // This is used by some support features.
 #[inline]
 fn last_idx<T: PartialEq>(x: &[T], value: &T) -> usize {
     x.iter().rposition(|b| b != value).map_or(0, |idx| idx + 1)
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] // This is used by some support features.
 #[inline]
 #[must_use]
 pub(crate) fn trim_end_slice<'a, T: PartialEq>(slice: &'a [T], value: &T) -> &'a [T] {
