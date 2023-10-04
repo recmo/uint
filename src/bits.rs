@@ -548,6 +548,84 @@ impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign);
 impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
 impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
 
+impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn shl(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+        // This check shortcuts, and prevents panics on the `[0]` later
+        if BITS == 0 {
+            return self;
+        }
+        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
+        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
+        // the code produces incorrect output.
+        self.wrapping_shl(rhs.as_limbs()[0] as usize)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Shl<&Self> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn shl(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+        self << *rhs
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Shr<Self> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn shr(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+        // This check shortcuts, and prevents panics on the `[0]` later
+        if BITS == 0 {
+            return self;
+        }
+        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
+        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
+        // the code produces incorrect output.
+        self.wrapping_shl(rhs.as_limbs()[0] as usize)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Shr<&Self> for Uint<BITS, LIMBS> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn shr(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+        self >> *rhs
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShlAssign<Self> for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn shl_assign(&mut self, rhs: Self) {
+        *self = *self << rhs;
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShlAssign<&Self> for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn shl_assign(&mut self, rhs: &Self) {
+        *self = *self << rhs;
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShrAssign<Self> for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn shr_assign(&mut self, rhs: Self) {
+        *self = *self >> rhs;
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ShrAssign<&Self> for Uint<BITS, LIMBS> {
+    #[inline(always)]
+    fn shr_assign(&mut self, rhs: &Self) {
+        *self = *self >> rhs;
+    }
+}
+
 macro_rules! impl_shift {
     (@main $u:ty) => {
         impl<const BITS: usize, const LIMBS: usize> Shl<$u> for Uint<BITS, LIMBS> {
@@ -620,7 +698,11 @@ macro_rules! impl_shift {
     };
 }
 
-impl_shift!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64);
+impl_shift!(usize, u8, u16, u32, isize, i8, i16, i32);
+
+// Only when losslessy castable to usize.
+#[cfg(target_pointer_width = "64")]
+impl_shift!(u64, i64);
 
 #[cfg(test)]
 mod tests {
