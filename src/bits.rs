@@ -620,7 +620,7 @@ macro_rules! impl_shift {
     };
 }
 
-impl_shift!(usize, u8, u16, u32, i8, i16, i32, isize);
+impl_shift!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64);
 
 #[cfg(test)]
 mod tests {
