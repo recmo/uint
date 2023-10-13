@@ -94,21 +94,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[inline]
     #[must_use]
-    pub fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+    pub const fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
         // TODO: Use a `const {}` block for this assertion
-        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
 
-        let mut bytes = [0; BYTES];
-
+        // Specialized impl
         #[cfg(target_endian = "little")]
-        bytes.copy_from_slice(self.as_le_slice());
+        // SAFETY: BYTES == Self::BYTES == self.as_le_slice().len()
+        return unsafe { *self.as_le_slice().as_ptr().cast() };
 
+        // Generic impl
         #[cfg(target_endian = "big")]
-        for (chunk, limb) in bytes.chunks_mut(8).zip(self.as_limbs()) {
-            chunk.copy_from_slice(&limb.to_le_bytes());
+        {
+            let mut limbs = self.limbs;
+            let mut i = 0;
+            while i < LIMBS {
+                limbs[i] = limbs[i].to_le();
+                i += 1;
+            }
+            // SAFETY: BYTES <= LIMBS * 8
+            unsafe { *limbs.as_ptr().cast() }
         }
-
-        bytes
     }
 
     /// Converts the [`Uint`] to a little-endian byte vector of size exactly
@@ -144,9 +150,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [#60551]: https://github.com/rust-lang/rust/issues/60551
     #[must_use]
     #[inline]
-    pub fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
-        let mut bytes = self.to_le_bytes();
-        bytes.reverse();
+    pub const fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        let mut bytes = self.to_le_bytes::<BYTES>();
+
+        // bytes.reverse()
+        let len = bytes.len();
+        let half_len = len / 2;
+        let mut i = 0;
+        while i < half_len {
+            let tmp = bytes[i];
+            bytes[i] = bytes[len - 1 - i];
+            bytes[len - 1 - i] = tmp;
+            i += 1;
+        }
+
         bytes
     }
 
@@ -208,7 +225,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline]
     pub fn from_be_slice(bytes: &[u8]) -> Self {
-        match Self::try_from_le_slice(bytes) {
+        match Self::try_from_be_slice(bytes) {
             Some(value) => value,
             None => panic!("value too large for Uint"),
         }
@@ -335,6 +352,57 @@ mod tests {
     const K: Uint<72, 2> = Uint::from_limbs([0x3456_7890_1234_5678_u64, 0x12_u64]);
     const KBE: [u8; 9] = [0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78];
     const KLE: [u8; 9] = [0x78, 0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12];
+
+    #[test]
+    const fn const_to_bytes() {
+        assert!(matches!(N.to_be_bytes::<{ BE.len() }>(), BE));
+        assert!(matches!(N.to_le_bytes::<{ LE.len() }>(), LE));
+
+        assert!(matches!(K.to_be_bytes::<{ KBE.len() }>(), KBE));
+        assert!(matches!(K.to_le_bytes::<{ KLE.len() }>(), KLE));
+
+        assert!(matches!(Uint::<0, 0>::ZERO.to_be_bytes::<0>(), []));
+        assert!(matches!(Uint::<1, 1>::ZERO.to_be_bytes::<1>(), [0]));
+        assert!(matches!(
+            Uint::<1, 1>::from_limbs([1]).to_be_bytes::<1>(),
+            [1]
+        ));
+        assert!(matches!(
+            Uint::<16, 1>::from_limbs([0x1234]).to_be_bytes::<2>(),
+            [0x12, 0x34]
+        ));
+
+        assert!(matches!(Uint::<0, 0>::ZERO.to_be_bytes::<0>(), []));
+        assert!(matches!(Uint::<0, 0>::ZERO.to_le_bytes::<0>(), []));
+        assert!(matches!(Uint::<1, 1>::ZERO.to_be_bytes::<1>(), [0]));
+        assert!(matches!(Uint::<1, 1>::ZERO.to_le_bytes::<1>(), [0]));
+        assert!(matches!(
+            Uint::<1, 1>::from_limbs([1]).to_be_bytes::<1>(),
+            [1]
+        ));
+        assert!(matches!(
+            Uint::<1, 1>::from_limbs([1]).to_le_bytes::<1>(),
+            [1]
+        ));
+        assert!(matches!(
+            Uint::<16, 1>::from_limbs([0x1234]).to_be_bytes::<2>(),
+            [0x12, 0x34]
+        ));
+        assert!(matches!(
+            Uint::<16, 1>::from_limbs([0x1234]).to_le_bytes::<2>(),
+            [0x34, 0x12]
+        ));
+
+        assert!(matches!(
+            Uint::<63, 1>::from_limbs([0x010203]).to_be_bytes::<8>(),
+            [0, 0, 0, 0, 0, 1, 2, 3]
+        ));
+        assert!(matches!(
+            Uint::<63, 1>::from_limbs([0x010203]).to_le_bytes::<8>(),
+            [3, 2, 1, 0, 0, 0, 0, 0]
+        ));
+    }
+    // const _: () = const_to_bytes();
 
     #[test]
     fn test_from_bytes() {
