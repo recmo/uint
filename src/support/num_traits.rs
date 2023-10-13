@@ -125,26 +125,6 @@ impl<const BITS: usize, const LIMBS: usize> CheckedRem for Uint<BITS, LIMBS> {
     }
 }
 
-// TODO: Move out of support.
-impl<const BITS: usize, const LIMBS: usize> Shl<u32> for Uint<BITS, LIMBS> {
-    type Output = Self;
-
-    #[inline(always)]
-    fn shl(self, rhs: u32) -> Self::Output {
-        <Self>::shl(self, rhs as usize)
-    }
-}
-
-// TODO: Move out of support lib into.
-impl<const BITS: usize, const LIMBS: usize> Shr<u32> for Uint<BITS, LIMBS> {
-    type Output = Self;
-
-    #[inline(always)]
-    fn shr(self, rhs: u32) -> Self::Output {
-        <Self>::shr(self, rhs as usize)
-    }
-}
-
 impl<const BITS: usize, const LIMBS: usize> CheckedShl for Uint<BITS, LIMBS> {
     #[inline(always)]
     fn checked_shl(&self, other: u32) -> Option<Self> {
