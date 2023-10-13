@@ -552,7 +552,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
     type Output = Self;
 
     #[inline(always)]
-    fn shl(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+    fn shl(self, rhs: Self) -> Self::Output {
         // This check shortcuts, and prevents panics on the `[0]` later
         if BITS == 0 {
             return self;
@@ -560,6 +560,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
         // Rationale: if BITS is larger than 2**64 - 1, it means we're running
         // on a 128-bit platform with 2.3 exabytes of memory. In this case,
         // the code produces incorrect output.
+        #[allow(clippy::cast_possible_truncation)]
         self.wrapping_shl(rhs.as_limbs()[0] as usize)
     }
 }
@@ -568,7 +569,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<&Self> for Uint<BITS, LIMBS> {
     type Output = Self;
 
     #[inline(always)]
-    fn shl(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+    fn shl(self, rhs: &Self) -> Self::Output {
         self << *rhs
     }
 }
@@ -577,7 +578,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<Self> for Uint<BITS, LIMBS> {
     type Output = Self;
 
     #[inline(always)]
-    fn shr(self, rhs: Uint<BITS, LIMBS>) -> Self::Output {
+    fn shr(self, rhs: Self) -> Self::Output {
         // This check shortcuts, and prevents panics on the `[0]` later
         if BITS == 0 {
             return self;
@@ -585,6 +586,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<Self> for Uint<BITS, LIMBS> {
         // Rationale: if BITS is larger than 2**64 - 1, it means we're running
         // on a 128-bit platform with 2.3 exabytes of memory. In this case,
         // the code produces incorrect output.
+        #[allow(clippy::cast_possible_truncation)]
         self.wrapping_shl(rhs.as_limbs()[0] as usize)
     }
 }
@@ -593,7 +595,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<&Self> for Uint<BITS, LIMBS> {
     type Output = Self;
 
     #[inline(always)]
-    fn shr(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
+    fn shr(self, rhs: &Self) -> Self::Output {
         self >> *rhs
     }
 }
