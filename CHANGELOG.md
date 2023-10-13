@@ -11,17 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `U768` alias ([#310])
 - `bytemuck` feature ([#292])
 - `Uint::is_zero() -> bool` ([#296])
 - `num-traits` features ([#298])
-- Improve `add` and `sub` performance ([#316])
-- Make `add` and `sub` functions `const` ([#324])
+- `U768` alias ([#310])
+- Improved `add` and `sub` performance ([#316])
+- Made `add` and `sub` functions `const` ([#324])
+- Made `{from,to}_{b,l}e_bytes` `const` ([#329])
 
 [#292]: https://github.com/recmo/uint/pulls/292
+[#296]: https://github.com/recmo/uint/pulls/296
 [#298]: https://github.com/recmo/uint/pulls/298
+[#310]: https://github.com/recmo/uint/pulls/310
 [#316]: https://github.com/recmo/uint/pulls/316
 [#324]: https://github.com/recmo/uint/pulls/324
+[#329]: https://github.com/recmo/uint/pulls/329
 
 ### Fixed
 
