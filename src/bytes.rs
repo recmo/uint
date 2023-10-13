@@ -175,6 +175,108 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         bytes
     }
 
+    /// Converts a big-endian byte array of size exactly
+    /// [`Self::BYTES`] to [`Uint`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
+    ///
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    ///
+    /// Panics if the value is too large for the bit-size of the Uint.
+    #[must_use]
+    #[track_caller]
+    #[inline]
+    pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+        // TODO: Use a `const {}` block for this assertion
+        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+        Self::from_be_slice(&bytes)
+    }
+
+    /// Creates a new integer from a big endian slice of bytes.
+    ///
+    /// The slice is interpreted as a big endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is larger than fits the [`Uint`].
+    #[must_use]
+    #[track_caller]
+    #[inline]
+    pub fn from_be_slice(bytes: &[u8]) -> Self {
+        match Self::try_from_le_slice(bytes) {
+            Some(value) => value,
+            None => panic!("value too large for Uint"),
+        }
+    }
+
+    /// Creates a new integer from a big endian slice of bytes.
+    ///
+    /// The slice is interpreted as a big endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
+    #[must_use]
+    #[inline]
+    pub fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
+        Self::try_from_le_byte_iter(bytes.iter().copied().rev())
+    }
+
+    /// Converts a little-endian byte array of size exactly
+    /// [`Self::BYTES`] to [`Uint`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
+    /// Ideally this would be a compile time error, but this is blocked by
+    /// Rust issue [#60551].
+    ///
+    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
+    ///
+    /// Panics if the value is too large for the bit-size of the Uint.
+    #[must_use]
+    #[track_caller]
+    #[inline]
+    pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+        // TODO: Use a `const {}` block for this assertion
+        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
+        Self::from_le_slice(&bytes)
+    }
+
+    /// Creates a new integer from a little endian slice of bytes.
+    ///
+    /// The slice is interpreted as a little endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is larger than fits the [`Uint`].
+    #[must_use]
+    #[track_caller]
+    #[inline]
+    pub fn from_le_slice(bytes: &[u8]) -> Self {
+        match Self::try_from_le_slice(bytes) {
+            Some(value) => value,
+            None => panic!("value too large for Uint"),
+        }
+    }
+
+    /// Creates a new integer from a little endian slice of bytes.
+    ///
+    /// The slice is interpreted as a little endian number. Leading zeros
+    /// are ignored. The slice can be any length.
+    ///
+    /// Returns [`None`] if the value is larger than fits the [`Uint`].
+    #[must_use]
+    #[inline]
+    pub fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
+        Self::try_from_le_byte_iter(bytes.iter().copied())
+    }
+
     /// Creates a new integer from a little endian stream of bytes.
     #[must_use]
     #[allow(clippy::cast_lossless)]
@@ -199,83 +301,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return None;
         }
         Some(Self::from_limbs(limbs))
-    }
-
-    /// Creates a new integer from a big endian slice of bytes.
-    ///
-    /// The slice is interpreted as a big endian number. Leading zeros
-    /// are ignored. The slice can be any length.
-    ///
-    /// Returns [`None`] if the value is larger than fits the [`Uint`].
-    #[must_use]
-    #[inline]
-    pub fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_byte_iter(bytes.iter().copied().rev())
-    }
-
-    /// Creates a new integer from a little endian slice of bytes.
-    ///
-    /// The slice is interpreted as a little endian number. Leading zeros
-    /// are ignored. The slice can be any length.
-    ///
-    /// Returns [`None`] if the value is larger than fits the [`Uint`].
-    #[must_use]
-    #[inline]
-    pub fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_byte_iter(bytes.iter().copied())
-    }
-
-    /// Converts a big-endian byte array of size exactly
-    /// [`Self::BYTES`] to [`Uint`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
-    /// Ideally this would be a compile time error, but this is blocked by
-    /// Rust issue [#60551].
-    ///
-    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    ///
-    /// Panics if the value is too large for the bit-size of the Uint.
-    #[must_use]
-    #[track_caller]
-    #[inline]
-    pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        // TODO: Use a `const {}` block for this assertion
-        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
-
-        if BYTES % 8 == 0 {
-            // Optimized implementation for full-limb types.
-            let mut limbs = [0_u64; LIMBS];
-            for (limb, bytes) in limbs.iter_mut().zip(bytes.rchunks_exact(8)) {
-                *limb = u64::from_be_bytes(bytes.try_into().unwrap());
-            }
-            Self::from_limbs(limbs)
-        } else {
-            Self::try_from_be_slice(&bytes).unwrap()
-        }
-    }
-
-    /// Converts a little-endian byte array of size exactly
-    /// [`Self::BYTES`] to [`Uint`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the generic parameter `BYTES` is not exactly [`Self::BYTES`].
-    /// Ideally this would be a compile time error, but this is blocked by
-    /// Rust issue [#60551].
-    ///
-    /// [#60551]: https://github.com/rust-lang/rust/issues/60551
-    ///
-    /// Panics if the value is too large for the bit-size of the Uint.
-    #[must_use]
-    #[track_caller]
-    #[inline]
-    pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        // TODO: Use a `const {}` block for this assertion
-        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
-
-        Self::try_from_le_slice(&bytes).expect("Value too large for Uint")
     }
 }
 
