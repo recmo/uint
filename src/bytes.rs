@@ -207,9 +207,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     #[inline]
-    pub fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+    pub const fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         // TODO: Use a `const {}` block for this assertion
-        assert_eq!(BYTES, Self::BYTES, "BYTES must be equal to Self::BYTES");
+        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
         Self::from_be_slice(&bytes)
     }
 
@@ -224,10 +224,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     #[inline]
-    pub fn from_be_slice(bytes: &[u8]) -> Self {
+    pub const fn from_be_slice(bytes: &[u8]) -> Self {
         match Self::try_from_be_slice(bytes) {
             Some(value) => value,
-            None => panic!("value too large for Uint"),
+            None => panic!("Value too large for Uint"),
         }
     }
 
@@ -239,8 +239,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     #[inline]
-    pub fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_byte_iter(bytes.iter().copied().rev())
+    pub const fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
+        if bytes.len() > Self::BYTES {
+            return None;
+        }
+
+        let mut limbs = [0; LIMBS];
+        let mut i = 0;
+        let mut c = bytes.len();
+        while i < bytes.len() {
+            c -= 1;
+            limbs[i / 8] += (bytes[c] as u64) << ((i % 8) * 8);
+            i += 1;
+        }
+        if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
+            return None;
+        }
+        Some(Self::from_limbs(limbs))
     }
 
     /// Converts a little-endian byte array of size exactly
@@ -258,7 +273,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     #[inline]
-    pub fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
+    pub const fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         // TODO: Use a `const {}` block for this assertion
         assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
         Self::from_le_slice(&bytes)
@@ -275,10 +290,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     #[inline]
-    pub fn from_le_slice(bytes: &[u8]) -> Self {
+    pub const fn from_le_slice(bytes: &[u8]) -> Self {
         match Self::try_from_le_slice(bytes) {
             Some(value) => value,
-            None => panic!("value too large for Uint"),
+            None => panic!("Value too large for Uint"),
         }
     }
 
@@ -290,29 +305,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     #[inline]
-    pub fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
-        Self::try_from_le_byte_iter(bytes.iter().copied())
-    }
+    pub const fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
+        if bytes.len() / 8 > Self::LIMBS {
+            return None;
+        }
 
-    /// Creates a new integer from a little endian stream of bytes.
-    #[must_use]
-    #[allow(clippy::cast_lossless)]
-    #[inline]
-    fn try_from_le_byte_iter<I>(iter: I) -> Option<Self>
-    where
-        I: Iterator<Item = u8>,
-    {
         let mut limbs = [0; LIMBS];
-        for (i, byte) in iter.enumerate() {
-            if byte == 0 {
-                continue;
-            }
-            let limb_index = i / 8;
-            if limb_index >= Self::LIMBS {
-                return None;
-            }
-            let byte_index = i % 8;
-            limbs[limb_index] += (byte as u64) << (byte_index * 8);
+        let mut i = 0;
+        while i < bytes.len() {
+            limbs[i / 8] += (bytes[i] as u64) << ((i % 8) * 8);
+            i += 1;
         }
         if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
             return None;
@@ -354,10 +356,16 @@ mod tests {
     const KLE: [u8; 9] = [0x78, 0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12];
 
     #[test]
-    const fn const_to_bytes() {
+    const fn const_from_to_bytes() {
+        const NL: [u64; 2] = N.limbs;
+        assert!(matches!(Uint::<128, 2>::from_be_bytes(BE).limbs, NL));
+        assert!(matches!(Uint::<128, 2>::from_le_bytes(LE).limbs, NL));
         assert!(matches!(N.to_be_bytes::<{ BE.len() }>(), BE));
         assert!(matches!(N.to_le_bytes::<{ LE.len() }>(), LE));
 
+        const KL: [u64; 2] = K.limbs;
+        assert!(matches!(Uint::<72, 2>::from_be_bytes(KBE).limbs, KL));
+        assert!(matches!(Uint::<72, 2>::from_le_bytes(KLE).limbs, KL));
         assert!(matches!(K.to_be_bytes::<{ KBE.len() }>(), KBE));
         assert!(matches!(K.to_le_bytes::<{ KLE.len() }>(), KLE));
 
@@ -402,7 +410,6 @@ mod tests {
             [3, 2, 1, 0, 0, 0, 0, 0]
         ));
     }
-    // const _: () = const_to_bytes();
 
     #[test]
     fn test_from_bytes() {
