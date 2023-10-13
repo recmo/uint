@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made `{from,to}_{b,l}e_bytes` `const` ([#329])
 
 [#292]: https://github.com/recmo/uint/pulls/292
+[#296]: https://github.com/recmo/uint/pulls/296
 [#298]: https://github.com/recmo/uint/pulls/298
+[#310]: https://github.com/recmo/uint/pulls/310
 [#316]: https://github.com/recmo/uint/pulls/316
 [#324]: https://github.com/recmo/uint/pulls/324
 [#329]: https://github.com/recmo/uint/pulls/329
