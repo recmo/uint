@@ -210,19 +210,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         // TODO: Use a `const {}` block for this assertion
         assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
-        if BYTES % 8 == 0 {
-            // Optimized implementation for full-limb types.
-            let mut limbs = [0; LIMBS];
-            let end = bytes.as_ptr_range().end;
-            let mut i = 0;
-            while i < LIMBS {
-                limbs[i] = u64::from_be_bytes(unsafe { *end.sub((i + 1) * 8).cast() });
-                i += 1;
-            }
-            Self::from_limbs(limbs)
-        } else {
-            Self::from_be_slice(&bytes)
-        }
+        Self::from_be_slice(&bytes)
     }
 
     /// Creates a new integer from a big endian slice of bytes.
@@ -254,6 +242,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
         if bytes.len() > Self::BYTES {
             return None;
+        }
+
+        if Self::BYTES % 8 == 0 && bytes.len() == Self::BYTES {
+            // Optimized implementation for full-limb types.
+            let mut limbs = [0; LIMBS];
+            let end = bytes.as_ptr_range().end;
+            let mut i = 0;
+            while i < LIMBS {
+                limbs[i] = u64::from_be_bytes(unsafe { *end.sub((i + 1) * 8).cast() });
+                i += 1;
+            }
+            return Some(Self::from_limbs(limbs));
         }
 
         let mut limbs = [0; LIMBS];
@@ -288,18 +288,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
         // TODO: Use a `const {}` block for this assertion
         assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
-        if BYTES % 8 == 0 {
-            // Optimized implementation for full-limb types.
-            let mut limbs = [0; LIMBS];
-            let mut i = 0;
-            while i < LIMBS {
-                limbs[i] = u64::from_le_bytes(unsafe { *bytes.as_ptr().add(i * 8).cast() });
-                i += 1;
-            }
-            Self::from_limbs(limbs)
-        } else {
-            Self::from_le_slice(&bytes)
-        }
+        Self::from_le_slice(&bytes)
     }
 
     /// Creates a new integer from a little endian slice of bytes.
@@ -331,6 +320,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
         if bytes.len() / 8 > Self::LIMBS {
             return None;
+        }
+
+        if Self::BYTES % 8 == 0 && bytes.len() == Self::BYTES {
+            // Optimized implementation for full-limb types.
+            let mut limbs = [0; LIMBS];
+            let mut i = 0;
+            while i < LIMBS {
+                limbs[i] = u64::from_le_bytes(unsafe { *bytes.as_ptr().add(i * 8).cast() });
+                i += 1;
+            }
+            return Some(Self::from_limbs(limbs));
         }
 
         let mut limbs = [0; LIMBS];
