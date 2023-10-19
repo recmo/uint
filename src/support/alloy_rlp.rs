@@ -77,7 +77,13 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
         let bytes = Header::decode_bytes(buf, false)?;
-        // TODO: leading zero and canonical representation checks
+
+        // We only need to check if the first byte is zero to make sure there are no
+        // leading zeros
+        if !bytes.is_empty() && bytes[0] == 0 {
+            return Err(Error::LeadingZero);
+        }
+
         Self::try_from_be_slice(bytes).ok_or(Error::Overflow)
     }
 }
@@ -157,16 +163,22 @@ mod test {
             U256::decode(&mut &hex!("820000")[..]),
             Err(Error::LeadingZero)
         );
-        assert_eq!(
-            U256::decode(&mut &hex!("8100")[..]),
-            Err(Error::LeadingZero)
-        );
         // 00 is not a valid uint
         // See https://github.com/ethereum/go-ethereum/blob/cd2953567268777507b1ec29269315324fb5aa9c/rlp/decode_test.go#L118
         assert_eq!(U256::decode(&mut &hex!("00")[..]), Err(Error::LeadingZero));
         // these are non-canonical because they can fit in a single byte, i.e.
-        // 0x7f, 0x assert_eq!(U256::decode(&mut &hex!("817f")[..]),
-        // Err(Error::LeadingZero)); assert_eq!(U256::decode(&mut
-        // &hex!("8133")[..]), Err(Error::LeadingZero));
+        // 0x7f, 0x33
+        assert_eq!(
+            U256::decode(&mut &hex!("8100")[..]),
+            Err(Error::NonCanonicalSingleByte)
+        );
+        assert_eq!(
+            U256::decode(&mut &hex!("817f")[..]),
+            Err(Error::NonCanonicalSingleByte)
+        );
+        assert_eq!(
+            U256::decode(&mut &hex!("8133")[..]),
+            Err(Error::NonCanonicalSingleByte)
+        );
     }
 }
