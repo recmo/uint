@@ -148,4 +148,24 @@ mod test {
             });
         });
     }
+
+    #[test]
+    fn test_invalid_uints() {
+        // these are non-canonical because they have leading zeros
+        assert_eq!(
+            U256::decode(&mut &hex!("820000")[..]),
+            Err(Error::LeadingZero)
+        );
+        assert_eq!(
+            U256::decode(&mut &hex!("8100")[..]),
+            Err(Error::LeadingZero)
+        );
+        // 00 is not a valid uint
+        // See https://github.com/ethereum/go-ethereum/blob/cd2953567268777507b1ec29269315324fb5aa9c/rlp/decode_test.go#L118
+        assert_eq!(U256::decode(&mut &hex!("00")[..]), Err(Error::LeadingZero));
+        // these are non-canonical because they can fit in a single byte, i.e.
+        // 0x7f, 0x assert_eq!(U256::decode(&mut &hex!("817f")[..]),
+        // Err(Error::LeadingZero)); assert_eq!(U256::decode(&mut
+        // &hex!("8133")[..]), Err(Error::LeadingZero));
+    }
 }
