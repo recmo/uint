@@ -77,6 +77,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
         let bytes = Header::decode_bytes(buf, false)?;
+        // TODO: leading zero and canonical representation checks
         Self::try_from_be_slice(bytes).ok_or(Error::Overflow)
     }
 }
