@@ -479,7 +479,6 @@ impl_from_signed_int!(i64, u64);
 impl_from_signed_int!(i128, u128);
 impl_from_signed_int!(isize, usize);
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
@@ -489,16 +488,32 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         if value.is_nan() {
             return Err(ToUintError::NotANumber(BITS));
         }
+
         if value < 0.0 {
-            let wrapped = match Self::try_from(value.abs()) {
+            #[cfg(feature = "std")]
+            let abs = value.abs();
+            #[cfg(not(feature = "std"))]
+            let abs = if value.is_sign_negative() {
+                -value
+            } else {
+                value
+            };
+            let wrapped = match Self::try_from(abs) {
                 Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
                 _ => Self::ZERO,
             }
             .wrapping_neg();
             return Err(ToUintError::ValueNegative(BITS, wrapped));
         }
+
+        if value < 0.5 {
+            return Ok(Self::ZERO);
+        }
+
+        #[cfg(feature = "std")]
         #[allow(clippy::cast_precision_loss)] // BITS is small-ish
         let modulus = (Self::BITS as f64).exp2();
+        #[cfg(feature = "std")]
         if value >= modulus {
             let wrapped = match Self::try_from(value % modulus) {
                 Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
@@ -506,9 +521,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             };
             return Err(ToUintError::ValueTooLarge(BITS, wrapped)); // Wrapping
         }
-        if value < 0.5 {
-            return Ok(Self::ZERO);
-        }
+
         // All non-normal cases should have been handled above
         assert!(value.is_normal());
 
@@ -532,6 +545,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             // Wrapped value is zero because the value is extended with zero bits.
             return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO));
         }
+
         if exponent <= 52 {
             // Truncate mantissa
             Self::try_from(mantissa >> (52 - exponent))
@@ -549,7 +563,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     }
 }
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
