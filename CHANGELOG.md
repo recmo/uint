@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2023-10-27
+
 ### Added
 
 - `bytemuck` feature ([#292])
@@ -275,7 +277,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.10.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/recmo/uint/releases/tag/v1.11.0
 [1.10.1]: https://github.com/recmo/uint/releases/tag/v1.10.1
 [1.10.0]: https://github.com/recmo/uint/releases/tag/v1.10.0
 [1.9.0]: https://github.com/recmo/uint/releases/tag/v1.9.0
