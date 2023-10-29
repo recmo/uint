@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `leading_ones` failed for non-aligned sizes.
+- Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
+
+[#335]: https://github.com/recmo/uint/pulls/335
 
 ## [1.10.1] - 2023-07-30
 
