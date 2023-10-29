@@ -78,14 +78,14 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
         let bytes = Header::decode_bytes(buf, false)?;
 
-        // The RLP spec states that deserialized positive integers with leading zeroes get treated
-        // as invalid.
+        // The RLP spec states that deserialized positive integers with leading zeroes
+        // get treated as invalid.
         //
         // See:
         // https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
         //
-        // To check this, we only need to check if the first byte is zero to make sure there are no
-        // leading zeros
+        // To check this, we only need to check if the first byte is zero to make sure
+        // there are no leading zeros
         if !bytes.is_empty() && bytes[0] == 0 {
             return Err(Error::LeadingZero);
         }
