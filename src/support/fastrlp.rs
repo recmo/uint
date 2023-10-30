@@ -76,7 +76,14 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, DecodeError> {
-        let bytes = Header::decode_bytes(buf, false)?;
+        // let bytes = Header::decode_bytes(buf, false)?;
+        let header = Header::decode(buf)?;
+        if header.list {
+            return Err(DecodeError::UnexpectedList);
+        }
+
+        let bytes = &buf[..header.payload_length];
+        *buf = &buf[header.payload_length..];
 
         // The RLP spec states that deserialized positive integers with leading zeroes
         // get treated as invalid.
