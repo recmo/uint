@@ -87,7 +87,7 @@ impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
         // To check this, we only need to check if the first byte is zero to make sure
         // there are no leading zeros
         if !bytes.is_empty() && bytes[0] == 0 {
-            return Err(Error::LeadingZero);
+            return Err(DecodeError::LeadingZero);
         }
 
         Self::try_from_be_slice(bytes).ok_or(DecodeError::Overflow)
