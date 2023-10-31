@@ -9,13 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2023-10-31
+
 ### Fixed
 
 - Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
 
-[#335]: https://github.com/recmo/uint/pulls/335
-
-## [1.11.0] - 2023-10-27
 
 ### Added
 
@@ -27,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made `add` and `sub` functions `const` ([#324])
 - Made `{from,to}_{b,l}e_bytes` `const` ([#329])
 
+[#335]: https://github.com/recmo/uint/pulls/335
 [#292]: https://github.com/recmo/uint/pulls/292
 [#296]: https://github.com/recmo/uint/pulls/296
 [#298]: https://github.com/recmo/uint/pulls/298
