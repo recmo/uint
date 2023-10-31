@@ -11,11 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.11.0] - 2023-10-31
 
-### Fixed
-
-- Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
-
-
 ### Added
 
 - `bytemuck` feature ([#292])
@@ -26,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made `add` and `sub` functions `const` ([#324])
 - Made `{from,to}_{b,l}e_bytes` `const` ([#329])
 
+### Fixed
+
+- Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
+- `leading_ones` failed for non-aligned sizes.
+
 [#335]: https://github.com/recmo/uint/pulls/335
 [#292]: https://github.com/recmo/uint/pulls/292
 [#296]: https://github.com/recmo/uint/pulls/296
@@ -34,10 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#316]: https://github.com/recmo/uint/pulls/316
 [#324]: https://github.com/recmo/uint/pulls/324
 [#329]: https://github.com/recmo/uint/pulls/329
-
-### Fixed
-
-- `leading_ones` failed for non-aligned sizes.
 
 ## [1.10.1] - 2023-07-30
 
