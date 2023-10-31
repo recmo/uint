@@ -13,7 +13,7 @@ const MAX_BITS: usize = 55 * 8;
 
 /// Allows a [`Uint`] to be serialized as RLP.
 ///
-/// See <https://eth.wiki/en/fundamentals/rlp>
+/// See <https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/>
 impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
     #[inline]
     fn length(&self) -> usize {
@@ -72,16 +72,31 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
 
 /// Allows a [`Uint`] to be deserialized from RLP.
 ///
-/// See <https://eth.wiki/en/fundamentals/rlp>
+/// See <https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/>
 impl<const BITS: usize, const LIMBS: usize> Decodable for Uint<BITS, LIMBS> {
     #[inline]
     fn decode(buf: &mut &[u8]) -> Result<Self, DecodeError> {
+        // let bytes = Header::decode_bytes(buf, false)?;
         let header = Header::decode(buf)?;
         if header.list {
             return Err(DecodeError::UnexpectedList);
         }
+
         let bytes = &buf[..header.payload_length];
         *buf = &buf[header.payload_length..];
+
+        // The RLP spec states that deserialized positive integers with leading zeroes
+        // get treated as invalid.
+        //
+        // See:
+        // https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
+        //
+        // To check this, we only need to check if the first byte is zero to make sure
+        // there are no leading zeros
+        if !bytes.is_empty() && bytes[0] == 0 {
+            return Err(DecodeError::LeadingZero);
+        }
+
         Self::try_from_be_slice(bytes).ok_or(DecodeError::Overflow)
     }
 }

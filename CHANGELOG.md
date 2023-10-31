@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
+
+[#335]: https://github.com/recmo/uint/pulls/335
+
 ## [1.11.0] - 2023-10-27
 
 ### Added
