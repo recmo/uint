@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Typo in `Shr` implementation ([#343])
+
+[#343]: https://github.com/recmo/uint/pulls/343
+
 ## [1.11.0] - 2023-10-31
 
 ### Added
@@ -26,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
 - `leading_ones` failed for non-aligned sizes.
 
-[#335]: https://github.com/recmo/uint/pulls/335
 [#292]: https://github.com/recmo/uint/pulls/292
 [#296]: https://github.com/recmo/uint/pulls/296
 [#298]: https://github.com/recmo/uint/pulls/298
@@ -34,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#316]: https://github.com/recmo/uint/pulls/316
 [#324]: https://github.com/recmo/uint/pulls/324
 [#329]: https://github.com/recmo/uint/pulls/329
+[#335]: https://github.com/recmo/uint/pulls/335
 
 ## [1.10.1] - 2023-07-30
 

@@ -86,8 +86,8 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::INT4 => out.put_i32(self.try_into()?),
             Type::OID => out.put_u32(self.try_into()?),
             Type::INT8 => out.put_i64(self.try_into()?),
-            Type::FLOAT4 => out.put_f32(self.try_into()?),
-            Type::FLOAT8 => out.put_f64(self.try_into()?),
+            Type::FLOAT4 => out.put_f32(self.into()),
+            Type::FLOAT8 => out.put_f64(self.into()),
             Type::MONEY => {
                 // Like i64, but with two decimals.
                 out.put_i64(
