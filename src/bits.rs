@@ -587,7 +587,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<Self> for Uint<BITS, LIMBS> {
         // on a 128-bit platform with 2.3 exabytes of memory. In this case,
         // the code produces incorrect output.
         #[allow(clippy::cast_possible_truncation)]
-        self.wrapping_shl(rhs.as_limbs()[0] as usize)
+        self.wrapping_shr(rhs.as_limbs()[0] as usize)
     }
 }
 
@@ -671,7 +671,6 @@ macro_rules! impl_shift {
 
     (@assign $u:ty) => {
         impl<const BITS: usize, const LIMBS: usize> ShlAssign<$u> for Uint<BITS, LIMBS> {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn shl_assign(&mut self, rhs: $u) {
                 *self = *self << rhs;
@@ -679,7 +678,6 @@ macro_rules! impl_shift {
         }
 
         impl<const BITS: usize, const LIMBS: usize> ShrAssign<$u> for Uint<BITS, LIMBS> {
-            #[allow(clippy::inline_always)]
             #[inline(always)]
             fn shr_assign(&mut self, rhs: $u) {
                 *self = *self >> rhs;
