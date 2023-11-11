@@ -32,6 +32,12 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
     }
 
     fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, DecodeError> {
+        if bytes.len() > nbytes(BITS) {
+            return Err(DecodeError::InvalidByteLength {
+                len:      bytes.len(),
+                expected: nbytes(BITS),
+            });
+        }
         Ok(Self::from_le_slice(bytes))
     }
 }
