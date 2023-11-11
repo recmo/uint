@@ -21,6 +21,7 @@ mod rlp;
 pub mod scale;
 mod serde;
 pub mod sqlx;
+pub mod ssz;
 mod valuable;
 mod zeroize;
 
