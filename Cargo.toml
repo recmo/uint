@@ -64,7 +64,7 @@ serde = { version = "1", optional = true, default-features = false }
 valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
-ethereum_ssz = { version = "0.5.3" }
+ethereum_ssz = { version = "0.5.3", optional = true, default-features = false }
 
 # postgres
 bytes = { version = "1.4", optional = true }
@@ -109,6 +109,7 @@ std = [
     "serde?/std",
     "valuable?/std",
     "zeroize?/std",
+    "ethereum_ssz",
 ]
 alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
 
