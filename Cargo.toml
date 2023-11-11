@@ -108,9 +108,9 @@ std = [
     "rlp?/std",
     "serde?/std",
     "valuable?/std",
-    "zeroize?/std",
-    "ethereum_ssz",
+    "zeroize?/std"
 ]
+ssz = ["std", "dep:ethereum_ssz"]
 alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
 
 # nightly-only features
