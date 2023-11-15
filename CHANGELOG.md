@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#343]: https://github.com/recmo/uint/pulls/343
 
+### Added
+
+-   Enable `SSZ` ([#344])
+
+[#344]: https://github.com/recmo/uint/pulls/344
+
 ## [1.11.0] - 2023-10-31
 
 ### Added
