@@ -46,19 +46,34 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
 mod tests {
     use proptest::proptest;
     use ruint::{const_for, nlimbs, Uint};
+    use ssz::DecodeError;
 
     #[test]
     fn test_ssz_human_readable() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
-
                 let expected = value;
                 let encoded = ssz::Encode::as_ssz_bytes(&expected);
                 let actual = ssz::Decode::from_ssz_bytes(&encoded).unwrap();
-                assert_eq!(expected, actual, "Failed for value: {:?}", value);
+                assert_eq!(expected, actual, "Failed for value: {value:?}" );
             });
 
+        });
+    }
+
+    #[test]
+    fn test_ssz_decode_error_length() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            proptest!(|(value: Uint<BITS, LIMBS>)| {
+                let encoded = ssz::Encode::as_ssz_bytes(&value);
+                let mut oversized = encoded;
+                oversized.push(0);
+
+                let result = <Uint<BITS, LIMBS> as ssz::Decode>::from_ssz_bytes(&oversized);
+                assert!(matches!(result, Err(DecodeError::InvalidByteLength { len:_, expected:_ })));
+            });
         });
     }
 }
