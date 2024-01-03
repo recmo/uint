@@ -374,11 +374,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Check for overflow
-        let mut overflow = false;
-        for i in 0..limbs {
-            overflow |= self.limbs[i] != 0;
-        }
-        overflow |= self.limbs[limbs] >> bits != 0;
+        let overflow = self.limbs[LIMBS - limbs - 1] >> (bits - 1) & 1 != 0;
 
         // Shift
         for i in 0..(LIMBS - limbs - 1) {
@@ -854,5 +850,97 @@ mod tests {
                 });
             });
         });
+    }
+
+    #[test]
+    fn test_overflowing_shr() {
+        assert_eq!(
+            Uint::<64, 1>::from_limbs([40u64]).overflowing_shr(1),
+            (Uint::<64, 1>::from(20), false)
+        );
+        assert_eq!(
+            Uint::<64, 1>::from_limbs([41u64]).overflowing_shr(1),
+            (Uint::<64, 1>::from(20), true)
+        );
+        assert_eq!(
+            Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).overflowing_shr(1),
+            (Uint::<65, 2>::from_limbs([0x0080_0000_0000_000, 0]), false)
+        );
+        assert_eq!(
+            Uint::<256, 4>::MAX.overflowing_shr(65),
+            (
+                Uint::<256, 4>::from_str_radix(
+                    "7fffffffffffffffffffffffffffffffffffffffffffffff",
+                    16
+                )
+                .unwrap(),
+                true
+            )
+        );
+        assert_eq!(
+            Uint::<4096, 64>::from_str_radix("3ffffffffffffffffffffffffffffc00000000", 16,)
+                .unwrap()
+                .overflowing_shr(34),
+            (
+                Uint::<4096, 64>::from_str_radix("fffffffffffffffffffffffffffff", 16).unwrap(),
+                false
+            )
+        );
+        assert_eq!(
+            Uint::<4096, 64>::from_str_radix(
+                "fffffffffffffffffffffffffffff0000000000000000000000000",
+                16,
+            )
+            .unwrap()
+            .overflowing_shr(100),
+            (
+                Uint::<4096, 64>::from_str_radix("fffffffffffffffffffffffffffff", 16).unwrap(),
+                false
+            )
+        );
+        assert_eq!(
+            Uint::<4096, 64>::from_str_radix(
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0bdbfe",
+                16,
+            )
+            .unwrap()
+            .overflowing_shr(1),
+            (
+                Uint::<4096, 64>::from_str_radix(
+                    "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffff85edff",
+                    16
+                )
+                .unwrap(),
+                false
+            )
+        );
+        assert_eq!(
+            Uint::<4096, 64>::from_str_radix(
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                16,
+            )
+            .unwrap()
+            .overflowing_shr(1000),
+            (
+                Uint::<4096, 64>::from_str_radix(
+                    "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                    16
+                )
+                .unwrap(),
+                false
+            )
+        );
+        assert_eq!(
+            Uint::<4096, 64>::MAX
+            .overflowing_shr(34),
+            (
+                Uint::<4096, 64>::from_str_radix(
+                    "3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                    16
+                )
+                .unwrap(),
+                true
+            )
+        );
     }
 }
