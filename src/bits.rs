@@ -854,18 +854,30 @@ mod tests {
 
     #[test]
     fn test_overflowing_shr() {
+        // Test: Single limb right shift from 40u64 by 1 bit.
+        // Expects resulting integer: 20 with no fractional part.
         assert_eq!(
             Uint::<64, 1>::from_limbs([40u64]).overflowing_shr(1),
             (Uint::<64, 1>::from(20), false)
         );
+
+        // Test: Single limb right shift from 41u64 by 1 bit.
+        // Expects resulting integer: 20 with a detected fractional part.
         assert_eq!(
             Uint::<64, 1>::from_limbs([41u64]).overflowing_shr(1),
             (Uint::<64, 1>::from(20), true)
         );
+
+        // Test: Two limbs right shift from 0x0010_0000_0000_0000 and 0 by 1 bit.
+        // Expects resulting limbs: [0x0080_0000_0000_000, 0] with no fractional part.
         assert_eq!(
             Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).overflowing_shr(1),
             (Uint::<65, 2>::from_limbs([0x0080_0000_0000_000, 0]), false)
         );
+
+        // Test: Shift beyond single limb capacity with MAX value.
+        // Expects the highest possible value in 256-bit representation with a detected
+        // fractional part.
         assert_eq!(
             Uint::<256, 4>::MAX.overflowing_shr(65),
             (
@@ -877,6 +889,8 @@ mod tests {
                 true
             )
         );
+        // Test: Large 4096-bit integer right shift by 34 bits.
+        // Expects a specific value with no fractional part.
         assert_eq!(
             Uint::<4096, 64>::from_str_radix("3ffffffffffffffffffffffffffffc00000000", 16,)
                 .unwrap()
@@ -886,6 +900,8 @@ mod tests {
                 false
             )
         );
+        // Test: Extremely large 4096-bit integer right shift by 100 bits.
+        // Expects a specific value with no fractional part.
         assert_eq!(
             Uint::<4096, 64>::from_str_radix(
                 "fffffffffffffffffffffffffffff0000000000000000000000000",
@@ -898,6 +914,8 @@ mod tests {
                 false
             )
         );
+        // Test: Complex 4096-bit integer right shift by 1 bit.
+        // Expects a specific value with no fractional part.
         assert_eq!(
             Uint::<4096, 64>::from_str_radix(
                 "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0bdbfe",
@@ -914,6 +932,8 @@ mod tests {
                 false
             )
         );
+        // Test: Large 4096-bit integer right shift by 1000 bits.
+        // Expects a specific value with no fractional part.
         assert_eq!(
             Uint::<4096, 64>::from_str_radix(
                 "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -930,6 +950,8 @@ mod tests {
                 false
             )
         );
+        // Test: MAX 4096-bit integer right shift by 34 bits.
+        // Expects a specific value with a detected fractional part.
         assert_eq!(
             Uint::<4096, 64>::MAX
             .overflowing_shr(34),
