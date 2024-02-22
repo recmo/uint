@@ -5,6 +5,7 @@ use crate::Uint;
 use core::slice;
 
 #[cfg(feature = "alloc")]
+#[allow(unused_imports)]
 use alloc::{borrow::Cow, vec::Vec};
 
 // OPT: *_to_smallvec to avoid allocation.

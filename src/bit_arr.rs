@@ -8,6 +8,7 @@ use core::{
 };
 
 #[cfg(feature = "alloc")]
+#[allow(unused_imports)]
 use alloc::{borrow::Cow, vec::Vec};
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those

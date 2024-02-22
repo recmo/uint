@@ -214,8 +214,10 @@ impl<const BITS: usize, const LIMBS: usize> FromStr for Uint<BITS, LIMBS> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::string::ToString;
     use proptest::proptest;
+
+    #[allow(unused_imports)]
+    use alloc::string::ToString;
 
     #[allow(clippy::unreadable_literal)]
     const N: Uint<256, 4> = Uint::from_limbs([

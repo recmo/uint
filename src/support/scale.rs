@@ -4,11 +4,13 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "parity-scale-codec")))]
 
 use crate::Uint;
-use alloc::vec::Vec;
 use parity_scale_codec::{
     Compact, CompactAs, Decode, Encode, EncodeAsRef, EncodeLike, Error, HasCompact, Input,
     MaxEncodedLen, Output,
 };
+
+#[allow(unused_imports)]
+use alloc::vec::Vec;
 
 // Compact encoding is supported only for 0-(2**536-1) values:
 // https://docs.substrate.io/reference/scale-codec/#fn-1
