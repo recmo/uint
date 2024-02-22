@@ -1,4 +1,5 @@
 #[cfg(feature = "alloc")]
+#[allow(unused_imports)]
 use alloc::vec::Vec;
 
 /// Like `a % b` but returns `b` instead of `0`.
