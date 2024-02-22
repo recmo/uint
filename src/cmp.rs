@@ -1,5 +1,5 @@
 use crate::Uint;
-use core::cmp::{Ord, Ordering, PartialOrd};
+use core::cmp::Ordering;
 
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[inline]

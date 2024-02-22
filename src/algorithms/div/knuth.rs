@@ -193,12 +193,14 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 mod tests {
     use super::*;
     use crate::algorithms::{addmul, cmp, sbb_n};
-    use alloc::vec::Vec;
     use core::cmp::Ordering;
     use proptest::{
         collection, num, proptest,
         strategy::{Just, Strategy},
     };
+
+    #[allow(unused_imports)]
+    use alloc::vec::Vec;
 
     // Basic test without exceptional paths
     #[test]
