@@ -1,3 +1,12 @@
+#[allow(rustdoc::broken_intra_doc_links)]
+#[doc = include_str!("../ruint-macro/README.md")]
+#[macro_export]
+macro_rules! uint {
+    ($($t:tt)*) => {
+        $crate::__private::ruint_macro::uint_with_path!([$crate] $($t)*)
+    }
+}
+
 macro_rules! impl_bin_op {
     ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident, $fdel:ident) => {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
@@ -63,4 +72,21 @@ macro_rules! impl_bin_op {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_uint_macro_with_paths() {
+        extern crate self as aaa;
+        use crate as ruint;
+        use crate as __ruint;
+        let value = crate::aliases::U256::from(0x10);
+        assert_eq!(value, uint!(0x10U256));
+        assert_eq!(value, ruint_macro::uint_with_path!([crate] 0x10U256));
+        assert_eq!(value, ruint_macro::uint_with_path!([aaa] 0x10U256));
+        assert_eq!(value, ruint_macro::uint_with_path!([aaa] 0x10U256));
+        assert_eq!(value, ruint_macro::uint_with_path!([ruint] 0x10U256));
+        assert_eq!(value, ruint_macro::uint_with_path!([__ruint] 0x10U256));
+    }
 }
