@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2024-02-27
+
 - Overflow check in `overflowing_shr` implementation ([#347])
+- Wrap the `uint!` macro to allow usage without needing `uint` import ([#350])
 
 [#347]: https://github.com/recmo/uint/pulls/347
+[#350]: https://github.com/recmo/uint/pulls/350
 
 ## [1.11.1] - 2023-11-18
 
@@ -297,7 +301,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.11.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/recmo/uint/releases/tag/v1.12.0
 [1.11.1]: https://github.com/recmo/uint/releases/tag/v1.11.1
 [1.11.0]: https://github.com/recmo/uint/releases/tag/v1.11.0
 [1.10.1]: https://github.com/recmo/uint/releases/tag/v1.10.1
