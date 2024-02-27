@@ -73,6 +73,12 @@ pub use self::{
     string::ParseError,
 };
 
+// For documentation purposes we expose the macro directly, otherwise it is
+// wrapped in ./macros.rs.
+#[cfg(doc)]
+#[doc(inline)]
+pub use ruint_macro::uint;
+
 #[cfg(feature = "generic_const_exprs")]
 pub mod nightly {
     //! Extra features that are nightly only.
