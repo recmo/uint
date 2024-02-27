@@ -1,6 +1,7 @@
-#[allow(rustdoc::broken_intra_doc_links)]
-#[doc = include_str!("../ruint-macro/README.md")]
+/// Wrapper for [`ruint_macro::uint!`]. See its documentation for details.
 #[macro_export]
+#[cfg(not(doc))] // Show the actual macro in docs.
+#[doc(hidden)]
 macro_rules! uint {
     ($($t:tt)*) => {
         $crate::__private::ruint_macro::uint_with_path!([$crate] $($t)*)

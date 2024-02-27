@@ -4,7 +4,7 @@ description = "Unsigned integer type with const-generic bit length"
 version = "1.12.0"
 keywords = ["uint"]
 categories = ["mathematics"]
-include = ["src/**/*.rs", "README.md", "ruint-macro/README.md"]
+include = ["src/**/*.rs", "README.md"]
 readme = "README.md"
 
 edition.workspace = true
