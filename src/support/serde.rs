@@ -4,7 +4,6 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 
 use crate::{nbytes, Bits, Uint};
-use alloc::string::String;
 use core::{
     fmt::{Formatter, Result as FmtResult, Write},
     str,
@@ -13,6 +12,9 @@ use serde::{
     de::{Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+
+#[allow(unused_imports)]
+use alloc::string::String;
 
 /// Canonical serialization for all human-readable instances of `Uint<0, 0>`,
 /// and minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
@@ -175,8 +177,10 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BI
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use alloc::vec::Vec;
     use proptest::proptest;
+
+    #[allow(unused_imports)]
+    use alloc::vec::Vec;
 
     #[test]
     fn test_serde_human_readable() {
@@ -204,7 +208,7 @@ mod tests {
             "0b1"
         ]"#;
         let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
-        ruint_macro::uint! {
+        uint! {
             assert_eq!(numbers, vec![1_U1, 1_U1, 1_U1, 1_U1]);
         }
 
@@ -215,7 +219,7 @@ mod tests {
             "0b"
         ]"#;
         let numbers: Vec<Uint<1, 1>> = serde_json::from_str(jason).unwrap();
-        ruint_macro::uint! {
+        uint! {
             assert_eq!(numbers, vec![0_U1, 0_U1, 0_U1, 0_U1]);
         }
     }

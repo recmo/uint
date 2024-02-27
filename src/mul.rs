@@ -180,7 +180,7 @@ impl_bin_op!(Mul, mul, MulAssign, mul_assign, wrapping_mul);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{const_for, nlimbs};
+    use crate::const_for;
     use proptest::proptest;
 
     #[test]

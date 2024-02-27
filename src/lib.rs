@@ -25,15 +25,12 @@
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "nightly", feature(core_intrinsics))]
+#![cfg_attr(feature = "nightly", allow(internal_features))]
 #![cfg_attr(
     feature = "generic_const_exprs",
     feature(generic_const_exprs),
     allow(incomplete_features)
 )]
-
-// Workaround for proc-macro `uint!` in this crate.
-// See <https://github.com/rust-lang/rust/pull/55275>
-extern crate self as ruint;
 
 #[cfg(feature = "alloc")]
 #[macro_use]
@@ -75,9 +72,6 @@ pub use self::{
     from::{FromUintError, ToFieldError, ToUintError, UintTryFrom, UintTryTo},
     string::ParseError,
 };
-
-#[doc(inline)]
-pub use ruint_macro::uint;
 
 #[cfg(feature = "generic_const_exprs")]
 pub mod nightly {
@@ -329,6 +323,12 @@ pub const fn mask(bits: usize) -> u64 {
     } else {
         (1 << bits) - 1
     }
+}
+
+// Not public API.
+#[doc(hidden)]
+pub mod __private {
+    pub use ruint_macro;
 }
 
 #[cfg(test)]

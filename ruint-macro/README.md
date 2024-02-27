@@ -63,7 +63,6 @@ error: Value too large for Uint<8>: 300
   |              ^^^^^^
 ```
 
-
 ## References
 
 * Rust [integer literals syntax](https://doc.rust-lang.org/stable/reference/tokens.html#integer-literals).

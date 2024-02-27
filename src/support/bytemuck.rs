@@ -2,8 +2,8 @@
 #![cfg(feature = "bytemuck")]
 #![cfg_attr(docsrs, doc(cfg(feature = "bytemuck")))]
 
+use crate::Uint;
 use bytemuck::{Pod, Zeroable};
-use ruint::Uint;
 
 // Implement Zeroable for all `Uint` types.
 unsafe impl<const BITS: usize, const LIMBS: usize> Zeroable for Uint<{ BITS }, { LIMBS }> {}

@@ -1,11 +1,36 @@
 #![doc = include_str!("../README.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::cargo, clippy::nursery)]
 
-use core::{
-    fmt::{Display, Formatter, Write},
-    str::FromStr,
-};
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::fmt::{self, Write};
+
+// Repeat the crate doc.
+#[doc = include_str!("../README.md")]
+#[proc_macro]
+pub fn uint(stream: TokenStream) -> TokenStream {
+    Transformer::new(None).transform_stream(stream)
+}
+
+/// Same as [`uint`], but with the first token always being a
+/// [group](proc_macro::Group) containing the `ruint` crate path.
+///
+/// This allows the macro to be used in a crates that don't on `ruint` through a
+/// wrapper `macro_rules!` that passes `$crate` as the path.
+///
+/// This is an implementation detail and should not be used directly.
+#[proc_macro]
+#[doc(hidden)]
+pub fn uint_with_path(stream: TokenStream) -> TokenStream {
+    let mut stream_iter = stream.into_iter();
+    let Some(TokenTree::Group(group)) = stream_iter.next() else {
+        return error(
+            Span::call_site(),
+            "Expected a group containing the `ruint` crate path",
+        )
+        .into();
+    };
+    Transformer::new(Some(group.stream())).transform_stream(stream_iter.collect())
+}
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum LiteralBaseType {
@@ -17,8 +42,8 @@ impl LiteralBaseType {
     const PATTERN: &'static [char] = &['U', 'B'];
 }
 
-impl Display for LiteralBaseType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for LiteralBaseType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Uint => f.write_str("Uint"),
             Self::Bits => f.write_str("Bits"),
@@ -26,7 +51,7 @@ impl Display for LiteralBaseType {
     }
 }
 
-impl FromStr for LiteralBaseType {
+impl std::str::FromStr for LiteralBaseType {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -36,18 +61,6 @@ impl FromStr for LiteralBaseType {
             _ => Err(()),
         }
     }
-}
-
-/// Construct a `<{base_type}><{bits}>` literal from `limbs`.
-fn construct(base_type: LiteralBaseType, bits: usize, limbs: &[u64]) -> TokenStream {
-    let mut limbs_str = String::new();
-    for limb in limbs {
-        write!(&mut limbs_str, "0x{limb:016x}_u64, ").unwrap();
-    }
-    let limbs_str = limbs_str.trim_end_matches(", ");
-    let limbs = (bits + 63) / 64;
-    let source = format!("::ruint::{base_type}::<{bits}, {limbs}>::from_limbs([{limbs_str}])");
-    TokenStream::from_str(&source).unwrap()
 }
 
 /// Construct a compiler error message.
@@ -162,66 +175,92 @@ fn parse_suffix(source: &str) -> Option<(LiteralBaseType, usize, &str)> {
     Some((base_type, bits, value))
 }
 
-/// Transforms a [`Literal`] and returns the substitute [`TokenStream`].
-fn transform_literal(source: &str) -> Result<Option<TokenStream>, String> {
-    // Check if literal has a suffix we accept
-    let Some((base_type, bits, value)) = parse_suffix(source) else {
-        return Ok(None);
-    };
-
-    // Parse `value` into limbs.
-    // At this point we are confident the literal was for us, so we throw errors.
-    let limbs = parse_digits(value)?;
-
-    // Pad limbs to the correct length.
-    let Some(limbs) = pad_limbs(bits, limbs) else {
-        let value = value.trim_end_matches('_');
-        return Err(format!("Value too large for {base_type}<{bits}>: {value}"));
-    };
-
-    Ok(Some(construct(base_type, bits, &limbs)))
+struct Transformer {
+    /// The `ruint` crate path.
+    /// Note that this stream's span must be used in order for the `$crate` to
+    /// work.
+    ruint_crate: TokenStream,
 }
 
-/// Recurse down tree and transform all literals.
-fn transform_tree(tree: TokenTree) -> TokenTree {
-    match tree {
-        TokenTree::Group(group) => {
-            let delimiter = group.delimiter();
-            let span = group.span();
-            let stream = transform_stream(group.stream());
-            let mut transformed = Group::new(delimiter, stream);
-            transformed.set_span(span);
-            TokenTree::Group(transformed)
+impl Transformer {
+    fn new(ruint_crate: Option<TokenStream>) -> Self {
+        Self {
+            ruint_crate: ruint_crate.unwrap_or_else(|| "::ruint".parse().unwrap()),
         }
-        TokenTree::Literal(a) => {
-            let span = a.span();
-            let source = a.to_string();
-            let mut tree = match transform_literal(&source) {
-                Ok(Some(stream)) => TokenTree::Group({
-                    let mut group = Group::new(Delimiter::None, stream);
-                    group.set_span(span);
-                    group
-                }),
-                Ok(None) => TokenTree::Literal(a),
-                Err(message) => error(span, &message),
-            };
-            tree.set_span(span);
-            tree
-        }
-        tree => tree,
     }
-}
 
-/// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
-fn transform_stream(stream: TokenStream) -> TokenStream {
-    stream.into_iter().map(transform_tree).collect()
-}
+    /// Construct a `<{base_type}><{bits}>` literal from `limbs`.
+    fn construct(&self, base_type: LiteralBaseType, bits: usize, limbs: &[u64]) -> TokenStream {
+        let mut limbs_str = String::new();
+        for limb in limbs {
+            write!(&mut limbs_str, "0x{limb:016x}_u64, ").unwrap();
+        }
+        let limbs_str = limbs_str.trim_end_matches(", ");
+        let limbs = (bits + 63) / 64;
+        let source = format!("::{base_type}::<{bits}, {limbs}>::from_limbs([{limbs_str}])");
 
-// Repeat the crate doc
-#[doc = include_str!("../README.md")]
-#[proc_macro]
-pub fn uint(stream: TokenStream) -> TokenStream {
-    transform_stream(stream)
+        let mut tokens = self.ruint_crate.clone();
+        tokens.extend(source.parse::<TokenStream>().unwrap());
+        tokens
+    }
+
+    /// Transforms a [`Literal`] and returns the substitute [`TokenStream`].
+    fn transform_literal(&self, source: &str) -> Result<Option<TokenStream>, String> {
+        // Check if literal has a suffix we accept.
+        let Some((base_type, bits, value)) = parse_suffix(source) else {
+            return Ok(None);
+        };
+
+        // Parse `value` into limbs.
+        // At this point we are confident the literal was for us, so we throw errors.
+        let limbs = parse_digits(value)?;
+
+        // Pad limbs to the correct length.
+        let Some(limbs) = pad_limbs(bits, limbs) else {
+            let value = value.trim_end_matches('_');
+            return Err(format!("Value too large for {base_type}<{bits}>: {value}"));
+        };
+
+        Ok(Some(self.construct(base_type, bits, &limbs)))
+    }
+
+    /// Recurse down tree and transform all literals.
+    fn transform_tree(&self, tree: TokenTree) -> TokenTree {
+        match tree {
+            TokenTree::Group(group) => {
+                let delimiter = group.delimiter();
+                let span = group.span();
+                let stream = self.transform_stream(group.stream());
+                let mut transformed = Group::new(delimiter, stream);
+                transformed.set_span(span);
+                TokenTree::Group(transformed)
+            }
+            TokenTree::Literal(a) => {
+                let span = a.span();
+                let source = a.to_string();
+                let mut tree = match self.transform_literal(&source) {
+                    Ok(Some(stream)) => TokenTree::Group({
+                        let mut group = Group::new(Delimiter::None, stream);
+                        group.set_span(span);
+                        group
+                    }),
+                    Ok(None) => TokenTree::Literal(a),
+                    Err(message) => error(span, &message),
+                };
+                tree.set_span(span);
+                tree
+            }
+            tree => tree,
+        }
+    }
+
+    /// Iterate over a [`TokenStream`] and transform all [`TokenTree`]s.
+    fn transform_stream(&self, stream: TokenStream) -> TokenStream {
+        stream
+            .into_iter()
+            .map(|tree| self.transform_tree(tree))
+            .collect()
+    }
 }
 
 #[cfg(test)]
