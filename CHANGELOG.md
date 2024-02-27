@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Overflow check in `overflowing_shr` implementation ([#347])
+
+[#347]: https://github.com/recmo/uint/pulls/347
+
 ## [1.11.1] - 2023-11-18
 
 ### Fixed
@@ -16,10 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typo in `Shr` implementation ([#343])
 
 [#343]: https://github.com/recmo/uint/pulls/343
-
-- Overflow check in `overflowing_shr` implementation
-
-[#347]: https://github.com/recmo/uint/pulls/347
 
 ### Added
 
