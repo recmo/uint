@@ -9,13 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- docs.rs build ([#356])
+
+[#356]: https://github.com/recmo/uint/pull/356
+
 ## [1.12.0] - 2024-02-27
 
-- Overflow check in `overflowing_shr` implementation ([#347])
+### Added
+
 - Wrap the `uint!` macro to allow usage without needing `uint` import ([#350])
 
-[#347]: https://github.com/recmo/uint/pulls/347
-[#350]: https://github.com/recmo/uint/pulls/350
+### Fixed
+
+- Overflow check in `overflowing_shr` implementation ([#347])
+
+[#347]: https://github.com/recmo/uint/pull/347
+[#350]: https://github.com/recmo/uint/pull/350
 
 ## [1.11.1] - 2023-11-18
 
@@ -23,13 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Typo in `Shr` implementation ([#343])
 
-[#343]: https://github.com/recmo/uint/pulls/343
+[#343]: https://github.com/recmo/uint/pull/343
 
 ### Added
 
 -   Enable `SSZ` ([#344])
 
-[#344]: https://github.com/recmo/uint/pulls/344
+[#344]: https://github.com/recmo/uint/pull/344
 
 ## [1.11.0] - 2023-10-31
 
@@ -48,14 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restricted RLP decoding to match the RLP spec and disallow leading zeros ([#335])
 - `leading_ones` failed for non-aligned sizes.
 
-[#292]: https://github.com/recmo/uint/pulls/292
-[#296]: https://github.com/recmo/uint/pulls/296
-[#298]: https://github.com/recmo/uint/pulls/298
-[#310]: https://github.com/recmo/uint/pulls/310
-[#316]: https://github.com/recmo/uint/pulls/316
-[#324]: https://github.com/recmo/uint/pulls/324
-[#329]: https://github.com/recmo/uint/pulls/329
-[#335]: https://github.com/recmo/uint/pulls/335
+[#292]: https://github.com/recmo/uint/pull/292
+[#296]: https://github.com/recmo/uint/pull/296
+[#298]: https://github.com/recmo/uint/pull/298
+[#310]: https://github.com/recmo/uint/pull/310
+[#316]: https://github.com/recmo/uint/pull/316
+[#324]: https://github.com/recmo/uint/pull/324
+[#329]: https://github.com/recmo/uint/pull/329
+[#335]: https://github.com/recmo/uint/pull/335
 
 ## [1.10.1] - 2023-07-30
 
@@ -63,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed some support features ([#289])
 
-[#289]: https://github.com/recmo/uint/pulls/289
+[#289]: https://github.com/recmo/uint/pull/289
 
 ## [1.10.0] - 2023-07-30
 
@@ -72,8 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for `no_std` environments ([#274])
 - `alloc` feature ([#277])
 
-[#274]: https://github.com/recmo/uint/pulls/274
-[#277]: https://github.com/recmo/uint/pulls/277
+[#274]: https://github.com/recmo/uint/pull/274
+[#277]: https://github.com/recmo/uint/pull/277
 
 ## [1.9.0] - 2023-07-25
 
