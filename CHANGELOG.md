@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2024-03-12
+
 ### Fixed
 
 - docs.rs build ([#356])
+- `uint!` in item position ([#360])
 
 [#356]: https://github.com/recmo/uint/pull/356
+[#360]: https://github.com/recmo/uint/pull/360
 
 ## [1.12.0] - 2024-02-27
 
@@ -312,7 +316,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.12.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.12.1...HEAD
+[1.12.1]: https://github.com/recmo/uint/releases/tag/v1.12.1
 [1.12.0]: https://github.com/recmo/uint/releases/tag/v1.12.0
 [1.11.1]: https://github.com/recmo/uint/releases/tag/v1.11.1
 [1.11.0]: https://github.com/recmo/uint/releases/tag/v1.11.0
