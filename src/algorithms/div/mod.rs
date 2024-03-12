@@ -101,7 +101,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U512, uint};
+    use crate::aliases::U512;
 
     // Test vectors from <https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/test/unittests/test_div.cpp#L58>
     // [[numerator, divisor, quotient, remainder]; _]

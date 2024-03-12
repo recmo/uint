@@ -79,10 +79,9 @@ pub use self::{
 #[doc(inline)]
 pub use ruint_macro::uint;
 
+/// Extra features that are nightly only.
 #[cfg(feature = "generic_const_exprs")]
 pub mod nightly {
-    //! Extra features that are nightly only.
-
     /// Alias for `Uint` specified only by bit size.
     ///
     /// Compared to [`crate::Uint`] it compile-time computes the required number

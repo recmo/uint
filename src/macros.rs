@@ -4,7 +4,7 @@
 #[doc(hidden)]
 macro_rules! uint {
     ($($t:tt)*) => {
-        $crate::__private::ruint_macro::uint_with_path!([$crate] $($t)*)
+        $crate::__private::ruint_macro::uint_with_path! { [$crate] $($t)* }
     }
 }
 
@@ -77,6 +77,22 @@ macro_rules! impl_bin_op {
 
 #[cfg(test)]
 mod tests {
+    // https://github.com/recmo/uint/issues/359
+    ruint_macro::uint_with_path! {
+        [crate]
+        const _A: [crate::aliases::U256; 2] = [
+            0x00006f85d6f68a85ec10345351a23a3aaf07f38af8c952a7bceca70bd2af7ad5_U256,
+            0x00004b4110c9ae997782e1509b1d0fdb20a7c02bbd8bea7305462b9f8125b1e8_U256,
+        ];
+    }
+
+    crate::uint! {
+        const _B: [crate::aliases::U256; 2] = [
+            0x00006f85d6f68a85ec10345351a23a3aaf07f38af8c952a7bceca70bd2af7ad5_U256,
+            0x00004b4110c9ae997782e1509b1d0fdb20a7c02bbd8bea7305462b9f8125b1e8_U256,
+        ];
+    }
+
     #[test]
     fn test_uint_macro_with_paths() {
         extern crate self as aaa;
