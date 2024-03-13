@@ -74,6 +74,28 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         modulus
     }
 
+    /// Alloc free variant of [`mul_mod`](Self::mul_mod).
+    ///
+    /// Requires `N` to be set to `nlimbs(2 * BITS)`.
+    #[inline]
+    #[must_use]
+    pub fn mul_mod_na<const N: usize>(self, rhs: Self, mut modulus: Self) -> Self {
+        assert_eq!(N, crate::nlimbs(2 * BITS));
+        if modulus == Self::ZERO {
+            return Self::ZERO;
+        }
+        // Compute full product.
+        let mut product = [0; N];
+        let overflow = algorithms::addmul(&mut product, self.as_limbs(), rhs.as_limbs());
+        debug_assert!(!overflow);
+
+        // Compute modulus using `div_rem`.
+        // This stores the remainder in the divisor, `modulus`.
+        algorithms::div(&mut product, &mut modulus.limbs);
+
+        modulus
+    }
+
     /// Compute $\mod{\mathtt{self}^{\mathtt{rhs}}}_{\mathtt{modulus}}$.
     ///
     /// Returns zero if the modulus is zero.
