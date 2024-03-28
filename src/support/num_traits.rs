@@ -26,8 +26,7 @@ use num_traits::{
     CheckedEuclid, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
 };
 
-#[cfg(feature = "alloc")]
-#[allow(unused_imports)]
+#[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
 // TODO: AsPrimitive
