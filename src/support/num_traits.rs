@@ -26,6 +26,9 @@ use num_traits::{
     CheckedEuclid, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
 };
 
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
+
 // TODO: AsPrimitive
 
 // Note. We can not implement `NumBytes` as it requires T to be `AsMut<[u8]>`.

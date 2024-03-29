@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- add `alloc` requirement to `num-traits` feature  [#363]
+
+[#363]: https://github.com/recmo/uint/pull/363
+
 ## [1.12.1] - 2024-03-12
 
 ### Fixed

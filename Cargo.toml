@@ -1,7 +1,7 @@
 [package]
 name = "ruint"
 description = "Unsigned integer type with const-generic bit length"
-version = "1.12.1"
+version = "1.12.2"
 keywords = ["uint"]
 categories = ["mathematics"]
 include = [".cargo/", "src/", "README.md"]
@@ -125,6 +125,7 @@ ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
 fastrlp = ["dep:fastrlp", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
+num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
 proptest = ["dep:proptest", "std"] # TODO: change to "alloc" on the next proptest release (>1.2.0)
