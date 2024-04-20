@@ -271,11 +271,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
             // Shift
             for i in (limbs..LIMBS).rev() {
+                assume!(i >= limbs && i - limbs < LIMBS);
                 self.limbs[i] = self.limbs[i - limbs];
             }
-            for i in 0..limbs {
-                self.limbs[i] = 0;
-            }
+            self.limbs[..limbs].fill(0);
             self.limbs[LIMBS - 1] &= Self::MASK;
             return (self, overflow);
         }
@@ -294,13 +293,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         // Shift
         for i in (limbs + 1..LIMBS).rev() {
+            assume!(i - limbs < LIMBS && i - limbs - 1 < LIMBS);
             self.limbs[i] = self.limbs[i - limbs] << bits;
             self.limbs[i] |= self.limbs[i - limbs - 1] >> (64 - bits);
         }
         self.limbs[limbs] = self.limbs[0] << bits;
-        for i in 0..limbs {
-            self.limbs[i] = 0;
-        }
+        self.limbs[..limbs].fill(0);
         self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }
@@ -367,9 +365,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             for i in 0..(LIMBS - limbs) {
                 self.limbs[i] = self.limbs[i + limbs];
             }
-            for i in (LIMBS - limbs)..LIMBS {
-                self.limbs[i] = 0;
-            }
+            self.limbs[LIMBS - limbs..].fill(0);
             return (self, overflow);
         }
 
@@ -378,13 +374,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         // Shift
         for i in 0..(LIMBS - limbs - 1) {
+            assume!(i + limbs < LIMBS && i + limbs + 1 < LIMBS);
             self.limbs[i] = self.limbs[i + limbs] >> bits;
             self.limbs[i] |= self.limbs[i + limbs + 1] << (64 - bits);
         }
         self.limbs[LIMBS - limbs - 1] = self.limbs[LIMBS - 1] >> bits;
-        for i in (LIMBS - limbs)..LIMBS {
-            self.limbs[i] = 0;
-        }
+        self.limbs[LIMBS - limbs..].fill(0);
         (self, overflow)
     }
 
@@ -630,6 +625,7 @@ macro_rules! impl_shift {
             type Output = Self;
 
             #[inline(always)]
+            #[allow(clippy::cast_possible_truncation)]
             fn shl(self, rhs: $u) -> Self::Output {
                 self.wrapping_shl(rhs as usize)
             }
@@ -639,8 +635,9 @@ macro_rules! impl_shift {
             type Output = Self;
 
             #[inline(always)]
+            #[allow(clippy::cast_possible_truncation)]
             fn shr(self, rhs: $u) -> Self::Output {
-               self.wrapping_shr(rhs as usize)
+                self.wrapping_shr(rhs as usize)
             }
         }
     };

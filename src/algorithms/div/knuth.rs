@@ -5,7 +5,6 @@ use crate::{
     algorithms::{add::adc_n, mul::submul_nx1},
     utils::{likely, unlikely},
 };
-use core::u64;
 
 /// ⚠️ In-place Knuth normalized long division with reciprocals.
 ///
