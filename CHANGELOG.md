@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use borrowing/carrying ops in add/sub, remove bound checks in shifts ([#366])
+
 ### Fixed
 
-- add `alloc` requirement to `num-traits` feature  [#363]
+- Add `alloc` requirement to `num-traits` feature [#363]
 
 [#363]: https://github.com/recmo/uint/pull/363
+[#366]: https://github.com/recmo/uint/pull/366
 
 ## [1.12.1] - 2024-03-12
 

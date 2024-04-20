@@ -56,19 +56,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
+        // TODO: Replace with `u64::carrying_add` once stable.
+        #[inline]
+        const fn u64_carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
+            let (a, b) = lhs.overflowing_add(rhs);
+            let (c, d) = a.overflowing_add(carry as u64);
+            (c, b || d)
+        }
+
         if BITS == 0 {
             return (Self::ZERO, false);
         }
-        let mut carry = 0_u128;
+        let mut carry = false;
         let mut i = 0;
-        #[allow(clippy::cast_possible_truncation)] // Intentional
         while i < LIMBS {
-            carry += self.limbs[i] as u128 + rhs.limbs[i] as u128;
-            self.limbs[i] = carry as u64;
-            carry >>= 64;
+            (self.limbs[i], carry) = u64_carrying_add(self.limbs[i], rhs.limbs[i], carry);
             i += 1;
         }
-        let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
+        let overflow = carry || self.limbs[LIMBS - 1] > Self::MASK;
         self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }
@@ -93,20 +98,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
+        // TODO: Replace with `u64::borrowing_sub` once stable.
+        #[inline]
+        const fn u64_borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
+            let (a, b) = lhs.overflowing_sub(rhs);
+            let (c, d) = a.overflowing_sub(borrow as u64);
+            (c, b || d)
+        }
+
         if BITS == 0 {
             return (Self::ZERO, false);
         }
-        let mut carry = 0_i128;
+        let mut borrow = false;
         let mut i = 0;
-        #[allow(clippy::cast_possible_truncation)] // Intentional
-        #[allow(clippy::cast_sign_loss)] // Intentional
         while i < LIMBS {
-            carry += self.limbs[i] as i128 - rhs.limbs[i] as i128;
-            self.limbs[i] = carry as u64;
-            carry >>= 64;
+            (self.limbs[i], borrow) = u64_borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
             i += 1;
         }
-        let overflow = carry != 0 || self.limbs[LIMBS - 1] > Self::MASK;
+        let overflow = borrow || self.limbs[LIMBS - 1] > Self::MASK;
         self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }

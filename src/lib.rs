@@ -16,6 +16,8 @@
     clippy::unreadable_literal,
     clippy::let_unit_value,
     clippy::option_if_let_else,
+    clippy::cast_sign_loss,
+    clippy::cast_lossless,
 )]
 #![cfg_attr(
     any(test, feature = "bench"),

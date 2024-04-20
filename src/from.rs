@@ -601,6 +601,7 @@ macro_rules! to_int {
             type Error = FromUintError<Self>;
 
             #[inline]
+            #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
             fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
                 const SIGNED: bool = <$int>::MIN != 0;
                 const CAPACITY: usize = if SIGNED { <$int>::BITS - 1 } else { <$int>::BITS } as usize;
