@@ -1,6 +1,6 @@
 //! Support for the [`ark-ff`](https://crates.io/crates/ark-ff) crate.
 #![cfg(feature = "ark-ff-04")]
-#![cfg_attr(has_doc_cfg, doc(cfg(feature = "ark-ff-04")))]
+#![cfg_attr(docsrs, doc(cfg(feature = "ark-ff-04")))]
 
 use crate::{ToFieldError, Uint};
 use ark_ff_04::{

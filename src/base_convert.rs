@@ -26,9 +26,9 @@ impl fmt::Display for BaseConvertError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Overflow => f.write_str("The value is too large to fit the target type"),
+            Self::Overflow => f.write_str("the value is too large to fit the target type"),
             Self::InvalidBase(base) => {
-                write!(f, "The requested number base {base} is less than two")
+                write!(f, "the requested number base {base} is less than two")
             }
             Self::InvalidDigit(digit, base) => {
                 write!(f, "digit {digit} is out of range for base {base}")
