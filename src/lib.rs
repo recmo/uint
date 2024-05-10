@@ -19,10 +19,7 @@
     clippy::cast_sign_loss,
     clippy::cast_lossless,
 )]
-#![cfg_attr(
-    any(test, feature = "bench"),
-    allow(clippy::wildcard_imports, clippy::cognitive_complexity)
-)]
+#![cfg_attr(test, allow(clippy::wildcard_imports, clippy::cognitive_complexity))]
 #![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
@@ -51,6 +48,7 @@ mod bytes;
 mod cmp;
 mod const_for;
 mod div;
+mod fmt;
 mod from;
 mod gcd;
 mod log;
