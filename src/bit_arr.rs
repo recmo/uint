@@ -13,7 +13,8 @@ use alloc::{borrow::Cow, vec::Vec};
 
 /// A newtype wrapper around [`Uint`] that restricts operations to those
 /// relevant for bit arrays.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Default, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "alloc", derive(Debug))]
 pub struct Bits<const BITS: usize, const LIMBS: usize>(Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for Bits<BITS, LIMBS> {
