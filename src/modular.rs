@@ -52,24 +52,28 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// some pre-computation.
     #[inline]
     #[must_use]
-    #[cfg(feature = "alloc")] // see comments below
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
         if modulus == Self::ZERO {
             return Self::ZERO;
         }
+
+        // Allocate at least `nlimbs(2 * BITS)` limbs to store the product. This array
+        // casting is a workaround for `generic_const_exprs` not being stable.
+        let mut product = [[0u64; 2]; LIMBS];
+        let product_len = crate::nlimbs(2 * BITS);
+        debug_assert!(2 * LIMBS >= product_len);
+        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
+        let product = unsafe {
+            core::slice::from_raw_parts_mut(product.as_mut_ptr().cast::<u64>(), product_len)
+        };
+
         // Compute full product.
-        // The challenge here is that Rust doesn't allow us to create a
-        // `Uint<2 * BITS, _>` for the intermediate result. Otherwise
-        // we could just use a `widening_mul`. So instead we allocate from heap.
-        // Alternatively we could use `alloca`, but that is blocked on
-        // See <https://github.com/rust-lang/rust/issues/48055>
-        let mut product = vec![0; crate::nlimbs(2 * BITS)];
-        let overflow = algorithms::addmul(&mut product, self.as_limbs(), rhs.as_limbs());
+        let overflow = algorithms::addmul(product, self.as_limbs(), rhs.as_limbs());
         debug_assert!(!overflow);
 
         // Compute modulus using `div_rem`.
         // This stores the remainder in the divisor, `modulus`.
-        algorithms::div(&mut product, &mut modulus.limbs);
+        algorithms::div(product, &mut modulus.limbs);
 
         modulus
     }
@@ -79,7 +83,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns zero if the modulus is zero.
     #[inline]
     #[must_use]
-    #[cfg(feature = "alloc")] // see comments in mul_mod
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
         if modulus == Self::ZERO || modulus <= Self::from(1) {
             // Also covers Self::BITS == 0

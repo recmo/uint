@@ -95,8 +95,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// * [`BaseConvertError::InvalidBase`] if the base is less than 2.
     /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
-    /// * [`BaseConvertError::Overflow`] if the number is too large to
-    /// fit.
+    /// * [`BaseConvertError::Overflow`] if the number is too large to fit.
     #[inline]
     pub fn from_base_le<I>(base: u64, digits: I) -> Result<Self, BaseConvertError>
     where
@@ -155,8 +154,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// * [`BaseConvertError::InvalidBase`] if the base is less than 2.
     /// * [`BaseConvertError::InvalidDigit`] if a digit is out of range.
-    /// * [`BaseConvertError::Overflow`] if the number is too large to
-    /// fit.
+    /// * [`BaseConvertError::Overflow`] if the number is too large to fit.
     #[inline]
     pub fn from_base_be<I: IntoIterator<Item = u64>>(
         base: u64,
