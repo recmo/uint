@@ -47,14 +47,14 @@ pub fn reciprocal_ref(d: u64) -> u64 {
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 /// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L683
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn reciprocal_mg10(d: u64) -> u64 {
     const ZERO: Wrapping<u64> = Wrapping(0);
     const ONE: Wrapping<u64> = Wrapping(1);
 
     // Lookup table for $\floor{\frac{2^{19} -3 ⋅ 2^8}{d_9 - 256}}$
-    const TABLE: [u16; 256] = [
+    static TABLE: [u16; 256] = [
         2045, 2037, 2029, 2021, 2013, 2005, 1998, 1990, 1983, 1975, 1968, 1960, 1953, 1946, 1938,
         1931, 1924, 1917, 1910, 1903, 1896, 1889, 1883, 1876, 1869, 1863, 1856, 1849, 1843, 1836,
         1830, 1824, 1817, 1811, 1805, 1799, 1792, 1786, 1780, 1774, 1768, 1762, 1756, 1750, 1745,
@@ -101,7 +101,7 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
 /// Implements [MG10] algorithm 6.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn reciprocal_2_mg10(d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
@@ -135,7 +135,7 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
 }
 
 #[allow(clippy::missing_const_for_fn)] // False positive
-#[inline(always)]
+#[inline]
 #[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
     let a = u128::from(a.0);
@@ -145,7 +145,7 @@ fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
 }
 
 #[allow(clippy::missing_const_for_fn)] // False positive
-#[inline(always)]
+#[inline]
 #[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
     let a = u128::from(a.0);
