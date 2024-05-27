@@ -19,7 +19,7 @@ pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 /// The divisor must be normalized. See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline(always)]
+#[inline]
 pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 63));
@@ -47,7 +47,7 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 ///
 /// May panics if the above requirements are not met.
 // TODO: Rewrite in a way that avoids bounds-checks without unsafe.
-#[inline(always)]
+#[inline]
 pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor != 0);
     debug_assert!(!limbs.is_empty());
@@ -91,7 +91,7 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
 ///
 /// Requires `divisor` to be in the range $[2^{127}, 2^{128})$ (i.e.
 /// normalized). Same as [`div_nx1`] but using [`div_3x2`] internally.
-#[inline(always)]
+#[inline]
 pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 127));
@@ -115,7 +115,7 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 ///
 /// May panics if the above requirements are not met.
 // TODO: Rewrite in a way that avoids bounds-checks without unsafe.
-#[inline(always)]
+#[inline]
 pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     debug_assert!(divisor >= 1 << 64);
     debug_assert!(!limbs.is_empty());
@@ -153,7 +153,7 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     remainder >> shift
 }
 
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
@@ -174,7 +174,7 @@ pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
 /// Implements algorithm 4 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
@@ -199,7 +199,7 @@ pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
 }
 
 /// TODO: This implementation is off by one.
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
@@ -252,7 +252,7 @@ pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
 /// Implements [MG10] algorithm 5.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
     debug_assert!(d >= (1 << 127));

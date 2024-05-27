@@ -62,7 +62,7 @@ pub fn addmul_ref(result: &mut [u64], a: &[u64], b: &[u64]) -> bool {
 /// assert_eq!(overflow, false);
 /// assert_eq!(result, [12]);
 /// ```
-#[inline(always)]
+#[inline]
 pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
     // Trim zeros from `a`
     while let [0, rest @ ..] = a {
@@ -116,7 +116,7 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
 }
 
 /// Computes `lhs += a` and returns the carry.
-#[inline(always)]
+#[inline]
 pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
     if a == 0 {
         return 0;
@@ -244,7 +244,7 @@ pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
 /// \\\\ \mathsf{carry} &= \floor{\frac{\mathsf{lhs} + \mathsf{a} ⋅ \mathsf{b}
 /// }{2^{64⋅N}}} \end{aligned}
 /// $$
-#[inline(always)]
+#[inline]
 pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     debug_assert_eq!(lhs.len(), a.len());
     let mut carry = 0;
@@ -267,7 +267,7 @@ pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 /// \mathsf{lhs}}{2^{64⋅N}}} \end{aligned}
 /// $$
 // OPT: `carry` and `borrow` can probably be merged into a single var.
-#[inline(always)]
+#[inline]
 pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     debug_assert_eq!(lhs.len(), a.len());
     let mut carry = 0;
