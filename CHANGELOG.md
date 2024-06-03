@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.3] - 2024-06-03
+
 ### Changed
 
 - Use borrowing/carrying ops in add/sub, remove bound checks in shifts ([#366])
+- Make `mul_mod` non-allocating ([#373])
 
 ### Fixed
 
@@ -19,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#363]: https://github.com/recmo/uint/pull/363
 [#366]: https://github.com/recmo/uint/pull/366
+[#373]: https://github.com/recmo/uint/pull/373
 
 ## [1.12.1] - 2024-03-12
 
@@ -327,7 +331,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.12.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.12.3...HEAD
+[1.12.3]: https://github.com/recmo/uint/releases/tag/v1.12.3
 [1.12.1]: https://github.com/recmo/uint/releases/tag/v1.12.1
 [1.12.0]: https://github.com/recmo/uint/releases/tag/v1.12.0
 [1.11.1]: https://github.com/recmo/uint/releases/tag/v1.11.1
