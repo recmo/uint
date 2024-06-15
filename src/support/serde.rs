@@ -39,29 +39,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     fn serialize_human_minimal<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        if BITS == 0 {
+        if self.is_zero() {
             return s.serialize_str(ZERO_STR);
         }
 
-        let le_bytes = self.as_le_bytes();
-        let mut bytes = le_bytes.iter().rev().skip_while(|b| **b == 0);
-
-        // We avoid String allocation if there is no non-0 byte
-        // If there is a first byte, we allocate a string, and write the prefix
-        // and first byte to it
-        let mut result = match bytes.next() {
-            Some(b) => {
-                let mut result = String::with_capacity(2 + nbytes(BITS) * 2);
-                write!(result, "0x{b:x}").unwrap();
-                result
-            }
-            None => return s.serialize_str(ZERO_STR),
-        };
-        bytes
-            .try_for_each(|byte| write!(result, "{byte:02x}"))
-            .unwrap();
-
-        s.serialize_str(&result)
+        s.serialize_str(&format!("{self:#x}"))
     }
 
     fn serialize_binary<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -83,7 +65,8 @@ impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     }
 }
 
-/// Deserialize human readable hex strings or byte arrays into hashes.
+/// Deserialize human readable hex strings or byte arrays into [`Uint`].
+///
 /// Hex strings can be upper/lower/mixed case, have an optional `0x` prefix, and
 /// can be any length. They are interpreted big-endian.
 impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS, LIMBS> {
