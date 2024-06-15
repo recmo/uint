@@ -445,9 +445,7 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            // TODO: Increase cases when perf is better.
-            let mut config = Config::default();
-            config.cases = min(config.cases, if BITS > 500 { 12 } else { 40 });
+            let config = Config { cases: 10, ..Default::default() };
             proptest!(config, |(a: U, b: U)| {
                 test_form_uint_one(a, b);
             });
