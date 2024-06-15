@@ -55,7 +55,7 @@ parity-scale-codec = { version = "3", optional = true, features = [
     "max-encoded-len",
 ], default-features = false }
 primitive-types = { version = "0.12", optional = true, default-features = false }
-proptest = { version = "1.2", optional = true, default-features = false }
+proptest = { version = "1.3", optional = true, default-features = false }
 pyo3 = { version = "0.19", optional = true, default-features = false }
 quickcheck = { version = "1", optional = true, default-features = false }
 rand = { version = "0.8", optional = true, default-features = false }
@@ -128,7 +128,7 @@ num-bigint = ["dep:num-bigint", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
-proptest = ["dep:proptest", "std"] # TODO: change to "alloc" on the next proptest release (>1.2.0)
+proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
