@@ -33,7 +33,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
-        assert!(rhs != Self::ZERO, "Division by zero");
         let (q, r) = self.div_rem(rhs);
         if r == Self::ZERO {
             q
@@ -51,7 +50,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
-        assert!(rhs != Self::ZERO, "Division by zero");
         algorithms::div(&mut self.limbs, &mut rhs.limbs);
         (self, rhs)
     }
