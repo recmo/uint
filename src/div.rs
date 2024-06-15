@@ -7,7 +7,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_div(self, rhs: Self) -> Option<Self> {
-        if rhs == Self::ZERO {
+        if rhs.is_zero() {
             return None;
         }
         Some(self.div(rhs))
@@ -18,7 +18,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
-        if rhs == Self::ZERO {
+        if rhs.is_zero() {
             return None;
         }
         Some(self.rem(rhs))
@@ -33,9 +33,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
-        assert!(rhs != Self::ZERO, "Division by zero");
         let (q, r) = self.div_rem(rhs);
-        if r == Self::ZERO {
+        if r.is_zero() {
             q
         } else {
             q + Self::from(1)
@@ -51,7 +50,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
-        assert!(rhs != Self::ZERO, "Division by zero");
         algorithms::div(&mut self.limbs, &mut rhs.limbs);
         (self, rhs)
     }

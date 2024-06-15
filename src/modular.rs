@@ -17,7 +17,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn reduce_mod(mut self, modulus: Self) -> Self {
-        if modulus == Self::ZERO {
+        if modulus.is_zero() {
             return Self::ZERO;
         }
         if self >= modulus {
@@ -53,7 +53,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
-        if modulus == Self::ZERO {
+        if modulus.is_zero() {
             return Self::ZERO;
         }
 
@@ -84,7 +84,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
-        if modulus == Self::ZERO || modulus <= Self::from(1) {
+        if modulus.is_zero() || modulus <= Self::from(1) {
             // Also covers Self::BITS == 0
             return Self::ZERO;
         }

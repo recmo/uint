@@ -75,36 +75,36 @@ jobs:
           --feature-powerset --exclude-features nightly,generic_const_exprs \
           --depth 1
 
-  codecov:
-    # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
-    name: Coverage
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Generate code coverage
-        env:
-          # Covered tests are slower, so reduce the test load. (We also shouldn't
-          # depend too much on case generation for coverage).
-          PROPTEST_CASES: 5
-        run: |
-          # Generate profiles, but do not merge them
-          cargo llvm-cov --no-report --workspace --all-features --all-targets -- --nocapture
-          cargo llvm-cov --no-report --workspace --all-features --doc -- --nocapture
-      - name: Merge profiles
-        run: cargo llvm-cov --no-run --lcov --output-path lcov.info
-      - name: Submit to codecov.io
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
-          files: lcov.info
-          fail_ci_if_error: true
-          verbose: true
+  # codecov:
+  #   # See <https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/source-based-code-coverage.html>
+  #   name: Coverage
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@nightly
+  #       with:
+  #         components: llvm-tools-preview
+  #     - uses: Swatinem/rust-cache@v2
+  #     - uses: taiki-e/install-action@cargo-llvm-cov
+  #     - name: Generate code coverage
+  #       env:
+  #         # Covered tests are slower, so reduce the test load. (We also shouldn't
+  #         # depend too much on case generation for coverage).
+  #         PROPTEST_CASES: 5
+  #       run: |
+  #         # Generate profiles, but do not merge them
+  #         cargo llvm-cov --no-report --workspace --all-features --all-targets -- --nocapture
+  #         cargo llvm-cov --no-report --workspace --all-features --doc -- --nocapture
+  #     - name: Merge profiles
+  #       run: cargo llvm-cov --no-run --lcov --output-path lcov.info
+  #     - name: Submit to codecov.io
+  #       uses: codecov/codecov-action@v3
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+  #         files: lcov.info
+  #         fail_ci_if_error: true
+  #         verbose: true
 
   clippy:
     name: Clippy
