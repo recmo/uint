@@ -31,7 +31,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert!(degree > 0, "degree must be greater than zero");
 
         // Handle zero case (including BITS == 0).
-        if self == Self::ZERO {
+        if self.is_zero() {
             return Self::ZERO;
         }
 
