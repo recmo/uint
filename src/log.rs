@@ -9,7 +9,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn checked_log(self, base: Self) -> Option<usize> {
-        if base < Self::from(2) || self == Self::ZERO {
+        if base < Self::from(2) || self.is_zero() {
             return None;
         }
         Some(self.log(base))
