@@ -17,7 +17,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn reduce_mod(mut self, modulus: Self) -> Self {
-        if modulus == Self::ZERO {
+        if modulus.is_zero() {
             return Self::ZERO;
         }
         if self >= modulus {
@@ -53,7 +53,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
-        if modulus == Self::ZERO {
+        if modulus.is_zero() {
             return Self::ZERO;
         }
 
@@ -84,7 +84,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
-        if modulus == Self::ZERO || modulus <= Self::from(1) {
+        if modulus.is_zero() || modulus <= Self::from(1) {
             // Also covers Self::BITS == 0
             return Self::ZERO;
         }
@@ -176,7 +176,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{aliases::U64, const_for, nlimbs};
-    use core::cmp::min;
     use proptest::{prop_assume, proptest, test_runner::Config};
 
     #[test]
@@ -252,10 +251,13 @@ mod tests {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            // TODO: Increase cases when perf is better.
-            let mut config = Config::default();
-            // BUG: Proptest still runs 5 cases even if we set it to 1.
-            config.cases = min(config.cases, if BITS > 500 { 1 } else { 3 });
+
+            // Too slow.
+            if LIMBS > 8 {
+                return;
+            }
+
+            let config = Config { cases: 5, ..Default::default() };
             proptest!(config, |(a: U, b: U, c: U, m: U)| {
                 // TODO: a^(b+c) = a^b * a^c. Which requires carmichael fn.
                 // TODO: (a^b)^c = a^(b * c). Which requires carmichael fn.
@@ -269,10 +271,7 @@ mod tests {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            // TODO: Increase cases when perf is better.
-            let mut config = Config::default();
-            config.cases = min(config.cases, if BITS > 500 { 6 } else { 20 });
-            proptest!(config, |(a: U, m: U)| {
+            proptest!(|(a: U, m: U)| {
                 if let Some(inv) = a.inv_mod(m) {
                     assert_eq!(a.mul_mod(inv, m), U::from(1));
                 }

@@ -75,6 +75,7 @@ macro_rules! impl_bin_op {
     };
 }
 
+#[allow(unused)]
 macro_rules! assume {
     ($e:expr $(,)?) => {
         if !$e {
@@ -89,6 +90,7 @@ macro_rules! assume {
     };
 }
 
+#[allow(unused)]
 macro_rules! debug_unreachable {
     ($($t:tt)*) => {
         if cfg!(debug_assertions) {

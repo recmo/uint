@@ -254,53 +254,22 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub fn overflowing_shl(mut self, rhs: usize) -> (Self, bool) {
+    pub fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, self != Self::ZERO);
         }
-        if bits == 0 {
-            // Check for overflow
-            let mut overflow = false;
-            for i in (LIMBS - limbs)..LIMBS {
-                overflow |= self.limbs[i] != 0;
-            }
-            if self.limbs[LIMBS - limbs - 1] > Self::MASK {
-                overflow = true;
-            }
 
-            // Shift
-            for i in (limbs..LIMBS).rev() {
-                assume!(i >= limbs && i - limbs < LIMBS);
-                self.limbs[i] = self.limbs[i - limbs];
-            }
-            self.limbs[..limbs].fill(0);
-            self.limbs[LIMBS - 1] &= Self::MASK;
-            return (self, overflow);
+        let word_bits = 64;
+        let mut r = Self::ZERO;
+        let mut carry = 0;
+        for i in 0..Self::LIMBS - limbs {
+            let x = self.limbs[i];
+            r.limbs[i + limbs] = (x << bits) | carry;
+            carry = (x >> (word_bits - bits - 1)) >> 1;
         }
-
-        // Check for overflow
-        let mut overflow = false;
-        for i in (LIMBS - limbs)..LIMBS {
-            overflow |= self.limbs[i] != 0;
-        }
-        if self.limbs[LIMBS - limbs - 1] >> (64 - bits) != 0 {
-            overflow = true;
-        }
-        if self.limbs[LIMBS - limbs - 1] << bits > Self::MASK {
-            overflow = true;
-        }
-
-        // Shift
-        for i in (limbs + 1..LIMBS).rev() {
-            assume!(i - limbs < LIMBS && i - limbs - 1 < LIMBS);
-            self.limbs[i] = self.limbs[i - limbs] << bits;
-            self.limbs[i] |= self.limbs[i - limbs - 1] >> (64 - bits);
-        }
-        self.limbs[limbs] = self.limbs[0] << bits;
-        self.limbs[..limbs].fill(0);
-        self.limbs[LIMBS - 1] &= Self::MASK;
-        (self, overflow)
+        r.limbs[LIMBS - 1] &= Self::MASK;
+        (r, carry != 0)
     }
 
     /// Left shift by `rhs` bits.
@@ -349,38 +318,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub fn overflowing_shr(mut self, rhs: usize) -> (Self, bool) {
+    pub fn overflowing_shr(self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, self != Self::ZERO);
         }
-        if bits == 0 {
-            // Check for overflow
-            let mut overflow = false;
-            for i in 0..limbs {
-                overflow |= self.limbs[i] != 0;
-            }
 
-            // Shift
-            for i in 0..(LIMBS - limbs) {
-                self.limbs[i] = self.limbs[i + limbs];
-            }
-            self.limbs[LIMBS - limbs..].fill(0);
-            return (self, overflow);
+        let word_bits = 64;
+        let mut r = Self::ZERO;
+        let mut carry = 0;
+        for i in 0..LIMBS - limbs {
+            let x = self.limbs[LIMBS - 1 - i];
+            r.limbs[LIMBS - 1 - i - limbs] = (x >> bits) | carry;
+            carry = (x << (word_bits - bits - 1)) << 1;
         }
-
-        // Check for overflow
-        let overflow = self.limbs[LIMBS - limbs - 1] >> (bits - 1) & 1 != 0;
-
-        // Shift
-        for i in 0..(LIMBS - limbs - 1) {
-            assume!(i + limbs < LIMBS && i + limbs + 1 < LIMBS);
-            self.limbs[i] = self.limbs[i + limbs] >> bits;
-            self.limbs[i] |= self.limbs[i + limbs + 1] << (64 - bits);
-        }
-        self.limbs[LIMBS - limbs - 1] = self.limbs[LIMBS - 1] >> bits;
-        self.limbs[LIMBS - limbs..].fill(0);
-        (self, overflow)
+        (r, carry != 0)
     }
 
     /// Right shift by `rhs` bits.
@@ -840,7 +792,7 @@ mod tests {
             type U = Uint::<BITS, LIMBS>;
             proptest!(|(value: U, shift in  0..=BITS + 2)| {
                 let shifted = value.arithmetic_shr(shift);
-                dbg!(value, shifted, shift);
+                // dbg!(value, shifted, shift);
                 assert_eq!(shifted.leading_ones(), match value.leading_ones() {
                     0 => 0,
                     n => min(BITS, n + shift)
