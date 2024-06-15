@@ -109,11 +109,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn checked_next_multiple_of(self, rhs: Self) -> Option<Self> {
-        if rhs == Self::ZERO {
+        if rhs.is_zero() {
             return None;
         }
         let (q, r) = self.div_rem(rhs);
-        if r == Self::ZERO {
+        if r.is_zero() {
             return Some(self);
         }
         let q = q.checked_add(Self::from(1))?;

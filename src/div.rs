@@ -7,7 +7,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_div(self, rhs: Self) -> Option<Self> {
-        if rhs == Self::ZERO {
+        if rhs.is_zero() {
             return None;
         }
         Some(self.div(rhs))
@@ -18,7 +18,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)] // False positive
     pub fn checked_rem(self, rhs: Self) -> Option<Self> {
-        if rhs == Self::ZERO {
+        if rhs.is_zero() {
             return None;
         }
         Some(self.rem(rhs))
@@ -34,7 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
         let (q, r) = self.div_rem(rhs);
-        if r == Self::ZERO {
+        if r.is_zero() {
             q
         } else {
             q + Self::from(1)
