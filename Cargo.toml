@@ -49,6 +49,7 @@ ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-fe
 bn-rs = { version = "0.2", optional = true, default-features = true }
 fastrlp = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
+num-integer = { version = "0.1", optional = true, default-features = false }
 num-traits = { version = "0.2.16", optional = true, default-features = false }
 parity-scale-codec = { version = "3", optional = true, features = [
     "derive",
@@ -100,6 +101,7 @@ std = [
     "bytes?/std",
     "fastrlp?/std",
     "num-bigint?/std",
+    "num-integer?/std",
     "num-traits?/std",
     "parity-scale-codec?/std",
     "primitive-types?/std",
@@ -125,6 +127,7 @@ ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
 fastrlp = ["dep:fastrlp", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
+num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
 primitive-types = ["dep:primitive-types"]
