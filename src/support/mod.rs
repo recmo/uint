@@ -23,6 +23,7 @@ mod pyo3;
 mod quickcheck;
 mod rand;
 mod rand_09;
+pub mod rkyv;
 mod rlp;
 pub mod scale;
 mod serde;
