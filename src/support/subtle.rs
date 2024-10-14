@@ -72,6 +72,7 @@ mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
     use proptest::proptest;
+    use subtle::ConditionallyNegatable;
 
     #[test]
     fn test_select() {
@@ -86,6 +87,22 @@ mod tests {
             });
         });
     }
+
+    #[test]
+    fn test_negate() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, c: bool)| {
+                let choice = Choice::from(c as u8);
+                let mut r = a;
+                r.conditional_negate(choice);
+                let e = if c { -a } else { a };
+                assert_eq!(r, e);
+            });
+        });
+    }
+
     #[test]
     fn test_eq() {
         const_for!(BITS in SIZES {

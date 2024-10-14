@@ -71,29 +71,92 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<UintRef<'_>> for Uint<BITS, 
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> TryFrom<Any> for Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&Any> for Uint<BITS, LIMBS> {
     type Error = Error;
 
-    fn try_from(any: Any) -> Result<Self> {
+    fn try_from(any: &Any) -> Result<Self> {
         any.decode_as()
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> TryFrom<Int> for Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&Int> for Uint<BITS, LIMBS> {
     type Error = Error;
 
-    fn try_from(int: Int) -> Result<Self> {
+    fn try_from(int: &Int) -> Result<Self> {
         from_der_slice(int.as_bytes())
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> TryFrom<DerUint> for Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> TryFrom<&DerUint> for Uint<BITS, LIMBS> {
     type Error = Error;
 
-    fn try_from(uint: DerUint) -> Result<Self> {
+    fn try_from(uint: &DerUint) -> Result<Self> {
         from_der_uint_slice(uint.as_bytes())
     }
 }
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Any {
+    fn from(uint: &Uint<BITS, LIMBS>) -> Self {
+        if uint.is_zero() {
+            Self::new(Tag::Integer, Box::new([0_u8]) as Box<[u8]>).unwrap()
+        } else {
+            let mut bytes = uint.to_be_bytes_trimmed_vec();
+            if bytes[0] >= 0x80 {
+                bytes.insert(0, 0);
+            }
+            Self::new(Tag::Integer, bytes).unwrap()
+        }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Int {
+    fn from(uint: &Uint<BITS, LIMBS>) -> Self {
+        if uint.is_zero() {
+            Self::new(&[0]).unwrap()
+        } else {
+            let mut bytes = uint.to_be_bytes_trimmed_vec();
+            if bytes[0] >= 0x80 {
+                bytes.insert(0, 0);
+            }
+            Self::new(&bytes).unwrap()
+        }
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for DerUint {
+    fn from(uint: &Uint<BITS, LIMBS>) -> Self {
+        if uint.is_zero() {
+            Self::new(&[0]).unwrap()
+        } else {
+            // Panics:
+            // The only error is if the length is more than can be represented in u32.
+            // This is well outside of the inteded usecase for this library.
+            Self::new(&uint.to_be_bytes_trimmed_vec()).unwrap()
+        }
+    }
+}
+
+macro_rules! forward_ref {
+    ($ty:ty) => {
+        impl<const BITS: usize, const LIMBS: usize> TryFrom<$ty> for Uint<BITS, LIMBS> {
+            type Error = Error;
+
+            fn try_from(obj: $ty) -> Result<Self> {
+                Self::try_from(&obj)
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for $ty {
+            fn from(uint: Uint<BITS, LIMBS>) -> Self {
+                <$ty>::from(&uint)
+            }
+        }
+    };
+}
+
+forward_ref!(Any);
+forward_ref!(Int);
+forward_ref!(DerUint);
 
 fn from_der_slice<const BITS: usize, const LIMBS: usize>(
     bytes: &[u8],
@@ -164,7 +227,7 @@ mod tests {
                     });
                 });
             }
-        };
+        }
     }
 
     test_roundtrip!(test_der_anyref_roundtrip, AnyRef);
@@ -173,4 +236,24 @@ mod tests {
     test_roundtrip!(test_der_any_roundtrip, Any);
     test_roundtrip!(test_der_int_roundtrip, Int);
     test_roundtrip!(test_der_uint_roundtrip, DerUint);
+
+    macro_rules! test_into {
+        ($name:ident, $ty:ty) => {
+            #[test]
+            fn $name() {
+                const_for!(BITS in SIZES {
+                    const LIMBS: usize = nlimbs(BITS);
+                    proptest!(|(value: Uint<BITS, LIMBS>)| {
+                        let obj: $ty = value.into();
+                        let result: Uint<BITS, LIMBS> = obj.try_into().unwrap();
+                        assert_eq!(result, value);
+                    });
+                });
+            }
+        }
+    }
+
+    test_into!(test_into_any, Any);
+    test_into!(test_into_int, Int);
+    test_into!(test_into_uint, DerUint);
 }
