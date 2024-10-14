@@ -8,6 +8,7 @@ mod ark_ff;
 mod ark_ff_04;
 mod bn_rs;
 mod bytemuck;
+mod der;
 mod fastrlp;
 mod num_bigint;
 mod num_integer;
@@ -23,6 +24,7 @@ pub mod scale;
 mod serde;
 pub mod sqlx;
 pub mod ssz;
+mod subtle;
 mod valuable;
 mod zeroize;
 

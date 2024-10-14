@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for [`subtle`](https://docs.rs/subtle).
+- Added support for [`der`](https://docs.rs/der).
+
 ## [1.12.3] - 2024-06-03
 
 ### Changed
