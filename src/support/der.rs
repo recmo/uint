@@ -4,7 +4,7 @@
 
 use crate::Uint;
 use der::{
-    asn1::{AnyRef, IntRef, UintRef},
+    asn1::{Any, AnyRef, Int, IntRef, Uint as DerUint, UintRef},
     DecodeValue, EncodeValue, Error, FixedTag, Header, Length, Reader, Result, Tag, ValueOrd,
     Writer,
 };
@@ -43,15 +43,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> DecodeValue<'a> for Uint<BITS, L
         if header.length > Length::try_from(Self::BYTES + 1)? {
             return Err(Self::TAG.non_canonical_error());
         }
-        let bytes = reader.read_vec(header.length)?;
-        let bytes = match bytes.as_slice() {
-            [] => Err(Tag::Integer.length_error()),
-            [0, byte, ..] if *byte < 0x80 => Err(Tag::Integer.non_canonical_error()),
-            [0, rest @ ..] => Ok(rest),
-            [byte, ..] if *byte >= 0x80 => Err(Tag::Integer.value_error()),
-            bytes => Ok(bytes),
-        }?;
-        Self::try_from_be_slice(bytes).ok_or_else(|| Tag::Integer.non_canonical_error())
+        from_der_slice(reader.read_vec(header.length)?.as_slice())
     }
 }
 
@@ -66,16 +58,66 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<AnyRef<'_>> for Uint<BITS, L
 impl<const BITS: usize, const LIMBS: usize> TryFrom<IntRef<'_>> for Uint<BITS, LIMBS> {
     type Error = Error;
 
-    fn try_from(any: IntRef<'_>) -> Result<Self> {
-        any.decode_as()
+    fn try_from(int: IntRef<'_>) -> Result<Self> {
+        from_der_slice(int.as_bytes())
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<UintRef<'_>> for Uint<BITS, LIMBS> {
     type Error = Error;
 
-    fn try_from(any: UintRef<'_>) -> Result<Self> {
+    fn try_from(uint: UintRef<'_>) -> Result<Self> {
+        from_der_uint_slice(uint.as_bytes())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<Any> for Uint<BITS, LIMBS> {
+    type Error = Error;
+
+    fn try_from(any: Any) -> Result<Self> {
         any.decode_as()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<Int> for Uint<BITS, LIMBS> {
+    type Error = Error;
+
+    fn try_from(int: Int) -> Result<Self> {
+        from_der_slice(int.as_bytes())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> TryFrom<DerUint> for Uint<BITS, LIMBS> {
+    type Error = Error;
+
+    fn try_from(uint: DerUint) -> Result<Self> {
+        from_der_uint_slice(uint.as_bytes())
+    }
+}
+
+fn from_der_slice<const BITS: usize, const LIMBS: usize>(
+    bytes: &[u8],
+) -> Result<Uint<BITS, LIMBS>> {
+    // Handle sign bits and zero-prefix.
+    let bytes = match bytes {
+        [] => Err(Tag::Integer.length_error()),
+        [0, byte, ..] if *byte < 0x80 => Err(Tag::Integer.non_canonical_error()),
+        [0, rest @ ..] => Ok(rest),
+        [byte, ..] if *byte >= 0x80 => Err(Tag::Integer.value_error()),
+        bytes => Ok(bytes),
+    }?;
+    Uint::try_from_be_slice(bytes).ok_or_else(|| Tag::Integer.non_canonical_error())
+}
+
+fn from_der_uint_slice<const BITS: usize, const LIMBS: usize>(
+    bytes: &[u8],
+) -> Result<Uint<BITS, LIMBS>> {
+    // UintRef and Uint have the leading 0x00 removed.
+    match bytes {
+        [] => Err(Tag::Integer.length_error()),
+        [0] => Ok(Uint::ZERO),
+        [0, ..] => Err(Tag::Integer.non_canonical_error()),
+        bytes => Uint::try_from_be_slice(bytes).ok_or_else(|| Tag::Integer.non_canonical_error()),
     }
 }
 
@@ -107,4 +149,28 @@ mod tests {
             assert_eq!(serialized1, serialized2);
         });
     }
+
+    macro_rules! test_roundtrip {
+        ($name:ident, $ty:ty) => {
+            #[test]
+            fn $name() {
+                const_for!(BITS in SIZES {
+                    const LIMBS: usize = nlimbs(BITS);
+                    proptest!(|(value: Uint<BITS, LIMBS>)| {
+                        let serialized = value.to_der().unwrap();
+                        let der = <$ty>::from_der(&serialized).unwrap();
+                        let deserialized = der.try_into().unwrap();
+                        assert_eq!(value, deserialized);
+                    });
+                });
+            }
+        };
+    }
+
+    test_roundtrip!(test_der_anyref_roundtrip, AnyRef);
+    test_roundtrip!(test_der_intref_roundtrip, IntRef);
+    test_roundtrip!(test_der_uintref_roundtrip, UintRef);
+    test_roundtrip!(test_der_any_roundtrip, Any);
+    test_roundtrip!(test_der_int_roundtrip, Int);
+    test_roundtrip!(test_der_uint_roundtrip, DerUint);
 }
