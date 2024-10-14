@@ -8,6 +8,22 @@ use subtle::{
     Choice, ConditionallySelectable, ConstantTimeEq, ConstantTimeGreater, ConstantTimeLess,
 };
 
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Returns a [`Choice`] if the bit at index is set.
+    ///
+    /// Constant time version of [`bit`]
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index >= Self::BITS`.
+    #[must_use]
+    pub fn bit_ct(&self, index: usize) -> Choice {
+        assert!(index < BITS);
+        let (limbs, bits) = (index / 64, index % 64);
+        (self.limbs[limbs] & (1 << bits)).ct_eq(&(1 << bits))
+    }
+}
+
 impl<const BITS: usize, const LIMBS: usize> ConditionallySelectable for Uint<BITS, LIMBS> {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         let mut limbs = [0_u64; LIMBS];
@@ -73,6 +89,18 @@ mod tests {
     use crate::{const_for, nlimbs};
     use proptest::proptest;
     use subtle::ConditionallyNegatable;
+
+    #[test]
+    fn test_bit() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            proptest!(|(n: Uint<BITS, LIMBS>, i in 0..BITS)| {
+                let r = n.bit_ct(i);
+                let e = n.bit(i);
+                assert_eq!(bool::from(r), e);
+            });
+        });
+    }
 
     #[test]
     fn test_select() {
