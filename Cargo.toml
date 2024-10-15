@@ -72,7 +72,7 @@ bytes = { version = "1.4", optional = true }
 postgres-types = { version = "0.2", optional = true }
 
 # sqlx
-sqlx-core = { version = "0.7", optional = true }
+sqlx-core = { version = "0.8.2", optional = true }
 
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
