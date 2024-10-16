@@ -100,7 +100,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Bits<BITS,
 /// Accepts either a primitive number, a decimal or a hexadecimal string.
 struct HrVisitor<const BITS: usize, const LIMBS: usize>;
 
-impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for HrVisitor<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for HrVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
     fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
@@ -136,7 +136,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for HrVisitor<BITS
 /// Serde Visitor for non-human readable formats
 struct ByteVisitor<const BITS: usize, const LIMBS: usize>;
 
-impl<'de, const BITS: usize, const LIMBS: usize> Visitor<'de> for ByteVisitor<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for ByteVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
     fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
