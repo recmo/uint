@@ -5,11 +5,13 @@
 #![cfg(feature = "sqlx")]
 #![cfg_attr(docsrs, doc(cfg(feature = "sqlx")))]
 
-use sqlx_core::database::Database;
-use sqlx_core::decode::Decode;
-use sqlx_core::encode::{Encode, IsNull};
-use sqlx_core::error::BoxDynError;
-use sqlx_core::types::Type;
+use sqlx_core::{
+    database::Database,
+    decode::Decode,
+    encode::{Encode, IsNull},
+    error::BoxDynError,
+    types::Type,
+};
 use thiserror::Error;
 
 use crate::Uint;
