@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for sqlx @ 0.8 ([#400])
+
+### Removed
+
+- Support for sqlx @ 0.7. This is a breaking change, outside of 
+  regular semver policy, as 0.7 contains a security vulnerability  ([#400])
+
+[#400]: https://github.com/recmo/uint/pull/400
+
 ## [1.12.3] - 2024-06-03
 
 ### Changed
