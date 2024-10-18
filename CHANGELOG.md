@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for sqlx @ 0.8 ([#400])
+- Support for fastrlp @ 0.4 ([#401])
 
 ### Removed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   regular semver policy, as 0.7 contains a security vulnerability  ([#400])
 
 [#400]: https://github.com/recmo/uint/pull/400
+[#401]: https://github.com/recmo/uint/pull/401
 
 ## [1.12.3] - 2024-06-03
 
