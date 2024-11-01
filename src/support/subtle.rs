@@ -11,7 +11,7 @@ use subtle::{
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns a [`Choice`] if the bit at index is set.
     ///
-    /// Constant time version of [`bit`]
+    /// Constant time version of [`Uint::bit`]
     ///
     /// # Panics
     ///
@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn test_bit() {
-        const_for!(BITS in SIZES {
+        const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(n: Uint<BITS, LIMBS>, i in 0..BITS)| {
                 let r = n.bit_ct(i);
