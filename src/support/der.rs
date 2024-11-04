@@ -95,7 +95,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&DerUint> for Uint<BITS, LIM
     }
 }
 
-// `Any::new()` only retutns error when length > u32:MAX, which is out of scope
+// `Any::new()` only returns error when length > u32:MAX, which is out of scope
 // for Uint.
 #[allow(clippy::fallible_impl_from)]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Any {
@@ -112,7 +112,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Any {
     }
 }
 
-// `Int::new()` only retutns error when length > u32:MAX, which is out of scope
+// `Int::new()` only returns error when length > u32:MAX, which is out of scope
 // for Uint.
 #[allow(clippy::fallible_impl_from)]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Int {
@@ -129,7 +129,7 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for Int {
     }
 }
 
-// `DerUint::new()` only retutns error when length > u32:MAX, which is out of
+// `DerUint::new()` only returns error when length > u32:MAX, which is out of
 // scope for Uint.
 #[allow(clippy::fallible_impl_from)]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for DerUint {
