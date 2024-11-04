@@ -382,12 +382,12 @@ mod tests {
     #[test]
     const fn const_from_to_bytes() {
         const NL: [u64; 2] = N.limbs;
+        const KL: [u64; 2] = K.limbs;
         assert!(matches!(Uint::<128, 2>::from_be_bytes(BE).limbs, NL));
         assert!(matches!(Uint::<128, 2>::from_le_bytes(LE).limbs, NL));
         assert!(matches!(N.to_be_bytes::<{ BE.len() }>(), BE));
         assert!(matches!(N.to_le_bytes::<{ LE.len() }>(), LE));
 
-        const KL: [u64; 2] = K.limbs;
         assert!(matches!(Uint::<72, 2>::from_be_bytes(KBE).limbs, KL));
         assert!(matches!(Uint::<72, 2>::from_le_bytes(KLE).limbs, KL));
         assert!(matches!(K.to_be_bytes::<{ KBE.len() }>(), KBE));

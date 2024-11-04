@@ -16,7 +16,12 @@ repository.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs", "--html-in-header", ".cargo/katex-header.html"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs",
+    "--html-in-header",
+    ".cargo/katex-header.html",
+]
 
 [workspace]
 members = [".", "ruint-macro"]
@@ -47,7 +52,9 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
-fastrlp = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
+fastrlp = { version = "0.3", optional = true, default-features = false, features = [
+    "alloc",
+] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
 num-integer = { version = "0.1", optional = true, default-features = false }
 num-traits = { version = "0.2.16", optional = true, default-features = false }
@@ -66,6 +73,10 @@ valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
 ethereum_ssz = { version = "0.5.3", optional = true, default-features = false }
+der = { version = "0.7", optional = true, default-features = false, features = [
+    "alloc",
+] }
+subtle = { version = "2.6.1", optional = true, default-features = false }
 
 # postgres
 bytes = { version = "1.4", optional = true }
@@ -113,7 +124,13 @@ std = [
     "zeroize?/std",
 ]
 ssz = ["std", "dep:ethereum_ssz"]
-alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
+alloc = [
+    "proptest?/alloc",
+    "rand?/alloc",
+    "serde?/alloc",
+    "valuable?/alloc",
+    "zeroize?/alloc",
+]
 
 # nightly-only features
 nightly = []
@@ -125,21 +142,22 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
+bytemuck = ["dep:bytemuck"]
+der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
 fastrlp = ["dep:fastrlp", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
+postgres = ["dep:postgres-types", "dep:bytes", "dep:thiserror", "std"]
 primitive-types = ["dep:primitive-types"]
 proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
 rlp = ["dep:rlp", "alloc"]
-serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
+serde = ["dep:serde", "alloc"]                                         # TODO: try to avoid alloc in serde impls
+sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
+subtle = ["dep:subtle"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
-bytemuck = ["dep:bytemuck"]
-
-postgres = ["dep:postgres-types", "dep:bytes", "std", "dep:thiserror"]
-sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
