@@ -5,6 +5,7 @@
     clippy::pedantic,
     clippy::nursery,
     clippy::missing_inline_in_public_items,
+    clippy::std_instead_of_core,
     missing_docs,
     unreachable_pub
 )]
