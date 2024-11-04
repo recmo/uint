@@ -6,51 +6,59 @@ use core::iter::zip;
 #[inline]
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
-pub fn mul_redc<const N: usize>(
-    a: &[u64; N],
-    b: &[u64; N],
-    modulus: &[u64; N],
-    inv: u64,
-) -> [u64; N] {
+pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
+    debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
+
     // Coarsely Integrated Operand Scanning (CIOS)
     // See <https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf>
     // See <https://hackmd.io/@gnark/modular_multiplication#fn1>
     let mut result = [0; N];
-    let mut carry = 0;
-    for &b in b {
+    let mut carry = false;
+    for b in b {
         // Add limb product
-        let c0 = addmul1(&mut result, a, b);
+        let (next_result, carry_1) = mul_add_small(a, b, result);
 
         // Compute reduction factor
-        let m = result[0].wrapping_mul(inv);
+        let m = next_result[0].wrapping_mul(inv);
 
-        // Add m * modulus to acc to clear acc[0]
-        let c1 = addmul1(&mut result, modulus, m);
-        debug_assert_eq!(result[0], 0);
+        // Add m * modulus to acc to clear next_result[0]
+        let (next_result, carry_2) = mul_add_small(modulus, m, next_result);
+        debug_assert_eq!(next_result[0], 0);
 
         // Shift result
-        // TODO: Merge with above addmul1 loop. Or merge both loops to get finely
+        // TODO: Merge with above addmul1 loop. Or merge all inner loops to get finely
         // integrated operand scanning (FIOS)
-        for i in 0..N - 1 {
-            result[i] = result[i + 1];
-        }
+        result[..N - 1].copy_from_slice(&next_result[1..]);
 
         // Add carries
-        // TODO: Can skip this step if modulus meets certain criteria.
-        // TODO: Is carry alwasy 0 or 1?
-        let r = (carry as u128) + (c0 as u128) + (c1 as u128);
-        result[N - 1] = r as u64;
-        carry = (r >> 64) as u64;
-        debug_assert!(carry == 0 || carry == 1);
+        // TODO: Can skip this carry if modulus meets certain criteria.
+        let (value, next_carry) = carrying_add(carry_1, carry_2, carry);
+        result[N - 1] = value;
+        carry = next_carry;
     }
 
     // Compute reduced product.
-    let (reduced, borrow) = sub(&result, modulus);
-    if carry == 1 || !borrow {
+    reduce1_carry(result, modulus, carry)
+}
+
+pub fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool) -> [u64; N] {
+    let (reduced, borrow) = sub(value, modulus);
+    if carry || !borrow {
         reduced
     } else {
-        result
+        value
     }
+}
+
+pub fn reduce1_carry_constime<const N: usize>(
+    value: [u64; N],
+    modulus: [u64; N],
+    carry: bool,
+) -> [u64; N] {
+    let (reduced, borrow) = sub(value, modulus);
+    let mut result = value;
+    cmov(&mut result, &reduced, carry || !borrow);
+    result
 }
 
 #[inline]
@@ -62,37 +70,80 @@ pub fn cmov<const N: usize>(dst: &mut [u64; N], src: &[u64; N], condition: bool)
     }
 }
 
-/// Compute `acc += a * b` for a single word `b`, returing the carry.
-#[allow(clippy::cast_possible_truncation)]
 #[inline]
 #[must_use]
-pub fn addmul1<const N: usize>(acc: &mut [u64; N], a: &[u64; N], b: u64) -> u64 {
-    let mut carry = 0;
-    for i in 0..N {
-        let r = (acc[i] as u128) + (a[i] as u128) * (b as u128) + (carry as u128);
-        acc[i] = r as u64;
-        carry = (r >> 64) as u64;
+fn add<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> ([u64; N], bool) {
+    let mut result = [0; N];
+    let mut carry = false;
+    for (result, (lhs, rhs)) in zip(&mut result, zip(lhs, rhs)) {
+        let (value, next_carry) = borrowing_sub(lhs, rhs, carry);
+        *result = value;
+        carry = next_carry;
     }
-    carry
+    (result, carry)
 }
 
-#[allow(clippy::cast_possible_truncation)]
 #[inline]
 #[must_use]
-fn sub<const N: usize>(a: &[u64; N], b: &[u64; N]) -> ([u64; N], bool) {
+fn sub<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> ([u64; N], bool) {
     let mut result = [0; N];
     let mut borrow = false;
-    for (r, (&a, &b)) in zip(&mut result, zip(a, b)) {
-        let (s, b) = a.overflowing_sub(b);
-        let (s, d) = s.overflowing_sub(borrow as u64);
-        *r = s;
-        borrow = b || d;
+    for (result, (lhs, rhs)) in zip(&mut result, zip(lhs, rhs)) {
+        let (value, next_borrow) = borrowing_sub(lhs, rhs, borrow);
+        *result = value;
+        borrow = next_borrow;
     }
     (result, borrow)
 }
 
-fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
-    let (a, b) = lhs.overflowing_sub(rhs);
-    let (c, d) = a.overflowing_sub(borrow as u64);
-    (c, b || d)
+/// Compute `accumulator + lhs * rhs` for a single word `rhs`, returing the
+/// result and carry.
+#[inline]
+#[must_use]
+pub fn mul_add_small<const N: usize>(lhs: [u64; N], rhs: u64, add: [u64; N]) -> ([u64; N], u64) {
+    let mut result = [0; N];
+    let mut carry = 0;
+    for (result, (lhs, add)) in zip(&mut result, zip(lhs, add)) {
+        let (value, next_carry) = carrying_mul_add(lhs, rhs, add, carry);
+        *result = value;
+        carry = next_carry;
+    }
+    (result, carry)
+}
+
+const fn carrying_mul_add(lhs: u64, rhs: u64, add: u64, carry: u64) -> (u64, u64) {
+    let wide = (lhs as u128)
+        .wrapping_mul(rhs as u128)
+        .wrapping_add(add as u128)
+        .wrapping_add(carry as u128);
+    (wide as u64, (wide >> 64) as u64)
+}
+
+// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
+#[must_use]
+#[inline]
+const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
+    let (result, carry_1) = lhs.overflowing_add(rhs);
+    let (result, carry_2) = result.overflowing_add(carry as u64);
+    (result, carry_1 || carry_2)
+}
+
+// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
+#[must_use]
+#[inline]
+const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
+    let (result, borrow_1) = lhs.overflowing_sub(rhs);
+    let (result, borrow_2) = result.overflowing_sub(borrow as u64);
+    (result, borrow_1 || borrow_2)
+}
+
+// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
+#[must_use]
+#[inline]
+#[allow(clippy::cast_possible_truncation)]
+const fn carrying_mul(lhs: u64, rhs: u64, carry: u64) -> (u64, u64) {
+    let wide = (lhs as u128)
+        .wrapping_mul(rhs as u128)
+        .wrapping_add(carry as u128);
+    (wide as u64, (wide >> 64) as u64)
 }

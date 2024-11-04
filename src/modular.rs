@@ -159,8 +159,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Self::ZERO;
         }
         debug_assert_eq!(inv.wrapping_mul(modulus.limbs[0]), u64::MAX);
-        let result =
-            algorithms::mul_redc(self.as_limbs(), other.as_limbs(), modulus.as_limbs(), inv);
+        let result = algorithms::mul_redc(self.limbs, other.limbs, modulus.limbs, inv);
         let result = Self::from_limbs(result);
 
         debug_assert!(result < modulus);
