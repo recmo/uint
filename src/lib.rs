@@ -5,6 +5,8 @@
     clippy::pedantic,
     clippy::nursery,
     clippy::missing_inline_in_public_items,
+    clippy::std_instead_of_alloc,
+    clippy::std_instead_of_core,
     missing_docs,
     unreachable_pub
 )]
@@ -345,8 +347,8 @@ mod test {
         assert_eq!(mask(0), 0);
         assert_eq!(mask(1), 1);
         assert_eq!(mask(5), 0x1f);
-        assert_eq!(mask(63), u64::max_value() >> 1);
-        assert_eq!(mask(64), u64::max_value());
+        assert_eq!(mask(63), u64::MAX >> 1);
+        assert_eq!(mask(64), u64::MAX);
     }
 
     #[test]

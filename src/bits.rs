@@ -726,7 +726,11 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::cast_lossless, clippy::cast_possible_truncation)]
+    #[allow(
+        clippy::cast_lossless,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn test_small() {
         const_for!(BITS in [1, 2, 8, 16, 32, 63, 64] {
             type U = Uint::<BITS, 1>;
@@ -821,7 +825,7 @@ mod tests {
         // Expects resulting limbs: [0x0080_0000_0000_000, 0] with no fractional part.
         assert_eq!(
             Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).overflowing_shr(1),
-            (Uint::<65, 2>::from_limbs([0x0080_0000_0000_000, 0]), false)
+            (Uint::<65, 2>::from_limbs([0x0008_0000_0000_0000, 0]), false)
         );
 
         // Test: Shift beyond single limb capacity with MAX value.
