@@ -52,7 +52,9 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
-fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = ["alloc"] }
+fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = [
+    "alloc",
+] }
 fastrlp-04 = { version = "0.4", package = "fastrlp", optional = true, default-features = false, features = [
     "alloc",
 ] }
@@ -144,10 +146,10 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
-fastrlp = ["dep:fastrlp-03", "alloc"]
-fastrlp-04 = ["dep:fastrlp-04", "alloc"]
 bytemuck = ["dep:bytemuck"]
 der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
+fastrlp = ["dep:fastrlp-03", "alloc"]
+fastrlp-04 = ["dep:fastrlp-04", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
