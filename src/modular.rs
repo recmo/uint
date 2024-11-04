@@ -150,7 +150,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Panics
     ///
-    /// Panics if `inv` is not correct.
+    /// Panics if `inv` is not correct in debug mode.
     #[inline]
     #[must_use]
     #[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
@@ -158,15 +158,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS == 0 {
             return Self::ZERO;
         }
-        assert_eq!(inv.wrapping_mul(modulus.limbs[0]), u64::MAX);
-        let mut result = Self::ZERO;
-        algorithms::mul_redc(
-            self.as_limbs(),
-            other.as_limbs(),
-            &mut result.limbs,
-            modulus.as_limbs(),
-            inv,
-        );
+        debug_assert_eq!(inv.wrapping_mul(modulus.limbs[0]), u64::MAX);
+        let result =
+            algorithms::mul_redc(self.as_limbs(), other.as_limbs(), modulus.as_limbs(), inv);
+        let result = Self::from_limbs(result);
+
         debug_assert!(result < modulus);
         result
     }

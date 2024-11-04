@@ -1,70 +1,98 @@
-use super::addmul;
 use core::iter::zip;
 
-/// See Handbook of Applied Cryptography, Algorithm 14.32, p. 601.
-#[allow(clippy::cognitive_complexity)] // REFACTOR: Improve
+/// Computes
+///
+/// (a * b) / 2^BITS mod modulus
 #[inline]
-pub fn mul_redc(a: &[u64], b: &[u64], result: &mut [u64], m: &[u64], inv: u64) {
-    debug_assert!(!m.is_empty());
-    debug_assert_eq!(a.len(), m.len());
-    debug_assert_eq!(b.len(), m.len());
-    debug_assert_eq!(result.len(), m.len());
-    debug_assert_eq!(inv.wrapping_mul(m[0]), u64::MAX);
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+pub fn mul_redc<const N: usize>(
+    a: &[u64; N],
+    b: &[u64; N],
+    modulus: &[u64; N],
+    inv: u64,
+) -> [u64; N] {
+    // Coarsely Integrated Operand Scanning (CIOS)
+    // See <https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf>
+    // See <https://hackmd.io/@gnark/modular_multiplication#fn1>
+    let mut result = [0; N];
+    let mut carry = 0;
+    for &b in b {
+        // Add limb product
+        let c0 = addmul1(&mut result, a, b);
 
-    // Compute temp full product.
-    // OPT: Do combined multiplication and reduction.
-    let mut temp = vec![0; 2 * m.len() + 1];
-    addmul(&mut temp, a, b);
+        // Compute reduction factor
+        let m = result[0].wrapping_mul(inv);
 
-    // Reduce temp.
-    for i in 0..m.len() {
-        let u = temp[i].wrapping_mul(inv);
+        // Add m * modulus to acc to clear acc[0]
+        let c1 = addmul1(&mut result, modulus, m);
+        debug_assert_eq!(result[0], 0);
 
-        // REFACTOR: Create add_mul1 routine.
-        let mut carry = 0;
-        #[allow(clippy::cast_possible_truncation)] // Intentional
-        for j in 0..m.len() {
-            carry += u128::from(temp[i + j]) + u128::from(m[j]) * u128::from(u);
-            temp[i + j] = carry as u64;
-            carry >>= 64;
+        // Shift result
+        // TODO: Merge with above addmul1 loop. Or merge both loops to get finely
+        // integrated operand scanning (FIOS)
+        for i in 0..N - 1 {
+            result[i] = result[i + 1];
         }
-        #[allow(clippy::cast_possible_truncation)] // Intentional
-        for j in m.len()..(temp.len() - i) {
-            carry += u128::from(temp[i + j]);
-            temp[i + j] = carry as u64;
-            carry >>= 64;
-        }
-        debug_assert!(carry == 0);
+
+        // Add carries
+        // TODO: Can skip this step if modulus meets certain criteria.
+        // TODO: Is carry alwasy 0 or 1?
+        let r = (carry as u128) + (c0 as u128) + (c1 as u128);
+        result[N - 1] = r as u64;
+        carry = (r >> 64) as u64;
+        debug_assert!(carry == 0 || carry == 1);
     }
-    debug_assert!(temp[temp.len() - 1] <= 1); // Basically a carry flag.
 
-    // Copy result.
-    result.copy_from_slice(&temp[m.len()..2 * m.len()]);
+    // Compute reduced product.
+    let (reduced, borrow) = sub(&result, modulus);
+    if carry == 1 || !borrow {
+        reduced
+    } else {
+        result
+    }
+}
 
-    // Subtract one more m if result >= m
-    let mut reduce = true;
-    // REFACTOR: Create cmp routine
-    if temp[temp.len() - 1] == 0 {
-        for (r, m) in zip(result.iter().rev(), m.iter().rev()) {
-            if r < m {
-                reduce = false;
-                break;
-            }
-            if r > m {
-                break;
-            }
-        }
+#[inline]
+pub fn cmov<const N: usize>(dst: &mut [u64; N], src: &[u64; N], condition: bool) {
+    let mask = (condition as u64).wrapping_neg();
+    let mask = core::hint::black_box(mask);
+    for (dst, &src) in zip(dst, src) {
+        *dst ^= (*dst ^ src) & mask;
     }
-    if reduce {
-        // REFACTOR: Create sub routine
-        let mut carry = 0;
-        #[allow(clippy::cast_possible_truncation)] // Intentional
-        #[allow(clippy::cast_sign_loss)] // Intentional
-        for (r, m) in zip(result.iter_mut(), m.iter().copied()) {
-            carry += i128::from(*r) - i128::from(m);
-            *r = carry as u64;
-            carry >>= 64; // Sign extending shift
-        }
-        debug_assert!(carry == 0 || temp[temp.len() - 1] == 1);
+}
+
+/// Compute `acc += a * b` for a single word `b`, returing the carry.
+#[allow(clippy::cast_possible_truncation)]
+#[inline]
+#[must_use]
+pub fn addmul1<const N: usize>(acc: &mut [u64; N], a: &[u64; N], b: u64) -> u64 {
+    let mut carry = 0;
+    for i in 0..N {
+        let r = (acc[i] as u128) + (a[i] as u128) * (b as u128) + (carry as u128);
+        acc[i] = r as u64;
+        carry = (r >> 64) as u64;
     }
+    carry
+}
+
+#[allow(clippy::cast_possible_truncation)]
+#[inline]
+#[must_use]
+fn sub<const N: usize>(a: &[u64; N], b: &[u64; N]) -> ([u64; N], bool) {
+    let mut result = [0; N];
+    let mut borrow = false;
+    for (r, (&a, &b)) in zip(&mut result, zip(a, b)) {
+        let (s, b) = a.overflowing_sub(b);
+        let (s, d) = s.overflowing_sub(borrow as u64);
+        *r = s;
+        borrow = b || d;
+    }
+    (result, borrow)
+}
+
+fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
+    let (a, b) = lhs.overflowing_sub(rhs);
+    let (c, d) = a.overflowing_sub(borrow as u64);
+    (c, b || d)
 }

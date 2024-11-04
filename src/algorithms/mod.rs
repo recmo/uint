@@ -11,7 +11,6 @@ mod add;
 pub mod div;
 mod gcd;
 mod mul;
-#[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
 mod mul_redc;
 mod ops;
 mod shift;
