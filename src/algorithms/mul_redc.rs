@@ -15,20 +15,30 @@ pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv
     let mut result = [0; N];
     let mut carry = false;
     for b in b {
-        // Add limb product
-        let (next_result, carry_1) = mul_add_small(a, b, result);
+        let mut m = 0;
+        let mut carry_1 = 0;
+        let mut carry_2 = 0;
+        for i in 0..N {
+            // Add limb product
+            let (value, next_carry) = carrying_mul_add(a[i], b, result[i], carry_1);
+            result[i] = value;
+            carry_1 = next_carry;
 
-        // Compute reduction factor
-        let m = next_result[0].wrapping_mul(inv);
+            if i == 0 {
+                // Compute reduction factor
+                m = result[0].wrapping_mul(inv);
+            }
 
-        // Add m * modulus to acc to clear next_result[0]
-        let (next_result, carry_2) = mul_add_small(modulus, m, next_result);
-        debug_assert_eq!(next_result[0], 0);
+            // Add m * modulus to acc to clear next_result[0]
+            let (value, next_carry) = carrying_mul_add(modulus[i], m, result[i], carry_2);
+            result[i] = value;
+            carry_2 = next_carry;
 
-        // Shift result
-        // TODO: Merge with above addmul1 loop. Or merge all inner loops to get finely
-        // integrated operand scanning (FIOS)
-        result[..N - 1].copy_from_slice(&next_result[1..]);
+            // Shift result
+            if i > 0 {
+                result[i - 1] = result[i];
+            }
+        }
 
         // Add carries
         // TODO: Can skip this carry if modulus meets certain criteria.
