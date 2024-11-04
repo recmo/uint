@@ -3,6 +3,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "der")))]
 
 use crate::Uint;
+use alloc::boxed::Box;
 use core::cmp::Ordering;
 use der::{
     asn1::{Any, AnyRef, Int, IntRef, Uint as DerUint, UintRef},
