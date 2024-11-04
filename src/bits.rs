@@ -825,7 +825,7 @@ mod tests {
         // Expects resulting limbs: [0x0080_0000_0000_000, 0] with no fractional part.
         assert_eq!(
             Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).overflowing_shr(1),
-            (Uint::<65, 2>::from_limbs([0x0080_0000_0000_0000, 0]), false)
+            (Uint::<65, 2>::from_limbs([0x0008_0000_0000_0000, 0]), false)
         );
 
         // Test: Shift beyond single limb capacity with MAX value.
