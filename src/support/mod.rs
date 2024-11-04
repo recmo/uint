@@ -10,6 +10,7 @@ mod bn_rs;
 mod bytemuck;
 mod fastrlp_03;
 mod fastrlp_04;
+mod der;
 mod num_bigint;
 mod num_integer;
 mod num_traits;
@@ -24,6 +25,7 @@ pub mod scale;
 mod serde;
 pub mod sqlx;
 pub mod ssz;
+mod subtle;
 mod valuable;
 mod zeroize;
 

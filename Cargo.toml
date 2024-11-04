@@ -16,7 +16,12 @@ repository.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs", "--html-in-header", ".cargo/katex-header.html"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs",
+    "--html-in-header",
+    ".cargo/katex-header.html",
+]
 
 [workspace]
 members = [".", "ruint-macro"]
@@ -69,6 +74,10 @@ valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
 ethereum_ssz = { version = "0.5.3", optional = true, default-features = false }
+der = { version = "0.7", optional = true, default-features = false, features = [
+    "alloc",
+] }
+subtle = { version = "2.6.1", optional = true, default-features = false }
 
 # postgres
 bytes = { version = "1.4", optional = true }
@@ -117,7 +126,13 @@ std = [
     "zeroize?/std",
 ]
 ssz = ["std", "dep:ethereum_ssz"]
-alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
+alloc = [
+    "proptest?/alloc",
+    "rand?/alloc",
+    "serde?/alloc",
+    "valuable?/alloc",
+    "zeroize?/alloc",
+]
 
 # nightly-only features
 nightly = []
@@ -131,20 +146,21 @@ ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
 fastrlp = ["dep:fastrlp-03", "alloc"]
 fastrlp-04 = ["dep:fastrlp-04", "alloc"]
+bytemuck = ["dep:bytemuck"]
+der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
 num-bigint = ["dep:num-bigint", "alloc"]
 num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
+postgres = ["dep:postgres-types", "dep:bytes", "dep:thiserror", "std"]
 primitive-types = ["dep:primitive-types"]
 proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
 rlp = ["dep:rlp", "alloc"]
-serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
+serde = ["dep:serde", "alloc"]                                         # TODO: try to avoid alloc in serde impls
+sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
+subtle = ["dep:subtle"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
-bytemuck = ["dep:bytemuck"]
-
-postgres = ["dep:postgres-types", "dep:bytes", "std", "dep:thiserror"]
-sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]

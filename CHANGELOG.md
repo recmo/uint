@@ -13,12 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for sqlx @ 0.8 ([#400])
 - Support for fastrlp @ 0.4 ([#401])
+- Added support for [`subtle`](https://docs.rs/subtle) and [`der`](https://docs.rs/der) ([#399])
 
 ### Removed
 
-- Support for sqlx @ 0.7. This is a breaking change, outside of 
+- Support for sqlx @ 0.7. This is a breaking change, outside of
   regular semver policy, as 0.7 contains a security vulnerability  ([#400])
 
+[#399]: https://github.com/recmo/uint/pull/399
 [#400]: https://github.com/recmo/uint/pull/400
 [#401]: https://github.com/recmo/uint/pull/401
 
