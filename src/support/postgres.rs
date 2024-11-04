@@ -8,12 +8,12 @@ use crate::{
     Uint,
 };
 use bytes::{BufMut, BytesMut};
-use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
-use std::{
+use core::{
     error::Error,
     iter,
     str::{from_utf8, FromStr},
 };
+use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
 use thiserror::Error;
 
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;

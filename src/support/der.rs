@@ -3,12 +3,12 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "der")))]
 
 use crate::Uint;
+use core::cmp::Ordering;
 use der::{
     asn1::{Any, AnyRef, Int, IntRef, Uint as DerUint, UintRef},
     DecodeValue, EncodeValue, Error, FixedTag, Header, Length, Reader, Result, Tag, ValueOrd,
     Writer,
 };
-use std::cmp::Ordering;
 
 impl<const BITS: usize, const LIMBS: usize> ValueOrd for Uint<BITS, LIMBS> {
     fn value_cmp(&self, other: &Self) -> Result<Ordering> {
