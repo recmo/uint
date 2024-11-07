@@ -85,6 +85,9 @@ subtle = { version = "2.6.1", optional = true, default-features = false }
 bytes = { version = "1.4", optional = true }
 postgres-types = { version = "0.2", optional = true }
 
+# diesel
+diesel = { version = "2.2", optional = true }
+
 # sqlx
 sqlx-core = { version = "0.8.2", optional = true }
 
@@ -148,6 +151,7 @@ ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
 bytemuck = ["dep:bytemuck"]
 der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
+diesel = ["dep:diesel", "std", "dep:thiserror"]
 fastrlp = ["dep:fastrlp-03", "alloc"]
 fastrlp-04 = ["dep:fastrlp-04", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
