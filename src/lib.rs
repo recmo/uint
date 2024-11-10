@@ -144,8 +144,6 @@ pub mod nightly {
 ///
 /// [std-overflow]: https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "diesel", derive(diesel::AsExpression, diesel::FromSqlRow))]
-#[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Binary))]
 #[repr(transparent)]
 pub struct Uint<const BITS: usize, const LIMBS: usize> {
     limbs: [u64; LIMBS],
