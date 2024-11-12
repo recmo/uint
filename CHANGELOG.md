@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support for diesel @ 2.2 ([#404])
 - Support for sqlx @ 0.8 ([#400])
 - Support for fastrlp @ 0.4 ([#401])
 - Added support for [`subtle`](https://docs.rs/subtle) and [`der`](https://docs.rs/der) ([#399])
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#399]: https://github.com/recmo/uint/pull/399
 [#400]: https://github.com/recmo/uint/pull/400
 [#401]: https://github.com/recmo/uint/pull/401
+[#404]: https://github.com/recmo/uint/pull/404
 
 ## [1.12.3] - 2024-06-03
 
