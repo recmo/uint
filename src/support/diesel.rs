@@ -7,11 +7,11 @@
 
 use diesel::{
     backend::Backend,
-    deserialize::{self, FromSql},
+    deserialize::{FromSql, Result as DeserResult},
     expression::AsExpression,
     internal::derives::as_expression::Bound,
     query_builder::bind_collector::RawBytesBindCollector,
-    serialize::{self, IsNull, Output, ToSql},
+    serialize::{IsNull, Output, Result as SerResult, ToSql},
     sql_types::{Binary, Nullable, SingleValue},
     Queryable,
 };
@@ -26,54 +26,44 @@ pub enum DecodeError {
     Overflow,
 }
 
-impl<const BITS: usize, const LIMBS: usize, DB: Backend> ToSql<Binary, DB> for Uint<BITS, LIMBS>
+impl<const BITS: usize, const LIMBS: usize, Db> ToSql<Binary, Db> for Uint<BITS, LIMBS>
 where
-    for<'c> DB: Backend<BindCollector<'c> = RawBytesBindCollector<DB>>,
+    for<'c> Db: Backend<BindCollector<'c> = RawBytesBindCollector<Db>>,
 {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Db>) -> SerResult {
         out.write_all(&self.to_be_bytes_vec())?;
         Ok(IsNull::No)
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize, DB: Backend> FromSql<Binary, DB> for Uint<BITS, LIMBS>
+impl<const BITS: usize, const LIMBS: usize, Db: Backend> FromSql<Binary, Db> for Uint<BITS, LIMBS>
 where
-    *const [u8]: FromSql<Binary, DB>,
+    *const [u8]: FromSql<Binary, Db>,
 {
-    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
-        let bytes: *const [u8] = FromSql::<Binary, DB>::from_sql(bytes)?;
+    fn from_sql(bytes: Db::RawValue<'_>) -> DeserResult<Self> {
+        let bytes: *const [u8] = FromSql::<Binary, Db>::from_sql(bytes)?;
         let bytes: &[u8] = unsafe { &*bytes };
         Self::try_from_be_slice(bytes).ok_or_else(|| DecodeError::Overflow.into())
     }
 }
 
-impl<'__expr, const BITS: usize, const LIMBS: usize> AsExpression<Binary>
-    for &'__expr Uint<BITS, LIMBS>
-{
+// NB: the following code is expanded derive macros. They were produced by
+// expanding the the following code:
+// ```
+// #[derive(diesel::AsExpression, diesel::FromSqlRow)]
+// #[diesel(sql_type = diesel::sql_types::Binary)]
+// pub struct Uint<const BITS: usize, const LIMBS: usize> { .. }
+// ```
+
+impl<'a, const BITS: usize, const LIMBS: usize> AsExpression<Binary> for &'a Uint<BITS, LIMBS> {
     type Expression = Bound<Binary, Self>;
     fn as_expression(self) -> Self::Expression {
         Bound::new(self)
     }
 }
 
-impl<'__expr, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
-    for &'__expr Uint<BITS, LIMBS>
-{
-    type Expression = Bound<Nullable<Binary>, Self>;
-    fn as_expression(self) -> Self::Expression {
-        Bound::new(self)
-    }
-}
-impl<'__expr, '__expr2, const BITS: usize, const LIMBS: usize> AsExpression<Binary>
-    for &'__expr2 &'__expr Uint<BITS, LIMBS>
-{
-    type Expression = Bound<Binary, Self>;
-    fn as_expression(self) -> Self::Expression {
-        Bound::new(self)
-    }
-}
-impl<'__expr, '__expr2, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
-    for &'__expr2 &'__expr Uint<BITS, LIMBS>
+impl<'a, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
+    for &'a Uint<BITS, LIMBS>
 {
     type Expression = Bound<Nullable<Binary>, Self>;
     fn as_expression(self) -> Self::Expression {
@@ -81,14 +71,31 @@ impl<'__expr, '__expr2, const BITS: usize, const LIMBS: usize> AsExpression<Null
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize, __DB> diesel::serialize::ToSql<Nullable<Binary>, __DB>
-    for Uint<BITS, LIMBS>
+impl<'a, 'b, const BITS: usize, const LIMBS: usize> AsExpression<Binary>
+    for &'b &'a Uint<BITS, LIMBS>
+{
+    type Expression = Bound<Binary, Self>;
+    fn as_expression(self) -> Self::Expression {
+        Bound::new(self)
+    }
+}
+
+impl<'a, 'b, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
+    for &'b &'a Uint<BITS, LIMBS>
+{
+    type Expression = Bound<Nullable<Binary>, Self>;
+    fn as_expression(self) -> Self::Expression {
+        Bound::new(self)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize, Db> ToSql<Nullable<Binary>, Db> for Uint<BITS, LIMBS>
 where
-    __DB: Backend,
-    Self: ToSql<Binary, __DB>,
+    Db: Backend,
+    Self: ToSql<Binary, Db>,
 {
-    fn to_sql<'__b>(&'__b self, out: &mut Output<'__b, '_, __DB>) -> serialize::Result {
-        ToSql::<Binary, __DB>::to_sql(self, out)
+    fn to_sql<'a>(&'a self, out: &mut Output<'a, '_, Db>) -> SerResult {
+        ToSql::<Binary, Db>::to_sql(self, out)
     }
 }
 
@@ -106,14 +113,14 @@ impl<const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>> for U
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize, __DB, __ST> Queryable<__ST, __DB> for Uint<BITS, LIMBS>
+impl<const BITS: usize, const LIMBS: usize, Db, St> Queryable<St, Db> for Uint<BITS, LIMBS>
 where
-    __DB: Backend,
-    __ST: SingleValue,
-    Self: FromSql<__ST, __DB>,
+    Db: Backend,
+    St: SingleValue,
+    Self: FromSql<St, Db>,
 {
     type Row = Self;
-    fn build(row: Self::Row) -> deserialize::Result<Self> {
+    fn build(row: Self::Row) -> DeserResult<Self> {
         Ok(row)
     }
 }
