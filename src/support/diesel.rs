@@ -55,34 +55,28 @@ where
 // pub struct Uint<const BITS: usize, const LIMBS: usize> { .. }
 // ```
 
-impl<'a, const BITS: usize, const LIMBS: usize> AsExpression<Binary> for &'a Uint<BITS, LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> AsExpression<Binary> for &Uint<BITS, LIMBS> {
     type Expression = Bound<Binary, Self>;
     fn as_expression(self) -> Self::Expression {
         Bound::new(self)
     }
 }
 
-impl<'a, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
-    for &'a Uint<BITS, LIMBS>
-{
+impl<const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>> for &Uint<BITS, LIMBS> {
     type Expression = Bound<Nullable<Binary>, Self>;
     fn as_expression(self) -> Self::Expression {
         Bound::new(self)
     }
 }
 
-impl<'a, 'b, const BITS: usize, const LIMBS: usize> AsExpression<Binary>
-    for &'b &'a Uint<BITS, LIMBS>
-{
+impl<const BITS: usize, const LIMBS: usize> AsExpression<Binary> for &&Uint<BITS, LIMBS> {
     type Expression = Bound<Binary, Self>;
     fn as_expression(self) -> Self::Expression {
         Bound::new(self)
     }
 }
 
-impl<'a, 'b, const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>>
-    for &'b &'a Uint<BITS, LIMBS>
-{
+impl<const BITS: usize, const LIMBS: usize> AsExpression<Nullable<Binary>> for &&Uint<BITS, LIMBS> {
     type Expression = Bound<Nullable<Binary>, Self>;
     fn as_expression(self) -> Self::Expression {
         Bound::new(self)
