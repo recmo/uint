@@ -67,8 +67,6 @@ pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv
 pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
     debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
     debug_assert!(less_than(a, modulus));
-    dbg!(a);
-    dbg!(modulus);
 
     let mut result = [0; N];
     let mut carry_outer = 0;
@@ -96,20 +94,28 @@ pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> 
         }
 
         // Add carries
-        let wide = (carry_outer as u128)
-            .wrapping_add(carry_lo as u128)
-            .wrapping_add((carry_hi as u128) << 64)
-            .wrapping_add(carry as u128);
+        if modulus[N - 1] >= 0x3fff_ffff_ffff_ffff {
+            let wide = (carry_outer as u128)
+                .wrapping_add(carry_lo as u128)
+                .wrapping_add((carry_hi as u128) << 64)
+                .wrapping_add(carry as u128);
+            result[N - 1] = wide as u64;
 
-        result[N - 1] = wide as u64;
-        carry_outer = (wide >> 64) as u64;
-        // Note carry_outer can be {0, 1, 2}.
+            // Note carry_outer can be {0, 1, 2}.
+            carry_outer = (wide >> 64) as u64;
+            debug_assert!(carry_outer <= 2);
+        } else {
+            // `carry_outer` and `carry_high` are always zero.
+            debug_assert!(!carry_hi);
+            debug_assert_eq!(carry_outer, 0);
+            let (value, carry) = carry_lo.overflowing_add(carry);
+            debug_assert!(!carry);
+            result[N - 1] = value;
+        }
     }
 
-    dbg!(result);
-
     // Compute reduced product.
-    assert!(carry_outer <= 1);
+    debug_assert!(carry_outer <= 1);
     reduce1_carry(result, modulus, carry_outer > 0)
 }
 
@@ -212,7 +218,7 @@ mod test {
         *,
     };
     use crate::{aliases::U64, const_for, nlimbs, Uint};
-    use proptest::{prop_assert_eq, prop_assume, proptest};
+    use proptest::{prop_assert_eq, proptest};
 
     fn modmul<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N]) -> [u64; N] {
         // Compute a * b
