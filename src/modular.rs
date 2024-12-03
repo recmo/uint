@@ -115,6 +115,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Montgomery multiplication.
     ///
+    /// Requires `self` and `other` to be less than `modulus`.
+    ///
     /// Computes
     ///
     /// $$
@@ -153,15 +155,27 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if `inv` is not correct in debug mode.
     #[inline]
     #[must_use]
-    #[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
     pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {
         if BITS == 0 {
             return Self::ZERO;
         }
-        debug_assert_eq!(inv.wrapping_mul(modulus.limbs[0]), u64::MAX);
         let result = algorithms::mul_redc(self.limbs, other.limbs, modulus.limbs, inv);
         let result = Self::from_limbs(result);
+        debug_assert!(result < modulus);
+        result
+    }
 
+    /// Montgomery squaring.
+    ///
+    /// See [Self::mul_redc].
+    #[inline]
+    #[must_use]
+    pub fn square_redc(self, modulus: Self, inv: u64) -> Self {
+        if BITS == 0 {
+            return Self::ZERO;
+        }
+        let result = algorithms::square_redc(self.limbs, modulus.limbs, inv);
+        let result = Self::from_limbs(result);
         debug_assert!(result < modulus);
         result
     }
@@ -292,6 +306,28 @@ mod tests {
                     let expected = a.mul_mod(b, m).mul_mod(r, m);
 
                     assert_eq!(ar.mul_redc(br, m, inv), expected);
+                }
+            });
+        });
+    }
+
+    #[test]
+    fn test_square_redc() {
+        const_for!(BITS in NON_ZERO if (BITS >= 16) {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, m: U)| {
+                prop_assume!(m >= U::from(2));
+                if let Some(inv) = U64::from(m.as_limbs()[0]).inv_ring() {
+                    let inv = (-inv).as_limbs()[0];
+
+                    let r = U::from(2).pow_mod(U::from(64 * LIMBS), m);
+                    let ar = a.mul_mod(r, m);
+                    // TODO: Test for larger (>= m) values of a, b.
+
+                    let expected = a.mul_mod(a, m).mul_mod(r, m);
+
+                    assert_eq!(ar.square_redc(m, inv), expected);
                 }
             });
         });
