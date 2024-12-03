@@ -155,6 +155,7 @@ named feature flag.
 * [`num-traits`](https://docs.rs/num-traits): Implements about forty applicable traits.
 * [`subtle`](https://docs.rs/subtle): Implements [`Uint::bit_ct`], [`ConditionallySelectable`](https://docs.rs/subtle/latest/subtle/trait.ConditionallySelectable.html),[`ConditionallyNegatable`](https://docs.rs/subtle/latest/subtle/trait.ConditionallyNegatable.html), [`ConstantTimeEq`](https://docs.rs/subtle/latest/subtle/trait.ConstantTimeEq.html)/[`ConstantTimeGreater`](https://docs.rs/subtle/latest/subtle/trait.ConstantTimeGreater.html)/[`ConstantTimeLess`](https://docs.rs/subtle/latest/subtle/trait.ConstantTimeLess.html).
 * [`der`](https://docs.rs/der): Implements [`Encode`](https://docs.rs/der/latest/der/trait.Encode.html)/[`Decode`](https://docs.rs/der/latest/der/trait.Decode.html) and [`TryFrom`]/[`From`] casting for [`Any`](https://docs.rs/der/latest/der/asn1/struct.Any.html), [`AnyRef`](https://docs.rs/der/latest/der/asn1/struct.AnyRef.html), [`Int`](https://docs.rs/der/latest/der/asn1/struct.Int.html), [`IntRef`](https://docs.rs/der/latest/der/asn1/struct.IntRef.html), [`Uint`](https://docs.rs/der/latest/der/asn1/struct.Uint.html), [`UintRef`](https://docs.rs/der/latest/der/asn1/struct.UintRef.html).
+* [`diesel`](https://docs.rs/diesel): Implements the [`ToSql`](https://docs.rs/diesel/latest/diesel/serialize/trait.ToSql.html) and [`FromSql`](https://docs.rs/diesel/latest/diesel/deserialize/trait.FromSql.html) traits for storing `Uint` values as byte arrays in databases supported by Diesel.
 
 ## Building and testing
 

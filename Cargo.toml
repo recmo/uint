@@ -44,7 +44,7 @@ required-features = ["std"]
 [dependencies]
 ruint-macro = { version = "1.2.1", path = "ruint-macro" }
 
-thiserror = { version = "1.0", optional = true }
+thiserror = { version = "2.0", optional = true }
 
 # support
 alloy-rlp = { version = "0.3", optional = true, default-features = false }
@@ -52,7 +52,10 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
-fastrlp = { version = "0.3", optional = true, default-features = false, features = [
+fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = [
+    "alloc",
+] }
+fastrlp-04 = { version = "0.4", package = "fastrlp", optional = true, default-features = false, features = [
     "alloc",
 ] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
@@ -82,6 +85,9 @@ subtle = { version = "2.6.1", optional = true, default-features = false }
 bytes = { version = "1.4", optional = true }
 postgres-types = { version = "0.2", optional = true }
 
+# diesel
+diesel = { version = "2.2", optional = true }
+
 # sqlx
 sqlx-core = { version = "0.8.2", optional = true }
 
@@ -110,7 +116,8 @@ std = [
     "ark-ff-03?/std",
     "ark-ff-04?/std",
     "bytes?/std",
-    "fastrlp?/std",
+    "fastrlp-03?/std",
+    "fastrlp-04?/std",
     "num-bigint?/std",
     "num-integer?/std",
     "num-traits?/std",
@@ -144,7 +151,9 @@ ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
 bytemuck = ["dep:bytemuck"]
 der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
-fastrlp = ["dep:fastrlp", "alloc"]
+diesel = ["dep:diesel", "std", "dep:thiserror"]
+fastrlp = ["dep:fastrlp-03", "alloc"]
+fastrlp-04 = ["dep:fastrlp-04", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]

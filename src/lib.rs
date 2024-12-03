@@ -218,7 +218,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
     ///
-    /// Panics if the value is to large for the bit-size of the Uint.
+    /// Panics if the value is too large for the bit-size of the Uint.
     #[inline(always)]
     #[must_use]
     #[track_caller]
@@ -237,7 +237,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Panics
     ///
-    /// Panics if the value is to large for the bit-size of the Uint.
+    /// Panics if the value is too large for the bit-size of the Uint.
     #[inline]
     #[must_use]
     #[track_caller]
