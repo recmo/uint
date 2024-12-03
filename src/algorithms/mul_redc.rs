@@ -1,4 +1,4 @@
-use core::{cmp::Ordering, hint::black_box, iter::zip};
+use core::{cmp::Ordering, iter::zip};
 
 /// Computes a * b * 2^(-BITS) mod modulus
 ///
@@ -133,11 +133,14 @@ fn less_than<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> bool {
     false
 }
 
+#[inline]
+#[must_use]
+#[allow(clippy::needless_bitwise_bool)]
 fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool) -> [u64; N] {
     let (reduced, borrow) = sub(value, modulus);
-    // Using `black_box` here does the oposite of `likely` and `unlikely` and causes
-    // the compiler to generate conditional moves/selects instead of a branch.
-    if black_box(carry | !borrow) {
+    // TODO: Ideally this turns into a cmov, which makes the whole mul_redc constant
+    // time.
+    if carry | !borrow {
         reduced
     } else {
         value
