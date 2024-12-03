@@ -1,21 +1,20 @@
-use core::{hint::black_box, iter::zip};
+use core::{cmp::Ordering, hint::black_box, iter::zip};
 
-/// Computes
+/// Computes a * b * 2^(-BITS) mod modulus
 ///
-/// (a * b) / 2^BITS mod modulus
-///
-/// TODO: Do the inputs need to be reduced?
+/// Requires that `inv` is the inverse of `-modulus[0]` modulo `2^64`.
+/// Requires that `a` and `b` are less than `modulus`.
 #[inline]
 #[must_use]
-#[allow(clippy::cast_possible_truncation)]
 pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
     debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
-    // debug_assert!(a[N - 1] <= modulus[N - 1]);
-    // debug_assert!(b[N - 1] <= modulus[N - 1]);
+    debug_assert!(less_than(a, modulus));
+    debug_assert!(less_than(b, modulus));
 
     // Coarsely Integrated Operand Scanning (CIOS)
     // See <https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf>
     // See <https://hackmd.io/@gnark/modular_multiplication#fn1>
+    // See <https://tches.iacr.org/index.php/TCHES/article/view/10972>
     let mut result = [0; N];
     let mut carry = false;
     for b in b {
@@ -58,105 +57,85 @@ pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv
     reduce1_carry(result, modulus, carry)
 }
 
-/// Computes
+/// Computes a^2 * 2^(-BITS) mod modulus
 ///
-/// a^2 / 2^BITS mod modulus
-///
-/// TODO: Do the inputs need to be reduced?
+/// Requires that `inv` is the inverse of `-modulus[0]` modulo `2^64`.
+/// Requires that `a` is less than `modulus`.
 #[inline]
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
     debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
-    // debug_assert!(a[N - 1] <= modulus[N - 1]);
+    debug_assert!(less_than(a, modulus));
+    dbg!(a);
+    dbg!(modulus);
 
-    // Coarsely Integrated Operand Scanning (CIOS)
-    // See <https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf>
-    // See <https://hackmd.io/@gnark/modular_multiplication#fn1>
     let mut result = [0; N];
-    let mut carry = false;
-    for limb in a {
-        let mut m = 0;
-        let mut carry_1 = 0;
-        let mut carry_2 = 0;
-        for i in 0..N {
-            // Add limb product
-            let (value, next_carry) = carrying_mul_add(a[i], limb, result[i], carry_1);
-            carry_1 = next_carry;
+    let mut carry_outer = 0;
+    for i in 0..N {
+        // Add limb product
+        let (value, mut carry_lo) = carrying_mul_add(a[i], a[i], result[i], 0);
+        let mut carry_hi = false;
+        result[i] = value;
+        for j in (i + 1)..N {
+            let (value, next_carry_lo, next_carry_hi) =
+                carrying_double_mul_add(a[i], a[j], result[j], carry_lo, carry_hi);
+            result[j] = value;
+            carry_lo = next_carry_lo;
+            carry_hi = next_carry_hi;
+        }
 
-            if i == 0 {
-                // Compute reduction factor
-                m = value.wrapping_mul(inv);
-            }
-
-            // Add m * modulus to acc to clear next_result[0]
-            let (value, next_carry) = carrying_mul_add(modulus[i], m, value, carry_2);
-            carry_2 = next_carry;
-
-            // Shift result
-            if i > 0 {
-                result[i - 1] = value;
-            } else {
-                debug_assert_eq!(value, 0);
-            }
+        // Add m times modulus to result and shift one limb
+        let m = result[0].wrapping_mul(inv);
+        let (value, mut carry) = carrying_mul_add(m, modulus[0], result[0], 0);
+        debug_assert_eq!(value, 0);
+        for j in 1..N {
+            let (value, next_carry) = carrying_mul_add(modulus[j], m, result[j], carry);
+            result[j - 1] = value;
+            carry = next_carry;
         }
 
         // Add carries
-        let (value, next_carry) = carrying_add(carry_1, carry_2, carry);
-        result[N - 1] = value;
-        if modulus[N - 1] >= 0x7fff_ffff_ffff_ffff {
-            carry = next_carry;
-        } else {
-            debug_assert!(!next_carry);
-        }
+        let wide = (carry_outer as u128)
+            .wrapping_add(carry_lo as u128)
+            .wrapping_add((carry_hi as u128) << 64)
+            .wrapping_add(carry as u128);
+
+        result[N - 1] = wide as u64;
+        carry_outer = (wide >> 64) as u64;
+        // Note carry_outer can be {0, 1, 2}.
     }
+
+    dbg!(result);
 
     // Compute reduced product.
-    reduce1_carry(result, modulus, carry)
-}
-
-pub fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool) -> [u64; N] {
-    let (reduced, borrow) = sub(value, modulus);
-    // Using `black_box` here does the oposite of `likely` and `unlikely` and causes
-    // the compiler to generate conditional moves/selects instead of a branch.
-    if black_box(carry || !borrow) {
-        reduced
-    } else {
-        value
-    }
-}
-
-pub fn reduce1_carry_constime<const N: usize>(
-    value: [u64; N],
-    modulus: [u64; N],
-    carry: bool,
-) -> [u64; N] {
-    let (reduced, borrow) = sub(value, modulus);
-    let mut result = value;
-    cmov(&mut result, &reduced, carry || !borrow);
-    result
-}
-
-#[inline]
-pub fn cmov<const N: usize>(dst: &mut [u64; N], src: &[u64; N], condition: bool) {
-    let mask = (condition as u64).wrapping_neg();
-    let mask = core::hint::black_box(mask);
-    for (dst, &src) in zip(dst, src) {
-        *dst ^= (*dst ^ src) & mask;
-    }
+    assert!(carry_outer <= 1);
+    reduce1_carry(result, modulus, carry_outer > 0)
 }
 
 #[inline]
 #[must_use]
-fn add<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> ([u64; N], bool) {
-    let mut result = [0; N];
-    let mut carry = false;
-    for (result, (lhs, rhs)) in zip(&mut result, zip(lhs, rhs)) {
-        let (value, next_carry) = borrowing_sub(lhs, rhs, carry);
-        *result = value;
-        carry = next_carry;
+fn less_than<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> bool {
+    for (lhs, rhs) in zip(lhs.iter().rev(), rhs.iter().rev()) {
+        match lhs.cmp(rhs) {
+            Ordering::Less => return true,
+            Ordering::Greater => return false,
+            Ordering::Equal => {}
+        }
     }
-    (result, carry)
+    // lhs == rhs
+    false
+}
+
+fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool) -> [u64; N] {
+    let (reduced, borrow) = sub(value, modulus);
+    // Using `black_box` here does the oposite of `likely` and `unlikely` and causes
+    // the compiler to generate conditional moves/selects instead of a branch.
+    if black_box(carry | !borrow) {
+        reduced
+    } else {
+        value
+    }
 }
 
 #[inline]
@@ -172,21 +151,11 @@ fn sub<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> ([u64; N], bool) {
     (result, borrow)
 }
 
-/// Compute `accumulator + lhs * rhs` for a single word `rhs`, returing the
-/// result and carry.
+/// Compute `lhs * rhs + add + carry`.
+/// The output can not overflow for any input values.
 #[inline]
 #[must_use]
-pub fn mul_add_small<const N: usize>(lhs: [u64; N], rhs: u64, add: [u64; N]) -> ([u64; N], u64) {
-    let mut result = [0; N];
-    let mut carry = 0;
-    for (result, (lhs, add)) in zip(&mut result, zip(lhs, add)) {
-        let (value, next_carry) = carrying_mul_add(lhs, rhs, add, carry);
-        *result = value;
-        carry = next_carry;
-    }
-    (result, carry)
-}
-
+#[allow(clippy::cast_possible_truncation)]
 const fn carrying_mul_add(lhs: u64, rhs: u64, add: u64, carry: u64) -> (u64, u64) {
     let wide = (lhs as u128)
         .wrapping_mul(rhs as u128)
@@ -195,9 +164,30 @@ const fn carrying_mul_add(lhs: u64, rhs: u64, add: u64, carry: u64) -> (u64, u64
     (wide as u64, (wide >> 64) as u64)
 }
 
-// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
-#[must_use]
+/// Compute `2 * lhs * rhs + add + carry_lo + 2^64 * carry_hi`.
+/// The output can not overflow for any input values.
 #[inline]
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+const fn carrying_double_mul_add(
+    lhs: u64,
+    rhs: u64,
+    add: u64,
+    carry_lo: u64,
+    carry_hi: bool,
+) -> (u64, u64, bool) {
+    let wide = (lhs as u128).wrapping_mul(rhs as u128);
+    let (wide, carry_1) = wide.overflowing_add(wide);
+    let carries = (add as u128)
+        .wrapping_add(carry_lo as u128)
+        .wrapping_add((carry_hi as u128) << 64);
+    let (wide, carry_2) = wide.overflowing_add(carries);
+    (wide as u64, (wide >> 64) as u64, carry_1 | carry_2)
+}
+
+// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
+#[inline]
+#[must_use]
 const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
     let (result, carry_1) = lhs.overflowing_add(rhs);
     let (result, carry_2) = result.overflowing_add(carry as u64);
@@ -205,27 +195,18 @@ const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
 }
 
 // Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
-#[must_use]
 #[inline]
+#[must_use]
 const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
     let (result, borrow_1) = lhs.overflowing_sub(rhs);
     let (result, borrow_2) = result.overflowing_sub(borrow as u64);
     (result, borrow_1 || borrow_2)
 }
 
-// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
-#[must_use]
-#[inline]
-#[allow(clippy::cast_possible_truncation)]
-const fn carrying_mul(lhs: u64, rhs: u64, carry: u64) -> (u64, u64) {
-    let wide = (lhs as u128)
-        .wrapping_mul(rhs as u128)
-        .wrapping_add(carry as u128);
-    (wide as u64, (wide >> 64) as u64)
-}
-
 #[cfg(test)]
 mod test {
+    use core::ops::Neg;
+
     use super::{
         super::{addmul, div},
         *,
@@ -233,10 +214,21 @@ mod test {
     use crate::{aliases::U64, const_for, nlimbs, Uint};
     use proptest::{prop_assert_eq, prop_assume, proptest};
 
-    fn reference<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N]) -> [u64; N] {
-        // Compute a * b * 2^(64 * N)
-        let mut product = vec![0; 3 * N];
-        addmul(&mut product[N..], &a, &b);
+    fn modmul<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N]) -> [u64; N] {
+        // Compute a * b
+        let mut product = vec![0; 2 * N];
+        addmul(&mut product, &a, &b);
+
+        // Compute product mod modulus
+        let mut reduced = modulus;
+        div(&mut product, &mut reduced);
+        reduced
+    }
+
+    fn mul_base<const N: usize>(a: [u64; N], modulus: [u64; N]) -> [u64; N] {
+        // Compute a * 2^(N * 64)
+        let mut product = vec![0; 2 * N];
+        product[N..].copy_from_slice(&a);
 
         // Compute product mod modulus
         let mut reduced = modulus;
@@ -249,18 +241,17 @@ mod test {
         const_for!(BITS in NON_ZERO if (BITS >= 16) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, b: U, m: U)| {
+            proptest!(|(mut a: U, mut b: U, mut m: U)| {
+                m |= U::from(1_u64); // Make sure m is odd.
+                a %= m; // Make sure a is less than m.
+                b %= m; // Make sure b is less than m.
                 let a = *a.as_limbs();
                 let b = *b.as_limbs();
                 let m = *m.as_limbs();
+                let inv = U64::from(m[0]).inv_ring().unwrap().neg().as_limbs()[0];
 
-                // Make sure m has an inverse.
-                let inv = U64::from(m[0]).inv_ring();
-                prop_assume!(inv.is_some());
-                let inv = (-inv.unwrap()).as_limbs()[0];
-
-                let result = mul_redc(a, b, m, inv);
-                let expected = reference(a, b, m);
+                let result = mul_base(mul_redc(a, b, m, inv), m);
+                let expected = modmul(a, b, m);
 
                 prop_assert_eq!(result, expected);
             });
@@ -272,17 +263,15 @@ mod test {
         const_for!(BITS in NON_ZERO if (BITS >= 16) {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            proptest!(|(a: U, m: U)| {
+            proptest!(|(mut a: U, mut m: U)| {
+                m |= U::from(1_u64); // Make sure m is odd.
+                a %= m; // Make sure a is less than m.
                 let a = *a.as_limbs();
                 let m = *m.as_limbs();
+                let inv = U64::from(m[0]).inv_ring().unwrap().neg().as_limbs()[0];
 
-                // Make sure m has an inverse.
-                let inv = U64::from(m[0]).inv_ring();
-                prop_assume!(inv.is_some());
-                let inv = (-inv.unwrap()).as_limbs()[0];
-
-                let result = square_redc(a, m, inv);
-                let expected = reference(a, a, m);
+                let result = mul_base(square_redc(a, m, inv), m);
+                let expected = modmul(a, a, m);
 
                 prop_assert_eq!(result, expected);
             });
