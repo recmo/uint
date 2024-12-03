@@ -200,7 +200,7 @@ const fn carrying_double_mul_add(
 const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
     let (result, carry_1) = lhs.overflowing_add(rhs);
     let (result, carry_2) = result.overflowing_add(carry as u64);
-    (result, carry_1 || carry_2)
+    (result, carry_1 | carry_2)
 }
 
 // Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
@@ -209,7 +209,7 @@ const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
 const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
     let (result, borrow_1) = lhs.overflowing_sub(rhs);
     let (result, borrow_2) = result.overflowing_sub(borrow as u64);
-    (result, borrow_1 || borrow_2)
+    (result, borrow_1 | borrow_2)
 }
 
 #[cfg(test)]
