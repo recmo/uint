@@ -61,7 +61,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         const fn u64_carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
             let (a, b) = lhs.overflowing_add(rhs);
             let (c, d) = a.overflowing_add(carry as u64);
-            (c, b || d)
+            (c, b | d)
         }
 
         if BITS == 0 {
@@ -103,7 +103,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         const fn u64_borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
             let (a, b) = lhs.overflowing_sub(rhs);
             let (c, d) = a.overflowing_sub(borrow as u64);
-            (c, b || d)
+            (c, b | d)
         }
 
         if BITS == 0 {
