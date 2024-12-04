@@ -11,7 +11,6 @@ mod add;
 pub mod div;
 mod gcd;
 mod mul;
-#[cfg(feature = "alloc")] // TODO: Make mul_redc alloc-free
 mod mul_redc;
 mod ops;
 mod shift;
@@ -21,11 +20,10 @@ pub use self::{
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{add_nx1, addmul, addmul_n, addmul_nx1, mul_nx1, submul_nx1},
+    mul_redc::{mul_redc, square_redc},
     ops::{adc, sbb},
     shift::{shift_left_small, shift_right_small},
 };
-#[cfg(feature = "alloc")]
-pub use mul_redc::mul_redc;
 
 trait DoubleWord<T>: Sized + Copy {
     fn join(high: T, low: T) -> Self;

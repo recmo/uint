@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `Uint::square_redc`. ([#402])
 - Support for diesel @ 2.2 ([#404])
 - Support for sqlx @ 0.8 ([#400])
 - Support for fastrlp @ 0.4 ([#401])
@@ -21,10 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for sqlx @ 0.7. This is a breaking change, outside of
   regular semver policy, as 0.7 contains a security vulnerability  ([#400])
 
+### Fixed
+
+- `Uint::mul_redc` is now alloc free ([#402])
+
 [#399]: https://github.com/recmo/uint/pull/399
 [#400]: https://github.com/recmo/uint/pull/400
 [#401]: https://github.com/recmo/uint/pull/401
 [#404]: https://github.com/recmo/uint/pull/404
+[#402]: https://github.com/recmo/uint/pull/402
 
 ## [1.12.3] - 2024-06-03
 

@@ -1,5 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 
+// TODO: https://github.com/bitcoin-core/secp256k1/blob/master/doc/safegcd_implementation.md
+
 // TODO: Make these algorithms work on limb slices.
 mod matrix;
 
