@@ -1,3 +1,6 @@
+// TODO: https://baincapitalcrypto.com/optimizing-montgomery-multiplication-in-webassembly/
+
+use super::{borrowing_sub, carrying_add, cmp};
 use core::{cmp::Ordering, iter::zip};
 
 /// Computes a * b * 2^(-BITS) mod modulus
@@ -8,8 +11,8 @@ use core::{cmp::Ordering, iter::zip};
 #[must_use]
 pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
     debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
-    debug_assert!(less_than(a, modulus));
-    debug_assert!(less_than(b, modulus));
+    debug_assert_eq!(cmp(&a, &modulus), Ordering::Less);
+    debug_assert_eq!(cmp(&b, &modulus), Ordering::Less);
 
     // Coarsely Integrated Operand Scanning (CIOS)
     // See <https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf>
@@ -66,7 +69,7 @@ pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv
 #[allow(clippy::cast_possible_truncation)]
 pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> [u64; N] {
     debug_assert_eq!(inv.wrapping_mul(modulus[0]), u64::MAX);
-    debug_assert!(less_than(a, modulus));
+    debug_assert_eq!(cmp(&a, &modulus), Ordering::Less);
 
     let mut result = [0; N];
     let mut carry_outer = 0;
@@ -105,7 +108,7 @@ pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> 
             carry_outer = (wide >> 64) as u64;
             debug_assert!(carry_outer <= 2);
         } else {
-            // `carry_outer` and `carry_high` are always zero.
+            // `carry_outer` and `carry_hi` are always zero.
             debug_assert!(!carry_hi);
             debug_assert_eq!(carry_outer, 0);
             let (value, carry) = carry_lo.overflowing_add(carry);
@@ -117,20 +120,6 @@ pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> 
     // Compute reduced product.
     debug_assert!(carry_outer <= 1);
     reduce1_carry(result, modulus, carry_outer > 0)
-}
-
-#[inline]
-#[must_use]
-fn less_than<const N: usize>(lhs: [u64; N], rhs: [u64; N]) -> bool {
-    for (lhs, rhs) in zip(lhs.iter().rev(), rhs.iter().rev()) {
-        match lhs.cmp(rhs) {
-            Ordering::Less => return true,
-            Ordering::Greater => return false,
-            Ordering::Equal => {}
-        }
-    }
-    // lhs == rhs
-    false
 }
 
 #[inline]
@@ -192,24 +181,6 @@ const fn carrying_double_mul_add(
         .wrapping_add((carry_hi as u128) << 64);
     let (wide, carry_2) = wide.overflowing_add(carries);
     (wide as u64, (wide >> 64) as u64, carry_1 | carry_2)
-}
-
-// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
-#[inline]
-#[must_use]
-const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
-    let (result, carry_1) = lhs.overflowing_add(rhs);
-    let (result, carry_2) = result.overflowing_add(carry as u64);
-    (result, carry_1 | carry_2)
-}
-
-// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
-#[inline]
-#[must_use]
-const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
-    let (result, borrow_1) = lhs.overflowing_sub(rhs);
-    let (result, borrow_2) = result.overflowing_sub(borrow as u64);
-    (result, borrow_1 | borrow_2)
 }
 
 #[cfg(test)]
