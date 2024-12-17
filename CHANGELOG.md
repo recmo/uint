@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Support for borsh @ 1.5
+- Support for borsh @ 1.5 ([#416])
 
 ## [1.12.4] - 2024-12-16
 
