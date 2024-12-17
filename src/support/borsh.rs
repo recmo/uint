@@ -70,7 +70,6 @@ mod test {
         assert_eq!(Something::try_from_slice(&mut &buf[..]).unwrap(), something);
     }
 
-
     #[derive(Debug, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
     struct AnotherThing {
         is_it: bool,
@@ -93,6 +92,9 @@ mod test {
                 0, 0, 0, 0, 0
             ]
         );
-        assert_eq!(AnotherThing::try_from_slice(&mut &buf[..]).unwrap(), another_thing);
+        assert_eq!(
+            AnotherThing::try_from_slice(&mut &buf[..]).unwrap(),
+            another_thing
+        );
     }
 }
