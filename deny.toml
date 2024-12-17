@@ -1,9 +1,8 @@
 [advisories]
-vulnerability = "deny"
-unmaintained = "warn"
-unsound = "warn"
-yanked = "warn"
-notice = "warn"
+version = 2
+ignore = [
+    { id = "RUSTSEC-2024-0388", reason = "this is an unmaintained transitive subdep of a dev dep" },
+]
 
 [bans]
 multiple-versions = "warn"
@@ -11,10 +10,9 @@ wildcards = "warn"
 highlight = "all"
 
 [licenses]
-unlicensed = "deny"
+version = 2
 confidence-threshold = 0.9
 # copyleft = "deny"
-
 allow = [
     "MIT",
     "MIT-0",
