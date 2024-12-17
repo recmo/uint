@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.4] - 2024-12-16
+
+### Added
+
+- Added `Uint::square_redc`. ([#402])
+- Support for diesel @ 2.2 ([#404])
+- Support for sqlx @ 0.8 ([#400])
+- Support for fastrlp @ 0.4 ([#401])
+- Added support for [`subtle`](https://docs.rs/subtle) and [`der`](https://docs.rs/der) ([#399])
+
+### Removed
+
+- Support for sqlx @ 0.7. This is a breaking change, outside of
+  regular semver policy, as 0.7 contains a security vulnerability  ([#400])
+
+### Fixed
+
+- `Uint::mul_redc` is now alloc free ([#402])
+
+[#399]: https://github.com/recmo/uint/pull/399
+[#400]: https://github.com/recmo/uint/pull/400
+[#401]: https://github.com/recmo/uint/pull/401
+[#404]: https://github.com/recmo/uint/pull/404
+[#402]: https://github.com/recmo/uint/pull/402
+
 ## [1.12.3] - 2024-06-03
 
 ### Changed
@@ -331,7 +356,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.12.3...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.12.4...HEAD
+[1.12.4]: https://github.com/recmo/uint/releases/tag/v1.12.4
 [1.12.3]: https://github.com/recmo/uint/releases/tag/v1.12.3
 [1.12.1]: https://github.com/recmo/uint/releases/tag/v1.12.1
 [1.12.0]: https://github.com/recmo/uint/releases/tag/v1.12.0

@@ -5,6 +5,8 @@
     clippy::pedantic,
     clippy::nursery,
     clippy::missing_inline_in_public_items,
+    clippy::std_instead_of_alloc,
+    clippy::std_instead_of_core,
     missing_docs,
     unreachable_pub
 )]
@@ -216,7 +218,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics it `LIMBS` is not equal to `nlimbs(BITS)`.
     ///
-    /// Panics if the value is to large for the bit-size of the Uint.
+    /// Panics if the value is too large for the bit-size of the Uint.
     #[inline(always)]
     #[must_use]
     #[track_caller]
@@ -235,7 +237,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Panics
     ///
-    /// Panics if the value is to large for the bit-size of the Uint.
+    /// Panics if the value is too large for the bit-size of the Uint.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -345,8 +347,8 @@ mod test {
         assert_eq!(mask(0), 0);
         assert_eq!(mask(1), 1);
         assert_eq!(mask(5), 0x1f);
-        assert_eq!(mask(63), u64::max_value() >> 1);
-        assert_eq!(mask(64), u64::max_value());
+        assert_eq!(mask(63), u64::MAX >> 1);
+        assert_eq!(mask(64), u64::MAX);
     }
 
     #[test]

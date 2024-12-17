@@ -1,7 +1,7 @@
 [package]
 name = "ruint"
 description = "Unsigned integer type with const-generic bit length"
-version = "1.12.3"
+version = "1.12.4"
 keywords = ["uint"]
 categories = ["mathematics"]
 include = [".cargo/", "src/", "README.md"]
@@ -16,7 +16,12 @@ repository.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs", "--html-in-header", ".cargo/katex-header.html"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs",
+    "--html-in-header",
+    ".cargo/katex-header.html",
+]
 
 [workspace]
 members = [".", "ruint-macro"]
@@ -39,7 +44,7 @@ required-features = ["std"]
 [dependencies]
 ruint-macro = { version = "1.2.1", path = "ruint-macro" }
 
-thiserror = { version = "1.0", optional = true }
+thiserror = { version = "2.0", optional = true }
 
 # support
 alloy-rlp = { version = "0.3", optional = true, default-features = false }
@@ -47,7 +52,12 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
-fastrlp = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
+fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = [
+    "alloc",
+] }
+fastrlp-04 = { version = "0.4", package = "fastrlp", optional = true, default-features = false, features = [
+    "alloc",
+] }
 num-bigint = { version = "0.4", optional = true, default-features = false }
 num-integer = { version = "0.1", optional = true, default-features = false }
 num-traits = { version = "0.2.16", optional = true, default-features = false }
@@ -56,7 +66,7 @@ parity-scale-codec = { version = "3", optional = true, features = [
     "max-encoded-len",
 ], default-features = false }
 primitive-types = { version = "0.12", optional = true, default-features = false }
-proptest = { version = "1.3", optional = true, default-features = false }
+proptest = { version = "=1.5", optional = true, default-features = false }
 pyo3 = { version = "0.19", optional = true, default-features = false }
 quickcheck = { version = "1", optional = true, default-features = false }
 rand = { version = "0.8", optional = true, default-features = false }
@@ -66,13 +76,20 @@ valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
 ethereum_ssz = { version = "0.5.3", optional = true, default-features = false }
+der = { version = "0.7", optional = true, default-features = false, features = [
+    "alloc",
+] }
+subtle = { version = "2.6.1", optional = true, default-features = false }
 
 # postgres
 bytes = { version = "1.4", optional = true }
 postgres-types = { version = "0.2", optional = true }
 
+# diesel
+diesel = { version = "2.2", optional = true }
+
 # sqlx
-sqlx-core = { version = "0.7", optional = true }
+sqlx-core = { version = "0.8.2", optional = true }
 
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
@@ -88,7 +105,7 @@ bincode = "1.3"
 hex = "0.4"
 hex-literal = "0.4"
 postgres = "0.19"
-proptest = "1.2"
+proptest = "=1.5"
 serde_json = "1.0"
 
 [features]
@@ -99,7 +116,8 @@ std = [
     "ark-ff-03?/std",
     "ark-ff-04?/std",
     "bytes?/std",
-    "fastrlp?/std",
+    "fastrlp-03?/std",
+    "fastrlp-04?/std",
     "num-bigint?/std",
     "num-integer?/std",
     "num-traits?/std",
@@ -113,7 +131,13 @@ std = [
     "zeroize?/std",
 ]
 ssz = ["std", "dep:ethereum_ssz"]
-alloc = ["proptest?/alloc", "rand?/alloc", "serde?/alloc", "valuable?/alloc", "zeroize?/alloc"]
+alloc = [
+    "proptest?/alloc",
+    "rand?/alloc",
+    "serde?/alloc",
+    "valuable?/alloc",
+    "zeroize?/alloc",
+]
 
 # nightly-only features
 nightly = []
@@ -125,21 +149,24 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
-fastrlp = ["dep:fastrlp", "alloc"]
+bytemuck = ["dep:bytemuck"]
+der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
+diesel = ["dep:diesel", "std", "dep:thiserror"]
+fastrlp = ["dep:fastrlp-03", "alloc"]
+fastrlp-04 = ["dep:fastrlp-04", "alloc"]
 num-bigint = ["dep:num-bigint", "alloc"]
 num-integer = ["dep:num-integer", "num-traits", "alloc"]
 num-traits = ["dep:num-traits", "alloc"]
 parity-scale-codec = ["dep:parity-scale-codec", "alloc"]
+postgres = ["dep:postgres-types", "dep:bytes", "dep:thiserror", "std"]
 primitive-types = ["dep:primitive-types"]
 proptest = ["dep:proptest", "alloc"]
 pyo3 = ["dep:pyo3", "std"]
 quickcheck = ["dep:quickcheck", "std"]
 rand = ["dep:rand"]
 rlp = ["dep:rlp", "alloc"]
-serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
+serde = ["dep:serde", "alloc"]                                         # TODO: try to avoid alloc in serde impls
+sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
+subtle = ["dep:subtle"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
-bytemuck = ["dep:bytemuck"]
-
-postgres = ["dep:postgres-types", "dep:bytes", "std", "dep:thiserror"]
-sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]

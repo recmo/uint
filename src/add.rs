@@ -1,4 +1,7 @@
-use crate::Uint;
+use crate::{
+    algorithms::{borrowing_sub, carrying_add},
+    Uint,
+};
 use core::{
     iter::Sum,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
@@ -56,24 +59,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
-        // TODO: Replace with `u64::carrying_add` once stable.
-        #[inline]
-        const fn u64_carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
-            let (a, b) = lhs.overflowing_add(rhs);
-            let (c, d) = a.overflowing_add(carry as u64);
-            (c, b || d)
-        }
-
         if BITS == 0 {
             return (Self::ZERO, false);
         }
         let mut carry = false;
         let mut i = 0;
         while i < LIMBS {
-            (self.limbs[i], carry) = u64_carrying_add(self.limbs[i], rhs.limbs[i], carry);
+            (self.limbs[i], carry) = carrying_add(self.limbs[i], rhs.limbs[i], carry);
             i += 1;
         }
-        let overflow = carry || self.limbs[LIMBS - 1] > Self::MASK;
+        let overflow = carry | (self.limbs[LIMBS - 1] > Self::MASK);
         self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }
@@ -98,24 +93,16 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
-        // TODO: Replace with `u64::borrowing_sub` once stable.
-        #[inline]
-        const fn u64_borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
-            let (a, b) = lhs.overflowing_sub(rhs);
-            let (c, d) = a.overflowing_sub(borrow as u64);
-            (c, b || d)
-        }
-
         if BITS == 0 {
             return (Self::ZERO, false);
         }
         let mut borrow = false;
         let mut i = 0;
         while i < LIMBS {
-            (self.limbs[i], borrow) = u64_borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
+            (self.limbs[i], borrow) = borrowing_sub(self.limbs[i], rhs.limbs[i], borrow);
             i += 1;
         }
-        let overflow = borrow || self.limbs[LIMBS - 1] > Self::MASK;
+        let overflow = borrow | (self.limbs[LIMBS - 1] > Self::MASK);
         self.limbs[LIMBS - 1] &= Self::MASK;
         (self, overflow)
     }
