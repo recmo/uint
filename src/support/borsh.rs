@@ -64,6 +64,7 @@ mod test {
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
             0, 0, 0, 0
         ]);
+        assert_eq!(&something.value.to_le_bytes::<32>(), &buf[1..]);
         assert_eq!(Something::try_from_slice(&mut &buf[..]).unwrap(), something);
     }
 
@@ -86,6 +87,7 @@ mod test {
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
             0, 0, 0, 0
         ]);
+        assert_eq!(&another_thing.value.to_le_bytes::<32>(), &buf[1..]);
         assert_eq!(
             AnotherThing::try_from_slice(&mut &buf[..]).unwrap(),
             another_thing
