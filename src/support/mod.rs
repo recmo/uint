@@ -7,6 +7,7 @@ mod arbitrary;
 mod ark_ff;
 mod ark_ff_04;
 mod bn_rs;
+mod borsh;
 mod bytemuck;
 mod der;
 pub mod diesel;
