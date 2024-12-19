@@ -60,13 +60,10 @@ mod test {
         let mut buf = [0; 33];
 
         something.serialize(&mut buf.as_mut_slice()).unwrap();
-        assert_eq!(
-            buf,
-            [
-                1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
-                0, 0, 0, 0, 0
-            ]
-        );
+        assert_eq!(buf, [
+            1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+            0, 0, 0, 0
+        ]);
         assert_eq!(Something::try_from_slice(&mut &buf[..]).unwrap(), something);
     }
 
@@ -85,13 +82,10 @@ mod test {
         let mut buf = [0; 33];
 
         another_thing.serialize(&mut buf.as_mut_slice()).unwrap();
-        assert_eq!(
-            buf,
-            [
-                1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
-                0, 0, 0, 0, 0
-            ]
-        );
+        assert_eq!(buf, [
+            1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+            0, 0, 0, 0
+        ]);
         assert_eq!(
             AnotherThing::try_from_slice(&mut &buf[..]).unwrap(),
             another_thing
