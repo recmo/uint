@@ -15,9 +15,9 @@ impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMB
         // alignment to [u8; LIMBS * 8], which is guaranteed to be larger than
         // [u8; Self::BYTES].
         unsafe {
-            let ptr = limbs.as_mut_ptr() as *mut u8;
+            let ptr: *mut u8 = limbs.as_mut_ptr().cast();
             // target is only the first `SELF::BYTES` bytes
-            let target = std::slice::from_raw_parts_mut(ptr, Self::BYTES);
+            let target = core::slice::from_raw_parts_mut(ptr, Self::BYTES);
             // this writes into the memory occupied by `limbs`
             reader.read_exact(target)?;
         }
