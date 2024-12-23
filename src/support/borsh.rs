@@ -9,34 +9,45 @@ use borsh::{io, BorshDeserialize, BorshSerialize};
 impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMBS> {
     #[inline]
     fn deserialize_reader<R: io::Read>(reader: &mut R) -> io::Result<Self> {
+        // This is a bit of an end-run around missing `generic_const_exprs`
+        // We cannot declare a `[u8; Self::BYTES]` or `[u8; LIMBS * 8]`,
+        // so we declare a `[u8; LIMBS]` and use unsafe to write to it.
+
+        // TODO: Replace the unsafety with `generic_const_exprs` when
+        // available
         let mut limbs = [0; LIMBS];
 
         // SAFETY: `limbs` is known to have identical memory layout and
-        // alignment to [u8; LIMBS * 8], which is guaranteed to be larger than
-        // [u8; Self::BYTES].
-        unsafe {
+        // alignment to `[u8; LIMBS * 8]`, which is guaranteed to safely
+        // contain  [u8; Self::BYTES]`, as `LIMBS * 8 >= Self::BYTES`.
+        // Reference:
+        // https://doc.rust-lang.org/reference/type-layout.html#array-layout
+        let this = unsafe {
             let ptr: *mut u8 = limbs.as_mut_ptr().cast();
             // target is only the first `SELF::BYTES` bytes
             let target = core::slice::from_raw_parts_mut(ptr, Self::BYTES);
             // this writes into the memory occupied by `limbs`
             reader.read_exact(target)?;
-        }
 
-        // Last part: we need to check that the value fits in the type.
-        // This check is reproduced from the assertion in `from_limbs`.
-        if limbs.last().copied().unwrap_or_default() > Self::MASK {
-            return Err(io::Error::new(
+            // Using `Self::from_limbs(limbs)` would be incorrect here, as the
+            // inner u64s are encoded in LE, and the platform may be BE.
+
+            Self::try_from_le_slice(target)
+        };
+
+        this.ok_or_else(|| {
+            io::Error::new(
                 io::ErrorKind::InvalidData,
                 "value is too large for the type",
-            ));
-        }
-        Ok(Self::from_limbs(limbs))
+            )
+        })
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Uint<BITS, LIMBS> {
     #[inline]
     fn serialize<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
+        // TODO: non-allocating and remove the `alloc` feature requirement
         let bytes = self.as_le_bytes_trimmed();
         writer.write_all(&bytes)
     }
@@ -74,6 +85,7 @@ mod test {
         let mut buf = [0; 33];
 
         something.serialize(&mut buf.as_mut_slice()).unwrap();
+        dbg!(hex::encode(&buf));
         assert_eq!(buf, [
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
             0, 0, 0, 0
@@ -97,6 +109,9 @@ mod test {
         let mut buf = [0; 33];
 
         another_thing.serialize(&mut buf.as_mut_slice()).unwrap();
+
+        dbg!(hex::encode(&buf));
+
         assert_eq!(buf, [
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
             0, 0, 0, 0

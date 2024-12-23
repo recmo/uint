@@ -93,6 +93,7 @@ sqlx-core = { version = "0.8.2", optional = true }
 
 # borsh
 borsh = { version = "1.5", optional = true, default-features = false }
+hex = "0.4"
 
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
@@ -155,7 +156,7 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
-borsh = ["dep:borsh"]
+borsh = ["alloc", "dep:borsh"]
 bytemuck = ["dep:bytemuck"]
 der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
 diesel = ["dep:diesel", "std", "dep:thiserror"]
