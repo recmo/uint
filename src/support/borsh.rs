@@ -31,7 +31,6 @@ impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMB
 
             // Using `Self::from_limbs(limbs)` would be incorrect here, as the
             // inner u64s are encoded in LE, and the platform may be BE.
-
             Self::try_from_le_slice(target)
         };
 
@@ -85,7 +84,6 @@ mod test {
         let mut buf = [0; 33];
 
         something.serialize(&mut buf.as_mut_slice()).unwrap();
-        dbg!(hex::encode(&buf));
         assert_eq!(buf, [
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
             0, 0, 0, 0
@@ -109,8 +107,6 @@ mod test {
         let mut buf = [0; 33];
 
         another_thing.serialize(&mut buf.as_mut_slice()).unwrap();
-
-        dbg!(hex::encode(&buf));
 
         assert_eq!(buf, [
             1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
