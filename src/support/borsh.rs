@@ -15,14 +15,14 @@ impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMB
 
         // TODO: Replace the unsafety with `generic_const_exprs` when
         // available
-        let mut limbs = [0; LIMBS];
+        let mut limbs = [0u64; LIMBS];
 
         // SAFETY: `limbs` is known to have identical memory layout and
         // alignment to `[u8; LIMBS * 8]`, which is guaranteed to safely
         // contain  [u8; Self::BYTES]`, as `LIMBS * 8 >= Self::BYTES`.
         // Reference:
         // https://doc.rust-lang.org/reference/type-layout.html#array-layout
-        let this = unsafe {
+        unsafe {
             let ptr: *mut u8 = limbs.as_mut_ptr().cast();
             // target is only the first `SELF::BYTES` bytes
             let target = core::slice::from_raw_parts_mut(ptr, Self::BYTES);
@@ -31,15 +31,13 @@ impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMB
 
             // Using `Self::from_limbs(limbs)` would be incorrect here, as the
             // inner u64s are encoded in LE, and the platform may be BE.
-            Self::try_from_le_slice(target)
-        };
-
-        this.ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "value is too large for the type",
-            )
-        })
+            Self::try_from_le_slice(target).ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "value is too large for the type",
+                )
+            })
+        }
     }
 }
 
