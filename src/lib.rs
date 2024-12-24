@@ -34,7 +34,6 @@
 )]
 
 #[cfg(feature = "alloc")]
-#[macro_use]
 extern crate alloc;
 
 #[macro_use]
