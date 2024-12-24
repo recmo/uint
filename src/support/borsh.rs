@@ -60,6 +60,7 @@ impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Bits<BITS, LIMBS>
         self.as_uint().serialize(writer)
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
