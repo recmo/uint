@@ -91,6 +91,10 @@ diesel = { version = "2.2", optional = true }
 # sqlx
 sqlx-core = { version = "0.8.2", optional = true }
 
+# borsh
+borsh = { version = "1.5", optional = true, default-features = false }
+hex = "0.4"
+
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
 
@@ -107,6 +111,9 @@ hex-literal = "0.4"
 postgres = "0.19"
 proptest = "=1.5"
 serde_json = "1.0"
+
+# borsh
+borsh = { version = "1.5", features = ["derive"] }
 
 [features]
 default = ["std"]
@@ -149,6 +156,7 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bn-rs = ["dep:bn-rs", "std"]
+borsh = ["alloc", "dep:borsh"]
 bytemuck = ["dep:bytemuck"]
 der = ["dep:der", "alloc"]                                             # TODO: also have alloc free der impls.
 diesel = ["dep:diesel", "std", "dep:thiserror"]
