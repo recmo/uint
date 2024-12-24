@@ -357,6 +357,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// The number of bytes written to the buffer (always equal to
     /// [`Self::BYTES`]), but often useful to make explicit for encoders).
+    #[inline]
     pub fn copy_le_bytes_to(&self, buf: &mut [u8]) -> usize {
         // This is debug only. Release panics occur later in copy_from_slice
         debug_assert!(
@@ -385,6 +386,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [`Some`] with the number of bytes written to the buffer (always
     /// equal to [`Self::BYTES`]), but often useful to make explicit for
     /// encoders.
+    #[inline]
     pub fn checked_copy_le_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
         if buf.len() < Self::BYTES {
             return None;
@@ -404,6 +406,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// The number of bytes written to the buffer (always equal to
     /// [`Self::BYTES`]), but often useful to make explicit for encoders).
+    #[inline]
     pub fn copy_be_bytes_to(&self, buf: &mut [u8]) -> usize {
         // This is debug only. Release panics occur later in copy_from_slice
         debug_assert!(
@@ -434,6 +437,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [`Some`] with the number of bytes written to the buffer (always
     /// equal to [`Self::BYTES`]), but often useful to make explicit for
     /// encoders.
+    #[inline]
     pub fn checked_copy_be_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
         if buf.len() < Self::BYTES {
             return None;
