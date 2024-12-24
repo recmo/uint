@@ -34,6 +34,9 @@
 )]
 
 #[cfg(feature = "alloc")]
+#[allow(unused_imports)]
+// `unused_imports` triggers on macro_use, which is required by some support
+// modules.
 #[macro_use]
 extern crate alloc;
 
