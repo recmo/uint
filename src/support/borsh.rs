@@ -42,8 +42,8 @@ impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Uint<BITS, LIMBS>
     #[inline]
     fn serialize<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
         // TODO: non-allocating and remove the `alloc` feature requirement
-        let bytes = self.as_le_bytes_trimmed();
-        writer.write_all(&bytes)
+        let bytes = self.as_le_bytes();
+        writer.write_all(&bytes[..Self::BYTES])
     }
 }
 
@@ -123,5 +123,29 @@ mod test {
         let err = result.unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::InvalidData);
         assert_eq!(err.to_string(), "value is too large for the type");
+    }
+
+    #[derive(Debug, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
+    struct AThirdThing {
+        value:      Uint<64, 1>,
+        bool_value: bool,
+    }
+
+    #[test]
+    fn roundtrip_trailing_zeroes() {
+        let instance = AThirdThing {
+            value:      Uint::<64, 1>::from_limbs([1]),
+            bool_value: true,
+        };
+
+        let mut buf = [0u8; 9];
+
+        instance.serialize(&mut buf.as_mut_slice()).unwrap();
+        assert_eq!(buf, [1, 0, 0, 0, 0, 0, 0, 0, 1]);
+        assert_eq!(&instance.value.to_le_bytes::<8>(), &buf[..8]);
+        assert_eq!(
+            AThirdThing::try_from_slice(&mut &buf[..]).unwrap(),
+            instance
+        );
     }
 }
