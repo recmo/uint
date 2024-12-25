@@ -356,7 +356,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Returns
     ///
     /// The number of bytes written to the buffer (always equal to
-    /// [`Self::BYTES`]), but often useful to make explicit for encoders).
+    /// [`Self::BYTES`], but often useful to make explicit for encoders).
     #[inline]
     pub fn copy_le_bytes_to(&self, buf: &mut [u8]) -> usize {
         // This is debug only. Release panics occur later in copy_from_slice
@@ -405,7 +405,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Returns
     ///
     /// The number of bytes written to the buffer (always equal to
-    /// [`Self::BYTES`]), but often useful to make explicit for encoders).
+    /// [`Self::BYTES`], but often useful to make explicit for encoders).
     #[inline]
     pub fn copy_be_bytes_to(&self, buf: &mut [u8]) -> usize {
         // This is debug only. Release panics occur later in copy_from_slice
