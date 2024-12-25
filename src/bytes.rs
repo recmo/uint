@@ -365,7 +365,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             "Buffer is too small to hold the bytes of the Uint"
         );
 
-        let chunks = &mut buf[..Self::BYTES].chunks_mut(8);
+        let chunks = buf[..Self::BYTES].chunks_mut(8);
 
         self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
             let le = limb.to_le_bytes();
@@ -415,7 +415,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         );
 
         // start from the end of the slice
-        let chunks = &mut buf[..Self::BYTES].rchunks_mut(8);
+        let chunks = buf[..Self::BYTES].rchunks_mut(8);
 
         self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
             let be = limb.to_be_bytes();
