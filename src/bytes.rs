@@ -365,12 +365,18 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             "Buffer is too small to hold the bytes of the Uint"
         );
 
-        let chunks = buf[..Self::BYTES].chunks_mut(8);
+        #[cfg(target_endian = "little")]
+        buf[..Self::BYTES].copy_from_slice(self.as_le_slice());
 
-        self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
-            let le = limb.to_le_bytes();
-            chunk.copy_from_slice(&le[..chunk.len()]);
-        });
+        #[cfg(not(target_endian = "little"))]
+        {
+            let chunks = buf[..Self::BYTES].chunks_mut(8);
+
+            self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
+                let le = limb.to_le_bytes();
+                chunk.copy_from_slice(&le[..chunk.len()]);
+            });
+        }
 
         Self::BYTES
     }
