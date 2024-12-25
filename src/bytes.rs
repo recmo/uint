@@ -384,8 +384,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// bytes, and does not modify the buffer.
     ///
     /// [`Some`] with the number of bytes written to the buffer (always
-    /// equal to [`Self::BYTES`]), but often useful to make explicit for
-    /// encoders.
+    /// equal to [`Self::BYTES`], but often useful to make explicit for
+    /// encoders).
     #[inline]
     pub fn checked_copy_le_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
         if buf.len() < Self::BYTES {
@@ -435,8 +435,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// bytes, and does not modify the buffer.
     ///
     /// [`Some`] with the number of bytes written to the buffer (always
-    /// equal to [`Self::BYTES`]), but often useful to make explicit for
-    /// encoders.
+    /// equal to [`Self::BYTES`], but often useful to make explicit for
+    /// encoders).
     #[inline]
     pub fn checked_copy_be_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
         if buf.len() < Self::BYTES {
