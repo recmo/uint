@@ -381,7 +381,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         Self::BYTES
     }
 
-    /// writes the little-endian representation of the [`Uint`] to the given
+    /// Writes the little-endian representation of the [`Uint`] to the given
     /// buffer. The buffer must be large enough to hold [`Self::BYTES`] bytes.
     ///
     /// # Returns
