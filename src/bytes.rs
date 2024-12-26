@@ -368,7 +368,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         #[cfg(target_endian = "little")]
         buf[..Self::BYTES].copy_from_slice(self.as_le_slice());
 
-        #[cfg(not(target_endian = "little"))]
+        #[cfg(target_endian = "big")]
         {
             let chunks = buf[..Self::BYTES].chunks_mut(8);
 
