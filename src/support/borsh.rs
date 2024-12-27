@@ -42,7 +42,7 @@ impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Uint<BITS, LIMBS>
     #[inline]
     fn serialize<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
         #[cfg(target_endian = "little")]
-        return writer.write_all(&self.as_le_slice()[..Self::BYTES]);
+        return writer.write_all(self.as_le_slice());
 
         // TODO: Replace the unsafety with `generic_const_exprs` when
         // available
