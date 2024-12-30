@@ -345,6 +345,112 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
         Some(Self::from_limbs(limbs))
     }
+
+    /// Writes the little-endian representation of the [`Uint`] to the given
+    /// buffer. The buffer must be large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the buffer is not large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written to the buffer (always equal to
+    /// [`Self::BYTES`], but often useful to make explicit for encoders).
+    #[inline]
+    pub fn copy_le_bytes_to(&self, buf: &mut [u8]) -> usize {
+        // This is debug only. Release panics occur later in copy_from_slice
+        debug_assert!(
+            buf.len() >= Self::BYTES,
+            "Buffer is too small to hold the bytes of the Uint"
+        );
+
+        #[cfg(target_endian = "little")]
+        buf[..Self::BYTES].copy_from_slice(self.as_le_slice());
+
+        #[cfg(target_endian = "big")]
+        {
+            let chunks = buf[..Self::BYTES].chunks_mut(8);
+
+            self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
+                let le = limb.to_le_bytes();
+                chunk.copy_from_slice(&le[..chunk.len()]);
+            });
+        }
+
+        Self::BYTES
+    }
+
+    /// Writes the little-endian representation of the [`Uint`] to the given
+    /// buffer. The buffer must be large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Returns
+    ///
+    /// [`None`], if the buffer is not large enough to hold [`Self::BYTES`]
+    /// bytes, and does not modify the buffer.
+    ///
+    /// [`Some`] with the number of bytes written to the buffer (always
+    /// equal to [`Self::BYTES`], but often useful to make explicit for
+    /// encoders).
+    #[inline]
+    pub fn checked_copy_le_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
+        if buf.len() < Self::BYTES {
+            return None;
+        }
+
+        Some(self.copy_le_bytes_to(buf))
+    }
+
+    /// Writes the big-endian representation of the [`Uint`] to the given
+    /// buffer. The buffer must be large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the buffer is not large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written to the buffer (always equal to
+    /// [`Self::BYTES`], but often useful to make explicit for encoders).
+    #[inline]
+    pub fn copy_be_bytes_to(&self, buf: &mut [u8]) -> usize {
+        // This is debug only. Release panics occur later in copy_from_slice
+        debug_assert!(
+            buf.len() >= Self::BYTES,
+            "Buffer is too small to hold the bytes of the Uint"
+        );
+
+        // start from the end of the slice
+        let chunks = buf[..Self::BYTES].rchunks_mut(8);
+
+        self.limbs.iter().zip(chunks).for_each(|(&limb, chunk)| {
+            let be = limb.to_be_bytes();
+            let copy_from = 8 - chunk.len();
+            chunk.copy_from_slice(&be[copy_from..]);
+        });
+
+        Self::BYTES
+    }
+
+    /// Writes the big-endian representation of the [`Uint`] to the given
+    /// buffer. The buffer must be large enough to hold [`Self::BYTES`] bytes.
+    ///
+    /// # Returns
+    ///
+    /// [`None`], if the buffer is not large enough to hold [`Self::BYTES`]
+    /// bytes, and does not modify the buffer.
+    ///
+    /// [`Some`] with the number of bytes written to the buffer (always
+    /// equal to [`Self::BYTES`], but often useful to make explicit for
+    /// encoders).
+    #[inline]
+    pub fn checked_copy_be_bytes_to(&self, buf: &mut [u8]) -> Option<usize> {
+        if buf.len() < Self::BYTES {
+            return None;
+        }
+
+        Some(self.copy_be_bytes_to(buf))
+    }
 }
 
 /// Number of bytes required to represent the given number of bits.
@@ -485,6 +591,45 @@ mod tests {
                 assert_eq!(value, Uint::try_from_le_slice(&value.to_le_bytes_trimmed_vec()).unwrap());
                 assert_eq!(value, Uint::from_be_bytes(value.to_be_bytes::<BYTES>()));
                 assert_eq!(value, Uint::from_le_bytes(value.to_le_bytes::<BYTES>()));
+            });
+        });
+    }
+
+    #[test]
+    fn copy_to() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            const BYTES: usize = nbytes(BITS);
+            proptest!(|(value: Uint<BITS, LIMBS>)|{
+                let mut buf = [0; BYTES];
+                value.copy_le_bytes_to(&mut buf);
+                assert_eq!(buf, value.to_le_bytes::<BYTES>());
+                assert_eq!(value, Uint::try_from_le_slice(&buf).unwrap());
+
+                let mut buf = [0; BYTES];
+                value.copy_be_bytes_to(&mut buf);
+                assert_eq!(buf, value.to_be_bytes::<BYTES>());
+                assert_eq!(value, Uint::try_from_be_slice(&buf).unwrap());
+            });
+        });
+    }
+
+    #[test]
+    fn checked_copy_to() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            const BYTES: usize = nbytes(BITS);
+            proptest!(|(value: Uint<BITS, LIMBS>)|{
+                if BYTES != 0 {
+                    let mut buf = [0; BYTES];
+                    let too_short = buf.len() - 1;
+
+                    assert_eq!(value.checked_copy_le_bytes_to(&mut buf[..too_short]), None);
+                    assert_eq!(buf, [0; BYTES], "buffer was modified");
+
+                    assert_eq!(value.checked_copy_be_bytes_to(&mut buf[..too_short]), None);
+                    assert_eq!(buf, [0; BYTES], "buffer was modified");
+                }
             });
         });
     }

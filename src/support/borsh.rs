@@ -41,9 +41,25 @@ impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMB
 impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Uint<BITS, LIMBS> {
     #[inline]
     fn serialize<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
-        // TODO: non-allocating and remove the `alloc` feature requirement
-        let bytes = self.as_le_bytes();
-        writer.write_all(&bytes[..Self::BYTES])
+        #[cfg(target_endian = "little")]
+        return writer.write_all(self.as_le_slice());
+
+        // TODO: Replace the unsafety with `generic_const_exprs` when
+        // available
+        #[cfg(target_endian = "big")]
+        {
+            let mut limbs = [0u64; LIMBS];
+            // SAFETY: `limbs` is known to have identical memory layout and
+            // alignment to `[u8; LIMBS * 8]`, which is guaranteed to safely
+            // contain  [u8; Self::BYTES]`, as `LIMBS * 8 >= Self::BYTES`.
+            // Reference:
+            // https://doc.rust-lang.org/reference/type-layout.html#array-layout
+            let mut buf = unsafe {
+                core::slice::from_raw_parts_mut(limbs.as_mut_ptr().cast::<u8>(), Self::BYTES)
+            };
+            self.copy_le_bytes_to(&mut buf);
+            writer.write_all(&buf)
+        }
     }
 }
 
@@ -60,6 +76,7 @@ impl<const BITS: usize, const LIMBS: usize> BorshSerialize for Bits<BITS, LIMBS>
         self.as_uint().serialize(writer)
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
