@@ -375,7 +375,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Self::ZERO;
         }
         let rhs = rhs % BITS;
-        self << rhs | self >> (BITS - rhs)
+        (self << rhs) | (self >> (BITS - rhs))
     }
 
     /// Shifts the bits to the right by a specified amount, `rhs`, wrapping the
