@@ -12,10 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for borsh @ 1.5 ([#416])
 - `copy_le_to_slice` family to allow easier writing to pre-allocated buffers ([#424])
 - Unpin proptest ([#426])
+- Update documentation related to `Uint::byte` and knuth divison ([#429])
+- add `Uint::checked_byte(idx: usize) -> Option<u8>` ([#429])
 
 [#416]: https://github.com/recmo/uint/pull/416
 [#424]: https://github.com/recmo/uint/pull/424
 [#426]: https://github.com/recmo/uint/pull/426
+[#429]: https://github.com/recmo/uint/pull/429
 
 ## [1.12.4] - 2024-12-16
 
