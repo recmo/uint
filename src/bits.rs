@@ -37,7 +37,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// # Panics
     ///
-    /// Panics if `index` exceeds the byte width of the number.
+    /// Panics if `index` is greater than or equal to the byte width of the
+    /// number.
     ///
     /// # Examples
     ///
@@ -77,6 +78,26 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         #[allow(clippy::cast_possible_truncation)] // intentional
         {
             (self.limbs[index / 8] >> ((index % 8) * 8)) as u8
+        }
+    }
+
+    /// Returns a specific byte, or `None` if `index` is out of range. The byte
+    /// at index `0` is the least significant byte (little endian).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use ruint::uint;
+    /// let x = uint!(0x1234567890_U64);
+    /// assert_eq!(x.checked_byte(0), Some(0x90));
+    /// // Out of range
+    /// assert_eq!(x.checked_byte(8), None);
+    /// ```
+    pub fn checked_byte(&self, index: usize) -> Option<u8> {
+        if index >= self.byte_len() {
+            None
+        } else {
+            Some(self.byte(index))
         }
     }
 
