@@ -93,6 +93,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// // Out of range
     /// assert_eq!(x.checked_byte(8), None);
     /// ```
+    #[inline]
+    #[must_use]
     pub fn checked_byte(&self, index: usize) -> Option<u8> {
         if index >= self.byte_len() {
             None
