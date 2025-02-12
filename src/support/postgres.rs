@@ -167,7 +167,7 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             _ => {
                 return Err(Box::new(WrongType::new::<Self>(ty.clone())));
             }
-        };
+        }
         Ok(IsNull::No)
     }
 
