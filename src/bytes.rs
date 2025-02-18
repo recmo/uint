@@ -60,7 +60,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         return Cow::Owned({
             let mut cpy = *self;
             for limb in &mut cpy.limbs {
-                *limb = limb.reverse_bits();
+                *limb = limb.swap_bytes();
             }
             unsafe { slice::from_raw_parts(cpy.limbs.as_ptr().cast(), Self::BYTES).to_vec() }
         });
