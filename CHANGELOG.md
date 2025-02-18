@@ -371,7 +371,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.12.4...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.13.0...HEAD
+[1.13.0]: https://github.com/recmo/uint/releases/tag/v1.13.0
 [1.12.4]: https://github.com/recmo/uint/releases/tag/v1.12.4
 [1.12.3]: https://github.com/recmo/uint/releases/tag/v1.12.3
 [1.12.1]: https://github.com/recmo/uint/releases/tag/v1.12.1
