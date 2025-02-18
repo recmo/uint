@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- Section names: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
-## [Unreleased]
+## [1.13.0]
 
 - Support for borsh @ 1.5 ([#416])
 - `copy_le_to_slice` family to allow easier writing to pre-allocated buffers ([#424])
