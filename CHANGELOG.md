@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unpin proptest ([#426])
 - Update documentation related to `Uint::byte` and knuth divison ([#429])
 - add `Uint::checked_byte(idx: usize) -> Option<u8>` ([#429])
+- fix: swap bytes for `as_le_bytes` in big endian world ([#431])
 
 [#416]: https://github.com/recmo/uint/pull/416
 [#424]: https://github.com/recmo/uint/pull/424
 [#426]: https://github.com/recmo/uint/pull/426
 [#429]: https://github.com/recmo/uint/pull/429
+[#431]: https://github.com/recmo/uint/pull/431
 
 ## [1.12.4] - 2024-12-16
 
