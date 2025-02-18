@@ -95,7 +95,6 @@ sqlx-core = { version = "0.8.2", optional = true }
 
 # borsh
 borsh = { version = "1.5", optional = true, default-features = false }
-hex = "0.4"
 
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }

@@ -819,7 +819,6 @@ mod tests {
             type U = Uint::<BITS, LIMBS>;
             proptest!(|(value: U, shift in  0..=BITS + 2)| {
                 let shifted = value.arithmetic_shr(shift);
-                // dbg!(value, shifted, shift);
                 assert_eq!(shifted.leading_ones(), match value.leading_ones() {
                     0 => 0,
                     n => min(BITS, n + shift)

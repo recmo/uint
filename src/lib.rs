@@ -22,6 +22,7 @@
     clippy::cast_lossless,
 )]
 #![cfg_attr(test, allow(clippy::wildcard_imports, clippy::cognitive_complexity))]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
