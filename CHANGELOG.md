@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Remove unused `hex` dependencies which broke `no_std` ([#433])
+
+[#433]: https://github.com/recmo/uint/pull/433
+
 ## [1.13.0] - 2025-02-18
 
 - Support for borsh @ 1.5 ([#416])
