@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.1] - 2025-02-18
+
 - Remove unused `hex` dependencies which broke `no_std` ([#433])
 
 [#433]: https://github.com/recmo/uint/pull/433
@@ -375,7 +377,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.13.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.13.1...HEAD
+[1.13.1]: https://github.com/recmo/uint/releases/tag/v1.13.1
 [1.13.0]: https://github.com/recmo/uint/releases/tag/v1.13.0
 [1.12.4]: https://github.com/recmo/uint/releases/tag/v1.12.4
 [1.12.3]: https://github.com/recmo/uint/releases/tag/v1.12.3
