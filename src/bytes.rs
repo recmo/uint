@@ -241,10 +241,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline]
     pub const fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
-        if bytes.len() > Self::BYTES {
-            return None;
-        }
-
         if Self::BYTES % 8 == 0 && bytes.len() == Self::BYTES {
             // Optimized implementation for full-limb types.
             let mut limbs = [0; LIMBS];
