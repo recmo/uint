@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `checked_byte` bounds check and make it const ([#438])
+
+[#438]: https://github.com/recmo/uint/pull/438
+
 ## [1.13.1] - 2025-02-18
 
 - Remove unused `hex` dependencies which broke `no_std` ([#433])
