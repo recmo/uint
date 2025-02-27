@@ -504,7 +504,7 @@ mod tests {
             // with the `PROPTEST_CASES` env variable.
             let mut config = ProptestConfig::default();
             // No point in running many values for small sizes
-            if BITS < 4 { config.cases = 16; };
+            if BITS < 4 { config.cases = 16; }
 
             proptest!(config, |(value: Uint<BITS, LIMBS>)| {
 
