@@ -216,8 +216,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Creates a new integer from a big endian slice of bytes.
     ///
-    /// The slice is interpreted as a big endian number. Leading zeros
-    /// are ignored. The slice can be any length.
+    /// The slice is interpreted as a big endian number, and must be at most
+    /// [`Self::BYTES`] long.
     ///
     /// # Panics
     ///
@@ -234,13 +234,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Creates a new integer from a big endian slice of bytes.
     ///
-    /// The slice is interpreted as a big endian number. Leading zeros
-    /// are ignored. The slice can be any length.
+    /// The slice is interpreted as a big endian number, and must be at most
+    /// [`Self::BYTES`] long.
     ///
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     #[inline]
     pub const fn try_from_be_slice(bytes: &[u8]) -> Option<Self> {
+        if bytes.len() > Self::BYTES {
+            return None;
+        }
+
         if Self::BYTES % 8 == 0 && bytes.len() == Self::BYTES {
             // Optimized implementation for full-limb types.
             let mut limbs = [0; LIMBS];
@@ -258,7 +262,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut c = bytes.len();
         while i < bytes.len() {
             c -= 1;
-            limbs[i / 8] += (bytes[c] as u64) << ((i % 8) * 8);
+            let (limb, byte) = (i / 8, i % 8);
+            limbs[limb] += (bytes[c] as u64) << (byte * 8);
             i += 1;
         }
         if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
@@ -290,8 +295,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Creates a new integer from a little endian slice of bytes.
     ///
-    /// The slice is interpreted as a little endian number. Leading zeros
-    /// are ignored. The slice can be any length.
+    /// The slice is interpreted as a little endian number, and must be at most
+    /// [`Self::BYTES`] long.
     ///
     /// # Panics
     ///
@@ -308,14 +313,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Creates a new integer from a little endian slice of bytes.
     ///
-    /// The slice is interpreted as a little endian number. Leading zeros
-    /// are ignored. The slice can be any length.
+    /// The slice is interpreted as a little endian number, and must be at most
+    /// [`Self::BYTES`] long.
     ///
     /// Returns [`None`] if the value is larger than fits the [`Uint`].
     #[must_use]
     #[inline]
     pub const fn try_from_le_slice(bytes: &[u8]) -> Option<Self> {
-        if bytes.len() / 8 > Self::LIMBS {
+        if bytes.len() > Self::BYTES {
             return None;
         }
 
@@ -333,7 +338,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut limbs = [0; LIMBS];
         let mut i = 0;
         while i < bytes.len() {
-            limbs[i / 8] += (bytes[i] as u64) << ((i % 8) * 8);
+            let (limb, byte) = (i / 8, i % 8);
+            limbs[limb] += (bytes[i] as u64) << (byte * 8);
             i += 1;
         }
         if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
@@ -557,10 +563,32 @@ mod tests {
             Uint::<16, 1>::from_le_bytes([0x34, 0x12]),
             Uint::from(0x1234)
         );
+
         assert_eq!(Uint::from_be_bytes(BE), N);
         assert_eq!(Uint::from_le_bytes(LE), N);
         assert_eq!(Uint::from_be_bytes(KBE), K);
         assert_eq!(Uint::from_le_bytes(KLE), K);
+
+        assert_eq!(Uint::<128, 2>::try_from_be_slice(&BE), Some(N));
+        assert_eq!(
+            Uint::<128, 2>::try_from_be_slice(&[&BE[..], &[0xff][..]].concat()),
+            None
+        );
+        assert_eq!(Uint::<128, 2>::try_from_le_slice(&LE), Some(N));
+        assert_eq!(
+            Uint::<128, 2>::try_from_le_slice(&[&LE[..], &[0xff]].concat()),
+            None
+        );
+        assert_eq!(Uint::<72, 2>::try_from_be_slice(&KBE), Some(K));
+        assert_eq!(
+            Uint::<72, 2>::try_from_be_slice(&[&KBE[..], &[0xff][..]].concat()),
+            None
+        );
+        assert_eq!(Uint::<72, 2>::try_from_le_slice(&KLE), Some(K));
+        assert_eq!(
+            Uint::<72, 2>::try_from_le_slice(&[&KLE[..], &[0xff]].concat()),
+            None
+        );
     }
 
     #[test]

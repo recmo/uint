@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Change `try_from_be_slice` behavior to match its documentation ([#436])
+- Update `try_from_{b,l}e_slice` documentation ([#439])
 
 ### Fixed
 
 - Fix `checked_byte` bounds check and make it const ([#438])
 
-[#436]: https://github.com/recmo/uint/pull/436
+[#439]: https://github.com/recmo/uint/pull/439
 [#438]: https://github.com/recmo/uint/pull/438
 
 ## [1.13.1] - 2025-02-18
