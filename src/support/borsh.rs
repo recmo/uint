@@ -101,7 +101,7 @@ mod test {
             0, 0, 0, 0
         ]);
         assert_eq!(&something.value.to_le_bytes::<32>(), &buf[1..]);
-        assert_eq!(Something::try_from_slice(&mut &buf[..]).unwrap(), something);
+        assert_eq!(Something::try_from_slice(&buf[..]).unwrap(), something);
     }
 
     #[derive(Debug, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
@@ -126,7 +126,7 @@ mod test {
         ]);
         assert_eq!(&another_thing.value.to_le_bytes::<32>(), &buf[1..]);
         assert_eq!(
-            AnotherThing::try_from_slice(&mut &buf[..]).unwrap(),
+            AnotherThing::try_from_slice(&buf[..]).unwrap(),
             another_thing
         );
     }
@@ -160,9 +160,6 @@ mod test {
         instance.serialize(&mut buf.as_mut_slice()).unwrap();
         assert_eq!(buf, [1, 0, 0, 0, 0, 0, 0, 0, 1]);
         assert_eq!(&instance.value.to_le_bytes::<8>(), &buf[..8]);
-        assert_eq!(
-            AThirdThing::try_from_slice(&mut &buf[..]).unwrap(),
-            instance
-        );
+        assert_eq!(AThirdThing::try_from_slice(&buf[..]).unwrap(), instance);
     }
 }

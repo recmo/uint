@@ -7,27 +7,23 @@ use num_integer::{ExtendedGcd, Integer};
 
 impl<const BITS: usize, const LIMBS: usize> Integer for Uint<BITS, LIMBS> {
     #[inline]
-    #[must_use]
     #[track_caller]
     fn div_floor(&self, other: &Self) -> Self {
         Self::wrapping_div(*self, *other)
     }
 
     #[inline]
-    #[must_use]
     #[track_caller]
     fn mod_floor(&self, other: &Self) -> Self {
         Self::wrapping_rem(*self, *other)
     }
 
     #[inline]
-    #[must_use]
     fn gcd(&self, other: &Self) -> Self {
         <Self>::gcd(*self, *other)
     }
 
     #[inline]
-    #[must_use]
     #[track_caller]
     fn lcm(&self, other: &Self) -> Self {
         <Self>::lcm(*self, *other).unwrap()
