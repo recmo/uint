@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update `try_from_{b,l}e_slice` documentation ([#439])
+
 ### Fixed
 
 - Fix `checked_byte` bounds check and make it const ([#438])
 
+[#439]: https://github.com/recmo/uint/pull/439
 [#438]: https://github.com/recmo/uint/pull/438
 
 ## [1.13.1] - 2025-02-18
+
+### Fixed
 
 - Remove unused `hex` dependencies which broke `no_std` ([#433])
 
@@ -23,11 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.13.0] - 2025-02-18
 
+### Added
+
 - Support for borsh @ 1.5 ([#416])
 - `copy_le_to_slice` family to allow easier writing to pre-allocated buffers ([#424])
-- Unpin proptest ([#426])
-- Update documentation related to `Uint::byte` and knuth divison ([#429])
 - add `Uint::checked_byte(idx: usize) -> Option<u8>` ([#429])
+
+### Changed
+
+- Unpin proptest ([#426])
+
+### Fixed
+
+- Update documentation related to `Uint::byte` and knuth divison ([#429])
 - fix: swap bytes for `as_le_bytes` in big endian world ([#431])
 
 [#416]: https://github.com/recmo/uint/pull/416
