@@ -90,16 +90,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # use ruint::uint;
     /// let x = uint!(0x1234567890_U64);
     /// assert_eq!(x.checked_byte(0), Some(0x90));
+    /// assert_eq!(x.checked_byte(7), Some(0x00));
     /// // Out of range
     /// assert_eq!(x.checked_byte(8), None);
     /// ```
     #[inline]
     #[must_use]
-    pub fn checked_byte(&self, index: usize) -> Option<u8> {
-        if index >= self.byte_len() {
-            None
-        } else {
+    pub const fn checked_byte(&self, index: usize) -> Option<u8> {
+        if index < Self::BYTES {
             Some(self.byte(index))
+        } else {
+            None
         }
     }
 
@@ -141,7 +142,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn leading_ones(&self) -> usize {
-        (self.not()).leading_zeros()
+        self.not().leading_zeros()
     }
 
     /// Returns the number of trailing zeros in the binary representation of
@@ -187,14 +188,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         BITS - self.count_ones()
     }
 
-    /// Length of the number in bits ignoring leading zeros.
+    /// Returns the dynamic length of this number in bits, ignoring leading
+    /// zeros.
+    ///
+    /// For the maximum length of the type, use [`Uint::BITS`](Self::BITS).
     #[must_use]
     #[inline]
     pub fn bit_len(&self) -> usize {
         BITS - self.leading_zeros()
     }
 
-    /// Length of the number in bytes ignoring leading zeros.
+    /// Returns the dynamic length of this number in bytes, ignoring leading
+    /// zeros.
+    ///
+    /// For the maximum length of the type, use [`Uint::BYTES`](Self::BYTES).
     #[must_use]
     #[inline]
     pub fn byte_len(&self) -> usize {
