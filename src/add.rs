@@ -69,8 +69,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             i += 1;
         }
         let overflow = carry | (self.limbs[LIMBS - 1] > Self::MASK);
-        self.limbs[LIMBS - 1] &= Self::MASK;
-        (self, overflow)
+        (self.masked(), overflow)
     }
 
     /// Calculates $\mod{-\mathtt{self}}_{2^{BITS}}$.
@@ -103,8 +102,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             i += 1;
         }
         let overflow = borrow | (self.limbs[LIMBS - 1] > Self::MASK);
-        self.limbs[LIMBS - 1] &= Self::MASK;
-        (self, overflow)
+        (self.masked(), overflow)
     }
 
     /// Computes `self + rhs`, saturating at the numeric bounds instead of

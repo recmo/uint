@@ -167,6 +167,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Bit mask for the last limb.
     pub const MASK: u64 = mask(BITS);
 
+    const SHOULD_MASK: bool = BITS > 0 && Self::MASK != u64::MAX;
+
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
 
@@ -180,13 +182,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// The largest value that can be represented by this integer type,
     /// $2^{\mathtt{BITS}} − 1$.
-    pub const MAX: Self = {
-        let mut limbs = [u64::MAX; LIMBS];
-        if BITS > 0 {
-            limbs[LIMBS - 1] &= Self::MASK;
-        }
-        Self::from_limbs(limbs)
-    };
+    pub const MAX: Self = Self::from_limbs_unmasked([u64::MAX; LIMBS]);
 
     /// View the array of limbs.
     #[inline(always)]
@@ -227,7 +223,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
-        if BITS > 0 && Self::MASK != u64::MAX {
+        if Self::SHOULD_MASK {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
                 limbs[Self::LIMBS - 1] <= Self::MASK,
@@ -235,6 +231,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             );
         }
         Self { limbs }
+    }
+
+    #[inline(always)]
+    #[must_use]
+    const fn from_limbs_unmasked(limbs: [u64; LIMBS]) -> Self {
+        Self { limbs }.masked()
     }
 
     /// Construct a new integer from little-endian a slice of limbs.
@@ -303,6 +305,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             (n, false) => n,
             (_, true) => Self::MAX,
         }
+    }
+
+    #[inline(always)]
+    fn apply_mask(&mut self) {
+        if Self::SHOULD_MASK {
+            self.limbs[LIMBS - 1] &= Self::MASK;
+        }
+    }
+
+    #[inline(always)]
+    const fn masked(mut self) -> Self {
+        if Self::SHOULD_MASK {
+            self.limbs[LIMBS - 1] &= Self::MASK;
+        }
+        self
     }
 }
 

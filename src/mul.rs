@@ -41,7 +41,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut overflow = algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
             overflow |= result.limbs[LIMBS - 1] > Self::MASK;
-            result.limbs[LIMBS - 1] &= Self::MASK;
+            result.apply_mask();
         }
         (result, overflow)
     }
@@ -64,7 +64,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut result = Self::ZERO;
         algorithms::addmul_n(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
-            result.limbs[LIMBS - 1] &= Self::MASK;
+            result.apply_mask();
         }
         result
     }
@@ -99,7 +99,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             result *= Self::from(2) - self * result;
             correct_limbs *= 2;
         }
-        result.limbs[LIMBS - 1] &= Self::MASK;
+        result.apply_mask();
 
         Some(result)
     }
