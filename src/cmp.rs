@@ -19,8 +19,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns true if the value is zero.
     #[inline]
     #[must_use]
-    pub fn is_zero(&self) -> bool {
-        *self == Self::ZERO
+    pub const fn is_zero(&self) -> bool {
+        self.const_eq(Self::ZERO)
+    }
+
+    /// Returns `true` if `self` equals `other`.
+    ///
+    /// Note that this currently performs worse than the derived `PartialEq`
+    /// implementation when one of the numbers is known at compile-time due to
+    /// language limitations.
+    // https://godbolt.org/z/aM1nE1Pfh
+    #[inline]
+    #[must_use]
+    pub const fn const_eq(self, other: Self) -> bool {
+        // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
+        // let a = self.as_bytes();
+        // let b = other.as_bytes();
+        let a = self.as_limbs();
+        let b = other.as_limbs();
+        let mut i = 0;
+        let mut r = true;
+        while i < a.len() {
+            r &= a[i] == b[i];
+            i += 1;
+        }
+        r
     }
 }
 
