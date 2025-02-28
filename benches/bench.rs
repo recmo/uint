@@ -8,7 +8,7 @@ mod prelude {
         strategy::{Strategy, ValueTree},
         test_runner::TestRunner,
     };
-    pub use rand::prelude::*;
+    pub use rand_09::{self as rand, prelude::*, rng};
     pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
 }
 
