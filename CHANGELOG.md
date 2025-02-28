@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add const `not` function ([#442])
+- Make `leading_zeros`, `leading_ones`, `count_ones`, `count_zeros`, `bit_len`, `byte_len`, `is_power_of_two` functions `const` ([#442])
+
 ### Changed
 
 - Update `try_from_{b,l}e_slice` documentation ([#439])
@@ -17,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix `checked_byte` bounds check and make it const ([#438])
 
+[#442]: https://github.com/recmo/uint/pull/442
 [#439]: https://github.com/recmo/uint/pull/439
 [#438]: https://github.com/recmo/uint/pull/438
 
