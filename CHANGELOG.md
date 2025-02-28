@@ -11,12 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `const fn` `const_is_zero`, `const_eq`, `bit*` ([#441])
+
 ### Changed
 
 - Updated Pyo3. This is a **non-semver breaking change** to address a vulnerability reported on Pyo3. ([#460])
+- Make `rotate*`, `*sh[lr]` functions `const` ([#441])
 
-### Fixed
-
+[#441]: https://github.com/recmo/uint/pull/441
+[#460]: https://github.com/recmo/uint/pull/460
 
 ## [1.14.0] - 2025-03-25
 
