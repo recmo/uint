@@ -167,6 +167,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Bit mask for the last limb.
     pub const MASK: u64 = mask(BITS);
 
+    #[allow(dead_code)] // This is used by some support features.
+    const SHOULD_MASK: bool = Self::MASK != u64::MAX;
+
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
 
