@@ -9,13 +9,13 @@ pub fn group(criterion: &mut Criterion) {
 }
 
 fn bench_div_2x1_ref(criterion: &mut Criterion) {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/2x1/ref", move |bencher| {
         bencher.iter_batched(
             || {
-                let q: u64 = rng.gen();
-                let r: u64 = rng.gen();
-                let d = rng.gen::<u64>() | (1 << 63);
+                let q: u64 = rng.random();
+                let r: u64 = rng.random();
+                let d = rng.random::<u64>() | (1 << 63);
                 let r = r % d;
                 let n = u128::from(q) * u128::from(d) + u128::from(r);
                 (n, d)
@@ -27,13 +27,13 @@ fn bench_div_2x1_ref(criterion: &mut Criterion) {
 }
 
 fn bench_div_2x1_mg10(criterion: &mut Criterion) {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/2x1/mg10", move |bencher| {
         bencher.iter_batched(
             || {
-                let q: u64 = rng.gen();
-                let r: u64 = rng.gen();
-                let d = rng.gen::<u64>() | (1 << 63);
+                let q: u64 = rng.random();
+                let r: u64 = rng.random();
+                let d = rng.random::<u64>() | (1 << 63);
                 let r = r % d;
                 let n = u128::from(q) * u128::from(d) + u128::from(r);
                 let v = reciprocal(d);
@@ -46,13 +46,13 @@ fn bench_div_2x1_mg10(criterion: &mut Criterion) {
 }
 
 fn bench_div_3x2_ref(criterion: &mut Criterion) {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/3x2/ref", move |bencher| {
         bencher.iter_batched(
             || {
-                let q: u64 = rng.gen();
-                let r: u128 = rng.gen();
-                let d = rng.gen::<u128>() | (1 << 127);
+                let q: u64 = rng.random();
+                let r: u128 = rng.random();
+                let d = rng.random::<u128>() | (1 << 127);
                 let r = r % d;
                 let (n21, n0) = {
                     let d1 = (d >> 64) as u64;
@@ -74,13 +74,13 @@ fn bench_div_3x2_ref(criterion: &mut Criterion) {
 }
 
 fn bench_div_3x2_mg10(criterion: &mut Criterion) {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/3x2/mg10", move |bencher| {
         bencher.iter_batched(
             || {
-                let q: u64 = rng.gen();
-                let r: u128 = rng.gen();
-                let d = rng.gen::<u128>() | (1 << 127);
+                let q: u64 = rng.random();
+                let r: u128 = rng.random();
+                let d = rng.random::<u128>() | (1 << 127);
                 let r = r % d;
                 let (n21, n0) = {
                     let d1 = (d >> 64) as u64;

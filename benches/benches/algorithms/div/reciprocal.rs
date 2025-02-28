@@ -8,10 +8,10 @@ pub fn group(criterion: &mut Criterion) {
 }
 
 fn bench_reciprocal_ref(criterion: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/reciprocal/ref", move |bencher| {
         bencher.iter_batched(
-            || rng.gen::<u64>() | (1 << 63),
+            || rng.random::<u64>() | (1 << 63),
             |a| black_box(reciprocal_ref(black_box(a))),
             BatchSize::SmallInput,
         );
@@ -19,10 +19,10 @@ fn bench_reciprocal_ref(criterion: &mut Criterion) {
 }
 
 fn bench_reciprocal_mg10(criterion: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/reciprocal/mg10", move |bencher| {
         bencher.iter_batched(
-            || rng.gen::<u64>() | (1 << 63),
+            || rng.random::<u64>() | (1 << 63),
             |a| black_box(reciprocal_mg10(black_box(a))),
             BatchSize::SmallInput,
         );
@@ -30,10 +30,10 @@ fn bench_reciprocal_mg10(criterion: &mut Criterion) {
 }
 
 fn bench_reciprocal_2_mg10(criterion: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rng();
     criterion.bench_function("algo/div/reciprocal_2/mg10", move |bencher| {
         bencher.iter_batched(
-            || rng.gen::<u128>() | (1 << 127),
+            || rng.random::<u128>() | (1 << 127),
             |a| black_box(reciprocal_2_mg10(black_box(a))),
             BatchSize::SmallInput,
         );
