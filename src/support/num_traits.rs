@@ -42,7 +42,7 @@ impl<const BITS: usize, const LIMBS: usize> Zero for Uint<BITS, LIMBS> {
 
     #[inline(always)]
     fn is_zero(&self) -> bool {
-        self == &Self::ZERO
+        self.is_zero()
     }
 }
 

@@ -127,13 +127,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if BITS == 0 {
             return Self::ZERO;
         }
-
         let mut i = 0;
         while i < LIMBS {
             self.limbs[i] = !self.limbs[i];
             i += 1;
         }
-
         self.masked()
     }
 
@@ -195,15 +193,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn count_ones(&self) -> usize {
-        let mut total = 0;
-
+        let mut ones = 0;
         let mut i = 0;
         while i < LIMBS {
-            total += self.limbs[i].count_ones() as usize;
+            ones += self.limbs[i].count_ones() as usize;
             i += 1;
         }
-
-        total
+        ones
     }
 
     /// Returns the number of zeros in the binary representation of `self`.
@@ -278,7 +274,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// shift is larger than BITS (which is IMHO not very useful).
     #[inline(always)]
     #[must_use]
-    pub fn checked_shl(self, rhs: usize) -> Option<Self> {
+    pub const fn checked_shl(self, rhs: usize) -> Option<Self> {
         match self.overflowing_shl(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -292,7 +288,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// [`Uint::MAX`] if the bits shifted out would be non-zero.
     #[inline(always)]
     #[must_use]
-    pub fn saturating_shl(self, rhs: usize) -> Self {
+    pub const fn saturating_shl(self, rhs: usize) -> Self {
         match self.overflowing_shl(rhs) {
             (value, false) => value,
             _ => Self::MAX,
@@ -309,22 +305,23 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
+    pub const fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
-            return (Self::ZERO, self != Self::ZERO);
+            return (Self::ZERO, !self.const_is_zero());
         }
 
         let word_bits = 64;
         let mut r = Self::ZERO;
         let mut carry = 0;
-        for i in 0..Self::LIMBS - limbs {
+        let mut i = 0;
+        while i < Self::LIMBS - limbs {
             let x = self.limbs[i];
             r.limbs[i + limbs] = (x << bits) | carry;
             carry = (x >> (word_bits - bits - 1)) >> 1;
+            i += 1;
         }
-        r.apply_mask();
-        (r, carry != 0)
+        (r.masked(), carry != 0)
     }
 
     /// Left shift by `rhs` bits.
@@ -335,7 +332,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// by `BITS` (which is IMHO not very useful).
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_shl(self, rhs: usize) -> Self {
+    pub const fn wrapping_shl(self, rhs: usize) -> Self {
         self.overflowing_shl(rhs).0
     }
 
@@ -352,7 +349,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// shift is larger than BITS (which is IMHO not very useful).
     #[inline(always)]
     #[must_use]
-    pub fn checked_shr(self, rhs: usize) -> Option<Self> {
+    pub const fn checked_shr(self, rhs: usize) -> Option<Self> {
         match self.overflowing_shr(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -373,19 +370,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub fn overflowing_shr(self, rhs: usize) -> (Self, bool) {
+    pub const fn overflowing_shr(self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
-            return (Self::ZERO, self != Self::ZERO);
+            return (Self::ZERO, !self.const_is_zero());
         }
 
         let word_bits = 64;
         let mut r = Self::ZERO;
         let mut carry = 0;
-        for i in 0..LIMBS - limbs {
+        let mut i = 0;
+        while i < LIMBS - limbs {
             let x = self.limbs[LIMBS - 1 - i];
             r.limbs[LIMBS - 1 - i - limbs] = (x >> bits) | carry;
             carry = (x << (word_bits - bits - 1)) << 1;
+            i += 1;
         }
         (r, carry != 0)
     }
@@ -401,21 +400,22 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// by `BITS` (which is IMHO not very useful).
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_shr(self, rhs: usize) -> Self {
+    pub const fn wrapping_shr(self, rhs: usize) -> Self {
         self.overflowing_shr(rhs).0
     }
 
     /// Arithmetic shift right by `rhs` bits.
     #[inline]
     #[must_use]
-    pub fn arithmetic_shr(self, rhs: usize) -> Self {
+    pub const fn arithmetic_shr(self, rhs: usize) -> Self {
         if BITS == 0 {
             return Self::ZERO;
         }
         let sign = self.bit(BITS - 1);
-        let mut r = self >> rhs;
+        let mut r = self.wrapping_shr(rhs);
         if sign {
-            r |= Self::MAX << BITS.saturating_sub(rhs);
+            // r |= Self::MAX << BITS.saturating_sub(rhs);
+            r = r.bitor(Self::MAX.wrapping_shl(BITS.saturating_sub(rhs)));
         }
         r
     }
@@ -424,20 +424,20 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// truncated bits to the end of the resulting integer.
     #[inline]
     #[must_use]
-    #[allow(clippy::missing_const_for_fn)] // False positive
-    pub fn rotate_left(self, rhs: usize) -> Self {
+    pub const fn rotate_left(self, rhs: usize) -> Self {
         if BITS == 0 {
             return Self::ZERO;
         }
         let rhs = rhs % BITS;
-        (self << rhs) | (self >> (BITS - rhs))
+        // (self << rhs) | (self >> (BITS - rhs))
+        self.wrapping_shl(rhs).bitor(self.wrapping_shr(BITS - rhs))
     }
 
     /// Shifts the bits to the right by a specified amount, `rhs`, wrapping the
     /// truncated bits to the beginning of the resulting integer.
     #[inline(always)]
     #[must_use]
-    pub fn rotate_right(self, rhs: usize) -> Self {
+    pub const fn rotate_right(self, rhs: usize) -> Self {
         if BITS == 0 {
             return Self::ZERO;
         }
@@ -451,7 +451,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for Uint<BITS, LIMBS> {
 
     #[inline]
     fn not(self) -> Self::Output {
-        Self::not(self)
+        self.not()
     }
 }
 
@@ -465,7 +465,7 @@ impl<const BITS: usize, const LIMBS: usize> Not for &Uint<BITS, LIMBS> {
 }
 
 macro_rules! impl_bit_op {
-    ($trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
+    ($op:tt, $assign_op:tt, $trait:ident, $fn:ident, $trait_assign:ident, $fn_assign:ident) => {
         impl<const BITS: usize, const LIMBS: usize> $trait_assign<Uint<BITS, LIMBS>>
             for Uint<BITS, LIMBS>
         {
@@ -529,15 +529,29 @@ macro_rules! impl_bit_op {
 
             #[inline(always)]
             fn $fn(self, rhs: &Uint<BITS, LIMBS>) -> Self::Output {
-                self.clone().$fn(rhs)
+                <Uint<BITS, LIMBS>>::$fn(*self, *rhs)
+            }
+        }
+
+        impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+            #[doc = concat!("Returns the bitwise `", stringify!($op), "` of the two numbers.")]
+            #[inline(always)]
+            #[must_use]
+            pub const fn $fn(mut self, rhs: Uint<BITS, LIMBS>) -> Uint<BITS, LIMBS> {
+                let mut i = 0;
+                while i < LIMBS {
+                    self.limbs[i] $assign_op rhs.limbs[i];
+                    i += 1;
+                }
+                self
             }
         }
     };
 }
 
-impl_bit_op!(BitOr, bitor, BitOrAssign, bitor_assign);
-impl_bit_op!(BitAnd, bitand, BitAndAssign, bitand_assign);
-impl_bit_op!(BitXor, bitxor, BitXorAssign, bitxor_assign);
+impl_bit_op!(|, |=, BitOr,  bitor,  BitOrAssign,  bitor_assign);
+impl_bit_op!(&, &=, BitAnd, bitand, BitAndAssign, bitand_assign);
+impl_bit_op!(^, ^=, BitXor, bitxor, BitXorAssign, bitxor_assign);
 
 impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
     type Output = Self;
