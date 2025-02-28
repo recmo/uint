@@ -19,7 +19,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if and only if `self == 2^k` for some `k`.
     #[inline]
     #[must_use]
-    pub fn is_power_of_two(self) -> bool {
+    pub const fn is_power_of_two(self) -> bool {
         self.count_ones() == 1
     }
 
