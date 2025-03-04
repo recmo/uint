@@ -134,7 +134,6 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
     v
 }
 
-#[allow(clippy::missing_const_for_fn)] // False positive
 #[inline]
 #[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
@@ -144,7 +143,6 @@ fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
     Wrapping((r >> 64) as u64)
 }
 
-#[allow(clippy::missing_const_for_fn)] // False positive
 #[inline]
 #[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
