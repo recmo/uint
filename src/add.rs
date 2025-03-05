@@ -203,7 +203,7 @@ mod tests {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
-            assert_eq!(-U::from(1), !U::ZERO);
+            assert_eq!(-U::ONE, !U::ZERO);
         });
     }
 

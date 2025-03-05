@@ -56,8 +56,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // Exponentiation by squaring
         let mut overflow = false;
         let mut base_overflow = false;
-        let mut result = Self::from(1);
-        while exp != Self::ZERO {
+        let mut result = Self::ONE;
+        while !exp.is_zero() {
             // Multiply by base
             if exp.bit(0) {
                 let (r, o) = result.overflowing_mul(self);
@@ -100,8 +100,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Exponentiation by squaring
-        let mut result = Self::from(1);
-        while exp != Self::ZERO {
+        let mut result = Self::ONE;
+        while !exp.is_zero() {
             // Multiply by base
             if exp.bit(0) {
                 result = result.wrapping_mul(self);

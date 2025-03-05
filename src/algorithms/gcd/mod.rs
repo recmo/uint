@@ -81,10 +81,10 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
     }
 
     // Initialize state matrix to identity.
-    let mut s0 = Uint::from(1);
+    let mut s0 = Uint::ONE;
     let mut s1 = Uint::ZERO;
     let mut t0 = Uint::ZERO;
-    let mut t1 = Uint::from(1);
+    let mut t1 = Uint::ONE;
     let mut even = true;
     while b != Uint::ZERO {
         debug_assert!(a >= b);
@@ -146,7 +146,7 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
     num: Uint<BITS, LIMBS>,
     modulus: Uint<BITS, LIMBS>,
 ) -> Option<Uint<BITS, LIMBS>> {
-    if BITS == 0 || modulus == Uint::ZERO {
+    if BITS == 0 || modulus.is_zero() {
         return None;
     }
     let mut a = modulus;
@@ -154,12 +154,12 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
     if b >= a {
         b %= a;
     }
-    if b == Uint::ZERO {
+    if b.is_zero() {
         return None;
     }
 
     let mut t0 = Uint::ZERO;
-    let mut t1 = Uint::from(1);
+    let mut t1 = Uint::ONE;
     let mut even = true;
     while b != Uint::ZERO {
         debug_assert!(a >= b);
@@ -180,7 +180,7 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
             even ^= !m.4;
         }
     }
-    if a == Uint::from(1) {
+    if a == Uint::ONE {
         // When `even` t0 is negative and in twos-complement form
         Some(if even { modulus + t0 } else { t0 })
     } else {
