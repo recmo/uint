@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated Pyo3. This is a **non-semver breaking change** to address a vulnerability reported on Pyo3. ([#460])
 - Make `rotate*`, `*sh[lr]` functions `const` ([#441])
+- Make `mul*` functions `const` ([#449])
 
 [#441]: https://github.com/recmo/uint/pull/441
+[#449]: https://github.com/recmo/uint/pull/449
 [#460]: https://github.com/recmo/uint/pull/460
 
 ## [1.14.0] - 2025-03-25
