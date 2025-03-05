@@ -27,14 +27,10 @@ pub use self::{
 
 trait DoubleWord<T>: Sized + Copy {
     fn join(high: T, low: T) -> Self;
-    fn add(a: T, b: T) -> Self;
     fn mul(a: T, b: T) -> Self;
-    fn muladd(a: T, b: T, c: T) -> Self;
-    fn muladd2(a: T, b: T, c: T, d: T) -> Self;
 
     fn high(self) -> T;
     fn low(self) -> T;
-    fn split(self) -> (T, T);
 }
 
 impl DoubleWord<u64> for u128 {
@@ -43,30 +39,10 @@ impl DoubleWord<u64> for u128 {
         (Self::from(high) << 64) | Self::from(low)
     }
 
-    /// Computes `a + b` as a 128-bit value.
-    #[inline(always)]
-    fn add(a: u64, b: u64) -> Self {
-        Self::from(a) + Self::from(b)
-    }
-
     /// Computes `a * b` as a 128-bit value.
     #[inline(always)]
     fn mul(a: u64, b: u64) -> Self {
         Self::from(a) * Self::from(b)
-    }
-
-    /// Computes `a * b + c` as a 128-bit value. Note that this can not
-    /// overflow.
-    #[inline(always)]
-    fn muladd(a: u64, b: u64, c: u64) -> Self {
-        Self::from(a) * Self::from(b) + Self::from(c)
-    }
-
-    /// Computes `a * b + c + d` as a 128-bit value. Note that this can not
-    /// overflow.
-    #[inline(always)]
-    fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
-        Self::from(a) * Self::from(b) + Self::from(c) + Self::from(d)
     }
 
     #[inline(always)]
@@ -79,9 +55,50 @@ impl DoubleWord<u64> for u128 {
     fn low(self) -> u64 {
         self as u64
     }
+}
+
+#[derive(Clone, Copy)]
+struct ConstDoubleWord<T>(T);
+
+impl ConstDoubleWord<u128> {
+    #[inline(always)]
+    const fn ext(a: u64) -> u128 {
+        a as u128
+    }
+
+    /// Computes `a + b` as a 128-bit value.
+    #[inline(always)]
+    const fn add(a: u64, b: u64) -> Self {
+        Self(Self::ext(a) + Self::ext(b))
+    }
+
+    /// Computes `a * b + c` as a 128-bit value. Note that this can not
+    /// overflow.
+    #[inline(always)]
+    const fn muladd(a: u64, b: u64, c: u64) -> Self {
+        Self(Self::ext(a) * Self::ext(b) + Self::ext(c))
+    }
+
+    /// Computes `a * b + c + d` as a 128-bit value. Note that this can not
+    /// overflow.
+    #[inline(always)]
+    const fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
+        Self(Self::ext(a) * Self::ext(b) + Self::ext(c) + Self::ext(d))
+    }
 
     #[inline(always)]
-    fn split(self) -> (u64, u64) {
+    const fn high(self) -> u64 {
+        (self.0 >> 64) as u64
+    }
+
+    #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)]
+    const fn low(self) -> u64 {
+        self.0 as u64
+    }
+
+    #[inline(always)]
+    const fn split(self) -> (u64, u64) {
         (self.low(), self.high())
     }
 }

@@ -9,7 +9,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self * rhs`, returning [`None`] if overflow occurred.
     #[inline(always)]
     #[must_use]
-    pub fn checked_mul(self, rhs: Self) -> Option<Self> {
+    pub const fn checked_mul(self, rhs: Self) -> Option<Self> {
         match self.overflowing_mul(rhs) {
             (value, false) => Some(value),
             _ => None,
@@ -36,7 +36,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     #[inline]
     #[must_use]
-    pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
+    pub const fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut result = Self::ZERO;
         let mut overflow = algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
@@ -50,7 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// overflowing.
     #[inline(always)]
     #[must_use]
-    pub fn saturating_mul(self, rhs: Self) -> Self {
+    pub const fn saturating_mul(self, rhs: Self) -> Self {
         match self.overflowing_mul(rhs) {
             (value, false) => value,
             _ => Self::MAX,
@@ -60,7 +60,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes `self * rhs`, wrapping around at the boundary of the type.
     #[inline(always)]
     #[must_use]
-    pub fn wrapping_mul(self, rhs: Self) -> Self {
+    pub const fn wrapping_mul(self, rhs: Self) -> Self {
         let mut result = Self::ZERO;
         algorithms::addmul_n(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
         if BITS > 0 {
