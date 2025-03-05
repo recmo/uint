@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add const `not` function ([#442])
 - Make `leading_zeros`, `leading_ones`, `count_ones`, `count_zeros`, `bit_len`, `byte_len`, `is_power_of_two` functions `const` ([#442])
+- Add `const ONE` ([#448])
 
 ### Changed
 
@@ -22,9 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix `checked_byte` bounds check and make it const ([#438])
 
-[#442]: https://github.com/recmo/uint/pull/442
-[#439]: https://github.com/recmo/uint/pull/439
 [#438]: https://github.com/recmo/uint/pull/438
+[#439]: https://github.com/recmo/uint/pull/439
+[#442]: https://github.com/recmo/uint/pull/442
+[#448]: https://github.com/recmo/uint/pull/448
 
 ## [1.13.1] - 2025-02-18
 
