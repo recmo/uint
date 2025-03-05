@@ -123,6 +123,15 @@ impl fmt::Display for ToFieldError {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    pub(crate) const fn const_from_u64(x: u64) -> Self {
+        if BITS == 0 || (BITS < 64 && x >= 1 << BITS) {
+            return Self::ZERO;
+        }
+        let mut limbs = [0; LIMBS];
+        limbs[0] = x;
+        Self::from_limbs(limbs)
+    }
+
     /// Construct a new [`Uint`] from the value.
     ///
     /// # Panics

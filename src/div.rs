@@ -37,7 +37,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if r.is_zero() {
             q
         } else {
-            q + Self::from(1)
+            q + Self::ONE
         }
     }
 
@@ -99,7 +99,7 @@ mod tests {
                 let qf = n / d;
                 let qc = n.div_ceil(d);
                 assert!(qf <= qc);
-                assert!(qf == qc || qf == qc - U::from(1));
+                assert!(qf == qc || qf == qc - U::ONE);
                 if qf == qc {
                     assert!(n % d == U::ZERO);
                 }

@@ -118,7 +118,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         let mut iter = digits.into_iter();
         let mut result = Self::ZERO;
-        let mut power = Self::from(1);
+        let mut power = Self::ONE;
         for digit in iter.by_ref() {
             if digit >= base {
                 return Err(BaseConvertError::InvalidDigit(digit, base));

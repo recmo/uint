@@ -158,7 +158,7 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> 
         if BITS == 0 {
             return Self::ZERO;
         }
-        iter.fold(Self::from(1), Self::wrapping_mul)
+        iter.fold(Self::ONE, Self::wrapping_mul)
     }
 }
 
@@ -171,7 +171,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS,
         if BITS == 0 {
             return Self::ZERO;
         }
-        iter.copied().fold(Self::from(1), Self::wrapping_mul)
+        iter.copied().fold(Self::ONE, Self::wrapping_mul)
     }
 }
 
