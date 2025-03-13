@@ -708,13 +708,13 @@ mod tests {
     fn test_leading_zeros() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
         assert_eq!(Uint::<1, 1>::ZERO.leading_zeros(), 1);
-        assert_eq!(Uint::<1, 1>::from(1).leading_zeros(), 0);
+        assert_eq!(Uint::<1, 1>::ONE.leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint::<BITS, LIMBS>;
             assert_eq!(U::ZERO.leading_zeros(), BITS);
             assert_eq!(U::MAX.leading_zeros(), 0);
-            assert_eq!(U::from(1).leading_zeros(), BITS - 1);
+            assert_eq!(U::ONE.leading_zeros(), BITS - 1);
             proptest!(|(value: U)| {
                 let zeros = value.leading_zeros();
                 assert!(zeros <= BITS);
@@ -738,7 +738,7 @@ mod tests {
     fn test_leading_ones() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_ones(), 0);
         assert_eq!(Uint::<1, 1>::ZERO.leading_ones(), 0);
-        assert_eq!(Uint::<1, 1>::from(1).leading_ones(), 1);
+        assert_eq!(Uint::<1, 1>::ONE.leading_ones(), 1);
     }
 
     #[test]

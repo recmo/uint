@@ -37,7 +37,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         // Handle case where `degree > Self::BITS`.
         if degree >= Self::BITS {
-            return Self::from(1);
+            return Self::ONE;
         }
 
         // Handle case where `degree == 1`.
@@ -107,7 +107,7 @@ mod tests {
                 let lower = root.pow(U::from(degree));
                 assert!(value >= lower);
                 let upper = root
-                    .checked_add(U::from(1))
+                    .checked_add(U::ONE)
                     .and_then(|n| n.checked_pow(U::from(degree)));
                 if let Some(upper) = upper {
                    assert!(value < upper);
@@ -128,7 +128,7 @@ mod tests {
                 let lower = root.pow(U::from(degree));
                 assert!(value >= lower);
                 let upper = root
-                    .checked_add(U::from(1))
+                    .checked_add(U::ONE)
                     .and_then(|n| n.checked_pow(U::from(degree)));
                 if let Some(upper) = upper {
                    assert!(value < upper);

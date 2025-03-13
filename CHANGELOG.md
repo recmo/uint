@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add const `not` function ([#442])
 - Make `leading_zeros`, `leading_ones`, `count_ones`, `count_zeros`, `bit_len`, `byte_len`, `is_power_of_two` functions `const` ([#442])
 - `random`, `random_with`, `randomize`, `randomize_with` methods ([#444])
+- Add `const ONE` ([#448])
 
 ### Changed
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#439]: https://github.com/recmo/uint/pull/439
 [#442]: https://github.com/recmo/uint/pull/442
 [#444]: https://github.com/recmo/uint/pull/444
+[#448]: https://github.com/recmo/uint/pull/448
 
 ## [1.13.1] - 2025-02-18
 

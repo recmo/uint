@@ -176,6 +176,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// types.
     pub const ZERO: Self = Self::from_limbs([0; LIMBS]);
 
+    /// The value one. This is useful to have as a constant for use in const fn.
+    ///
+    /// Zero if `BITS` is zero.
+    pub const ONE: Self = Self::const_from_u64(1);
+
     /// The smallest value that can be represented by this integer type.
     /// Synonym for [`Self::ZERO`].
     pub const MIN: Self = Self::ZERO;

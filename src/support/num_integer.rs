@@ -74,12 +74,12 @@ impl<const BITS: usize, const LIMBS: usize> Integer for Uint<BITS, LIMBS> {
 
     #[inline]
     fn dec(&mut self) {
-        *self -= Self::from(1);
+        *self -= Self::ONE;
     }
 
     #[inline]
     fn inc(&mut self) {
-        *self += Self::from(1);
+        *self += Self::ONE;
     }
 }
 
