@@ -46,8 +46,8 @@ fn bench_div_rem_half<const BITS: usize, const LIMBS: usize>(criterion: &mut Cri
                 || {
                     let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
                     d >>= BITS / 2; // make d half size
-                    if d == Uint::ZERO {
-                        d = Uint::from(1);
+                    if d.is_zero() {
+                        d = Uint::ONE;
                     }
                     (n, d)
                 },
@@ -68,8 +68,8 @@ fn bench_div_rem_full<const BITS: usize, const LIMBS: usize>(criterion: &mut Cri
         bencher.iter_batched(
             || {
                 let (n, mut d) = input.new_tree(&mut runner).unwrap().current();
-                if d == Uint::ZERO {
-                    d = Uint::from(1);
+                if d.is_zero() {
+                    d = Uint::ONE;
                 }
                 (n, d)
             },

@@ -61,7 +61,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if exp >= BITS {
             return None;
         }
-        Some(Self::from(1) << exp)
+        Some(Self::ONE << exp)
     }
 }
 
@@ -116,7 +116,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if r.is_zero() {
             return Some(self);
         }
-        let q = q.checked_add(Self::from(1))?;
+        let q = q.checked_add(Self::ONE)?;
         q.checked_mul(rhs)
     }
 }

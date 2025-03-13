@@ -84,13 +84,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
-        if modulus.is_zero() || modulus <= Self::from(1) {
-            // Also covers Self::BITS == 0
+        if BITS == 0 || modulus <= Self::ONE {
             return Self::ZERO;
         }
 
         // Exponentiation by squaring
-        let mut result = Self::from(1);
+        let mut result = Self::ONE;
         while exp > Self::ZERO {
             // Multiply by base
             if exp.limbs[0] & 1 == 1 {
