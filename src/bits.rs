@@ -134,8 +134,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             i += 1;
         }
 
-        self.limbs[LIMBS - 1] &= Self::MASK;
-        self
+        self.masked()
     }
 
     /// Returns the number of leading zeros in the binary representation of
@@ -324,7 +323,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             r.limbs[i + limbs] = (x << bits) | carry;
             carry = (x >> (word_bits - bits - 1)) >> 1;
         }
-        r.limbs[LIMBS - 1] &= Self::MASK;
+        r.apply_mask();
         (r, carry != 0)
     }
 
