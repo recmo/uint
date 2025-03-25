@@ -29,9 +29,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[cfg(feature = "std")]
     pub fn random() -> Self {
-        // SAFETY: `uint` is only accessible after random initialization.
-        #[allow(clippy::uninit_assumed_init)]
-        let mut uint = unsafe { core::mem::MaybeUninit::<Self>::uninit().assume_init() };
+        let mut uint = Self::ZERO;
         uint.randomize();
         uint
     }
@@ -41,9 +39,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[doc(alias = "random_using")]
     #[must_use]
     pub fn random_with<R: rand::RngCore + ?Sized>(rng: &mut R) -> Self {
-        // SAFETY: `uint` is only accessible after random initialization.
-        #[allow(clippy::uninit_assumed_init)]
-        let mut uint = unsafe { core::mem::MaybeUninit::<Self>::uninit().assume_init() };
+        let mut uint = Self::ZERO;
         uint.randomize_with(rng);
         uint
     }
