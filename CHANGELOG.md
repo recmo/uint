@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.0] - 2025-03-25
+
 ### Added
 
 - Add const `not` function ([#442])
@@ -410,7 +412,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.13.1...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.14.0...HEAD
+[1.14.0]: https://github.com/recmo/uint/releases/tag/v1.14.0
 [1.13.1]: https://github.com/recmo/uint/releases/tag/v1.13.1
 [1.13.0]: https://github.com/recmo/uint/releases/tag/v1.13.0
 [1.12.4]: https://github.com/recmo/uint/releases/tag/v1.12.4
