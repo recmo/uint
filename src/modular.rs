@@ -31,17 +31,45 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns zero if the modulus is zero.
     #[inline]
     #[must_use]
-    pub fn add_mod(self, rhs: Self, modulus: Self) -> Self {
-        // Reduce inputs
-        let lhs = self.reduce_mod(modulus);
-        let rhs = rhs.reduce_mod(modulus);
-
-        // Compute the sum and conditionally subtract modulus once.
-        let (mut result, overflow) = lhs.overflowing_add(rhs);
-        if overflow || result >= modulus {
-            result -= modulus;
+    pub fn add_mod(self, rhs: Self, mut modulus: Self) -> Self {
+        if modulus.is_zero() {
+            return Self::ZERO;
         }
-        result
+
+        // do overflowing add, then check if we should divrem
+        let (result, overflow) = self.overflowing_add(rhs);
+        if overflow {
+            // Allocate at least `nlimbs(2 * BITS)` limbs to store the numerator. This array
+            // casting is a workaround for `generic_const_exprs` not being stable.
+            let mut numerator = [[0u64; 2]; LIMBS];
+            let numerator_len = crate::nlimbs(2 * BITS);
+            debug_assert!(2 * LIMBS >= numerator_len);
+            // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
+            let numerator = unsafe {
+                core::slice::from_raw_parts_mut(numerator.as_mut_ptr().cast::<u64>(), numerator_len)
+            };
+
+            // copy over the limbs
+            unsafe {
+                core::ptr::copy_nonoverlapping(
+                    result.as_limbs().as_ptr(),
+                    numerator.as_mut_ptr(),
+                    result.limbs.len(),
+                );
+            };
+
+            // Now we have to fill in the carry bit before reducing.
+            let (limbs, bits) = (BITS / 64, BITS % 64);
+            numerator[limbs] |= 1 << bits;
+
+            // Compute modulus using `div_rem`.
+            // This stores the remainder in the divisor, `modulus`.
+            algorithms::div(numerator, &mut modulus.limbs);
+
+            modulus
+        } else {
+            result.reduce_mod(modulus)
+        }
     }
 
     /// Compute $\mod{\mathtt{self} ⋅ \mathtt{rhs}}_{\mathtt{modulus}}$.
