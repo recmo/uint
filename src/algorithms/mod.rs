@@ -134,7 +134,7 @@ pub const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
 }
 
 #[inline]
-pub(crate) fn trim_end_zeros(mut x: &[u64]) -> &[u64] {
+pub(crate) const fn trim_end_zeros(mut x: &[u64]) -> &[u64] {
     while let [rest @ .., 0] = x {
         x = rest;
     }
