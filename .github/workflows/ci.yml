@@ -119,8 +119,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@clippy
-        with:
-          toolchain: nightly-2025-02-20 # https://github.com/rust-lang/rust-clippy/issues/14303
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
