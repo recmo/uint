@@ -47,27 +47,22 @@ use crate::algorithms::DoubleWord;
 #[inline]
 pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
-    let i = divisor
-        .iter()
-        .rposition(|&x| x != 0)
-        .expect("Divisor is zero");
-    let divisor = &mut divisor[..=i];
-    debug_assert!(!divisor.is_empty());
-    debug_assert!(divisor.last() != Some(&0));
+    let divisor = super::trim_end_zeros_mut(divisor);
+    assert!(!divisor.is_empty(), "divisor is 0");
+    debug_assert_ne!(*divisor.last().unwrap(), 0);
 
-    // Trim zeros from numerator
-    let numerator = if let Some(i) = numerator.iter().rposition(|&n| n != 0) {
-        &mut numerator[..=i]
-    } else {
-        // Empty numerator (q, r) = (0,0)
+    // Trim most significant zeros from numerator.
+    let numerator = super::trim_end_zeros_mut(numerator);
+    if numerator.is_empty() {
+        // Empty numerator: (q, r) = (0, 0)
         divisor.fill(0);
         return;
-    };
-    debug_assert!(!numerator.is_empty());
-    debug_assert!(*numerator.last().unwrap() != 0);
+    }
+    debug_assert_ne!(*numerator.last().unwrap(), 0);
 
-    // If numerator is smaller than divisor (q, r) = (0, numerator)
+    // if super::cmp(numerator, divisor).is_lt() {
     if numerator.len() < divisor.len() {
+        // Numerator is smaller than the divisor: (q, r) = (0, numerator)
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
         padding.fill(0);

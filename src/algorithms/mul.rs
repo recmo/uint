@@ -31,8 +31,9 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
             lhs = rest;
         }
     }
-    while let [rest @ .., 0] = a {
-        a = rest;
+    a = super::trim_end_zeros(a);
+    if a.is_empty() {
+        return false;
     }
 
     // Trim zeros from `b`
@@ -42,13 +43,11 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
             lhs = rest;
         }
     }
-    while let [rest @ .., 0] = b {
-        b = rest;
-    }
-
-    if a.is_empty() || b.is_empty() {
+    b = super::trim_end_zeros(b);
+    if b.is_empty() {
         return false;
     }
+
     if lhs.is_empty() {
         return true;
     }
