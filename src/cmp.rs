@@ -16,11 +16,40 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
 }
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    /// Returns true if the value is zero.
+    /// Returns `true` if the value is zero.
     #[inline]
     #[must_use]
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO
+    }
+
+    /// Returns `true` if the value is zero.
+    ///
+    /// Note that this currently might perform worse than
+    /// [`is_zero`](Self::is_zero).
+    #[inline]
+    #[must_use]
+    pub const fn const_is_zero(&self) -> bool {
+        self.const_eq(&Self::ZERO)
+    }
+
+    /// Returns `true` if `self` equals `other`.
+    ///
+    /// Note that this currently might perform worse than the derived
+    /// `PartialEq` (`==` operator).
+    #[inline]
+    #[must_use]
+    pub const fn const_eq(&self, other: &Self) -> bool {
+        // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
+        let a = self.as_limbs();
+        let b = other.as_limbs();
+        let mut i = 0;
+        let mut r = true;
+        while i < LIMBS {
+            r &= a[i] == b[i];
+            i += 1;
+        }
+        r
     }
 }
 

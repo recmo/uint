@@ -313,7 +313,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[inline(always)]
-    fn apply_mask(&mut self) {
+    const fn apply_mask(&mut self) {
         if Self::SHOULD_MASK {
             self.limbs[LIMBS - 1] &= Self::MASK;
         }
