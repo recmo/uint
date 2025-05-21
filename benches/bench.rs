@@ -1,3 +1,5 @@
+#![allow(clippy::incompatible_msrv)]
+
 mod benches;
 
 #[allow(unused_imports)]

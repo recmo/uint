@@ -28,6 +28,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Note that this currently might perform worse than
     /// [`is_zero`](Self::is_zero).
     #[inline]
+    #[must_use]
     pub const fn const_is_zero(&self) -> bool {
         self.const_eq(&Self::ZERO)
     }
