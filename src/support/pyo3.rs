@@ -31,7 +31,21 @@ use pyo3::{
     Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python,
 };
 
+// This implementation via &Self mirrors the implementations for biguint in
+// pyo3.
 impl<'a, const BITS: usize, const LIMBS: usize> IntoPyObject<'a> for Uint<BITS, LIMBS> {
+    type Target = PyInt;
+
+    type Output = Bound<'a, Self::Target>;
+
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'a>) -> Result<Self::Output, Self::Error> {
+        (&self).into_pyobject(py)
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> IntoPyObject<'a> for &Uint<BITS, LIMBS> {
     type Target = PyInt;
     type Output = Bound<'a, Self::Target>;
     type Error = PyErr;
