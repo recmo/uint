@@ -2,7 +2,7 @@ mod benches;
 
 #[allow(unused_imports)]
 mod prelude {
-    pub use criterion::{black_box, BatchSize, Criterion};
+    pub use criterion::{BatchSize, Criterion};
     pub use proptest::{
         arbitrary::Arbitrary,
         strategy::{Strategy, ValueTree},
@@ -10,6 +10,7 @@ mod prelude {
     };
     pub use rand_09::{self as rand, prelude::*, rng};
     pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
+    pub use std::hint::black_box;
 }
 
 fn main() {
