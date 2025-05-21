@@ -36,6 +36,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Self::ZERO;
         }
 
+        // This is not going to truncate with the final cast because the modulus value is 64
+        // bits.
+        #[allow(clippy::cast_possible_truncation)]
         if BITS <= 64 {
             self.limbs[0] =
                 ((self.limbs[0] as u128 + rhs.limbs[0] as u128) % modulus.limbs[0] as u128) as u64;
