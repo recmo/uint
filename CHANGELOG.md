@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+- Updated Pyo3. This is a **non-semver breaking change** to address a vulnerability reported on Pyo3. ([#460])
+
+### Fixed
+
+
 ## [1.14.0] - 2025-03-25
 
 ### Added

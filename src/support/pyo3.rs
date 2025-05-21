@@ -24,43 +24,54 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "pyo3")))]
 
 use crate::Uint;
-use core::ffi::c_uchar;
 use pyo3::{
-    exceptions::PyOverflowError, ffi, AsPyPointer, FromPyObject, IntoPy, PyAny, PyErr, PyObject,
-    PyResult, Python, ToPyObject,
+    exceptions::PyOverflowError,
+    ffi,
+    types::{PyAnyMethods, PyInt},
+    Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python,
 };
 
-impl<const BITS: usize, const LIMBS: usize> ToPyObject for Uint<BITS, LIMBS> {
-    fn to_object(&self, py: Python<'_>) -> PyObject {
+// This implementation via &Self mirrors the implementations for biguint in
+// pyo3.
+impl<'a, const BITS: usize, const LIMBS: usize> IntoPyObject<'a> for Uint<BITS, LIMBS> {
+    type Target = PyInt;
+
+    type Output = Bound<'a, Self::Target>;
+
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'a>) -> Result<Self::Output, Self::Error> {
+        (&self).into_pyobject(py)
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> IntoPyObject<'a> for &Uint<BITS, LIMBS> {
+    type Target = PyInt;
+    type Output = Bound<'a, Self::Target>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'a>) -> Result<Self::Output, Self::Error> {
         // Fast path for small ints
         if BITS <= 64 {
             let value = self.as_limbs().first().copied().unwrap_or(0);
-            return unsafe {
-                let obj = ffi::PyLong_FromUnsignedLongLong(value);
-                assert!(!obj.is_null(), "Out of memory");
-                PyObject::from_owned_ptr(py, obj)
-            };
+            return Ok(value.into_pyobject(py).unwrap());
         }
 
         // Convert using little endian bytes (trivial on LE archs)
         // and `_PyLong_FromByteArray`.
         let bytes = self.as_le_bytes();
+
         unsafe {
             let obj =
-                ffi::_PyLong_FromByteArray(bytes.as_ptr().cast::<c_uchar>(), bytes.len(), 1, 0);
-            PyObject::from_owned_ptr(py, obj)
+                ffi::_PyLong_FromByteArray(bytes.as_ptr().cast(), bytes.len(), 1, false.into());
+            let bound = Bound::from_owned_ptr(py, obj);
+            Ok(bound.downcast_into_unchecked())
         }
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> IntoPy<PyObject> for Uint<BITS, LIMBS> {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        self.to_object(py)
-    }
-}
-
-impl<'source, const BITS: usize, const LIMBS: usize> FromPyObject<'source> for Uint<BITS, LIMBS> {
-    fn extract(ob: &'source PyAny) -> PyResult<Self> {
+impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, LIMBS> {
+    fn extract_bound(ob: &Bound<'a, PyAny>) -> PyResult<Self> {
         let mut result = Self::ZERO;
 
         // On little endian let Python write directly to the uint.
@@ -134,8 +145,8 @@ mod test {
                 const LIMBS: usize = nlimbs(BITS);
                 type U = Uint<BITS, LIMBS>;
                 proptest!(|(value: U)| {
-                    let obj = value.into_py(py);
-                    let native = obj.extract::<U>(py).unwrap();
+                    let obj = value.into_pyobject(py).unwrap();
+                    let native = Uint::<BITS, LIMBS>::extract_bound(&obj).unwrap();
                     assert_eq!(value, native);
                 });
             });
@@ -145,19 +156,19 @@ mod test {
     #[test]
     fn test_errors() {
         pyo3::prepare_freethreaded_python();
-        Python::with_gil(|py| {
-            let obj = (-1_i64).to_object(py);
-            assert!(obj.extract::<U0>(py).is_err());
-            assert!(obj.extract::<U256>(py).is_err());
+        Python::with_gil(|py: Python<'_>| {
+            let obj = (-1_i64).into_pyobject(py).unwrap();
+            assert!(U0::extract_bound(&obj).is_err());
+            assert!(U256::extract_bound(&obj).is_err());
 
-            let obj = (1000_i64).to_object(py);
-            assert!(obj.extract::<U0>(py).is_err());
-            assert!(obj.extract::<U8>(py).is_err());
+            let obj = (1000_i64).into_pyobject(py).unwrap();
+            assert!(U0::extract_bound(&obj).is_err());
+            assert!(U8::extract_bound(&obj).is_err());
 
-            let obj = U512::MAX.to_object(py);
-            assert!(obj.extract::<U0>(py).is_err());
-            assert!(obj.extract::<U64>(py).is_err());
-            assert!(obj.extract::<U256>(py).is_err());
+            let obj = U512::MAX.into_pyobject(py).unwrap();
+            assert!(U0::extract_bound(&obj).is_err());
+            assert!(U64::extract_bound(&obj).is_err());
+            assert!(U256::extract_bound(&obj).is_err());
         });
     }
 }
