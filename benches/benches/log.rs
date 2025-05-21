@@ -11,13 +11,13 @@ fn bench_log<const BITS: usize, const LIMBS: usize>(criterion: &mut Criterion) {
     if BITS < 7 {
         return;
     }
-    let input = (Uint::<BITS, LIMBS>::arbitrary(), 2_u64..100);
-    let mut runner = TestRunner::deterministic();
-    criterion.bench_function(&format!("log/{BITS}"), move |bencher| {
-        bencher.iter_batched(
-            || input.new_tree(&mut runner).unwrap().current(),
-            |(n, b)| black_box(black_box(n).checked_log(Uint::<BITS, LIMBS>::from(b))),
-            BatchSize::SmallInput,
-        );
-    });
+    bench_arbitrary_with(
+        criterion,
+        &format!("log/{BITS}"),
+        (
+            Uint::<BITS, LIMBS>::arbitrary(),
+            (2_u64..100).prop_map(Uint::<BITS, LIMBS>::from),
+        ),
+        |(n, b)| n.checked_log(b),
+    );
 }
