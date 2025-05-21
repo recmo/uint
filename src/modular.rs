@@ -31,9 +31,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns zero if the modulus is zero.
     #[inline]
     #[must_use]
-    pub fn add_mod(self, rhs: Self, mut modulus: Self) -> Self {
+    pub fn add_mod(mut self, rhs: Self, mut modulus: Self) -> Self {
         if modulus.is_zero() {
             return Self::ZERO;
+        }
+
+        if BITS <= 64 {
+            self.limbs[0] =
+                ((self.limbs[0] as u128 + rhs.limbs[0] as u128) % modulus.limbs[0] as u128) as u64;
+            return self;
         }
 
         // do overflowing add, then check if we should divrem
@@ -49,7 +55,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 core::slice::from_raw_parts_mut(numerator.as_mut_ptr().cast::<u64>(), numerator_len)
             };
 
-            // copy over the limbs
+            // Copy the result limbs into the numerator.
+            // SAFETY:
+            // * `result` is valid for the length of `result.limbs`
+            // * `numerator` is valid for the length of `result.limbs`
+            // * `result` and `numerator` do not overlap
             unsafe {
                 core::ptr::copy_nonoverlapping(
                     result.as_limbs().as_ptr(),
