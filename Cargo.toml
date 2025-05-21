@@ -103,7 +103,7 @@ ruint = { path = ".", features = ["arbitrary", "proptest"] }
 ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
 ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
 
-criterion = "0.5"
+criterion = "0.6"
 rand-09 = { version = "0.9", package = "rand" }
 
 approx = "0.5"
