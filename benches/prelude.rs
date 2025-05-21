@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![allow(clippy::incompatible_msrv)]
 
 pub use criterion::{BatchSize, Criterion};
 pub use proptest::{
