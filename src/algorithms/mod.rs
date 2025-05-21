@@ -87,7 +87,7 @@ impl DoubleWord<u64> for u128 {
 }
 
 /// Compare two `u64` slices in reverse order.
-#[inline]
+#[inline(always)]
 #[must_use]
 pub fn cmp(left: &[u64], right: &[u64]) -> Ordering {
     let l = core::cmp::min(left.len(), right.len());

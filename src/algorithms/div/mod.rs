@@ -22,7 +22,7 @@ pub use self::{
     knuth::{div_nxm, div_nxm_normalized},
     reciprocal::{reciprocal, reciprocal_2, reciprocal_2_mg10, reciprocal_mg10, reciprocal_ref},
     small::{
-        div_2x1, div_2x1_mg10, div_2x1_ref, div_3x2, div_3x2_mg10, div_3x2_ref, div_nx1,
+        div_1x1, div_2x1, div_2x1_mg10, div_2x1_ref, div_3x2, div_3x2_mg10, div_3x2_ref, div_nx1,
         div_nx1_normalized, div_nx2, div_nx2_normalized,
     },
 };
@@ -48,7 +48,11 @@ use crate::algorithms::DoubleWord;
 pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
     let divisor = super::trim_end_zeros_mut(divisor);
-    assert!(!divisor.is_empty(), "divisor is 0");
+    if divisor.is_empty() {
+        // Force a division by 0 panic, which is smaller in code size than an `assert!`.
+        #[allow(unconditional_panic, clippy::all)]
+        let _ = 0 / 0;
+    }
     debug_assert_ne!(*divisor.last().unwrap(), 0);
 
     // Trim most significant zeros from numerator.
@@ -60,8 +64,14 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     }
     debug_assert_ne!(*numerator.last().unwrap(), 0);
 
-    // if super::cmp(numerator, divisor).is_lt() {
-    if numerator.len() < divisor.len() {
+    // Compare length first, as we have trimmed zeros.
+    // let is_less = match numerator.len().cmp(&divisor.len()) {
+    //     core::cmp::Ordering::Less => true,
+    //     core::cmp::Ordering::Equal => super::cmp(numerator, divisor).is_lt(),
+    //     core::cmp::Ordering::Greater => false,
+    // };
+    let is_less = numerator.len() < divisor.len();
+    if is_less {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
@@ -73,14 +83,12 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
 
     // Compute quotient and remainder, branching out to different algorithms.
     if divisor.len() <= 2 {
-        if divisor.len() == 1 {
-            if numerator.len() == 1 {
-                let q = numerator[0] / divisor[0];
-                let r = numerator[0] % divisor[0];
-                numerator[0] = q;
-                divisor[0] = r;
+        if let [divisor] = divisor {
+            assume!(*divisor != 0); // Elides division by 0 check.
+            if let [numerator] = numerator {
+                (*numerator, *divisor) = div_1x1(*numerator, *divisor);
             } else {
-                divisor[0] = div_nx1(numerator, divisor[0]);
+                *divisor = div_nx1(numerator, *divisor);
             }
         } else {
             let d = u128::join(divisor[1], divisor[0]);
