@@ -14,9 +14,6 @@ fn bench_div_rem<const BITS: usize, const LIMBS: usize>(
     criterion: &mut Criterion,
     rhs_bits: usize,
 ) {
-    if BITS == 0 {
-        return;
-    }
     bench_arbitrary_with(
         criterion,
         &format!("div_rem/{BITS}/{rhs_bits}"),

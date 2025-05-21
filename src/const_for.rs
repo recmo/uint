@@ -56,7 +56,7 @@ macro_rules! const_for {
         $crate::const_for!($C in [1, 2, 63, 64, 65, 127, 128, 129, 256, 384, 512, 4096] $x);
     };
     ($C:ident in BENCH $x:block) => {
-        $crate::const_for!($C in [0, 64, 128, 192, 256, 384, 512, 4096] $x);
+        $crate::const_for!($C in [64, 128, 192, 256, 384, 512, 4096] $x);
     };
     ($C:ident in $S:ident if ( $c:expr ) $x:block) => {
         $crate::const_for!($C in $S {
