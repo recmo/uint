@@ -49,7 +49,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[cfg(feature = "alloc")]
     #[must_use]
     #[inline]
-    #[allow(clippy::missing_const_for_fn)]
+    #[cfg_attr(target_endian = "little", allow(clippy::missing_const_for_fn))] // Not const in big-endian.
     pub fn as_le_bytes(&self) -> Cow<'_, [u8]> {
         // On little endian platforms this is a no-op.
         #[cfg(target_endian = "little")]
@@ -58,11 +58,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // In others, reverse each limb and return a copy.
         #[cfg(target_endian = "big")]
         return Cow::Owned({
-            let mut cpy = *self;
-            for limb in &mut cpy.limbs {
+            let mut limbs = self.limbs;
+            for limb in &mut limbs {
                 *limb = limb.swap_bytes();
             }
-            unsafe { slice::from_raw_parts(cpy.limbs.as_ptr().cast(), Self::BYTES).to_vec() }
+            unsafe { slice::from_raw_parts(limbs.as_ptr().cast(), Self::BYTES).to_vec() }
         });
     }
 
