@@ -491,7 +491,7 @@ mod tests {
     // --nocapture postgres
     //
     #[test]
-    #[ignore]
+    #[ignore = "requires a live postgresql server"]
     fn test_postgres() {
         // docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
         let client = Client::connect("postgresql://postgres:postgres@localhost", NoTls).unwrap();

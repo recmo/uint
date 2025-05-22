@@ -189,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_pow_log() {
-        const_for!(BITS in NON_ZERO if (BITS >= 64) {
+        const_for!(BITS in NON_ZERO if BITS >= 64 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0..BITS)| {
@@ -204,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_log_pow() {
-        const_for!(BITS in NON_ZERO if (BITS >= 64) {
+        const_for!(BITS in NON_ZERO if BITS >= 64 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, n: U)| {
