@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2025-05-22
+
 ### Added
 
 - Add `const fn` `const_is_zero`, `const_eq`, `bit*` ([#441])
@@ -424,7 +426,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.14.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/recmo/uint/releases/tag/v1.15.0
 [1.14.0]: https://github.com/recmo/uint/releases/tag/v1.14.0
 [1.13.1]: https://github.com/recmo/uint/releases/tag/v1.13.1
 [1.13.0]: https://github.com/recmo/uint/releases/tag/v1.13.0
