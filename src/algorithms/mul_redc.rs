@@ -218,7 +218,7 @@ mod test {
 
     #[test]
     fn test_mul_redc() {
-        const_for!(BITS in NON_ZERO if (BITS >= 16) {
+        const_for!(BITS in NON_ZERO if BITS >= 16 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(mut a: U, mut b: U, mut m: U)| {
@@ -240,7 +240,7 @@ mod test {
 
     #[test]
     fn test_square_redc() {
-        const_for!(BITS in NON_ZERO if (BITS >= 16) {
+        const_for!(BITS in NON_ZERO if BITS >= 16 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(mut a: U, mut m: U)| {

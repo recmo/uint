@@ -186,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_pow2_shl() {
-        const_for!(BITS in NON_ZERO if (BITS >= 2) {
+        const_for!(BITS in NON_ZERO if BITS >= 2 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(e in 0..=BITS+1)| {
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_pow_product() {
-        const_for!(BITS in NON_ZERO if (BITS >= 64) {
+        const_for!(BITS in NON_ZERO if BITS >= 64 {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0_usize..100)| {
