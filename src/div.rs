@@ -50,7 +50,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
-        algorithms::div(&mut self.limbs, &mut rhs.limbs);
+        if LIMBS == 1 {
+            let q = &mut self.limbs[0];
+            let r = &mut rhs.limbs[0];
+            (*q, *r) = algorithms::div::div_1x1(*q, *r);
+        } else {
+            algorithms::div(&mut self.limbs, &mut rhs.limbs);
+        }
         (self, rhs)
     }
 

@@ -14,6 +14,14 @@ use crate::{algorithms::DoubleWord, utils::unlikely};
 // [`div_2x1_ref`].
 pub use self::{div_2x1_mg10 as div_2x1, div_3x2_mg10 as div_3x2};
 
+/// ⚠️ Compute single limb division.
+#[inline(always)]
+#[track_caller]
+#[must_use]
+pub const fn div_1x1(numerator: u64, divisor: u64) -> (u64, u64) {
+    (numerator / divisor, numerator % divisor)
+}
+
 /// ⚠️ Compute single limb normalized division.
 ///
 /// The divisor must be normalized. See algorithm 7 from [MG10].

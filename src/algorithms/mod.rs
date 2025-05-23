@@ -87,7 +87,7 @@ impl DoubleWord<u64> for u128 {
 }
 
 /// Compare two `u64` slices in reverse order.
-#[inline(always)]
+#[inline]
 #[must_use]
 pub fn cmp(left: &[u64], right: &[u64]) -> Ordering {
     let l = core::cmp::min(left.len(), right.len());
@@ -131,4 +131,20 @@ pub const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
     let (result, borrow_1) = lhs.overflowing_sub(rhs);
     let (result, borrow_2) = result.overflowing_sub(borrow as u64);
     (result, borrow_1 | borrow_2)
+}
+
+#[inline]
+pub(crate) const fn trim_end_zeros(mut x: &[u64]) -> &[u64] {
+    while let [rest @ .., 0] = x {
+        x = rest;
+    }
+    x
+}
+
+#[inline]
+pub(crate) fn trim_end_zeros_mut(mut x: &mut [u64]) -> &mut [u64] {
+    while let [rest @ .., 0] = x {
+        x = rest;
+    }
+    x
 }
