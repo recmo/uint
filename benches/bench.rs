@@ -1,10 +1,8 @@
 #![allow(clippy::incompatible_msrv)]
 
+use criterion::criterion_main;
+
 mod benches;
 mod prelude;
 
-fn main() {
-    let mut c = criterion::Criterion::default().configure_from_args();
-    benches::group(&mut c);
-    c.final_summary();
-}
+criterion_main!(benches::group);
