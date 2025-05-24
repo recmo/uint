@@ -55,14 +55,23 @@ pub fn bench_arbitrary_with<T: Strategy, U>(
     criterion: &mut criterion::Criterion,
     name: &str,
     input: T,
-    mut f: impl FnMut(T::Value) -> U,
+    f: impl FnMut(T::Value) -> U,
 ) {
     let mut runner = TestRunner::deterministic();
+    let mut setup = mk_setup(&input, &mut runner);
+    let mut f = black_box_routine(f);
     criterion.bench_function(name, move |bencher| {
-        bencher.iter_batched(
-            || input.new_tree(&mut runner).unwrap().current(),
-            |input| black_box(f(black_box(input))),
-            BatchSize::SmallInput,
-        );
+        bencher.iter_batched(&mut setup, &mut f, BatchSize::SmallInput);
     });
+}
+
+fn mk_setup<'a, T: Strategy>(
+    input: &'a T,
+    runner: &'a mut TestRunner,
+) -> impl FnMut() -> T::Value + 'a {
+    move || input.new_tree(runner).unwrap().current()
+}
+
+fn black_box_routine<T, U>(mut f: impl FnMut(T) -> U) -> impl FnMut(T) -> U {
+    move |input| black_box(f(black_box(input)))
 }

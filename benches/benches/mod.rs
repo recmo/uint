@@ -8,6 +8,8 @@ mod mul;
 mod pow;
 mod root;
 
+pub(crate) mod prelude;
+
 pub fn group(c: &mut criterion::Criterion) {
     cmp::group(c);
     add::group(c);
