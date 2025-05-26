@@ -14,6 +14,9 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
+[lib]
+bench = false
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = [
@@ -24,7 +27,7 @@ rustdoc-args = [
 ]
 
 [workspace]
-members = [".", "ruint-macro"]
+members = [".", "ruint-macro", "ruint-bench"]
 resolver = "2"
 
 [workspace.package]
@@ -34,12 +37,6 @@ authors = ["Remco Bloemen <remco@wicked.ventures>"]
 license = "MIT"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"
-
-[[bench]]
-name = "bench_uint"
-harness = false
-path = "benches/bench.rs"
-required-features = ["std"]
 
 [dependencies]
 ruint-macro = { version = "1.2.1", path = "ruint-macro" }
