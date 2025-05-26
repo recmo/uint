@@ -1,0 +1,30 @@
+[package]
+name = "ruint-bench"
+description = "ruint benchmarks"
+version = "0.0.0"
+publish = false
+
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+test = false
+doctest = false
+doc = false
+harness = false
+
+[dev-dependencies]
+ruint = { path = "..", features = ["std", "proptest"] }
+
+criterion = { version = "2.10", package = "codspeed-criterion-compat" }
+rand-09 = { version = "0.9", package = "rand" }
+proptest = "1"
+
+[[bench]]
+name = "bench"
+harness = false
+path = "../benches/bench.rs"
