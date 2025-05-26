@@ -60,11 +60,7 @@ pub fn bench_arbitrary_with<T: Strategy, U>(
     let mut runner = TestRunner::deterministic();
     let mut setup = mk_setup(&input, &mut runner);
     criterion.bench_function(name, move |bencher| {
-        bencher.iter_batched(
-            &mut setup,
-            |input| black_box(f(black_box(input))),
-            BatchSize::SmallInput,
-        );
+        bencher.iter_batched(&mut setup, &mut f, BatchSize::SmallInput);
     });
 }
 

@@ -200,6 +200,3 @@ strip = false
 
 [profile.bench]
 inherits = "profiling"
-
-# [patch.crates-io]
-# codspeed = { git = "https://github.com/danipopes/codspeed-rust", branch = "std-black-box" }
