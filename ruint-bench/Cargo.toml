@@ -21,7 +21,6 @@ harness = false
 ruint = { path = "..", features = ["std", "proptest"] }
 
 criterion = { version = "2.10", package = "codspeed-criterion-compat" }
-rand-09 = { version = "0.9", package = "rand" }
 proptest = "1"
 
 [[bench]]

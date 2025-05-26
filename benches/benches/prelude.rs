@@ -7,7 +7,6 @@ pub use proptest::{
     strategy::{Strategy, ValueTree},
     test_runner::TestRunner,
 };
-pub use rand_09::{self as rand, prelude::*, rng};
 pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
 pub use std::hint::black_box;
 
