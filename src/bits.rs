@@ -306,48 +306,62 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_shl(mut self, rhs: usize) -> (Self, bool) {
+        if rhs == 0 {
+            // if there are no limbs and no bits, return self
+            return (self.masked(), false);
+        }
+
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
         }
 
-        // if there are no leftover bits, shift over just the limbs, no carry
+        // if there are no leftover bits, shift over just the limbs
         if bits == 0 && LIMBS == 4 {
-            // special case for 1,2,3 limb shifts, and another case for limb shifts greater
-            // than 3
+            // if the last limb is not zero, we would have overflowed
+            let overflowed = self.limbs[LIMBS - limbs] != 0;
+
+            // special case for 1,2,3 limb shifts
             if limbs == 1 {
                 // shift by 1 limb
-                self.limbs[0] = self.limbs[1];
-                self.limbs[1] = self.limbs[2];
-                self.limbs[2] = self.limbs[3];
-                self.limbs[3] = 0;
+                self.limbs[3] = self.limbs[2];
+                self.limbs[2] = self.limbs[1];
+                self.limbs[1] = self.limbs[0];
             } else if limbs == 2 {
                 // shift by 2 limbs
-                self.limbs[0] = self.limbs[2];
-                self.limbs[1] = self.limbs[3];
-                self.limbs[2] = 0;
-                self.limbs[3] = 0;
+                self.limbs[3] = self.limbs[1];
+                self.limbs[2] = self.limbs[0];
+                self.limbs[1] = 0;
             } else if limbs == 3 {
                 // shift by 3 limbs
-                self.limbs[0] = self.limbs[3];
-                self.limbs[1] = 0;
+                self.limbs[3] = self.limbs[0];
                 self.limbs[2] = 0;
-                self.limbs[3] = 0;
+                self.limbs[1] = 0;
             }
 
-            return (self.masked(), !self.const_is_zero());
+            self.limbs[0] = 0;
+
+            return (self.masked(), overflowed);
         } else if bits == 0 {
-            // shift by limbs, no carry
-            let mut i = 0;
-            while i < LIMBS - limbs {
-                self.limbs[i] = self.limbs[i + limbs];
-                i += 1;
+            // if there are no leftover bits, shift over just the limbs
+            let mut i = LIMBS - 1;
+
+            // if the last limb is not zero, we would have overflowed
+            let overflowed = self.limbs[LIMBS - limbs] != 0;
+            while i >= limbs {
+                self.limbs[i] = self.limbs[i - limbs];
+                i -= 1;
             }
-            while i < LIMBS {
+
+            // zero out the rest of the limbs
+            while i > 0 {
                 self.limbs[i] = 0;
-                i += 1;
+                i -= 1;
             }
-            return (self.masked(), !self.const_is_zero());
+
+            self.limbs[0] = 0;
+
+            return (self.masked(), overflowed);
         }
 
         let word_bits = 64;
