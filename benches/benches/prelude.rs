@@ -32,6 +32,18 @@ pub fn bench_binop<const BITS: usize, const LIMBS: usize, U>(
     );
 }
 
+pub fn bench_shifting_binop<const BITS: usize, const LIMBS: usize, U>(
+    criterion: &mut criterion::Criterion,
+    name: &str,
+    mut f: impl FnMut(Uint<BITS, LIMBS>, usize) -> U,
+) {
+    bench_arbitrary::<(Uint<BITS, LIMBS>, usize), U>(
+        criterion,
+        &format!("{name}/{BITS}"),
+        move |(a, b)| f(a, b),
+    );
+}
+
 pub fn bench_ternary<const BITS: usize, const LIMBS: usize, U>(
     criterion: &mut criterion::Criterion,
     name: &str,
