@@ -305,10 +305,49 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub const fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
+    pub const fn overflowing_shl(mut self, rhs: usize) -> (Self, bool) {
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
+        }
+
+        // if there are no leftover bits, shift over just the limbs, no carry
+        if bits == 0 && LIMBS == 4 {
+            // special case for 1,2,3 limb shifts, and another case for limb shifts greater
+            // than 3
+            if limbs == 1 {
+                // shift by 1 limb
+                self.limbs[0] = self.limbs[1];
+                self.limbs[1] = self.limbs[2];
+                self.limbs[2] = self.limbs[3];
+                self.limbs[3] = 0;
+            } else if limbs == 2 {
+                // shift by 2 limbs
+                self.limbs[0] = self.limbs[2];
+                self.limbs[1] = self.limbs[3];
+                self.limbs[2] = 0;
+                self.limbs[3] = 0;
+            } else if limbs == 3 {
+                // shift by 3 limbs
+                self.limbs[0] = self.limbs[3];
+                self.limbs[1] = 0;
+                self.limbs[2] = 0;
+                self.limbs[3] = 0;
+            }
+
+            return (self.masked(), !self.const_is_zero());
+        } else if bits == 0 {
+            // shift by limbs, no carry
+            let mut i = 0;
+            while i < LIMBS - limbs {
+                self.limbs[i] = self.limbs[i + limbs];
+                i += 1;
+            }
+            while i < LIMBS {
+                self.limbs[i] = 0;
+                i += 1;
+            }
+            return (self.masked(), !self.const_is_zero());
         }
 
         let word_bits = 64;
