@@ -6,11 +6,12 @@ use std::cell::RefCell;
 pub use criterion::{BatchSize, Criterion};
 pub use proptest::{
     arbitrary::Arbitrary,
+    num::sample_uniform_incl,
     strategy::{Strategy, ValueTree},
     test_runner::TestRunner,
 };
 pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
-pub use std::hint::black_box;
+pub use std::{hint::black_box, ops::RangeInclusive};
 
 pub fn bench_unop<const BITS: usize, const LIMBS: usize, U>(
     criterion: &mut criterion::Criterion,
@@ -32,18 +33,6 @@ pub fn bench_binop<const BITS: usize, const LIMBS: usize, U>(
     );
 }
 
-pub fn bench_shifting_binop<const BITS: usize, const LIMBS: usize, U>(
-    criterion: &mut criterion::Criterion,
-    name: &str,
-    mut f: impl FnMut(Uint<BITS, LIMBS>, usize) -> U,
-) {
-    bench_arbitrary::<(Uint<BITS, LIMBS>, usize), U>(
-        criterion,
-        &format!("{name}/{BITS}"),
-        move |(a, b)| f(a, b),
-    );
-}
-
 pub fn bench_ternary<const BITS: usize, const LIMBS: usize, U>(
     criterion: &mut criterion::Criterion,
     name: &str,
@@ -54,6 +43,55 @@ pub fn bench_ternary<const BITS: usize, const LIMBS: usize, U>(
         &format!("{name}/{BITS}"),
         move |(a, b, c)| f(a, b, c),
     );
+}
+
+pub fn bench_shifting_binop<const BITS: usize, const LIMBS: usize, U>(
+    criterion: &mut criterion::Criterion,
+    name: &str,
+    mut f: impl FnMut(Uint<BITS, LIMBS>, usize) -> U,
+) {
+    bench_arbitrary_shifting::<Uint<BITS, LIMBS>, U>(
+        criterion,
+        &format!("{name}/{BITS}"),
+        0..=BITS,
+        move |(a, b)| f(a, b),
+    );
+}
+
+pub fn bench_arbitrary_shifting<T, U>(
+    criterion: &mut criterion::Criterion,
+    name: &str,
+    range: RangeInclusive<usize>,
+    f: impl FnMut((<T::Strategy as proptest::strategy::Strategy>::Value, usize)) -> U,
+) where
+    T: Arbitrary,
+{
+    bench_arbitrary_with_range(criterion, name, T::arbitrary(), range, f)
+}
+
+pub fn bench_arbitrary_with_range<T, U>(
+    criterion: &mut criterion::Criterion,
+    name: &str,
+    input: T,
+    range: RangeInclusive<usize>,
+    mut f: impl FnMut((T::Value, usize)) -> U,
+) where
+    T: Strategy,
+{
+    let mut runner = TestRunner::deterministic();
+
+    // create strategy that picks a value from the range
+    let (start, end) = range.into_inner();
+    let mut strategy = move || {
+        (
+            input.new_tree(&mut runner).unwrap().current(),
+            sample_uniform_incl(&mut runner, start, end),
+        )
+    };
+
+    criterion.bench_function(name, move |bencher| {
+        bencher.iter_batched(&mut strategy, &mut f, BatchSize::SmallInput);
+    });
 }
 
 pub fn bench_arbitrary<T: Arbitrary, U>(
