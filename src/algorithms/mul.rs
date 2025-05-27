@@ -105,6 +105,7 @@ pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
         2 => addmul_2(lhs, a, b),
         3 => addmul_3(lhs, a, b),
         4 => addmul_4(lhs, a, b),
+        8 => addmul_8(lhs, a, b),
         _ => _ = addmul(lhs, a, b),
     }
 }
@@ -169,6 +170,66 @@ fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     mac(&mut lhs[3], a[2], b[1], carry);
 
     mac(&mut lhs[3], a[3], b[0], 0);
+}
+
+/// Computes `lhs += a * b` for 8 limbs.
+#[inline(always)]
+fn addmul_8(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assume!(lhs.len() == 8);
+    assume!(a.len() == 8);
+    assume!(b.len() == 8);
+
+    // a[0] * b[0..8]
+    let carry = mac(&mut lhs[0], a[0], b[0], 0);
+    let carry = mac(&mut lhs[1], a[0], b[1], carry);
+    let carry = mac(&mut lhs[2], a[0], b[2], carry);
+    let carry = mac(&mut lhs[3], a[0], b[3], carry);
+    let carry = mac(&mut lhs[4], a[0], b[4], carry);
+    let carry = mac(&mut lhs[5], a[0], b[5], carry);
+    let carry = mac(&mut lhs[6], a[0], b[6], carry);
+    mac(&mut lhs[7], a[0], b[7], carry);
+
+    // a[1] * b[0..7]
+    let carry = mac(&mut lhs[1], a[1], b[0], 0);
+    let carry = mac(&mut lhs[2], a[1], b[1], carry);
+    let carry = mac(&mut lhs[3], a[1], b[2], carry);
+    let carry = mac(&mut lhs[4], a[1], b[3], carry);
+    let carry = mac(&mut lhs[5], a[1], b[4], carry);
+    let carry = mac(&mut lhs[6], a[1], b[5], carry);
+    mac(&mut lhs[7], a[1], b[6], carry);
+
+    // a[2] * b[0..6]
+    let carry = mac(&mut lhs[2], a[2], b[0], 0);
+    let carry = mac(&mut lhs[3], a[2], b[1], carry);
+    let carry = mac(&mut lhs[4], a[2], b[2], carry);
+    let carry = mac(&mut lhs[5], a[2], b[3], carry);
+    let carry = mac(&mut lhs[6], a[2], b[4], carry);
+    mac(&mut lhs[7], a[2], b[5], carry);
+
+    // a[3] * b[0..5]
+    let carry = mac(&mut lhs[3], a[3], b[0], 0);
+    let carry = mac(&mut lhs[4], a[3], b[1], carry);
+    let carry = mac(&mut lhs[5], a[3], b[2], carry);
+    let carry = mac(&mut lhs[6], a[3], b[3], carry);
+    mac(&mut lhs[7], a[3], b[4], carry);
+
+    // a[4] * b[0..4]
+    let carry = mac(&mut lhs[4], a[4], b[0], 0);
+    let carry = mac(&mut lhs[5], a[4], b[1], carry);
+    let carry = mac(&mut lhs[6], a[4], b[2], carry);
+    mac(&mut lhs[7], a[4], b[3], carry);
+
+    // a[5] * b[0..3]
+    let carry = mac(&mut lhs[5], a[5], b[0], 0);
+    let carry = mac(&mut lhs[6], a[5], b[1], carry);
+    mac(&mut lhs[7], a[5], b[2], carry);
+
+    // a[6] * b[0..2]
+    let carry = mac(&mut lhs[6], a[6], b[0], 0);
+    mac(&mut lhs[7], a[6], b[1], carry);
+
+    // a[7] * b[0]
+    mac(&mut lhs[7], a[7], b[0], 0);
 }
 
 #[inline(always)]
