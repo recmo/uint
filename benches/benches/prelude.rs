@@ -61,7 +61,7 @@ pub fn bench_arbitrary_with<T: Strategy, U>(
     let runner = std::cell::RefCell::new(TestRunner::deterministic());
     let mut setup = mk_setup(&input, &runner);
     let setup2 = mk_setup(&input, &runner);
-    let mut f = manual_batch(setup2, f);
+    let mut f = manual_batch(setup2, f, name);
     criterion.bench_function(name, move |bencher| {
         bencher.iter_batched(&mut setup, &mut f, BatchSize::SmallInput);
     });
@@ -79,8 +79,11 @@ fn mk_setup<'a, T: Strategy>(
 /// measured accurately.
 #[cfg(codspeed)]
 #[inline]
-#[allow(unused_mut)]
-fn manual_batch<T, U>(mut setup: impl FnMut() -> T, mut f: impl FnMut(T) -> U) -> impl FnMut(T) {
+fn manual_batch<T, U>(
+    mut setup: impl FnMut() -> T,
+    mut f: impl FnMut(T) -> U,
+    name: &str,
+) -> impl FnMut(T) {
     assert!(
         !std::mem::needs_drop::<T>(),
         "cannot batch inputs that need to be dropped: {}",
@@ -92,8 +95,8 @@ fn manual_batch<T, U>(mut setup: impl FnMut() -> T, mut f: impl FnMut(T) -> U) -
         std::any::type_name::<U>(),
     );
 
-    let batch_size: usize = black_box(1000);
-    let inputs = (0..batch_size).map(|_| setup()).collect::<Vec<_>>();
+    let batch_size = black_box(get_batch_size(name));
+    let inputs = black_box((0..batch_size).map(|_| setup()).collect::<Box<[_]>>());
     let mut out = black_box(Box::new_uninit_slice(batch_size));
     move |_| {
         for i in 0..batch_size {
@@ -105,6 +108,26 @@ fn manual_batch<T, U>(mut setup: impl FnMut() -> T, mut f: impl FnMut(T) -> U) -
 }
 
 #[cfg(not(codspeed))]
-fn manual_batch<T, U>(_setup: impl FnMut() -> T, f: impl FnMut(T) -> U) -> impl FnMut(T) -> U {
+fn manual_batch<T, U>(
+    _setup: impl FnMut() -> T,
+    f: impl FnMut(T) -> U,
+    _name: &str,
+) -> impl FnMut(T) -> U {
     f
+}
+
+#[allow(dead_code)]
+fn get_batch_size(name: &str) -> usize {
+    let size = name.split('/').flat_map(str::parse::<usize>).max();
+    if name.contains("pow") {
+        if size >= Some(4096) {
+            1
+        } else {
+            100
+        }
+    } else if size >= Some(4096) {
+        100
+    } else {
+        10000
+    }
 }
