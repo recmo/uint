@@ -317,37 +317,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // if there are no leftover bits, shift over just the limbs
-        if bits == 0 && LIMBS == 4 {
+        if bits == 0 {
             // if the last limb is not zero, we would have overflowed
             let overflowed = self.limbs[LIMBS - limbs] != 0;
 
-            // special case for 1,2,3 limb shifts
-            if limbs == 1 {
-                // shift by 1 limb
-                self.limbs[3] = self.limbs[2];
-                self.limbs[2] = self.limbs[1];
-                self.limbs[1] = self.limbs[0];
-            } else if limbs == 2 {
-                // shift by 2 limbs
-                self.limbs[3] = self.limbs[1];
-                self.limbs[2] = self.limbs[0];
-                self.limbs[1] = 0;
-            } else if limbs == 3 {
-                // shift by 3 limbs
-                self.limbs[3] = self.limbs[0];
-                self.limbs[2] = 0;
-                self.limbs[1] = 0;
-            }
-
-            self.limbs[0] = 0;
-
-            return (self.masked(), overflowed);
-        } else if bits == 0 {
-            // if there are no leftover bits, shift over just the limbs
             let mut i = LIMBS - 1;
-
-            // if the last limb is not zero, we would have overflowed
-            let overflowed = self.limbs[LIMBS - limbs] != 0;
             while i >= limbs {
                 self.limbs[i] = self.limbs[i - limbs];
                 i -= 1;
