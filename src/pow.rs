@@ -53,10 +53,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return (self, false);
         }
 
+        let mut result = Self::ONE;
+        if BITS > 1 && self == Self::TWO {
+            return (result << exp, exp >= Self::BITS_SELF);
+        }
+
         // Exponentiation by squaring
         let mut overflow = false;
         let mut base_overflow = false;
-        let mut result = Self::ONE;
         while !exp.is_zero() {
             // Multiply by base
             if exp.bit(0) {
@@ -99,8 +103,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return self;
         }
 
-        // Exponentiation by squaring
         let mut result = Self::ONE;
+        if BITS > 1 && self == Self::TWO {
+            return result << exp;
+        }
+
+        // Exponentiation by squaring
         while !exp.is_zero() {
             // Multiply by base
             if exp.bit(0) {
@@ -193,6 +201,14 @@ mod tests {
                 assert_eq!(U::from(2).pow(U::from(e)), U::from(1) << e);
             });
         });
+    }
+
+    #[test]
+    fn test_pow_edge_case() {
+        uint! {
+            assert_eq!(2U65.checked_pow(64U65).unwrap(), 18446744073709551616U65);
+            assert_eq!(2U65.checked_pow(65U65), None);
+        }
     }
 
     #[test]
