@@ -1,6 +1,8 @@
 #![allow(unused_imports)]
 #![allow(clippy::incompatible_msrv)]
 
+use std::cell::RefCell;
+
 pub use criterion::{BatchSize, Criterion};
 pub use proptest::{
     arbitrary::Arbitrary,
@@ -15,7 +17,7 @@ pub fn bench_unop<const BITS: usize, const LIMBS: usize, U>(
     name: &str,
     f: impl FnMut(Uint<BITS, LIMBS>) -> U,
 ) {
-    bench_arbitrary::<Uint<BITS, LIMBS>, U>(criterion, &format!("{name}/{BITS}"), f);
+    bench_arbitrary::<Uint<BITS, LIMBS>, _>(criterion, &format!("{name}/{BITS}"), f);
 }
 
 pub fn bench_binop<const BITS: usize, const LIMBS: usize, U>(
@@ -23,7 +25,7 @@ pub fn bench_binop<const BITS: usize, const LIMBS: usize, U>(
     name: &str,
     mut f: impl FnMut(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>) -> U,
 ) {
-    bench_arbitrary::<(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>), U>(
+    bench_arbitrary::<(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>), _>(
         criterion,
         &format!("{name}/{BITS}"),
         move |(a, b)| f(a, b),
@@ -35,7 +37,7 @@ pub fn bench_ternary<const BITS: usize, const LIMBS: usize, U>(
     name: &str,
     mut f: impl FnMut(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>, Uint<BITS, LIMBS>) -> U,
 ) {
-    bench_arbitrary::<(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>, Uint<BITS, LIMBS>), U>(
+    bench_arbitrary::<(Uint<BITS, LIMBS>, Uint<BITS, LIMBS>, Uint<BITS, LIMBS>), _>(
         criterion,
         &format!("{name}/{BITS}"),
         move |(a, b, c)| f(a, b, c),
@@ -54,10 +56,12 @@ pub fn bench_arbitrary_with<T: Strategy, U>(
     criterion: &mut criterion::Criterion,
     name: &str,
     input: T,
-    mut f: impl FnMut(T::Value) -> U,
+    f: impl FnMut(T::Value) -> U,
 ) {
-    let mut runner = TestRunner::deterministic();
-    let mut setup = mk_setup(&input, &mut runner);
+    let runner = std::cell::RefCell::new(TestRunner::deterministic());
+    let mut setup = mk_setup(&input, &runner);
+    let setup2 = mk_setup(&input, &runner);
+    let mut f = manual_batch(setup2, f, name);
     criterion.bench_function(name, move |bencher| {
         bencher.iter_batched(&mut setup, &mut f, BatchSize::SmallInput);
     });
@@ -65,7 +69,65 @@ pub fn bench_arbitrary_with<T: Strategy, U>(
 
 fn mk_setup<'a, T: Strategy>(
     input: &'a T,
-    runner: &'a mut TestRunner,
+    runner: &'a RefCell<TestRunner>,
 ) -> impl FnMut() -> T::Value + 'a {
-    move || input.new_tree(runner).unwrap().current()
+    move || input.new_tree(&mut runner.borrow_mut()).unwrap().current()
+}
+
+/// Codspeed does not batch inputs even if `iter_batched` is used, so we have to
+/// do it ourselves for operations that would otherwise be too fast to be
+/// measured accurately.
+#[cfg(codspeed)]
+#[inline]
+fn manual_batch<T, U>(
+    mut setup: impl FnMut() -> T,
+    mut f: impl FnMut(T) -> U,
+    name: &str,
+) -> impl FnMut(T) {
+    assert!(
+        !std::mem::needs_drop::<T>(),
+        "cannot batch inputs that need to be dropped: {}",
+        std::any::type_name::<T>(),
+    );
+    assert!(
+        !std::mem::needs_drop::<U>(),
+        "cannot batch outputs that need to be dropped: {}",
+        std::any::type_name::<U>(),
+    );
+
+    let batch_size = black_box(get_batch_size(name));
+    let inputs = black_box((0..batch_size).map(|_| setup()).collect::<Box<[_]>>());
+    let mut out = black_box(Box::new_uninit_slice(batch_size));
+    move |_| {
+        for i in 0..batch_size {
+            let input = unsafe { std::ptr::read(inputs.get_unchecked(i)) };
+            let output = unsafe { out.get_unchecked_mut(i) };
+            output.write(f(input));
+        }
+    }
+}
+
+#[cfg(not(codspeed))]
+fn manual_batch<T, U>(
+    _setup: impl FnMut() -> T,
+    f: impl FnMut(T) -> U,
+    _name: &str,
+) -> impl FnMut(T) -> U {
+    f
+}
+
+#[allow(dead_code)]
+fn get_batch_size(name: &str) -> usize {
+    let size = name.split('/').flat_map(str::parse::<usize>).max();
+    if name.contains("pow") {
+        if size >= Some(4096) {
+            1
+        } else {
+            100
+        }
+    } else if size >= Some(4096) {
+        100
+    } else {
+        10000
+    }
 }
