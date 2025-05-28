@@ -64,14 +64,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     }
     debug_assert_ne!(*numerator.last().unwrap(), 0);
 
-    // Compare length first, as we have trimmed zeros.
-    // let is_less = match numerator.len().cmp(&divisor.len()) {
-    //     core::cmp::Ordering::Less => true,
-    //     core::cmp::Ordering::Equal => super::cmp(numerator, divisor).is_lt(),
-    //     core::cmp::Ordering::Greater => false,
-    // };
-    let is_less = numerator.len() < divisor.len();
-    if is_less {
+    if super::cmp(numerator, divisor).is_lt() {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
