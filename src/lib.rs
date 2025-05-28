@@ -192,6 +192,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
+    pub(crate) const BITS_SELF: Self = Self::const_from_u64(BITS as u64);
 
     /// The value zero. This is the only value that exists in all [`Uint`]
     /// types.
@@ -201,6 +202,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Zero if `BITS` is zero.
     pub const ONE: Self = Self::const_from_u64(1);
+
+    pub(crate) const TWO: Self = Self::const_from_u64(2);
 
     /// The smallest value that can be represented by this integer type.
     /// Synonym for [`Self::ZERO`].
