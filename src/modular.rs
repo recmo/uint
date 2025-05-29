@@ -7,21 +7,6 @@ use crate::{algorithms, Uint};
 // See also <https://static1.squarespace.com/static/61f7cacf2d7af938cad5b81c/t/62deb4e0c434f7134c2730ee/1658762465114/modular_multiplication.pdf>
 // FEATURE: Modular wrapper class, like Wrapping.
 
-/// `let $id = &mut [0u64; nlimbs(2 * BITS)][..]`
-macro_rules! let_double_bits {
-    ($id:ident) => {
-        // This array casting is a workaround for `generic_const_exprs` not being
-        // stable.
-        let mut double = [[0u64; 2]; LIMBS];
-        let double_len = crate::nlimbs(2 * BITS);
-        debug_assert!(2 * LIMBS >= double_len);
-        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
-        let $id = unsafe {
-            core::slice::from_raw_parts_mut(double.as_mut_ptr().cast::<u64>(), double_len)
-        };
-    };
-}
-
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ⚠️ Compute $\mod{\mathtt{self}}_{\mathtt{modulus}}$.
     ///
@@ -65,9 +50,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if overflow {
             // Add carry bit to the result in an extra limb.
             let_double_bits!(numerator);
-            let numerator = &mut numerator[..=LIMBS];
-            numerator[..LIMBS].copy_from_slice(result.as_limbs());
             let (limb, bit) = (BITS / 64, BITS % 64);
+            let numerator = &mut numerator[..=limb];
+            numerator[..LIMBS].copy_from_slice(result.as_limbs());
             numerator[limb] |= 1 << bit;
 
             // Compute modulus using `div_rem`.
