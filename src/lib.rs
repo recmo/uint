@@ -231,7 +231,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if Self::SHOULD_MASK {
             // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
             assert!(
-                limbs[Self::LIMBS - 1] <= Self::MASK,
+                limbs[LIMBS - 1] <= Self::MASK,
                 "Value too large for this Uint"
             );
         }
