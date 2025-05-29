@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Check limb overflow in shift ops ([#476])
+
+[#476]: https://github.com/recmo/uint/pull/476
+
 ## [1.15.0] - 2025-05-22
 
 ### Added

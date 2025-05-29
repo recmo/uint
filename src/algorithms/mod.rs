@@ -86,33 +86,33 @@ impl DoubleWord<u64> for u128 {
     }
 }
 
-/// Compare two `u64` slices in reverse order.
+/// Compare two limb slices in reverse order.
+///
+/// Assumes that if the slices are of different length, the longer slice is
+/// always greater than the shorter slice.
 #[inline(always)]
 #[must_use]
-pub fn cmp(left: &[u64], right: &[u64]) -> Ordering {
-    let l = core::cmp::min(left.len(), right.len());
-
-    // Slice to the loop iteration range to enable bound check
-    // elimination in the compiler
-    let lhs = &left[..l];
-    let rhs = &right[..l];
-
-    for i in (0..l).rev() {
-        match i8::from(lhs[i] > rhs[i]) - i8::from(lhs[i] < rhs[i]) {
+pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
+    match a.len().cmp(&b.len()) {
+        Ordering::Equal => {}
+        non_eq => return non_eq,
+    }
+    for i in (0..a.len()).rev() {
+        match i8::from(a[i] > b[i]) - i8::from(a[i] < b[i]) {
             -1 => return Ordering::Less,
             0 => {}
             1 => return Ordering::Greater,
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
 
-        // Equivalent to:
-        // match lhs[i].cmp(&rhs[i]) {
+        // Equivalent to the following code, but on older rustc versions
+        // performs better:
+        // match a[i].cmp(&b[i]) {
         //     Ordering::Equal => {}
         //     non_eq => return non_eq,
         // }
     }
-
-    left.len().cmp(&right.len())
+    Ordering::Equal
 }
 
 // Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
@@ -131,4 +131,20 @@ pub const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
     let (result, borrow_1) = lhs.overflowing_sub(rhs);
     let (result, borrow_2) = result.overflowing_sub(borrow as u64);
     (result, borrow_1 | borrow_2)
+}
+
+#[inline]
+pub(crate) const fn trim_end_zeros(mut x: &[u64]) -> &[u64] {
+    while let [rest @ .., 0] = x {
+        x = rest;
+    }
+    x
+}
+
+#[inline]
+pub(crate) fn trim_end_zeros_mut(mut x: &mut [u64]) -> &mut [u64] {
+    while let [rest @ .., 0] = x {
+        x = rest;
+    }
+    x
 }

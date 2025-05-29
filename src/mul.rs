@@ -63,10 +63,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn wrapping_mul(self, rhs: Self) -> Self {
         let mut result = Self::ZERO;
         algorithms::addmul_n(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
-        if BITS > 0 {
-            result.apply_mask();
-        }
-        result
+        result.masked()
     }
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning

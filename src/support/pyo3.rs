@@ -90,7 +90,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, 
         // On big endian we use an intermediate
         #[cfg(not(target_endian = "little"))]
         let py_result = {
-            let mut raw = vec![0_u8; Self::LIMBS * 8];
+            let mut raw = vec![0_u8; LIMBS * 8];
             let py_result = unsafe {
                 ffi::_PyLong_AsByteArray(
                     ob.as_ptr().cast::<ffi::PyLongObject>(),

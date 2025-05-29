@@ -31,8 +31,9 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
             lhs = rest;
         }
     }
-    while let [rest @ .., 0] = a {
-        a = rest;
+    a = super::trim_end_zeros(a);
+    if a.is_empty() {
+        return false;
     }
 
     // Trim zeros from `b`
@@ -42,13 +43,11 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
             lhs = rest;
         }
     }
-    while let [rest @ .., 0] = b {
-        b = rest;
-    }
-
-    if a.is_empty() || b.is_empty() {
+    b = super::trim_end_zeros(b);
+    if b.is_empty() {
         return false;
     }
+
     if lhs.is_empty() {
         return true;
     }
@@ -94,7 +93,7 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
 ///
 /// # Panics
 ///
-/// Panics if the lengts are not the same.
+/// Panics if the lengths are not the same.
 #[inline(always)]
 pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assert_eq!(lhs.len(), a.len());

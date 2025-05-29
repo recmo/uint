@@ -6,6 +6,7 @@ use std::cell::RefCell;
 pub use criterion::{BatchSize, Criterion};
 pub use proptest::{
     arbitrary::Arbitrary,
+    num::sample_uniform_incl,
     strategy::{Strategy, ValueTree},
     test_runner::TestRunner,
 };
