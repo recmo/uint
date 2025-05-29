@@ -55,7 +55,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         let mut result = Self::ONE;
         if BITS > 1 && self == Self::TWO {
-            return (result << exp, exp >= Self::BITS_SELF);
+            return ({
+                #[inline(never)]
+                #[cold]
+                move || (result << exp, exp >= Self::BITS_SELF)
+            })();
         }
 
         // Exponentiation by squaring
@@ -105,7 +109,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         let mut result = Self::ONE;
         if BITS > 1 && self == Self::TWO {
-            return result << exp;
+            return ({
+                #[inline(never)]
+                #[cold]
+                move || result << exp
+            })();
         }
 
         // Exponentiation by squaring
