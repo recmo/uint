@@ -31,17 +31,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns zero if the modulus is zero.
     #[inline]
     #[must_use]
-    pub fn add_mod(self, rhs: Self, modulus: Self) -> Self {
-        // Reduce inputs
-        let lhs = self.reduce_mod(modulus);
-        let rhs = rhs.reduce_mod(modulus);
-
-        // Compute the sum and conditionally subtract modulus once.
-        let (mut result, overflow) = lhs.overflowing_add(rhs);
-        if overflow || result >= modulus {
-            result -= modulus;
+    pub fn add_mod(mut self, rhs: Self, mut modulus: Self) -> Self {
+        if modulus.is_zero() {
+            return Self::ZERO;
         }
-        result
+
+        // This is not going to truncate with the final cast because the modulus value
+        // is 64 bits.
+        #[allow(clippy::cast_possible_truncation)]
+        if BITS <= 64 {
+            self.limbs[0] =
+                ((self.limbs[0] as u128 + rhs.limbs[0] as u128) % modulus.limbs[0] as u128) as u64;
+            return self;
+        }
+
+        // do overflowing add, then check if we should divrem
+        let (result, overflow) = self.overflowing_add(rhs);
+        if overflow {
+            // Add carry bit to the result in an extra limb.
+            let_double_bits!(numerator);
+            let (limb, bit) = (BITS / 64, BITS % 64);
+            let numerator = &mut numerator[..=limb];
+            numerator[..LIMBS].copy_from_slice(result.as_limbs());
+            numerator[limb] |= 1 << bit;
+
+            // Compute modulus using `div_rem`.
+            // This stores the remainder in the divisor, `modulus`.
+            algorithms::div(numerator, &mut modulus.limbs);
+
+            modulus
+        } else {
+            result.reduce_mod(modulus)
+        }
     }
 
     /// Compute $\mod{\mathtt{self} ⋅ \mathtt{rhs}}_{\mathtt{modulus}}$.
@@ -57,17 +78,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             return Self::ZERO;
         }
 
-        // Allocate at least `nlimbs(2 * BITS)` limbs to store the product. This array
-        // casting is a workaround for `generic_const_exprs` not being stable.
-        let mut product = [[0u64; 2]; LIMBS];
-        let product_len = crate::nlimbs(2 * BITS);
-        debug_assert!(2 * LIMBS >= product_len);
-        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
-        let product = unsafe {
-            core::slice::from_raw_parts_mut(product.as_mut_ptr().cast::<u64>(), product_len)
-        };
-
         // Compute full product.
+        let_double_bits!(product);
         let overflow = algorithms::addmul(product, self.as_limbs(), rhs.as_limbs());
         debug_assert!(!overflow);
 
