@@ -11,7 +11,7 @@ pub use proptest::{
     test_runner::TestRunner,
 };
 pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
-pub use std::{hint::black_box, ops::RangeInclusive};
+pub use std::hint::black_box;
 
 pub fn bench_unop<const BITS: usize, const LIMBS: usize, U>(
     criterion: &mut criterion::Criterion,
