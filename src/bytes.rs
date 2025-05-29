@@ -266,7 +266,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             limbs[limb] += (bytes[c] as u64) << (byte * 8);
             i += 1;
         }
-        if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
+        if LIMBS > 0 && limbs[LIMBS - 1] > Self::MASK {
             return None;
         }
         Some(Self::from_limbs(limbs))
@@ -342,7 +342,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             limbs[limb] += (bytes[i] as u64) << (byte * 8);
             i += 1;
         }
-        if Self::LIMBS > 0 && limbs[Self::LIMBS - 1] > Self::MASK {
+        if LIMBS > 0 && limbs[LIMBS - 1] > Self::MASK {
             return None;
         }
         Some(Self::from_limbs(limbs))

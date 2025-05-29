@@ -135,24 +135,35 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.masked()
     }
 
+    /// Returns the number of significant words (limbs) in the integer.
+    ///
+    /// If this is 0, then `limbs[1..]` are all non-zero.
+    #[inline]
+    pub(crate) const fn count_significant_words(&self) -> usize {
+        let mut i = LIMBS;
+        while i > 0 {
+            i -= 1;
+            if self.limbs[i] != 0 {
+                return i + 1;
+            }
+        }
+        0
+    }
+
     /// Returns the number of leading zeros in the binary representation of
     /// `self`.
     #[inline]
     #[must_use]
     pub const fn leading_zeros(&self) -> usize {
-        let mut i = LIMBS;
-        while i > 0 {
-            i -= 1;
-            if self.limbs[i] != 0 {
-                let n = LIMBS - 1 - i;
-                let skipped = n * 64;
-                let fixed = Self::MASK.leading_zeros() as usize;
-                let top = self.limbs[i].leading_zeros() as usize;
-                return skipped + top - fixed;
-            }
+        let s = self.count_significant_words();
+        if s == 0 {
+            return BITS;
         }
-
-        BITS
+        let n = LIMBS - s;
+        let skipped = n * 64;
+        let fixed = Self::MASK.leading_zeros() as usize;
+        let top = self.limbs[s - 1].leading_zeros() as usize;
+        skipped + top - fixed
     }
 
     /// Returns the number of leading ones in the binary representation of
@@ -315,7 +326,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut r = Self::ZERO;
         let mut carry = 0;
         let mut i = 0;
-        while i < Self::LIMBS - limbs {
+        while i < LIMBS - limbs {
             let x = self.limbs[i];
             r.limbs[i + limbs] = (x << bits) | carry;
             carry = (x >> (word_bits - bits - 1)) >> 1;
