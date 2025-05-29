@@ -93,7 +93,7 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
 ///
 /// # Panics
 ///
-/// Panics if the lengts are not the same.
+/// Panics if the lengths are not the same.
 #[inline(always)]
 pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assert_eq!(lhs.len(), a.len());
