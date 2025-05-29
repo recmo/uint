@@ -1,5 +1,6 @@
 mod add;
 mod algorithms;
+mod bits;
 mod cmp;
 mod div;
 mod log;
@@ -12,6 +13,7 @@ pub(crate) mod prelude;
 
 pub fn group(c: &mut criterion::Criterion) {
     cmp::group(c);
+    bits::group(c);
     add::group(c);
     mul::group(c);
     div::group(c);
