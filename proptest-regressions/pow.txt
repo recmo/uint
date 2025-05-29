@@ -6,3 +6,4 @@
 # everyone who runs the test benefits from these saved cases.
 cc 6094eff41642fcafe6b3f005cb37be0a1325663279a398d9a322b9713e31dfaf # shrinks to b = 2, e = 0
 cc 91ec14a644e5bb122d26bff9b283ec81f2410e2ce2c0650263bef622c45c0b82 # shrinks to e = 1
+cc 59c1c81a16f5f196bcc05ffd83cc3cfa6f16e281bac0e0c058b25b2fc8e87792 # shrinks to e = 0

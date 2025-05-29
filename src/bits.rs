@@ -137,7 +137,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Returns the number of significant words (limbs) in the integer.
     ///
-    /// If this is 0, then `limbs[1..]` are all non-zero.
+    /// If this is 0, then `self` is zero.
     #[inline]
     pub(crate) const fn count_significant_words(&self) -> usize {
         let mut i = LIMBS;

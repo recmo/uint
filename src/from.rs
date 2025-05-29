@@ -328,7 +328,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 .fold(0u64, core::ops::BitOr::bitor)
                 != 0
         } else {
-            self.count_significant_words() == 0
+            self.bit_len() > 64
         }
     }
 }
