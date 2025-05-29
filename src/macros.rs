@@ -75,7 +75,6 @@ macro_rules! impl_bin_op {
     };
 }
 
-#[allow(unused)]
 macro_rules! assume {
     ($e:expr $(,)?) => {
         if !$e {
@@ -90,7 +89,6 @@ macro_rules! assume {
     };
 }
 
-#[allow(unused)]
 macro_rules! debug_unreachable {
     ($($t:tt)*) => {
         if cfg!(debug_assertions) {
@@ -98,6 +96,21 @@ macro_rules! debug_unreachable {
         } else {
             unsafe { core::hint::unreachable_unchecked() };
         }
+    };
+}
+
+/// `let $id = &mut [0u64; nlimbs(2 * BITS)][..]`
+macro_rules! let_double_bits {
+    ($id:ident) => {
+        // This array casting is a workaround for `generic_const_exprs` not being
+        // stable.
+        let mut double = [[0u64; 2]; LIMBS];
+        let double_len = crate::nlimbs(2 * BITS);
+        debug_assert!(2 * LIMBS >= double_len);
+        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
+        let $id = unsafe {
+            core::slice::from_raw_parts_mut(double.as_mut_ptr().cast::<u64>(), double_len)
+        };
     };
 }
 

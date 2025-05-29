@@ -135,24 +135,35 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         self.masked()
     }
 
+    /// Returns the number of significant words (limbs) in the integer.
+    ///
+    /// If this is 0, then `self` is zero.
+    #[inline]
+    pub(crate) const fn count_significant_words(&self) -> usize {
+        let mut i = LIMBS;
+        while i > 0 {
+            i -= 1;
+            if self.limbs[i] != 0 {
+                return i + 1;
+            }
+        }
+        0
+    }
+
     /// Returns the number of leading zeros in the binary representation of
     /// `self`.
     #[inline]
     #[must_use]
     pub const fn leading_zeros(&self) -> usize {
-        let mut i = LIMBS;
-        while i > 0 {
-            i -= 1;
-            if self.limbs[i] != 0 {
-                let n = LIMBS - 1 - i;
-                let skipped = n * 64;
-                let fixed = Self::MASK.leading_zeros() as usize;
-                let top = self.limbs[i].leading_zeros() as usize;
-                return skipped + top - fixed;
-            }
+        let s = self.count_significant_words();
+        if s == 0 {
+            return BITS;
         }
-
-        BITS
+        let n = LIMBS - s;
+        let skipped = n * 64;
+        let fixed = Self::MASK.leading_zeros() as usize;
+        let top = self.limbs[s - 1].leading_zeros() as usize;
+        skipped + top - fixed
     }
 
     /// Returns the number of leading ones in the binary representation of
@@ -315,13 +326,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let mut r = Self::ZERO;
         let mut carry = 0;
         let mut i = 0;
-        while i < Self::LIMBS - limbs {
+        while i < LIMBS - limbs {
             let x = self.limbs[i];
             r.limbs[i + limbs] = (x << bits) | carry;
             carry = (x >> (word_bits - bits - 1)) >> 1;
             i += 1;
         }
         (r.masked(), carry != 0)
+    }
+
+    /// Left shift by `rhs` bits with overflow detection, but with `Self` rhs.
+    ///
+    /// See [`overflowing_shl`](Self::overflowing_shl) for details.
+    #[inline]
+    pub(crate) fn overflowing_shl_big(self, rhs: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (Self::ZERO, false);
+        }
+        let Ok(rhs) = u64::try_from(rhs) else {
+            return (Self::ZERO, true);
+        };
+        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
+        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
+        // the code produces incorrect output.
+        #[allow(clippy::cast_possible_truncation)]
+        self.overflowing_shl(rhs as usize)
     }
 
     /// Left shift by `rhs` bits.
@@ -387,6 +416,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             i += 1;
         }
         (r, carry != 0)
+    }
+
+    /// Right shift by `rhs` bits with underflow detection, but with `Self` rhs.
+    ///
+    /// See [`overflowing_shr`](Self::overflowing_shr) for details.
+    #[inline]
+    pub(crate) fn overflowing_shr_big(self, rhs: Self) -> (Self, bool) {
+        if BITS == 0 {
+            return (Self::ZERO, false);
+        }
+        let Ok(rhs) = u64::try_from(rhs) else {
+            return (Self::ZERO, true);
+        };
+        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
+        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
+        // the code produces incorrect output.
+        #[allow(clippy::cast_possible_truncation)]
+        self.overflowing_shr(rhs as usize)
     }
 
     /// Right shift by `rhs` bits.
@@ -558,15 +605,7 @@ impl<const BITS: usize, const LIMBS: usize> Shl<Self> for Uint<BITS, LIMBS> {
 
     #[inline(always)]
     fn shl(self, rhs: Self) -> Self::Output {
-        // This check shortcuts, and prevents panics on the `[0]` later
-        if BITS == 0 {
-            return self;
-        }
-        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
-        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
-        // the code produces incorrect output.
-        #[allow(clippy::cast_possible_truncation)]
-        self.wrapping_shl(rhs.as_limbs()[0] as usize)
+        self.overflowing_shl_big(rhs).0
     }
 }
 
@@ -584,15 +623,7 @@ impl<const BITS: usize, const LIMBS: usize> Shr<Self> for Uint<BITS, LIMBS> {
 
     #[inline(always)]
     fn shr(self, rhs: Self) -> Self::Output {
-        // This check shortcuts, and prevents panics on the `[0]` later
-        if BITS == 0 {
-            return self;
-        }
-        // Rationale: if BITS is larger than 2**64 - 1, it means we're running
-        // on a 128-bit platform with 2.3 exabytes of memory. In this case,
-        // the code produces incorrect output.
-        #[allow(clippy::cast_possible_truncation)]
-        self.wrapping_shr(rhs.as_limbs()[0] as usize)
+        self.overflowing_shr_big(rhs).0
     }
 }
 
@@ -837,6 +868,22 @@ mod tests {
                 assert_eq!(left, right);
             });
         });
+    }
+
+    #[test]
+    fn test_shift_very_big_rhs() {
+        type U = Uint<128, 2>;
+
+        for rhs in [
+            U::from(u64::MAX),
+            U::from(u128::MAX),
+            U::from_limbs([0, 1]),
+            U::from_limbs([1, 1]),
+            U::from_limbs([1, u64::MAX]),
+        ] {
+            assert_eq!(U::ONE << rhs, U::ZERO, "{rhs}");
+            assert_eq!(U::ONE >> rhs, U::ZERO, "{rhs}");
+        }
     }
 
     #[test]

@@ -316,6 +316,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ) -> Option<Self> {
         Self::checked_from_limbs_slice(value.as_limbs())
     }
+
+    /// Returns `true` if `self` is larger than 64 bits.
+    #[inline]
+    fn gt_u64_max(&self) -> bool {
+        if BITS <= 512 {
+            // Use branchless `bitor` chain for smaller integers.
+            self.as_limbs()[1..]
+                .iter()
+                .copied()
+                .fold(0u64, core::ops::BitOr::bitor)
+                != 0
+        } else {
+            self.bit_len() > 64
+        }
+    }
 }
 
 /// ⚠️ Workaround for [Rust issue #50133](https://github.com/rust-lang/rust/issues/50133).
@@ -395,18 +410,15 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
 
     #[inline]
     fn try_from(value: u64) -> Result<Self, Self::Error> {
-        if LIMBS <= 1 {
-            if value > Self::MASK {
-                // Construct wrapped value
-                let mut limbs = [0; LIMBS];
-                if LIMBS == 1 {
-                    limbs[0] = value & Self::MASK;
-                }
-                return Err(ToUintError::ValueTooLarge(BITS, Self::from_limbs(limbs)));
+        match LIMBS {
+            0 | 1 if value > Self::MASK => {
+                return Err(ToUintError::ValueTooLarge(
+                    BITS,
+                    Self::from_limbs([value & Self::MASK; LIMBS]),
+                ))
             }
-            if LIMBS == 0 {
-                return Ok(Self::ZERO);
-            }
+            0 => return Ok(Self::ZERO),
+            _ => {}
         }
         let mut limbs = [0; LIMBS];
         limbs[0] = value;
@@ -425,15 +437,15 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u128> for Uint<BITS, LIMBS> 
         if value <= u64::MAX as u128 {
             return Self::try_from(value as u64);
         }
-        if Self::LIMBS < 2 {
+        if LIMBS < 2 {
             return Self::try_from(value as u64)
                 .and_then(|n| Err(ToUintError::ValueTooLarge(BITS, n)));
         }
         let mut limbs = [0; LIMBS];
         limbs[0] = value as u64;
         limbs[1] = (value >> 64) as u64;
-        if Self::LIMBS == 2 && limbs[1] > Self::MASK {
-            limbs[1] %= Self::MASK;
+        if LIMBS == 2 && limbs[1] > Self::MASK {
+            limbs[1] &= Self::MASK;
             Err(ToUintError::ValueTooLarge(BITS, Self::from_limbs(limbs)))
         } else {
             Ok(Self::from_limbs(limbs))
@@ -599,10 +611,10 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool
         if BITS == 0 {
             return Ok(false);
         }
-        if value.bit_len() > 1 {
+        if value.gt_u64_max() || value.limbs[0] > 1 {
             return Err(Self::Error::Overflow(BITS, value.bit(0), true));
         }
-        Ok(value.as_limbs()[0] != 0)
+        Ok(value.limbs[0] != 0)
     }
 }
 
@@ -616,19 +628,17 @@ macro_rules! to_int {
             #[inline]
             #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
             fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-                const SIGNED: bool = <$int>::MIN != 0;
-                const CAPACITY: usize = if SIGNED { <$int>::BITS - 1 } else { <$int>::BITS } as usize;
                 if BITS == 0 {
                     return Ok(0);
                 }
-                if value.bit_len() > CAPACITY {
+                if value.gt_u64_max() || value.limbs[0] > (Self::MAX as u64) {
                     return Err(Self::Error::Overflow(
                         BITS,
                         value.limbs[0] as Self,
                         Self::MAX,
                     ));
                 }
-                Ok(value.as_limbs()[0] as Self)
+                Ok(value.limbs[0] as Self)
             }
         }
     )*};
@@ -745,6 +755,45 @@ mod test {
             assert_eq!(Uint::<BITS, LIMBS>::try_from(0_u64), Ok(Uint::ZERO));
             assert_eq!(Uint::<BITS, LIMBS>::try_from(1_u64).unwrap().as_limbs()[0], 1);
         });
+    }
+
+    #[test]
+    fn test_u64_max() {
+        assert_eq!(
+            Uint::<64, 1>::try_from(u64::MAX),
+            Ok(Uint::from_limbs([u64::MAX]))
+        );
+        assert_eq!(
+            Uint::<64, 1>::try_from(u64::MAX as u128),
+            Ok(Uint::from_limbs([u64::MAX]))
+        );
+        assert_eq!(
+            Uint::<64, 1>::try_from(u64::MAX as u128 + 1),
+            Err(ToUintError::ValueTooLarge(64, Uint::ZERO))
+        );
+
+        assert_eq!(
+            Uint::<128, 2>::try_from(u64::MAX),
+            Ok(Uint::from_limbs([u64::MAX, 0]))
+        );
+        assert_eq!(
+            Uint::<128, 2>::try_from(u64::MAX as u128),
+            Ok(Uint::from_limbs([u64::MAX, 0]))
+        );
+        assert_eq!(
+            Uint::<128, 2>::try_from(u64::MAX as u128 + 1),
+            Ok(Uint::from_limbs([0, 1]))
+        );
+    }
+
+    #[test]
+    fn test_u65() {
+        let x = uint!(18446744073711518810_U65);
+        assert_eq!(x.bit_len(), 65);
+        assert_eq!(
+            u64::try_from(x),
+            Err(FromUintError::Overflow(65, 1967194, u64::MAX))
+        );
     }
 
     #[test]
