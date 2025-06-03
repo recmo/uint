@@ -190,6 +190,88 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         debug_assert!(result < modulus);
         result
     }
+
+    /// Compute $\mod{\mathtt{base}^{\mathtt{exp}}}_{\mathtt{modulus}}$ using Montgomery multiplication.
+    ///
+    /// This is significantly faster than [`pow_mod`](Self::pow_mod) for large exponents.
+    /// Uses the Montgomery REDC algorithm to perform efficient modular arithmetic.
+    ///
+    /// # Algorithm
+    ///
+    /// This function uses the square-and-multiply algorithm with Montgomery reduction.
+    /// It requires precomputing the Montgomery parameter `inv` and converting the base
+    /// to Montgomery form.
+    ///
+    /// # Requirements
+    ///
+    /// - `modulus` must be odd
+    /// - `inv` must equal $\mod{\frac{-1}{\mathtt{modulus}}}{2^{64}}$
+    ///
+    /// # Returns
+    ///
+    /// Returns zero if the modulus is zero or even.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use ruint::{uint, Uint, aliases::*};
+    /// # uint!{
+    /// let base = 5_U256;
+    /// let exp = 117_U256;
+    /// let modulus = 119_U256;
+    /// 
+    /// // Compute inv parameter
+    /// let inv = U64::wrapping_from(modulus).inv_ring().unwrap().wrapping_neg().to();
+    /// 
+    /// // Compute modular exponentiation
+    /// let result = base.pow_mod_redc(exp, modulus, inv);
+    /// assert_eq!(result, base.pow_mod(exp, modulus));
+    /// # }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn pow_mod_redc(self, exp: Self, modulus: Self, inv: u64) -> Self {
+        if BITS == 0 || modulus <= Self::ONE || modulus.limbs[0] & 1 == 0 {
+            return Self::ZERO;
+        }
+
+        // Handle special cases
+        if exp == Self::ZERO {
+            return Self::ONE;
+        }
+        if self == Self::ZERO {
+            return Self::ZERO;
+        }
+
+        // Convert base to Montgomery form by computing base * R mod modulus
+        // where R = 2^(64 * LIMBS)
+        let base_reduced = self % modulus;
+        let r_mod = Self::from(2).pow_mod(Self::from(64 * LIMBS), modulus);
+        let base_mont = base_reduced.mul_mod(r_mod, modulus);
+
+        // Montgomery representation of 1 is R mod modulus
+        let one_mont = r_mod;
+
+        // Exponentiation by squaring
+        let mut result = one_mont;
+        let mut base = base_mont;
+        let mut exp = exp;
+
+        while exp > Self::ZERO {
+            // Multiply by base if bit is set
+            if exp.limbs[0] & 1 == 1 {
+                result = result.mul_redc(base, modulus, inv);
+            }
+
+            // Square base
+            base = base.square_redc(modulus, inv);
+            exp >>= 1;
+        }
+
+        // Convert back from Montgomery form
+        // result_mont * 1 * R^(-1) = result
+        result.mul_redc(Self::ONE, modulus, inv)
+    }
 }
 
 #[cfg(test)]
@@ -342,5 +424,98 @@ mod tests {
                 }
             });
         });
+    }
+
+    #[test]
+    fn test_pow_mod_redc() {
+        const_for!(BITS in NON_ZERO if BITS >= 16 {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            
+            // Reduce number of test cases for large bit sizes
+            let config = if LIMBS > 8 {
+                Config { cases: 10, ..Default::default() }
+            } else {
+                Config::default()
+            };
+            
+            proptest!(config, |(base: U, exp: U, m: U)| {
+                prop_assume!(m >= U::from(2));
+                prop_assume!(m.limbs[0] & 1 == 1); // modulus must be odd
+                
+                if let Some(inv) = U64::from(m.as_limbs()[0]).inv_ring() {
+                    let inv = (-inv).as_limbs()[0];
+                    
+                    let expected = base.pow_mod(exp, m);
+                    let result = base.pow_mod_redc(exp, m, inv);
+                    
+                    assert_eq!(result, expected);
+                }
+            });
+        });
+    }
+
+    #[test]
+    fn test_pow_mod_redc_edge_cases() {
+        const_for!(BITS in NON_ZERO if BITS >= 64 {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            
+            // Test with small values
+            let m = U::from(7);
+            let inv = U64::from(m.as_limbs()[0]).inv_ring().unwrap();
+            let inv = (-inv).as_limbs()[0];
+            
+            // Test 0^0 mod m = 1
+            assert_eq!(U::ZERO.pow_mod_redc(U::ZERO, m, inv), U::ONE);
+            
+            // Test n^0 mod m = 1
+            assert_eq!(U::from(5).pow_mod_redc(U::ZERO, m, inv), U::ONE);
+            
+            // Test 0^n mod m = 0 (for n > 0)
+            assert_eq!(U::ZERO.pow_mod_redc(U::from(5), m, inv), U::ZERO);
+            
+            // Test 1^n mod m = 1
+            assert_eq!(U::ONE.pow_mod_redc(U::from(100), m, inv), U::ONE);
+            
+            // Test with even modulus (should return 0)
+            assert_eq!(U::from(5).pow_mod_redc(U::from(3), U::from(8), 0), U::ZERO);
+        });
+    }
+
+    #[test]
+    fn test_pow_mod_redc_known_values() {
+        use crate::aliases::{U128, U256};
+        
+        // Test case 1: 3^5 mod 13 = 9
+        let m = U128::from(13);
+        let inv = U64::from(m.as_limbs()[0]).inv_ring().unwrap();
+        let inv = (-inv).as_limbs()[0];
+        assert_eq!(U128::from(3).pow_mod_redc(U128::from(5), m, inv), U128::from(9));
+        
+        // Test case 2: 5^117 mod 119
+        let m = U256::from(119);
+        let inv = U64::from(m.as_limbs()[0]).inv_ring().unwrap();
+        let inv = (-inv).as_limbs()[0];
+        // First check what pow_mod gives us
+        let expected = U256::from(5).pow_mod(U256::from(117), m);
+        println!("5^117 mod 119 = {}", expected);
+        assert_eq!(U256::from(5).pow_mod_redc(U256::from(117), m, inv), expected);
+        
+        // Test case 3: Large modulus
+        // 2^255 mod (2^255 - 19)
+        let m = U256::from_limbs([
+            0xffff_ffff_ffff_ffed,
+            0xffff_ffff_ffff_ffff,
+            0xffff_ffff_ffff_ffff,
+            0x7fff_ffff_ffff_ffff,
+        ]);
+        let inv = U64::from(m.as_limbs()[0]).inv_ring().unwrap();
+        let inv = (-inv).as_limbs()[0];
+        let base = U256::from(2);
+        let exp = U256::from(255);
+        let expected = base.pow_mod(exp, m);
+        println!("2^255 mod (2^255 - 19) = {}", expected);
+        assert_eq!(base.pow_mod_redc(exp, m, inv), expected);
     }
 }

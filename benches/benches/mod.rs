@@ -7,6 +7,7 @@ mod log;
 mod modular;
 mod mul;
 mod pow;
+mod pow_mod_redc;
 mod root;
 
 pub(crate) mod prelude;
@@ -21,5 +22,6 @@ pub fn group(c: &mut criterion::Criterion) {
     log::group(c);
     root::group(c);
     modular::group(c);
+    pow_mod_redc::group(c);
     algorithms::group(c);
 }
