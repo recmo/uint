@@ -4,11 +4,11 @@ use ruint::aliases::U64;
 pub fn group(criterion: &mut Criterion) {
     const_for!(BITS in BENCH {
         const LIMBS: usize = nlimbs(BITS);
-        
+
         // Compare pow_mod vs pow_mod_redc performance
         let name = format!("modexp_comparison/{BITS}");
         let mut group = criterion.benchmark_group(&name);
-        
+
         // Regular pow_mod
         group.bench_function("pow_mod", |bencher| {
             bencher.iter_batched(
@@ -26,7 +26,7 @@ pub fn group(criterion: &mut Criterion) {
                 BatchSize::SmallInput,
             )
         });
-        
+
         // Optimized pow_mod_redc
         group.bench_function("pow_mod_redc", |bencher| {
             bencher.iter_batched(
@@ -46,7 +46,7 @@ pub fn group(criterion: &mut Criterion) {
                 BatchSize::SmallInput,
             )
         });
-        
+
         group.finish();
     });
 }
