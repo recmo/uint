@@ -364,6 +364,13 @@ pub mod __private {
     pub use ruint_macro;
 }
 
+/// Tag for the UniFFI crate. Must be set in the crate root.
+#[cfg(feature = "uniffi")]
+pub struct UniFfiTag;
+
+#[cfg(feature = "uniffi")]
+pub use support::uniffi;
+
 #[cfg(test)]
 mod test {
     use super::*;
