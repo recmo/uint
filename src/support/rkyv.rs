@@ -3,6 +3,7 @@
 #![cfg(feature = "rkyv")]
 #![cfg_attr(docsrs, doc(cfg(feature = "rkyv")))]
 
+use core::fmt;
 use crate::Uint;
 use rkyv::{
     bytecheck::CheckBytes,
@@ -12,7 +13,7 @@ use rkyv::{
 };
 
 /// An archived [`Uint`]
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 pub struct ArchivedUint<const BITS: usize, const LIMBS: usize>([u64_le; LIMBS]);
 
@@ -78,6 +79,42 @@ impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedUint<BITS, LIMB
 impl<const BITS: usize, const LIMBS: usize> From<ArchivedUint<BITS, LIMBS>> for Uint<BITS, LIMBS> {
     fn from(archived: ArchivedUint<BITS, LIMBS>) -> Self {
         (&archived).into()
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::Display for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::Debug for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::Binary for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Binary::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::Octal for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Octal::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::LowerHex for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> fmt::UpperHex for ArchivedUint<BITS, LIMBS> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&Into::<Uint<BITS, LIMBS>>::into(self), f)
     }
 }
 
