@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support [rkyv](https://github.com/rkyv/rkyv) ([#484])
+
 ### Fixed
 
 - Check limb overflow in shift ops ([#476])
 
 [#476]: https://github.com/recmo/uint/pull/476
+[#484]: https://github.com/recmo/uint/pull/484
 
 ## [1.15.0] - 2025-05-22
 
