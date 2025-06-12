@@ -114,6 +114,34 @@ macro_rules! let_double_bits {
     };
 }
 
+/// Specialize an operation for u64, u128, u256 ([u128; 2])...
+macro_rules! as_primitives {
+    ($uint:expr, { $($arm:ident $t:tt => $e:expr),* $(,)? }) => {
+        $(
+            as_primitives!(@arm $uint; $arm $t => $e);
+        )*
+    };
+
+    (@arm $uint:expr; u64($n:ident) => $e:expr) => {
+        if LIMBS == 1 {
+            let $n = $uint.limbs[0];
+            $e
+        }
+    };
+    (@arm $uint:expr; u128($n:ident) => $e:expr) => {
+        if LIMBS == 2 {
+            let $n = $uint.as_double_words()[0].0;
+            $e
+        }
+    };
+    (@arm $uint:expr; u256($lo:ident, $hi:ident) => $e:expr) => {
+        if LIMBS == 4 {
+            let &[$crate::pu128($lo), $crate::pu128($hi)] = $uint.as_double_words() else { unreachable!() };
+            $e
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     // https://github.com/recmo/uint/issues/359

@@ -155,13 +155,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn leading_zeros(&self) -> usize {
+        let fixed = Self::MASK.leading_zeros() as usize;
+
+        as_primitives!(self, {
+            u64(x) => return x.leading_zeros() as usize - fixed,
+            u128(x) => return x.leading_zeros() as usize - fixed,
+            u256(lo, hi) => return (if hi != 0 {
+                hi.leading_zeros()
+            } else {
+                lo.leading_zeros() + 128
+            }) as usize - fixed,
+        });
+
         let s = self.count_significant_words();
         if s == 0 {
             return BITS;
         }
         let n = LIMBS - s;
         let skipped = n * 64;
-        let fixed = Self::MASK.leading_zeros() as usize;
         let top = self.limbs[s - 1].leading_zeros() as usize;
         skipped + top - fixed
     }
@@ -745,7 +756,10 @@ impl_shift!(u64, i64);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U128, const_for, nlimbs};
+    use crate::{
+        aliases::{U128, U256},
+        const_for, nlimbs,
+    };
     use core::cmp::min;
     use proptest::proptest;
 
@@ -777,6 +791,14 @@ mod tests {
             let uint = U128::from(value);
             assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
         });
+
+        assert_eq!(U256::from_limbs([0, 1, 0, 1]).leading_zeros(), 63);
+        assert_eq!(U256::from_limbs([0, 0, 1, 1]).leading_zeros(), 63);
+        assert_eq!(U256::from_limbs([1, 0, 1, 1]).leading_zeros(), 63);
+        assert_eq!(U256::from_limbs([0, 1, 1, 1]).leading_zeros(), 63);
+        assert_eq!(U256::from_limbs([1, 1, 1, 1]).leading_zeros(), 63);
+
+        assert_eq!(U256::from_limbs([1, 0, 1, 0]).leading_zeros(), 64 + 63);
     }
 
     #[test]

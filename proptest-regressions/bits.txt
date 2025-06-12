@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 4f81456d3f288de0117fa107265e453e73976ff9df4088d20a323f6ce56f4d70 # shrinks to value = 0x00_U2
+cc b3c40cd3e2937f6d986cfe9d9c25773752a748eebbd981bd5a78188bcc5ae429 # shrinks to value = 17870283321406128128, shift = 59
