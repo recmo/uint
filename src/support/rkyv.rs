@@ -3,8 +3,8 @@
 #![cfg(feature = "rkyv")]
 #![cfg_attr(docsrs, doc(cfg(feature = "rkyv")))]
 
-use core::fmt;
 use crate::Uint;
+use core::fmt;
 use rkyv::{
     bytecheck::CheckBytes,
     rancor::{Fallible, Trace},
