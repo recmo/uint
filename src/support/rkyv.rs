@@ -3,7 +3,7 @@
 #![cfg(feature = "rkyv")]
 #![cfg_attr(docsrs, doc(cfg(feature = "rkyv")))]
 
-use crate::Uint;
+use crate::{Bits, Uint};
 use core::fmt;
 use rkyv::{
     bytecheck::CheckBytes,
@@ -16,6 +16,11 @@ use rkyv::{
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 pub struct ArchivedUint<const BITS: usize, const LIMBS: usize>([u64_le; LIMBS]);
+
+/// An archived [`Bits`]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[repr(transparent)]
+pub struct ArchivedBits<const BITS: usize, const LIMBS: usize>(ArchivedUint<BITS, LIMBS>);
 
 unsafe impl<const BITS: usize, const LIMBS: usize, C: Fallible + ?Sized> CheckBytes<C>
     for ArchivedUint<BITS, LIMBS>
@@ -66,6 +71,55 @@ impl<D: Fallible + ?Sized, const BITS: usize, const LIMBS: usize> Deserialize<Ui
     }
 }
 
+unsafe impl<const BITS: usize, const LIMBS: usize, C: Fallible + ?Sized> CheckBytes<C>
+    for ArchivedBits<BITS, LIMBS>
+where
+    <C as Fallible>::Error: Trace,
+{
+    unsafe fn check_bytes(
+        value: *const Self,
+        context: &mut C,
+    ) -> Result<(), <C as Fallible>::Error> {
+        unsafe {
+            <ArchivedUint<BITS, LIMBS>>::check_bytes(value.cast(), context)?;
+        }
+        Ok(())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Archive for Bits<BITS, LIMBS> {
+    type Archived = ArchivedBits<BITS, LIMBS>;
+    type Resolver = [(); LIMBS];
+
+    fn resolve(&self, resolver: Self::Resolver, out: Place<Self::Archived>) {
+        self.as_uint()
+            .resolve(resolver, unsafe { out.cast_unchecked() });
+    }
+}
+
+unsafe impl<const BITS: usize, const LIMBS: usize> Portable for ArchivedBits<BITS, LIMBS> {}
+
+impl<S: Fallible + ?Sized, const BITS: usize, const LIMBS: usize> Serialize<S>
+    for Bits<BITS, LIMBS>
+{
+    fn serialize(&self, serializer: &mut S) -> Result<[(); LIMBS], <S as Fallible>::Error> {
+        self.as_uint().serialize(serializer)
+    }
+}
+
+impl<D: Fallible + ?Sized, const BITS: usize, const LIMBS: usize> Deserialize<Bits<BITS, LIMBS>, D>
+    for Archived<Bits<BITS, LIMBS>>
+{
+    fn deserialize(
+        &self,
+        deserializer: &mut D,
+    ) -> Result<Bits<BITS, LIMBS>, <D as Fallible>::Error> {
+        Ok(Bits::from(
+            Deserialize::<Uint<BITS, LIMBS>, D>::deserialize(&self.0, deserializer)?,
+        ))
+    }
+}
+
 impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedUint<BITS, LIMBS>>
     for Uint<BITS, LIMBS>
 {
@@ -73,6 +127,14 @@ impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedUint<BITS, LIMB
         Self {
             limbs: archived.0.map(u64_le::to_native),
         }
+    }
+}
+
+impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedBits<BITS, LIMBS>>
+    for Bits<BITS, LIMBS>
+{
+    fn from(archived: &'a ArchivedBits<BITS, LIMBS>) -> Self {
+        Bits::from(Into::<Uint<BITS, LIMBS>>::into(archived.0))
     }
 }
 
@@ -135,6 +197,13 @@ mod tests {
                 assert_eq!(n, a.into());
                 let d = rkyv::deserialize::<_, rancor::Error>(a).unwrap();
                 assert_eq!(n, d);
+
+                let b = Bits::from(n);
+                let s = rkyv::to_bytes::<rancor::Error>(&b).unwrap();
+                let a = rkyv::access::<ArchivedBits<BITS, LIMBS>, rancor::Error>(&s).unwrap();
+                assert_eq!(b, a.into());
+                let d = rkyv::deserialize::<_, rancor::Error>(a).unwrap();
+                assert_eq!(b, d);
             });
         });
     }
