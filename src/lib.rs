@@ -325,7 +325,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[inline(always)]
-    fn apply_mask(&mut self) {
+    const fn apply_mask(&mut self) {
         if Self::SHOULD_MASK {
             self.limbs[LIMBS - 1] &= Self::MASK;
         }
@@ -333,9 +333,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline(always)]
     const fn masked(mut self) -> Self {
-        if Self::SHOULD_MASK {
-            self.limbs[LIMBS - 1] &= Self::MASK;
-        }
+        self.apply_mask();
         self
     }
 }

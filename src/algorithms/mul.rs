@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::algorithms::{ops::sbb, DoubleWord};
+use crate::algorithms::{ops::sbb, ConstDoubleWord as DW};
 
 /// ⚠️ Computes `result += a * b` and checks for overflow.
 ///
@@ -23,7 +23,7 @@ use crate::algorithms::{ops::sbb, DoubleWord};
 /// assert_eq!(result, [12]);
 /// ```
 #[inline(always)]
-pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
+pub const fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
     // Trim zeros from `a`
     while let [0, rest @ ..] = a {
         a = rest;
@@ -55,8 +55,10 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
     let (a, b) = if b.len() > a.len() { (b, a) } else { (a, b) };
 
     // Iterate over limbs of `b` and add partial products to `lhs`.
+    let mut i = 0;
     let mut overflow = false;
-    for &b in b {
+    while i < b.len() {
+        let b = b[i];
         if lhs.len() >= a.len() {
             let (target, rest) = lhs.split_at_mut(a.len());
             let carry = addmul_nx1(target, a, b);
@@ -67,24 +69,27 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
             if lhs.is_empty() {
                 break;
             }
-            addmul_nx1(lhs, &a[..lhs.len()], b);
+            addmul_nx1(lhs, a.split_at(lhs.len()).0, b);
         }
-        lhs = &mut lhs[1..];
+        lhs = lhs.split_at_mut(1).1;
+        i += 1;
     }
     overflow
 }
 
 /// Computes `lhs += a` and returns the carry.
 #[inline(always)]
-pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
+pub const fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
     if a == 0 {
         return 0;
     }
-    for lhs in lhs {
-        (*lhs, a) = u128::add(*lhs, a).split();
+    let mut i = 0;
+    while i < lhs.len() {
+        (lhs[i], a) = DW::add(lhs[i], a).split();
         if a == 0 {
             return 0;
         }
+        i += 1;
     }
     a
 }
@@ -95,9 +100,9 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
 ///
 /// Panics if the lengths are not the same.
 #[inline(always)]
-pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assert_eq!(lhs.len(), a.len());
-    assert_eq!(lhs.len(), b.len());
+pub const fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    assert!(lhs.len() == a.len());
+    assert!(lhs.len() == b.len());
     match lhs.len() {
         0 => {}
         1 => addmul_1(lhs, a, b),
@@ -110,7 +115,7 @@ pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 
 /// Computes `lhs += a * b` for 1 limb.
 #[inline(always)]
-fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+const fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assume!(lhs.len() == 1);
     assume!(a.len() == 1);
     assume!(b.len() == 1);
@@ -120,7 +125,7 @@ fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 
 /// Computes `lhs += a * b` for 2 limbs.
 #[inline(always)]
-fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+const fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assume!(lhs.len() == 2);
     assume!(a.len() == 2);
     assume!(b.len() == 2);
@@ -133,7 +138,7 @@ fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 
 /// Computes `lhs += a * b` for 3 limbs.
 #[inline(always)]
-fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+const fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assume!(lhs.len() == 3);
     assume!(a.len() == 3);
     assume!(b.len() == 3);
@@ -150,7 +155,7 @@ fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 
 /// Computes `lhs += a * b` for 4 limbs.
 #[inline(always)]
-fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+const fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     assume!(lhs.len() == 4);
     assume!(a.len() == 4);
     assume!(b.len() == 4);
@@ -171,18 +176,20 @@ fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 }
 
 #[inline(always)]
-fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
-    let prod = u128::muladd2(a, b, c, *lhs);
+const fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
+    let prod = DW::muladd2(a, b, c, *lhs);
     *lhs = prod.low();
     prod.high()
 }
 
 /// Computes `lhs *= a` and returns the carry.
 #[inline(always)]
-pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
+pub const fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     let mut carry = 0;
-    for lhs in lhs {
-        (*lhs, carry) = u128::muladd(*lhs, a, carry).split();
+    let mut i = 0;
+    while i < lhs.len() {
+        (lhs[i], carry) = DW::muladd(lhs[i], a, carry).split();
+        i += 1;
     }
     carry
 }
@@ -198,11 +205,13 @@ pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
 /// }{2^{64⋅N}}} \end{aligned}
 /// $$
 #[inline(always)]
-pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
+pub const fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     assume!(lhs.len() == a.len());
     let mut carry = 0;
-    for i in 0..a.len() {
-        (lhs[i], carry) = u128::muladd2(a[i], b, carry, lhs[i]).split();
+    let mut i = 0;
+    while i < a.len() {
+        (lhs[i], carry) = DW::muladd2(a[i], b, carry, lhs[i]).split();
+        i += 1;
     }
     carry
 }
@@ -219,17 +228,20 @@ pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 /// $$
 // OPT: `carry` and `borrow` can probably be merged into a single var.
 #[inline(always)]
-pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
+pub const fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     assume!(lhs.len() == a.len());
     let mut carry = 0;
     let mut borrow = 0;
-    for i in 0..a.len() {
+    let mut i = 0;
+    while i < a.len() {
         // Compute product limbs
         let limb;
-        (limb, carry) = u128::muladd(a[i], b, carry).split();
+        (limb, carry) = DW::muladd(a[i], b, carry).split();
 
         // Subtract
         (lhs[i], borrow) = sbb(lhs[i], limb, borrow);
+
+        i += 1;
     }
     borrow + carry
 }
