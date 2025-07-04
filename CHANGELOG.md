@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support [rkyv](https://github.com/rkyv/rkyv) ([#483])
+- Added `bigdecimal` support ([#486])
 
 ### Fixed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#476]: https://github.com/recmo/uint/pull/476
 [#483]: https://github.com/recmo/uint/pull/483
+[#486]: https://github.com/recmo/uint/pull/486
 
 ## [1.15.0] - 2025-05-22
 
