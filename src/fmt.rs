@@ -1,5 +1,5 @@
 #![allow(clippy::missing_inline_in_public_items)] // allow format functions
-#![cfg(feature = "alloc")]
+#![cfg(feature = "fmt")]
 
 use crate::Uint;
 use core::{
@@ -51,13 +51,34 @@ mod base {
 use base::Base;
 
 macro_rules! write_digits {
-    ($self:expr, $f:expr; $base:ty, $base_char:literal) => {
+    ($self:expr, $f:expr; $base:ty, $base_char:literal, $be_repr_capacity_factor:literal) => {
         if LIMBS == 0 || $self.is_zero() {
             return $f.pad_integral(true, <$base>::PREFIX, "0");
         }
         // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
         let mut buffer = DisplayBuffer::<BITS>::new();
-        for (i, spigot) in $self.to_base_be(<$base>::MAX).enumerate() {
+        // Use some MaybeUninit to avoid allocating
+        let mut be_buffer =
+            [[const { MaybeUninit::<u64>::uninit() }; LIMBS]; $be_repr_capacity_factor];
+        // Two passes:
+        // - collect
+        let mut num_initialized = 0;
+        for (i, spigot) in $self.to_base_le(<$base>::MAX).enumerate() {
+            let major = i / LIMBS;
+            let minor = i % LIMBS;
+            be_buffer[major][minor].write(spigot);
+            num_initialized += 1;
+        }
+        // - write
+        // Safety: We will cast everything to slice, with length being number of
+        // initialized elements, and walk back
+        let src = unsafe {
+            core::slice::from_raw_parts(
+                (&be_buffer as *const [MaybeUninit<u64>; LIMBS]).cast::<u64>(),
+                num_initialized,
+            )
+        };
+        for (i, spigot) in src.iter().rev().enumerate() {
             write!(
                 buffer,
                 concat!("{:0width$", $base_char, "}"),
@@ -72,7 +93,7 @@ macro_rules! write_digits {
 
 impl<const BITS: usize, const LIMBS: usize> fmt::Display for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Decimal, "");
+        write_digits!(self, f; base::Decimal, "", 2);
     }
 }
 
@@ -84,25 +105,25 @@ impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
 
 impl<const BITS: usize, const LIMBS: usize> fmt::Binary for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Binary, "b");
+        write_digits!(self, f; base::Binary, "b", 2);
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> fmt::Octal for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Octal, "o");
+        write_digits!(self, f; base::Octal, "o", 2);
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> fmt::LowerHex for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Hexadecimal, "x");
+        write_digits!(self, f; base::Hexadecimal, "x", 2);
     }
 }
 
 impl<const BITS: usize, const LIMBS: usize> fmt::UpperHex for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Hexadecimal, "X");
+        write_digits!(self, f; base::Hexadecimal, "X", 2);
     }
 }
 
