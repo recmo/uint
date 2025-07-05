@@ -33,6 +33,26 @@ pub(crate) fn trim_end_vec<T: PartialEq>(vec: &mut Vec<T>, value: &T) {
     vec.truncate(last_idx(vec, value));
 }
 
+/// Returns the highest power of `n` that fits in `u64`.
+#[inline]
+pub(crate) const fn max_pow_u64(n: u64) -> u64 {
+    match n {
+        2 | 8 => 1 << 63,
+        10 => 10_000_000_000_000_000_000,
+        16 => 1 << 60,
+        _ => max_pow_u64_impl(n),
+    }
+}
+
+#[inline]
+const fn max_pow_u64_impl(n: u64) -> u64 {
+    let mut max = n;
+    while let Some(next) = max.checked_mul(n) {
+        max = next;
+    }
+    max
+}
+
 // Branch prediction hints.
 #[cfg(feature = "nightly")]
 pub(crate) use core::intrinsics::{likely, unlikely};
@@ -67,5 +87,18 @@ mod tests {
         assert_eq!(trim_end_vec(vec![0, 1, 0, 0], &0), &[0, 1]);
         assert_eq!(trim_end_vec(vec![0, 1, 0, 0, 0], &0), &[0, 1]);
         assert_eq!(trim_end_vec(vec![0, 1, 0, 1, 0], &0), &[0, 1, 0, 1]);
+    }
+
+    #[test]
+    fn test_max_pow_u64() {
+        for (n, expected) in [
+            (2, 1 << 63),
+            (8, 1 << 63),
+            (10, 10_000_000_000_000_000_000),
+            (16, 1 << 60),
+        ] {
+            assert_eq!(max_pow_u64(n), expected);
+            assert_eq!(max_pow_u64_impl(n), expected);
+        }
     }
 }
