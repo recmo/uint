@@ -1,5 +1,4 @@
 #![allow(clippy::missing_inline_in_public_items)] // allow format functions
-#![cfg(feature = "alloc")]
 
 use crate::Uint;
 use core::{
@@ -9,43 +8,45 @@ use core::{
 
 mod base {
     pub(super) trait Base {
-        /// Highest power of the base that fits in a `u64`.
-        const MAX: u64;
-        /// Number of characters written using `MAX` as the base in
-        /// `to_base_be`.
-        ///
-        /// This is `MAX.log(base)`.
-        const WIDTH: usize;
+        /// The base.
+        const BASE: u64;
         /// The prefix for the base.
         const PREFIX: &'static str;
+
+        /// Highest power of the base that fits in a `u64`.
+        const MAX: u64 = crate::utils::max_pow_u64(Self::BASE);
+        /// Number of characters written using `MAX` as the base in
+        /// `to_base_be`.
+        // TODO(MSRV-1.67): = `Self::MAX.ilog(Self::BASE)`
+        const WIDTH: usize;
     }
 
     pub(super) struct Binary;
     impl Base for Binary {
-        const MAX: u64 = 1 << 63;
-        const WIDTH: usize = 63;
+        const BASE: u64 = 2;
         const PREFIX: &'static str = "0b";
+        const WIDTH: usize = 63;
     }
 
     pub(super) struct Octal;
     impl Base for Octal {
-        const MAX: u64 = 1 << 63;
-        const WIDTH: usize = 21;
+        const BASE: u64 = 8;
         const PREFIX: &'static str = "0o";
+        const WIDTH: usize = 21;
     }
 
     pub(super) struct Decimal;
     impl Base for Decimal {
-        const MAX: u64 = 10_000_000_000_000_000_000;
-        const WIDTH: usize = 19;
+        const BASE: u64 = 10;
         const PREFIX: &'static str = "";
+        const WIDTH: usize = 19;
     }
 
     pub(super) struct Hexadecimal;
     impl Base for Hexadecimal {
-        const MAX: u64 = 1 << 60;
-        const WIDTH: usize = 15;
+        const BASE: u64 = 16;
         const PREFIX: &'static str = "0x";
+        const WIDTH: usize = 15;
     }
 }
 use base::Base;
