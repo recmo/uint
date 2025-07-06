@@ -26,7 +26,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-#![cfg_attr(feature = "nightly", feature(core_intrinsics))]
+#![cfg_attr(feature = "nightly", feature(core_intrinsics, bigint_helper_methods))]
 #![cfg_attr(feature = "nightly", allow(internal_features))]
 #![cfg_attr(
     feature = "generic_const_exprs",
@@ -325,7 +325,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[inline(always)]
-    fn apply_mask(&mut self) {
+    const fn apply_mask(&mut self) {
         if Self::SHOULD_MASK {
             self.limbs[LIMBS - 1] &= Self::MASK;
         }
@@ -333,9 +333,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline(always)]
     const fn masked(mut self) -> Self {
-        if Self::SHOULD_MASK {
-            self.limbs[LIMBS - 1] &= Self::MASK;
-        }
+        self.apply_mask();
         self
     }
 }
