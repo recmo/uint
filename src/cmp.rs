@@ -103,20 +103,32 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if the value is zero.
     ///
     /// Note that this currently might perform worse than
-    /// [`is_zero`](Self::is_zero).
+    /// [`is_zero`](Self::is_zero), so prefer that if possible.
     #[inline]
     #[must_use]
     pub const fn const_is_zero(&self) -> bool {
+        as_primitives!(self; {
+            u64(x) => return x == 0,
+            u128(x) => return x == 0,
+            u256((lo, hi)) => return (lo | hi) == 0,
+        });
+
         self.const_eq(&Self::ZERO)
     }
 
     /// Returns `true` if `self` equals `other`.
     ///
     /// Note that this currently might perform worse than the derived
-    /// `PartialEq` (`==` operator).
+    /// `PartialEq` (`==` operator), so prefer that if possible.
     #[inline]
     #[must_use]
     pub const fn const_eq(&self, other: &Self) -> bool {
+        as_primitives!(self, other; {
+            u64(x, y) => return x == y,
+            u128(x, y) => return x == y,
+            u256((lo, hi), (lo2, hi2)) => return (lo == lo2) & (hi == hi2),
+        });
+
         // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
         let a = self.as_limbs();
         let b = other.as_limbs();
