@@ -48,16 +48,18 @@ macro_rules! cmp_fns {
 }
 
 cmp_fns! {
-    lt, "<"  => |a, b| match a.len().cmp(&b.len()) {
-        Ordering::Equal => lt_thru_sub(a, b),
-        non_eq => non_eq.is_lt(),
-    },
+    // lt, "<"  => |a, b| match a.len().cmp(&b.len()) {
+    //     Ordering::Equal => lt_thru_sub(a, b),
+    //     non_eq => non_eq.is_lt(),
+    // },
+    lt, "<"  => |a, b| cmp(a, b).is_lt(),
     gt, ">"  => |a, b| lt(b, a),
     ge, ">=" => |a, b| !lt(a, b),
     le, "<=" => |a, b| !lt(b, a),
 }
 
 #[inline]
+#[allow(dead_code)]
 fn lt_thru_sub(a: &[u64], b: &[u64]) -> bool {
     assume!(a.len() == b.len());
     let mut borrow = false;
