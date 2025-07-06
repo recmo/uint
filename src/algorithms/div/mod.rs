@@ -65,7 +65,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     }
     debug_assert_ne!(*numerator.last().unwrap(), 0);
 
-    if super::cmp(numerator, divisor).is_lt() {
+    if super::lt(numerator, divisor) {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);

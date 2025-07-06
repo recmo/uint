@@ -157,10 +157,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const fn leading_zeros(&self) -> usize {
         let fixed = Self::MASK.leading_zeros() as usize;
 
-        as_primitives!(self, {
+        as_primitives!(self; {
             u64(x) => return x.leading_zeros() as usize - fixed,
             u128(x) => return x.leading_zeros() as usize - fixed,
-            u256(lo, hi) => return (if hi != 0 {
+            u256((lo, hi)) => return (if hi != 0 {
                 hi.leading_zeros()
             } else {
                 lo.leading_zeros() + 128

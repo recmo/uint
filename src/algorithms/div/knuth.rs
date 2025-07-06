@@ -194,8 +194,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::{addmul, cmp, sbb_n};
-    use core::cmp::Ordering;
+    use crate::algorithms::{addmul, lt, sbb_n};
     use proptest::{
         collection, num, proptest,
         strategy::{Just, Strategy},
@@ -317,7 +316,7 @@ mod tests {
             let d = divisor.clone();
             let remainder =
                 collection::vec(num::u64::ANY, divisor.len()).prop_map(move |mut vec| {
-                    if cmp(&vec, &d) != Ordering::Less {
+                    if !lt(&vec, &d) {
                         let carry = sbb_n(&mut vec, &d, 0);
                         assert_eq!(carry, 0);
                     }
