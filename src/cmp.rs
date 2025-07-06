@@ -1,4 +1,4 @@
-use crate::Uint;
+use crate::{algorithms, Uint};
 use core::cmp::Ordering;
 
 impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
@@ -6,12 +6,37 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
+
+    #[inline]
+    fn lt(&self, other: &Self) -> bool {
+        as_primitives!(self, other; {
+            u64(x, y) => return x < y,
+            u128(x, y) => return x < y,
+        });
+
+        algorithms::lt(self.as_limbs(), other.as_limbs())
+    }
+
+    #[inline]
+    fn gt(&self, other: &Self) -> bool {
+        other.lt(self)
+    }
+
+    #[inline]
+    fn ge(&self, other: &Self) -> bool {
+        !self.lt(other)
+    }
+
+    #[inline]
+    fn le(&self, other: &Self) -> bool {
+        !other.lt(self)
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
-        crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
+        algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }
 
@@ -96,18 +121,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let a = self.as_limbs();
         let b = other.as_limbs();
         let mut i = 0;
-        let mut r = true;
+        let mut r = 0;
         while i < LIMBS {
-            r &= a[i] == b[i];
+            r |= a[i] ^ b[i];
             i += 1;
         }
-        r
+        r == 0
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::Uint;
+    use proptest::prop_assert_eq;
 
     #[test]
     fn test_is_zero() {
@@ -119,5 +145,29 @@ mod tests {
         assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+    }
+
+    proptest::proptest! {
+        #[test]
+        fn test_cmp_u64(a: u64, b: u64) {
+            let x = Uint::<64, 1>::from(a);
+            let y = Uint::<64, 1>::from(b);
+            prop_assert_eq!(x.cmp(&y), a.cmp(&b));
+            prop_assert_eq!(x.lt(&y), a < b);
+            prop_assert_eq!(x.gt(&y), a > b);
+            prop_assert_eq!(x.ge(&y), a >= b);
+            prop_assert_eq!(x.le(&y), a <= b);
+        }
+
+        #[test]
+        fn test_cmp_u128(a: u128, b: u128) {
+            let x = Uint::<128, 2>::from(a);
+            let y = Uint::<128, 2>::from(b);
+            prop_assert_eq!(x.cmp(&y), a.cmp(&b));
+            prop_assert_eq!(x.lt(&y), a < b);
+            prop_assert_eq!(x.gt(&y), a > b);
+            prop_assert_eq!(x.ge(&y), a >= b);
+            prop_assert_eq!(x.le(&y), a <= b);
+        }
     }
 }
