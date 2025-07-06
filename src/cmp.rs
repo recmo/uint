@@ -1,36 +1,29 @@
 use crate::{algorithms, Uint};
 use core::cmp::Ordering;
 
+macro_rules! cmp_fns {
+    ($($name:ident $op:tt),*) => {
+        $(
+            #[inline]
+            fn $name(&self, other: &Self) -> bool {
+                as_primitives!(self, other; {
+                    u64(x, y) => return x $op y,
+                    u128(x, y) => return x $op y,
+                });
+
+                algorithms::$name(self.as_limbs(), other.as_limbs())
+            }
+        )*
+    };
+}
+
 impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 
-    #[inline]
-    fn lt(&self, other: &Self) -> bool {
-        as_primitives!(self, other; {
-            u64(x, y) => return x < y,
-            u128(x, y) => return x < y,
-        });
-
-        algorithms::lt(self.as_limbs(), other.as_limbs())
-    }
-
-    #[inline]
-    fn gt(&self, other: &Self) -> bool {
-        other.lt(self)
-    }
-
-    #[inline]
-    fn ge(&self, other: &Self) -> bool {
-        !self.lt(other)
-    }
-
-    #[inline]
-    fn le(&self, other: &Self) -> bool {
-        !other.lt(self)
-    }
+    cmp_fns!(lt <, gt >, ge >=, le <=);
 }
 
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
