@@ -101,85 +101,19 @@ pub const fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
 /// Panics if the lengths are not the same.
 #[inline(always)]
 pub const fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assert!(lhs.len() == a.len());
-    assert!(lhs.len() == b.len());
-    match lhs.len() {
-        0 => {}
-        1 => addmul_1(lhs, a, b),
-        2 => addmul_2(lhs, a, b),
-        3 => addmul_3(lhs, a, b),
-        4 => addmul_4(lhs, a, b),
-        _ => _ = addmul(lhs, a, b),
+    let n = lhs.len();
+    assert!(a.len() == n && b.len() == n);
+
+    let mut i = 0;
+    while i < n {
+        let mut carry = 0;
+        let mut j = 0;
+        while j < (n - i) {
+            (lhs[i + j], carry) = DW::carrying_mul_add(a[j], b[i], carry, lhs[i + j]).split();
+            j += 1;
+        }
+        i += 1;
     }
-}
-
-/// Computes `lhs += a * b` for 1 limb.
-#[inline(always)]
-const fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 1);
-    assume!(a.len() == 1);
-    assume!(b.len() == 1);
-
-    mac(&mut lhs[0], a[0], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 2 limbs.
-#[inline(always)]
-const fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 2);
-    assume!(a.len() == 2);
-    assume!(b.len() == 2);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    mac(&mut lhs[1], a[0], b[1], carry);
-
-    mac(&mut lhs[1], a[1], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 3 limbs.
-#[inline(always)]
-const fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 3);
-    assume!(a.len() == 3);
-    assume!(b.len() == 3);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    let carry = mac(&mut lhs[1], a[0], b[1], carry);
-    mac(&mut lhs[2], a[0], b[2], carry);
-
-    let carry = mac(&mut lhs[1], a[1], b[0], 0);
-    mac(&mut lhs[2], a[1], b[1], carry);
-
-    mac(&mut lhs[2], a[2], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 4 limbs.
-#[inline(always)]
-const fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 4);
-    assume!(a.len() == 4);
-    assume!(b.len() == 4);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    let carry = mac(&mut lhs[1], a[0], b[1], carry);
-    let carry = mac(&mut lhs[2], a[0], b[2], carry);
-    mac(&mut lhs[3], a[0], b[3], carry);
-
-    let carry = mac(&mut lhs[1], a[1], b[0], 0);
-    let carry = mac(&mut lhs[2], a[1], b[1], carry);
-    mac(&mut lhs[3], a[1], b[2], carry);
-
-    let carry = mac(&mut lhs[2], a[2], b[0], 0);
-    mac(&mut lhs[3], a[2], b[1], carry);
-
-    mac(&mut lhs[3], a[3], b[0], 0);
-}
-
-#[inline(always)]
-const fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
-    let prod = DW::muladd2(a, b, c, *lhs);
-    *lhs = prod.low();
-    prod.high()
 }
 
 /// Computes `lhs *= a` and returns the carry.
@@ -188,7 +122,7 @@ pub const fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     let mut carry = 0;
     let mut i = 0;
     while i < lhs.len() {
-        (lhs[i], carry) = DW::muladd(lhs[i], a, carry).split();
+        (lhs[i], carry) = DW::carrying_mul(lhs[i], a, carry).split();
         i += 1;
     }
     carry
@@ -210,7 +144,7 @@ pub const fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     let mut carry = 0;
     let mut i = 0;
     while i < a.len() {
-        (lhs[i], carry) = DW::muladd2(a[i], b, carry, lhs[i]).split();
+        (lhs[i], carry) = DW::carrying_mul_add(a[i], b, carry, lhs[i]).split();
         i += 1;
     }
     carry
@@ -236,7 +170,7 @@ pub const fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     while i < a.len() {
         // Compute product limbs
         let limb;
-        (limb, carry) = DW::muladd(a[i], b, carry).split();
+        (limb, carry) = DW::carrying_mul(a[i], b, carry).split();
 
         // Subtract
         (lhs[i], borrow) = sbb(lhs[i], limb, borrow);

@@ -66,6 +66,12 @@ impl ConstDoubleWord<u128> {
         a as u128
     }
 
+    #[inline(always)]
+    #[allow(dead_code)]
+    const fn join(high: u64, low: u64) -> Self {
+        Self(Self::ext(high) << 64 | Self::ext(low))
+    }
+
     /// Computes `a + b` as a 128-bit value.
     #[inline(always)]
     const fn add(a: u64, b: u64) -> Self {
@@ -75,15 +81,23 @@ impl ConstDoubleWord<u128> {
     /// Computes `a * b + c` as a 128-bit value. Note that this can not
     /// overflow.
     #[inline(always)]
-    const fn muladd(a: u64, b: u64, c: u64) -> Self {
-        Self(Self::ext(a) * Self::ext(b) + Self::ext(c))
+    const fn carrying_mul(a: u64, b: u64, c: u64) -> Self {
+        Self::carrying_mul_add(a, b, c, 0)
     }
 
     /// Computes `a * b + c + d` as a 128-bit value. Note that this can not
     /// overflow.
     #[inline(always)]
-    const fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
-        Self(Self::ext(a) * Self::ext(b) + Self::ext(c) + Self::ext(d))
+    const fn carrying_mul_add(a: u64, b: u64, c: u64, d: u64) -> Self {
+        #[cfg(feature = "nightly")]
+        {
+            let (low, high) = u64::carrying_mul_add(a, b, c, d);
+            Self::join(high, low)
+        }
+        #[cfg(not(feature = "nightly"))]
+        {
+            Self(Self::ext(a) * Self::ext(b) + Self::ext(c) + Self::ext(d))
+        }
     }
 
     #[inline(always)]
