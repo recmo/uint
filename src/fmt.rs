@@ -58,7 +58,7 @@ macro_rules! impl_fmt {
                 // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
                 let mut buffer = DisplayBuffer::<BITS>::new();
                 let mut first = true;
-                for spigot in self.to_base_be(<$base>::MAX) {
+                for spigot in self.to_base_be_2(<$base>::MAX) {
                     write!(
                         buffer,
                         concat!("{:0width$", $base_char, "}"),
@@ -87,16 +87,16 @@ impl_fmt!(fmt::LowerHex; base::Hexadecimal, "x");
 impl_fmt!(fmt::UpperHex; base::Hexadecimal, "X");
 
 struct DisplayBuffer<const SIZE: usize> {
-    buf: [MaybeUninit<u8>; SIZE],
     len: usize,
+    buf: [MaybeUninit<u8>; SIZE],
 }
 
 impl<const SIZE: usize> DisplayBuffer<SIZE> {
     #[inline]
     const fn new() -> Self {
         Self {
-            buf: unsafe { MaybeUninit::uninit().assume_init() },
             len: 0,
+            buf: unsafe { MaybeUninit::uninit().assume_init() },
         }
     }
 
