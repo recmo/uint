@@ -223,9 +223,26 @@ impl<const LIMBS: usize, const BITS: usize> SpigotBig<LIMBS, BITS> {
     fn new(n: Uint<BITS, LIMBS>, base: u64) -> Self {
         assert!(base > 1);
 
-        // Get the largest power of `base` that fits in `n`.
+        Self {
+            n,
+            base,
+            power: Self::highest_power(n, base),
+            done: false,
+        }
+    }
+
+    /// Returns the largest power of `base` that fits in `n`.
+    #[inline]
+    fn highest_power(n: Uint<BITS, LIMBS>, base: u64) -> Uint<BITS, LIMBS> {
         let mut power = Uint::ONE;
-        if let Ok(base) = Uint::try_from(base) {
+        if base.is_power_of_two() {
+            loop {
+                match power.checked_shl(base.trailing_zeros() as _) {
+                    Some(p) if p < n => power = p,
+                    _ => break,
+                }
+            }
+        } else if let Ok(base) = Uint::try_from(base) {
             loop {
                 match power.checked_mul(base) {
                     Some(p) if p < n => power = p,
@@ -233,12 +250,7 @@ impl<const LIMBS: usize, const BITS: usize> SpigotBig<LIMBS, BITS> {
                 }
             }
         }
-        Self {
-            n,
-            base,
-            power,
-            done: false,
-        }
+        power
     }
 }
 
@@ -255,6 +267,11 @@ impl<const LIMBS: usize, const BITS: usize> Iterator for SpigotBig<LIMBS, BITS> 
         if self.power == 1 {
             digit = self.n;
             self.done = true;
+        } else if self.base.is_power_of_two() {
+            digit = self.n >> self.power.trailing_zeros();
+            self.n &= self.power - Uint::ONE;
+
+            self.power >>= self.base.trailing_zeros();
         } else {
             (digit, self.n) = self.n.div_rem(self.power);
             self.power /= Uint::from(self.base);
@@ -384,14 +401,6 @@ mod tests {
     #[test]
     fn test_roundtrip() {
         fn test<const BITS: usize, const LIMBS: usize>(n: Uint<BITS, LIMBS>, base: u64) {
-            let digits = n.to_base_le(base);
-            let n2 = Uint::<BITS, LIMBS>::from_base_le(base, digits).unwrap();
-            assert_eq!(n, n2);
-
-            let digits = n.to_base_be(base);
-            let n2 = Uint::<BITS, LIMBS>::from_base_be(base, digits).unwrap();
-            assert_eq!(n, n2);
-
             assert_eq!(
                 n.to_base_be(base).collect::<Vec<_>>(),
                 n.to_base_le(base)
@@ -400,6 +409,14 @@ mod tests {
                     .rev()
                     .collect::<Vec<_>>(),
             );
+
+            let digits = n.to_base_le(base);
+            let n2 = Uint::<BITS, LIMBS>::from_base_le(base, digits).unwrap();
+            assert_eq!(n, n2);
+
+            let digits = n.to_base_be(base);
+            let n2 = Uint::<BITS, LIMBS>::from_base_be(base, digits).unwrap();
+            assert_eq!(n, n2);
         }
 
         let single = |x: u64| x..=x;
