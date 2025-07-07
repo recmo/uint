@@ -12,22 +12,14 @@ pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
         Ordering::Equal => {}
         non_eq => return non_eq,
     }
-    for i in (0..a.len()).rev() {
-        match i8::from(a[i] > b[i]) - i8::from(a[i] < b[i]) {
-            -1 => return Ordering::Less,
-            0 => {}
-            1 => return Ordering::Greater,
-            _ => unsafe { core::hint::unreachable_unchecked() },
-        }
-
-        // Equivalent to the following code, but on older rustc versions
-        // performs better:
-        // match a[i].cmp(&b[i]) {
-        //     Ordering::Equal => {}
-        //     non_eq => return non_eq,
-        // }
+    let (r, o) = sub(a, b);
+    if r == 0 {
+        Ordering::Equal
+    } else if o {
+        Ordering::Less
+    } else {
+        Ordering::Greater
     }
-    Ordering::Equal
 }
 
 macro_rules! cmp_fns {
@@ -48,19 +40,18 @@ macro_rules! cmp_fns {
 }
 
 cmp_fns! {
-    // lt, "<"  => |a, b| match a.len().cmp(&b.len()) {
-    //     Ordering::Equal => lt_thru_sub(a, b),
-    //     non_eq => non_eq.is_lt(),
-    // },
-    lt, "<"  => |a, b| cmp(a, b).is_lt(),
+    lt, "<"  => |a, b| match a.len().cmp(&b.len()) {
+        Ordering::Equal => sub(a, b).1,
+        non_eq => non_eq.is_lt(),
+    },
     gt, ">"  => |a, b| lt(b, a),
     ge, ">=" => |a, b| !lt(a, b),
     le, "<=" => |a, b| !lt(b, a),
 }
 
+/// `a - b`, returns `((a - b).fold(0, bit_or), overflow)`.
 #[inline]
-#[allow(dead_code)]
-fn lt_thru_sub(a: &[u64], b: &[u64]) -> bool {
+fn sub(a: &[u64], b: &[u64]) -> (u64, bool) {
     assume!(a.len() == b.len());
     let mut borrow = false;
     let mut acc = 0;
@@ -69,8 +60,11 @@ fn lt_thru_sub(a: &[u64], b: &[u64]) -> bool {
         (x, borrow) = borrowing_sub(a[i], b[i], borrow);
         acc |= x;
     }
+    // HACK: This is a hack to avoid the compiler optimizing too much that the
+    // backend doesn't recognize the `borrowing_sub` chain: https://github.com/rust-lang/rust/issues/143517
+    // SAFETY: Writing to a local variable through a reference is perfectly safe.
     unsafe { core::ptr::write_volatile(&mut acc, acc) };
-    borrow
+    (acc, borrow)
 }
 
 #[cfg(test)]
