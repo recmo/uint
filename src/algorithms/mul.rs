@@ -74,6 +74,39 @@ pub fn addmul(mut lhs: &mut [u64], mut a: &[u64], mut b: &[u64]) -> bool {
     overflow
 }
 
+const ADDMUL_N_SMALL_LIMIT: usize = 8;
+
+/// ⚠️ Computes wrapping `result += a * b`, with a fast-path for when all inputs
+/// are the same length and small enough.
+///
+/// **Warning.** This function is not part of the stable API.
+///
+/// See [`addmul`] for more details.
+#[inline(always)]
+pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    let n = lhs.len();
+    if n <= ADDMUL_N_SMALL_LIMIT && a.len() == n && b.len() == n {
+        addmul_n_small(lhs, a, b);
+    } else {
+        let _ = addmul(lhs, a, b);
+    }
+}
+
+#[inline(always)]
+fn addmul_n_small(lhs: &mut [u64], a: &[u64], b: &[u64]) {
+    let n = lhs.len();
+    assume!(n <= ADDMUL_N_SMALL_LIMIT);
+    assume!(a.len() == n);
+    assume!(b.len() == n);
+
+    for j in 0..n {
+        let mut carry = 0;
+        for i in 0..(n - j) {
+            (lhs[j + i], carry) = u128::muladd2(a[i], b[j], carry, lhs[j + i]).split();
+        }
+    }
+}
+
 /// Computes `lhs += a` and returns the carry.
 #[inline(always)]
 pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
@@ -87,94 +120,6 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
         }
     }
     a
-}
-
-/// Computes wrapping `lhs += a * b` when all arguments are the same length.
-///
-/// # Panics
-///
-/// Panics if the lengths are not the same.
-#[inline(always)]
-pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assert_eq!(lhs.len(), a.len());
-    assert_eq!(lhs.len(), b.len());
-    match lhs.len() {
-        0 => {}
-        1 => addmul_1(lhs, a, b),
-        2 => addmul_2(lhs, a, b),
-        3 => addmul_3(lhs, a, b),
-        4 => addmul_4(lhs, a, b),
-        _ => _ = addmul(lhs, a, b),
-    }
-}
-
-/// Computes `lhs += a * b` for 1 limb.
-#[inline(always)]
-fn addmul_1(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 1);
-    assume!(a.len() == 1);
-    assume!(b.len() == 1);
-
-    mac(&mut lhs[0], a[0], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 2 limbs.
-#[inline(always)]
-fn addmul_2(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 2);
-    assume!(a.len() == 2);
-    assume!(b.len() == 2);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    mac(&mut lhs[1], a[0], b[1], carry);
-
-    mac(&mut lhs[1], a[1], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 3 limbs.
-#[inline(always)]
-fn addmul_3(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 3);
-    assume!(a.len() == 3);
-    assume!(b.len() == 3);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    let carry = mac(&mut lhs[1], a[0], b[1], carry);
-    mac(&mut lhs[2], a[0], b[2], carry);
-
-    let carry = mac(&mut lhs[1], a[1], b[0], 0);
-    mac(&mut lhs[2], a[1], b[1], carry);
-
-    mac(&mut lhs[2], a[2], b[0], 0);
-}
-
-/// Computes `lhs += a * b` for 4 limbs.
-#[inline(always)]
-fn addmul_4(lhs: &mut [u64], a: &[u64], b: &[u64]) {
-    assume!(lhs.len() == 4);
-    assume!(a.len() == 4);
-    assume!(b.len() == 4);
-
-    let carry = mac(&mut lhs[0], a[0], b[0], 0);
-    let carry = mac(&mut lhs[1], a[0], b[1], carry);
-    let carry = mac(&mut lhs[2], a[0], b[2], carry);
-    mac(&mut lhs[3], a[0], b[3], carry);
-
-    let carry = mac(&mut lhs[1], a[1], b[0], 0);
-    let carry = mac(&mut lhs[2], a[1], b[1], carry);
-    mac(&mut lhs[3], a[1], b[2], carry);
-
-    let carry = mac(&mut lhs[2], a[2], b[0], 0);
-    mac(&mut lhs[3], a[2], b[1], carry);
-
-    mac(&mut lhs[3], a[3], b[0], 0);
-}
-
-#[inline(always)]
-fn mac(lhs: &mut u64, a: u64, b: u64, c: u64) -> u64 {
-    let prod = u128::muladd2(a, b, c, *lhs);
-    *lhs = prod.low();
-    prod.high()
 }
 
 /// Computes `lhs *= a` and returns the carry.
