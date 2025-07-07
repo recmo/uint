@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `bigdecimal` support ([#486])
+- `PartialEq` and `PartialOrd` implementations for primitive integers; minor breaking change for type inference ([#491])
 
 ### Fixed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#476]: https://github.com/recmo/uint/pull/476
 [#486]: https://github.com/recmo/uint/pull/486
+[#491]: https://github.com/recmo/uint/pull/491
 
 ## [1.15.0] - 2025-05-22
 
