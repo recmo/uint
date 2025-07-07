@@ -51,30 +51,32 @@ mod base {
 }
 use base::Base;
 
-macro_rules! write_digits {
-    ($self:expr, $f:expr; $base:ty, $base_char:literal) => {
-        if LIMBS == 0 || $self.is_zero() {
-            return $f.pad_integral(true, <$base>::PREFIX, "0");
-        }
-        // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
-        let mut buffer = DisplayBuffer::<BITS>::new();
-        for (i, spigot) in $self.to_base_be(<$base>::MAX).enumerate() {
-            write!(
-                buffer,
-                concat!("{:0width$", $base_char, "}"),
-                spigot,
-                width = if i == 0 { 0 } else { <$base>::WIDTH },
-            )
-            .unwrap();
-        }
-        return $f.pad_integral(true, <$base>::PREFIX, buffer.as_str());
-    };
-}
+macro_rules! impl_fmt {
+    ($tr:path; $base:ty, $base_char:literal) => {
+        impl<const BITS: usize, const LIMBS: usize> $tr for Uint<BITS, LIMBS> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if let Ok(single) = u64::try_from(self) {
+                    return <u64 as $tr>::fmt(&single, f);
+                }
+                if let Ok(single) = u128::try_from(self) {
+                    return <u128 as $tr>::fmt(&single, f);
+                }
 
-impl<const BITS: usize, const LIMBS: usize> fmt::Display for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Decimal, "");
-    }
+                // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
+                let mut buffer = DisplayBuffer::<BITS>::new();
+                for (i, spigot) in self.to_base_be(<$base>::MAX).enumerate() {
+                    write!(
+                        buffer,
+                        concat!("{:0width$", $base_char, "}"),
+                        spigot,
+                        width = if i == 0 { 0 } else { <$base>::WIDTH },
+                    )
+                    .unwrap();
+                }
+                f.pad_integral(true, <$base>::PREFIX, buffer.as_str())
+            }
+        }
+    };
 }
 
 impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
@@ -83,29 +85,11 @@ impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS: usize, const LIMBS: usize> fmt::Binary for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Binary, "b");
-    }
-}
-
-impl<const BITS: usize, const LIMBS: usize> fmt::Octal for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Octal, "o");
-    }
-}
-
-impl<const BITS: usize, const LIMBS: usize> fmt::LowerHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Hexadecimal, "x");
-    }
-}
-
-impl<const BITS: usize, const LIMBS: usize> fmt::UpperHex for Uint<BITS, LIMBS> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write_digits!(self, f; base::Hexadecimal, "X");
-    }
-}
+impl_fmt!(fmt::Display; base::Decimal, "");
+impl_fmt!(fmt::Binary; base::Binary, "b");
+impl_fmt!(fmt::Octal; base::Octal, "o");
+impl_fmt!(fmt::LowerHex; base::Hexadecimal, "x");
+impl_fmt!(fmt::UpperHex; base::Hexadecimal, "X");
 
 struct DisplayBuffer<const SIZE: usize> {
     buf: [MaybeUninit<u8>; SIZE],
