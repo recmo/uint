@@ -2,16 +2,17 @@ use crate::{algorithms, Uint};
 use core::cmp::Ordering;
 
 macro_rules! cmp_fns {
-    ($($name:ident $op:tt),*) => {
+    ($($name:ident, $op:tt => |$a:ident, $b:ident| $impl:expr),* $(,)?) => {
         $(
             #[inline]
-            fn $name(&self, other: &Self) -> bool {
-                as_primitives!(self, other; {
+            fn $name(&self, $b: &Self) -> bool {
+                let $a = self;
+                as_primitives!($a, $b; {
                     u64(x, y) => return x $op y,
                     u128(x, y) => return x $op y,
                 });
 
-                algorithms::$name(self.as_limbs(), other.as_limbs())
+                $impl
             }
         )*
     };
@@ -23,13 +24,34 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
         Some(self.cmp(other))
     }
 
-    cmp_fns!(lt <, gt >, ge >=, le <=);
+    cmp_fns! {
+        lt, <  => |a, b| algorithms::lt(a.as_limbs(), b.as_limbs()),
+        gt, >  => |a, b| Self::lt(b, a),
+        ge, >= => |a, b| !Self::lt(a, b),
+        le, <= => |a, b| !Self::lt(b, a),
+    }
 }
 
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
-        algorithms::cmp(self.as_limbs(), rhs.as_limbs())
+        as_primitives!(self, rhs; {
+            u64(x, y) => return x.cmp(&y),
+            u128(x, y) => return x.cmp(&y),
+        });
+
+        // NOTE: This currently uses `overflowing_sub` instead of `algorithms::cmp`
+        // to make use of `r.is_zero()`. The accumulator version in `algorithms::cmp`
+        // includes the hack in `algorithms::cmp::sub` which is slower. This should be
+        // switched in the future once the hack is fixed.
+        let (r, o) = self.overflowing_sub(*rhs);
+        if r.is_zero() {
+            Ordering::Equal
+        } else if o {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
     }
 }
 
@@ -152,27 +174,95 @@ mod tests {
         assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
     }
 
+    fn exhaustive_proptest<T, U>(a: T, b: T) -> Result<(), proptest::prelude::TestCaseError>
+    where
+        T: Copy + Ord + Eq + core::fmt::Debug,
+        U: Copy + Ord + Eq + core::fmt::Debug + TryFrom<T>,
+        U::Error: core::fmt::Debug,
+    {
+        let x = U::try_from(a).unwrap();
+        let y = U::try_from(b).unwrap();
+        exhaustive_proptest_impl(a, b, x, y)
+    }
+
+    fn exhaustive_proptest_impl<T, U>(
+        a: T,
+        b: T,
+        x: U,
+        y: U,
+    ) -> Result<(), proptest::prelude::TestCaseError>
+    where
+        T: Copy + Ord + Eq + core::fmt::Debug,
+        U: Copy + Ord + Eq + core::fmt::Debug + TryFrom<T>,
+        U::Error: core::fmt::Debug,
+    {
+        prop_assert_eq!(x == y, a == b);
+        prop_assert_eq!(y == x, b == a);
+
+        prop_assert_eq!(x != y, a != b);
+        prop_assert_eq!(y != x, b != a);
+
+        prop_assert_eq!(x.cmp(&y), a.cmp(&b));
+        prop_assert_eq!(x < y, a < b);
+        prop_assert_eq!(x > y, a > b);
+        prop_assert_eq!(x >= y, a >= b);
+        prop_assert_eq!(x <= y, a <= b);
+
+        prop_assert_eq!(y.cmp(&x), b.cmp(&a));
+        prop_assert_eq!(y < x, b < a);
+        prop_assert_eq!(y > x, b > a);
+        prop_assert_eq!(y >= x, b >= a);
+        prop_assert_eq!(y <= x, b <= a);
+
+        Ok(())
+    }
+
     proptest::proptest! {
         #[test]
         fn test_cmp_u64(a: u64, b: u64) {
-            let x = Uint::<64, 1>::from(a);
-            let y = Uint::<64, 1>::from(b);
-            prop_assert_eq!(x.cmp(&y), a.cmp(&b));
-            prop_assert_eq!(x.lt(&y), a < b);
-            prop_assert_eq!(x.gt(&y), a > b);
-            prop_assert_eq!(x.ge(&y), a >= b);
-            prop_assert_eq!(x.le(&y), a <= b);
+            exhaustive_proptest::<u64, Uint<64, 1>>(a, b)?;
         }
 
         #[test]
-        fn test_cmp_u128(a: u128, b: u128) {
-            let x = Uint::<128, 2>::from(a);
-            let y = Uint::<128, 2>::from(b);
-            prop_assert_eq!(x.cmp(&y), a.cmp(&b));
-            prop_assert_eq!(x.lt(&y), a < b);
-            prop_assert_eq!(x.gt(&y), a > b);
-            prop_assert_eq!(x.ge(&y), a >= b);
-            prop_assert_eq!(x.le(&y), a <= b);
+        fn test_cmp_u128_half(a: u64, b: u64) {
+            exhaustive_proptest::<u64, Uint<128, 2>>(a, b)?;
         }
+
+        #[test]
+        fn test_cmp_u128_full(a: u128, b: u128) {
+            exhaustive_proptest::<u128, Uint<128, 2>>(a, b)?;
+        }
+
+        #[test]
+        fn test_cmp_u192(a: u128, b: u128) {
+            exhaustive_proptest::<u128, Uint<192, 3>>(a, b)?;
+        }
+
+        #[test]
+        fn test_cmp_u256(a: u128, b: u128) {
+            exhaustive_proptest::<u128, Uint<256, 4>>(a, b)?;
+        }
+    }
+
+    #[test]
+    fn test_cmp_all() {
+        crate::const_for!(BITS in SIZES {
+            const LIMBS: usize = crate::nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            if BITS > 128 {
+                return;
+            }
+            proptest::proptest!(|(x: U, y: U)| {
+                let Ok(a) = u128::try_from(x) else {
+                    proptest::prop_assume!(false);
+                    return Ok(());
+                };
+                let Ok(b) = u128::try_from(y) else {
+                    proptest::prop_assume!(false);
+                    return Ok(());
+                };
+                exhaustive_proptest_impl::<u128, U>(a, b, x, y)?;
+            });
+        });
     }
 }
