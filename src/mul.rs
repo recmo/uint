@@ -39,7 +39,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut result = Self::ZERO;
         let mut overflow = algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
-        if BITS > 0 {
+        if Self::SHOULD_MASK {
             overflow |= result.limbs[LIMBS - 1] > Self::MASK;
             result.apply_mask();
         }
@@ -63,7 +63,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn wrapping_mul(self, rhs: Self) -> Self {
         let mut result = Self::ZERO;
         algorithms::addmul_n(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
-        result.masked()
+        result.apply_mask();
+        result
     }
 
     /// Computes the inverse modulo $2^{\mathtt{BITS}}$ of `self`, returning

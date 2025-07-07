@@ -15,6 +15,58 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     }
 }
 
+/// Implements `PartialEq` and `PartialOrd` for `Uint` and primitive integers.
+///
+/// This intentionally does not use `<$t>::try_from` to avoid unnecessary
+/// checks for non-limb-sized primitive integers.
+macro_rules! impl_for_primitives {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl<const BITS: usize, const LIMBS: usize> PartialEq<$t> for Uint<BITS, LIMBS> {
+                #[inline]
+                #[allow(unused_comparisons)] // Both signed and unsigned integers use this.
+                #[allow(clippy::cast_possible_truncation)] // Unreachable.
+                fn eq(&self, &other: &$t) -> bool {
+                    (other >= 0) & (if <$t>::BITS <= u64::BITS {
+                        u64::try_from(self).ok() == Some(other as u64)
+                    } else {
+                        u128::try_from(self).ok() == Some(other as u128)
+                    })
+                }
+            }
+
+            impl<const BITS: usize, const LIMBS: usize> PartialOrd<$t> for Uint<BITS, LIMBS> {
+                #[inline]
+                #[allow(unused_comparisons)] // Both signed and unsigned integers use this.
+                #[allow(clippy::cast_possible_truncation)] // Unreachable.
+                fn partial_cmp(&self, other: &$t) -> Option<Ordering> {
+                    if *other < 0 {
+                        return Some(Ordering::Greater);
+                    }
+
+                    if <$t>::BITS <= u64::BITS {
+                        let Ok(self_t) = u64::try_from(self) else {
+                            return Some(Ordering::Greater);
+                        };
+                        self_t.partial_cmp(&(*other as u64))
+                    } else {
+                        let Ok(self_t) = u128::try_from(self) else {
+                            return Some(Ordering::Greater);
+                        };
+                        self_t.partial_cmp(&(*other as u128))
+                    }
+                }
+            }
+        )*
+    };
+}
+
+#[rustfmt::skip]
+impl_for_primitives!(
+    u8, u16, u32, u64, u128, usize,
+    i8, i16, i32, i64, i128, isize,
+);
+
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if the value is zero.
     #[inline]
