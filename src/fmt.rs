@@ -1,5 +1,4 @@
 #![allow(clippy::missing_inline_in_public_items)] // allow format functions
-#![cfg(feature = "fmt")]
 
 use crate::Uint;
 use core::{

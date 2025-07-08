@@ -125,7 +125,6 @@ std = [
     "bytes?/std",
     "fastrlp-03?/std",
     "fastrlp-04?/std",
-    "fmt",
     "num-bigint?/std",
     "num-integer?/std",
     "num-traits?/std",
@@ -150,7 +149,6 @@ alloc = [
     "valuable?/alloc",
     "zeroize?/alloc",
 ]
-fmt = []
 
 # nightly-only features
 nightly = []
