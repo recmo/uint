@@ -134,7 +134,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedBits<BITS, LIMB
     for Bits<BITS, LIMBS>
 {
     fn from(archived: &'a ArchivedBits<BITS, LIMBS>) -> Self {
-        Bits::from(Into::<Uint<BITS, LIMBS>>::into(archived.0))
+        Self::from(Into::<Uint<BITS, LIMBS>>::into(archived.0))
     }
 }
 
@@ -194,7 +194,7 @@ mod tests {
             proptest!(|(n: Uint<BITS, LIMBS>)| {
                 let s = rkyv::to_bytes::<rancor::Error>(&n).unwrap();
                 let a = rkyv::access::<ArchivedUint<BITS, LIMBS>, rancor::Error>(&s).unwrap();
-                assert_eq!(n, a.into());
+                assert_eq!(n, Into::<Uint<BITS, LIMBS>>::into(a));
                 let d = rkyv::deserialize::<_, rancor::Error>(a).unwrap();
                 assert_eq!(n, d);
 
