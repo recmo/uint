@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support [rkyv](https://github.com/rkyv/rkyv) ([#483])
 - Added `bigdecimal` support ([#486])
 - `PartialEq` and `PartialOrd` implementations for primitive integers; minor breaking change for type inference ([#491])
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check limb overflow in shift ops ([#476])
 
 [#476]: https://github.com/recmo/uint/pull/476
+[#483]: https://github.com/recmo/uint/pull/483
 [#486]: https://github.com/recmo/uint/pull/486
 [#491]: https://github.com/recmo/uint/pull/491
 
