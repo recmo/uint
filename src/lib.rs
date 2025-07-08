@@ -225,6 +225,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline]
     pub(crate) const fn as_double_words(&self) -> &[pu128] {
+        assert!(LIMBS >= 2);
         let (ptr, len) = (self.limbs.as_ptr(), self.limbs.len());
         unsafe { core::slice::from_raw_parts(ptr.cast(), len / 2) }
     }
