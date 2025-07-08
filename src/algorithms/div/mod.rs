@@ -45,6 +45,7 @@ use crate::algorithms::DoubleWord;
 ///
 /// Panics if `divisor` is zero.
 #[inline]
+#[cfg_attr(debug_assertions, track_caller)]
 pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
     let divisor = super::trim_end_zeros_mut(divisor);

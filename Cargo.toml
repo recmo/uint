@@ -14,9 +14,6 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 
-[lib]
-bench = false
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = [
@@ -102,7 +99,6 @@ ruint = { path = ".", features = ["arbitrary", "proptest"] }
 ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
 ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
 
-criterion = { version = "2.10", package = "codspeed-criterion-compat" }
 rand-09 = { version = "0.9", package = "rand" }
 
 approx = "0.5"
@@ -115,6 +111,10 @@ serde_json = "1.0"
 
 # borsh
 borsh = { version = "1.5", features = ["derive"] }
+
+# benches only; we still need to include these here to make rust-analyzer work
+arrayvec = "0.7"
+criterion = { version = "3", package = "codspeed-criterion-compat" }
 
 [features]
 default = ["std"]
@@ -204,3 +204,13 @@ strip = false
 
 [profile.bench]
 inherits = "profiling"
+
+# Looks like there is no way to completely disable cargo's automatic bench/test/etc. finding.
+[lib]
+bench = false
+
+[[bench]]
+name = "bench"
+harness = false
+path = "benches/bench.rs"
+# required-features = ["run_with_-p_ruint-bench"]

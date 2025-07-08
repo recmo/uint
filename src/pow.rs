@@ -202,7 +202,7 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0_usize..100)| {
                 let b = U::from(b);
-                let prod = repeat(b).take(e).product();
+                let prod = repeat(b).take(e).product::<U>();
                 assert_eq!(b.pow(U::from(e)), prod);
             });
         });

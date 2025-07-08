@@ -86,12 +86,12 @@ fn manual_batch<T, U>(
     name: &str,
 ) -> impl FnMut(T) {
     assert!(
-        !std::mem::needs_drop::<T>(),
+        !needs_drop::<T>(),
         "cannot batch inputs that need to be dropped: {}",
         std::any::type_name::<T>(),
     );
     assert!(
-        !std::mem::needs_drop::<U>(),
+        !needs_drop::<U>(),
         "cannot batch outputs that need to be dropped: {}",
         std::any::type_name::<U>(),
     );
@@ -105,6 +105,17 @@ fn manual_batch<T, U>(
             let output = unsafe { out.get_unchecked_mut(i) };
             output.write(f(input));
         }
+    }
+}
+
+#[cfg(codspeed)]
+fn needs_drop<T>() -> bool {
+    // SAFETY: `ArrayVec` doesn't implement `Copy` when `T: Copy` even though it
+    // can.
+    if std::any::type_name::<T>().contains("ArrayVec<u64") {
+        false
+    } else {
+        std::mem::needs_drop::<T>()
     }
 }
 
