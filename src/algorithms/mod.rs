@@ -25,64 +25,64 @@ pub use self::{
     shift::{shift_left_small, shift_right_small},
 };
 
-trait DoubleWord<T>: Sized + Copy {
+pub(crate) trait DoubleWord<T: Default>: Sized + Copy {
+    /// `high << 64 | low`
     fn join(high: T, low: T) -> Self;
-    fn add(a: T, b: T) -> Self;
-    fn mul(a: T, b: T) -> Self;
-    fn muladd(a: T, b: T, c: T) -> Self;
+    /// `(low, high)`
+    fn split(self) -> (T, T);
+
+    /// `a * b + c + d`
     fn muladd2(a: T, b: T, c: T, d: T) -> Self;
 
-    fn high(self) -> T;
-    fn low(self) -> T;
-    fn split(self) -> (T, T);
+    /// `a + b`
+    #[inline(always)]
+    fn add(a: T, b: T) -> Self {
+        Self::muladd2(T::default(), T::default(), a, b)
+    }
+    /// `a * b`
+    #[inline(always)]
+    fn mul(a: T, b: T) -> Self {
+        Self::muladd2(a, b, T::default(), T::default())
+    }
+    /// `a * b + c`
+    #[inline(always)]
+    fn muladd(a: T, b: T, c: T) -> Self {
+        Self::muladd2(a, b, c, T::default())
+    }
+
+    #[inline(always)]
+    fn high(self) -> T {
+        self.split().1
+    }
+    #[inline(always)]
+    fn low(self) -> T {
+        self.split().0
+    }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 impl DoubleWord<u64> for u128 {
     #[inline(always)]
     fn join(high: u64, low: u64) -> Self {
         (Self::from(high) << 64) | Self::from(low)
     }
 
-    /// Computes `a + b` as a 128-bit value.
-    #[inline(always)]
-    fn add(a: u64, b: u64) -> Self {
-        Self::from(a) + Self::from(b)
-    }
-
-    /// Computes `a * b` as a 128-bit value.
-    #[inline(always)]
-    fn mul(a: u64, b: u64) -> Self {
-        Self::from(a) * Self::from(b)
-    }
-
-    /// Computes `a * b + c` as a 128-bit value. Note that this can not
-    /// overflow.
-    #[inline(always)]
-    fn muladd(a: u64, b: u64, c: u64) -> Self {
-        Self::from(a) * Self::from(b) + Self::from(c)
-    }
-
-    /// Computes `a * b + c + d` as a 128-bit value. Note that this can not
-    /// overflow.
-    #[inline(always)]
-    fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
-        Self::from(a) * Self::from(b) + Self::from(c) + Self::from(d)
-    }
-
-    #[inline(always)]
-    fn high(self) -> u64 {
-        (self >> 64) as u64
-    }
-
-    #[inline(always)]
-    #[allow(clippy::cast_possible_truncation)]
-    fn low(self) -> u64 {
-        self as u64
-    }
-
     #[inline(always)]
     fn split(self) -> (u64, u64) {
-        (self.low(), self.high())
+        (self as u64, (self >> 64) as u64)
+    }
+
+    #[inline(always)]
+    fn muladd2(a: u64, b: u64, c: u64, d: u64) -> Self {
+        #[cfg(feature = "nightly")]
+        {
+            let (low, high) = u64::carrying_mul_add(a, b, c, d);
+            Self::join(high, low)
+        }
+        #[cfg(not(feature = "nightly"))]
+        {
+            Self::from(a) * Self::from(b) + Self::from(c) + Self::from(d)
+        }
     }
 }
 

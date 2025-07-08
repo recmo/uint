@@ -55,7 +55,7 @@ mod tests {
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let expected = value;
                 let encoded = ssz::Encode::as_ssz_bytes(&expected);
-                let actual = ssz::Decode::from_ssz_bytes(&encoded).unwrap();
+                let actual: Uint<BITS, LIMBS> = ssz::Decode::from_ssz_bytes(&encoded).unwrap();
                 assert_eq!(expected, actual, "Failed for value: {value:?}" );
             });
 

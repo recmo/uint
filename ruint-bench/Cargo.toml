@@ -20,7 +20,8 @@ harness = false
 [dev-dependencies]
 ruint = { path = "..", features = ["std", "proptest"] }
 
-criterion = { version = "2.10", package = "codspeed-criterion-compat" }
+arrayvec = "0.7"
+criterion = { version = "3", package = "codspeed-criterion-compat" }
 proptest = "1"
 
 [[bench]]

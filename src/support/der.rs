@@ -232,7 +232,7 @@ mod tests {
                     proptest!(|(value: Uint<BITS, LIMBS>)| {
                         let serialized = value.to_der().unwrap();
                         let der = <$ty>::from_der(&serialized).unwrap();
-                        let deserialized = der.try_into().unwrap();
+                        let deserialized = Uint::<BITS, LIMBS>::try_from(der).unwrap();
                         assert_eq!(value, deserialized);
                     });
                 });

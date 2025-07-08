@@ -26,7 +26,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-#![cfg_attr(feature = "nightly", feature(core_intrinsics))]
+#![cfg_attr(feature = "nightly", feature(core_intrinsics, bigint_helper_methods))]
 #![cfg_attr(feature = "nightly", allow(internal_features))]
 #![cfg_attr(
     feature = "generic_const_exprs",
@@ -120,6 +120,12 @@ pub mod nightly {
 // #![feature(const_fn_floating_point_arithmetic)]
 // #![feature(const_float_bits_conv)]
 // and more.
+
+/// Packed u128, for [`as_double_words`](Uint::as_double_words).
+#[derive(Clone, Copy)]
+#[repr(packed(8))]
+#[allow(non_camel_case_types)]
+pub(crate) struct pu128(u128);
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 ///
@@ -215,6 +221,12 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     pub const fn into_limbs(self) -> [u64; LIMBS] {
         self.limbs
+    }
+
+    #[inline]
+    pub(crate) const fn as_double_words(&self) -> &[pu128] {
+        let (ptr, len) = (self.limbs.as_ptr(), self.limbs.len());
+        unsafe { core::slice::from_raw_parts(ptr.cast(), len / 2) }
     }
 
     /// Construct a new integer from little-endian a array of limbs.

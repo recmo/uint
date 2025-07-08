@@ -171,12 +171,12 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let serialized = serde_json::to_string(&value).unwrap();
-                let deserialized = serde_json::from_str(&serialized).unwrap();
+                let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized).unwrap();
                 assert_eq!(value, deserialized);
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
                 let serialized = serde_json::to_string(&value).unwrap();
-                let deserialized = serde_json::from_str(&serialized).unwrap();
+                let deserialized = serde_json::from_str::<Bits<BITS, LIMBS>>(&serialized).unwrap();
                 assert_eq!(value, deserialized);
             });
         });
@@ -213,12 +213,12 @@ mod tests {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let serialized = bincode::serialize(&value).unwrap();
-                let deserialized = bincode::deserialize(&serialized[..]).unwrap();
+                let deserialized = bincode::deserialize::<Uint<BITS, LIMBS>>(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
                 let serialized = bincode::serialize(&value).unwrap();
-                let deserialized = bincode::deserialize(&serialized[..]).unwrap();
+                let deserialized = bincode::deserialize::<Bits<BITS, LIMBS>>(&serialized[..]).unwrap();
                 assert_eq!(value, deserialized);
             });
         });
