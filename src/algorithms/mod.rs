@@ -5,9 +5,8 @@
 
 #![allow(missing_docs)] // TODO: document algorithms
 
-use core::cmp::Ordering;
-
 mod add;
+mod cmp;
 pub mod div;
 mod gcd;
 mod mul;
@@ -17,6 +16,7 @@ mod shift;
 
 pub use self::{
     add::{adc_n, sbb_n},
+    cmp::{cmp, ge, gt, le, lt},
     div::div,
     gcd::{gcd, gcd_extended, inv_mod, LehmerMatrix},
     mul::{add_nx1, addmul, addmul_n, addmul_nx1, mul_nx1, submul_nx1},
@@ -86,51 +86,36 @@ impl DoubleWord<u64> for u128 {
     }
 }
 
-/// Compare two limb slices in reverse order.
-///
-/// Assumes that if the slices are of different length, the longer slice is
-/// always greater than the shorter slice.
-#[inline(always)]
-#[must_use]
-pub fn cmp(a: &[u64], b: &[u64]) -> Ordering {
-    match a.len().cmp(&b.len()) {
-        Ordering::Equal => {}
-        non_eq => return non_eq,
-    }
-    for i in (0..a.len()).rev() {
-        match i8::from(a[i] > b[i]) - i8::from(a[i] < b[i]) {
-            -1 => return Ordering::Less,
-            0 => {}
-            1 => return Ordering::Greater,
-            _ => unsafe { core::hint::unreachable_unchecked() },
-        }
-
-        // Equivalent to the following code, but on older rustc versions
-        // performs better:
-        // match a[i].cmp(&b[i]) {
-        //     Ordering::Equal => {}
-        //     non_eq => return non_eq,
-        // }
-    }
-    Ordering::Equal
-}
-
 // Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
 #[inline]
 #[must_use]
 pub const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
-    let (result, carry_1) = lhs.overflowing_add(rhs);
-    let (result, carry_2) = result.overflowing_add(carry as u64);
-    (result, carry_1 | carry_2)
+    #[cfg(feature = "nightly")]
+    {
+        lhs.carrying_add(rhs, carry)
+    }
+    #[cfg(not(feature = "nightly"))]
+    {
+        let (result, carry_1) = lhs.overflowing_add(rhs);
+        let (result, carry_2) = result.overflowing_add(carry as u64);
+        (result, carry_1 | carry_2)
+    }
 }
 
 // Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
 #[inline]
 #[must_use]
 pub const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
-    let (result, borrow_1) = lhs.overflowing_sub(rhs);
-    let (result, borrow_2) = result.overflowing_sub(borrow as u64);
-    (result, borrow_1 | borrow_2)
+    #[cfg(feature = "nightly")]
+    {
+        lhs.borrowing_sub(rhs, borrow)
+    }
+    #[cfg(not(feature = "nightly"))]
+    {
+        let (result, borrow_1) = lhs.overflowing_sub(rhs);
+        let (result, borrow_2) = result.overflowing_sub(borrow as u64);
+        (result, borrow_1 | borrow_2)
+    }
 }
 
 #[inline]

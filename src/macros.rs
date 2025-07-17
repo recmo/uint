@@ -116,27 +116,37 @@ macro_rules! let_double_bits {
 
 /// Specialize an operation for u64, u128, u256 ([u128; 2])...
 macro_rules! as_primitives {
-    ($uint:expr, { $($arm:ident $t:tt => $e:expr),* $(,)? }) => {
+    ($($uints:expr),* $(,)?; $($rest:tt)*) => {
+        as_primitives!(@inner ($($uints),*); $($rest)*);
+    };
+
+    (@inner $uints:tt; { $($arm:ident $t:tt => $e:expr),* $(,)? }) => {
         $(
-            as_primitives!(@arm $uint; $arm $t => $e);
+            as_primitives!(@arm $uints; $arm $t => $e);
         )*
     };
 
-    (@arm $uint:expr; u64($n:ident) => $e:expr) => {
+    (@arm ($($uint:expr),*); u64($($n:pat),*) => $e:expr) => {
         if LIMBS == 1 {
-            let $n = $uint.limbs[0];
+            $(
+                let $n = $uint.limbs[0];
+            )*
             $e
         }
     };
-    (@arm $uint:expr; u128($n:ident) => $e:expr) => {
+    (@arm ($($uint:expr),*); u128($($n:pat),*) => $e:expr) => {
         if LIMBS == 2 {
-            let $n = $uint.as_double_words()[0].0;
+            $(
+                let $n = $uint.as_double_words()[0].0;
+            )*
             $e
         }
     };
-    (@arm $uint:expr; u256($lo:ident, $hi:ident) => $e:expr) => {
+    (@arm ($($uint:expr),*); u256($(($lo:pat, $hi:pat)),*) => $e:expr) => {
         if LIMBS == 4 {
-            let &[$crate::pu128($lo), $crate::pu128($hi)] = $uint.as_double_words() else { unreachable!() };
+            $(
+                let &[$crate::pu128($lo), $crate::pu128($hi)] = $uint.as_double_words() else { unreachable!() };
+            )*
             $e
         }
     };
