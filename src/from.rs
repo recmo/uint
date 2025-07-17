@@ -320,15 +320,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Returns `true` if `self` is larger than 64 bits.
     #[inline]
     fn gt_u64_max(&self) -> bool {
+        self.limbs_gt(1)
+    }
+
+    /// Returns `true` if `self` is larger than 128 bits.
+    #[inline]
+    fn gt_u128_max(&self) -> bool {
+        self.limbs_gt(2)
+    }
+
+    /// Returns `true` if `self` is larger than `64 * n` bits.
+    #[inline]
+    fn limbs_gt(&self, n: usize) -> bool {
+        if LIMBS < n {
+            return false;
+        }
+
         if BITS <= 512 {
             // Use branchless `bitor` chain for smaller integers.
-            self.as_limbs()[1..]
+            self.as_limbs()[n..]
                 .iter()
                 .copied()
                 .fold(0u64, core::ops::BitOr::bitor)
                 != 0
         } else {
-            self.bit_len() > 64
+            self.bit_len() > 64 * n
         }
     }
 }
@@ -652,21 +668,18 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for i128
     type Error = FromUintError<Self>;
 
     #[inline]
+    #[allow(clippy::cast_possible_wrap)] // Intentional.
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-        if BITS == 0 {
-            return Ok(0);
-        }
-        let mut result = value.limbs[0] as i128;
         if BITS <= 64 {
-            return Ok(result);
+            return Ok(u64::try_from(value).unwrap().into());
         }
-        result |= (value.limbs[1] as i128) << 64;
-        if value.bit_len() > 127 {
-            return Err(Self::Error::Overflow(BITS, result, i128::MAX));
+        let result = value.as_double_words()[0].get();
+        if value.gt_u128_max() || result > i128::MAX as u128 {
+            return Err(Self::Error::Overflow(BITS, result as i128, i128::MAX));
         }
-        Ok(result)
+        Ok(result as i128)
     }
 }
 
@@ -679,15 +692,11 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
     #[allow(clippy::cast_lossless)] // Safe casts
     #[allow(clippy::use_self)] // More readable
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-        if BITS == 0 {
-            return Ok(0);
-        }
-        let mut result = value.limbs[0] as u128;
         if BITS <= 64 {
-            return Ok(result);
+            return Ok(u64::try_from(value).unwrap().into());
         }
-        result |= (value.limbs[1] as u128) << 64;
-        if value.bit_len() > 128 {
+        let result = value.as_double_words()[0].get();
+        if value.gt_u128_max() {
             return Err(Self::Error::Overflow(BITS, result, u128::MAX));
         }
         Ok(result)
