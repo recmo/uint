@@ -123,9 +123,24 @@ pub mod nightly {
 
 /// Packed u128, for [`as_double_words`](Uint::as_double_words).
 #[derive(Clone, Copy)]
-#[repr(packed(8))]
 #[allow(non_camel_case_types)]
-pub(crate) struct pu128(u128);
+pub(crate) struct pu128 {
+    inner: [u64; 2],
+}
+impl pu128 {
+    #[inline]
+    pub(crate) const fn get(self) -> u128 {
+        let arr = self.inner;
+        #[cfg(target_endian = "little")]
+        {
+            unsafe { core::mem::transmute(arr) }
+        }
+        #[cfg(target_endian = "big")]
+        {
+            arr[0] as u128 | (arr[1] as u128) << 64
+        }
+    }
+}
 
 /// The ring of numbers modulo $2^{\mathtt{BITS}}$.
 ///
@@ -225,6 +240,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline]
     pub(crate) const fn as_double_words(&self) -> &[pu128] {
+        assert!(LIMBS >= 2);
         let (ptr, len) = (self.limbs.as_ptr(), self.limbs.len());
         unsafe { core::slice::from_raw_parts(ptr.cast(), len / 2) }
     }

@@ -130,13 +130,15 @@ macro_rules! as_primitives {
     };
     (@arm $uint:expr; u128($n:ident) => $e:expr) => {
         if LIMBS == 2 {
-            let $n = $uint.as_double_words()[0].0;
+            let $n = $uint.as_double_words()[0].get();
             $e
         }
     };
     (@arm $uint:expr; u256($lo:ident, $hi:ident) => $e:expr) => {
         if LIMBS == 4 {
-            let &[$crate::pu128($lo), $crate::pu128($hi)] = $uint.as_double_words() else { unreachable!() };
+            let &[lo, hi] = $uint.as_double_words() else { unreachable!() };
+            let $lo = lo.get();
+            let $hi = hi.get();
             $e
         }
     };
