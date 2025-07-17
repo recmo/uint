@@ -202,15 +202,17 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     #[inline]
     #[allow(clippy::cast_possible_truncation)] // Doesn't truncate
     fn next(&mut self) -> Option<Self::Item> {
-        // Knuth Algorithm S.
-        let mut zero: u64 = 0_u64;
+        let base = self.base;
+        assume!(base > 1); // Checked in `new`.
+
+        let mut zero = 0_u64;
         let mut remainder = 0_u128;
         // OPT: If we keep track of leading zero limbs we can half iterations.
         for limb in self.limbs.iter_mut().rev() {
             zero |= *limb;
             remainder = (remainder << 64) | u128::from(*limb);
-            *limb = (remainder / u128::from(self.base)) as u64;
-            remainder %= u128::from(self.base);
+            *limb = (remainder / u128::from(base)) as u64;
+            remainder %= u128::from(base);
         }
         if zero == 0 {
             None
