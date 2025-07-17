@@ -50,11 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the base is less than 2.
     #[inline]
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
-        assert!(base > 1);
-        SpigotLittle {
-            base,
-            limbs: self.limbs,
-        }
+        SpigotLittle::new(self.limbs, base)
     }
 
     /// Returns an iterator over the base `base` digits of the number in
@@ -68,24 +64,19 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if the base is less than 2.
     #[inline]
-    #[cfg(feature = "alloc")] // OPT: Find an allocation free method. Maybe extract from the top?
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
-        struct OwnedVecIterator {
-            vec: alloc::vec::Vec<u64>,
+        // Use `to_base_le` if we can heap-allocate it to reverse the order,
+        // as it only performs one division per iteration instead of two.
+        #[cfg(feature = "alloc")]
+        {
+            self.to_base_le(base)
+                .collect::<alloc::vec::Vec<_>>()
+                .into_iter()
+                .rev()
         }
-
-        impl Iterator for OwnedVecIterator {
-            type Item = u64;
-
-            #[inline]
-            fn next(&mut self) -> Option<Self::Item> {
-                self.vec.pop()
-            }
-        }
-
-        assert!(base > 1);
-        OwnedVecIterator {
-            vec: self.to_base_le(base).collect(),
+        #[cfg(not(feature = "alloc"))]
+        {
+            SpigotBig::new(*self, base)
         }
     }
 
@@ -196,6 +187,15 @@ struct SpigotLittle<const LIMBS: usize> {
     limbs: [u64; LIMBS],
 }
 
+impl<const LIMBS: usize> SpigotLittle<LIMBS> {
+    #[inline]
+    #[track_caller]
+    fn new(limbs: [u64; LIMBS], base: u64) -> Self {
+        assert!(base > 1);
+        Self { base, limbs }
+    }
+}
+
 impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     type Item = u64;
 
@@ -219,6 +219,90 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
         }
     }
 }
+
+/// Implementation of `to_base_be` when `alloc` feature is disabled.
+///
+/// This is generally slower than simply reversing the result of `to_base_le`
+/// as it performs two divisions per iteration instead of one.
+#[cfg(not(feature = "alloc"))]
+struct SpigotBig<const LIMBS: usize, const BITS: usize> {
+    base:  u64,
+    n:     Uint<BITS, LIMBS>,
+    power: Uint<BITS, LIMBS>,
+    done:  bool,
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const LIMBS: usize, const BITS: usize> SpigotBig<LIMBS, BITS> {
+    #[inline]
+    #[track_caller]
+    fn new(n: Uint<BITS, LIMBS>, base: u64) -> Self {
+        assert!(base > 1);
+
+        Self {
+            n,
+            base,
+            power: Self::highest_power(n, base),
+            done: false,
+        }
+    }
+
+    /// Returns the largest power of `base` that fits in `n`.
+    #[inline]
+    fn highest_power(n: Uint<BITS, LIMBS>, base: u64) -> Uint<BITS, LIMBS> {
+        let mut power = Uint::ONE;
+        if base.is_power_of_two() {
+            loop {
+                match power.checked_shl(base.trailing_zeros() as _) {
+                    Some(p) if p < n => power = p,
+                    _ => break,
+                }
+            }
+        } else if let Ok(base) = Uint::try_from(base) {
+            loop {
+                match power.checked_mul(base) {
+                    Some(p) if p < n => power = p,
+                    _ => break,
+                }
+            }
+        }
+        power
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const LIMBS: usize, const BITS: usize> Iterator for SpigotBig<LIMBS, BITS> {
+    type Item = u64;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        let digit;
+        if self.power == 1 {
+            digit = self.n;
+            self.done = true;
+        } else if self.base.is_power_of_two() {
+            digit = self.n >> self.power.trailing_zeros();
+            self.n &= self.power - Uint::ONE;
+
+            self.power >>= self.base.trailing_zeros();
+        } else {
+            (digit, self.n) = self.n.div_rem(self.power);
+            self.power /= Uint::from(self.base);
+        }
+
+        match u64::try_from(digit) {
+            Ok(digit) => Some(digit),
+            Err(e) => debug_unreachable!("digit {digit}: {e}"),
+        }
+    }
+}
+
+#[cfg(not(feature = "alloc"))]
+impl<const LIMBS: usize, const BITS: usize> core::iter::FusedIterator for SpigotBig<LIMBS, BITS> {}
 
 #[cfg(test)]
 #[allow(clippy::unreadable_literal)]
@@ -330,5 +414,37 @@ mod tests {
             Uint::<1, 1>::from_base_be(10, [1, 0, 0].into_iter()),
             Err(BaseConvertError::Overflow)
         );
+    }
+
+    #[test]
+    fn test_roundtrip() {
+        fn test<const BITS: usize, const LIMBS: usize>(n: Uint<BITS, LIMBS>, base: u64) {
+            assert_eq!(
+                n.to_base_be(base).collect::<Vec<_>>(),
+                n.to_base_le(base)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect::<Vec<_>>(),
+            );
+
+            let digits = n.to_base_le(base);
+            let n2 = Uint::<BITS, LIMBS>::from_base_le(base, digits).unwrap();
+            assert_eq!(n, n2);
+
+            let digits = n.to_base_be(base);
+            let n2 = Uint::<BITS, LIMBS>::from_base_be(base, digits).unwrap();
+            assert_eq!(n, n2);
+        }
+
+        let single = |x: u64| x..=x;
+        for base in [2..=129, single(1 << 31), single(1 << 32), single(1 << 33)]
+            .into_iter()
+            .flatten()
+        {
+            test(Uint::<64, 1>::from(123456789), base);
+            test(Uint::<128, 2>::from(123456789), base);
+            test(N, base);
+        }
     }
 }
