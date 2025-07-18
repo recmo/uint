@@ -50,7 +50,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the base is less than 2.
     #[inline]
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
-        SpigotLittle::new(self.limbs, base)
+        SpigotLittle::new(*self, base)
     }
 
     /// Returns an iterator over the base `base` digits of the number in
@@ -182,40 +182,52 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 }
 
-struct SpigotLittle<const LIMBS: usize> {
-    base:  u64,
-    limbs: [u64; LIMBS],
+struct SpigotLittle<const BITS: usize, const LIMBS: usize> {
+    base: u64,
+    n:    Uint<BITS, LIMBS>,
 }
 
-impl<const LIMBS: usize> SpigotLittle<LIMBS> {
-    #[inline]
+impl<const BITS: usize, const LIMBS: usize> SpigotLittle<BITS, LIMBS> {
+    #[inline(always)]
     #[track_caller]
-    fn new(limbs: [u64; LIMBS], base: u64) -> Self {
+    fn new(n: Uint<BITS, LIMBS>, base: u64) -> Self {
         assert!(base > 1);
-        Self { base, limbs }
+        Self { base, n }
     }
 }
 
-impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> Iterator for SpigotLittle<BITS, LIMBS> {
     type Item = u64;
 
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::cast_possible_truncation)] // Doesn't truncate
     fn next(&mut self) -> Option<Self::Item> {
-        // Knuth Algorithm S.
-        let mut zero: u64 = 0_u64;
-        let mut remainder = 0_u128;
-        // OPT: If we keep track of leading zero limbs we can half iterations.
-        for limb in self.limbs.iter_mut().rev() {
-            zero |= *limb;
-            remainder = (remainder << 64) | u128::from(*limb);
-            *limb = (remainder / u128::from(self.base)) as u64;
-            remainder %= u128::from(self.base);
-        }
-        if zero == 0 {
-            None
+        let base = self.base;
+        assume!(base > 1); // Checked in `new`.
+
+        if base.is_power_of_two() {
+            let n = self.n;
+            if n.is_zero() {
+                None
+            } else {
+                let digit = n.as_limbs()[0] & (base - 1);
+                self.n = n >> base.trailing_zeros();
+                Some(digit)
+            }
         } else {
-            Some(remainder as u64)
+            let limbs = crate::algorithms::trim_end_zeros_mut(&mut self.n.limbs);
+            if limbs.is_empty() {
+                None
+            } else {
+                let base = u128::from(base);
+                let mut remainder = 0_u128;
+                for limb in limbs.iter_mut().rev() {
+                    remainder = (remainder << 64) | u128::from(*limb);
+                    *limb = (remainder / base) as u64;
+                    remainder %= base;
+                }
+                Some(remainder as u64)
+            }
         }
     }
 }
@@ -294,15 +306,22 @@ impl<const LIMBS: usize, const BITS: usize> Iterator for SpigotBig<LIMBS, BITS> 
             self.power /= Uint::from(self.base);
         }
 
-        match u64::try_from(digit) {
-            Ok(digit) => Some(digit),
-            Err(e) => debug_unreachable!("digit {digit}: {e}"),
-        }
+        Some(u64_from_uint_unchecked(digit))
     }
 }
 
 #[cfg(not(feature = "alloc"))]
 impl<const LIMBS: usize, const BITS: usize> core::iter::FusedIterator for SpigotBig<LIMBS, BITS> {}
+
+#[inline]
+#[track_caller]
+#[allow(dead_code)]
+fn u64_from_uint_unchecked<const BITS: usize, const LIMBS: usize>(x: Uint<BITS, LIMBS>) -> u64 {
+    match u64::try_from(x) {
+        Ok(x) => x,
+        Err(e) => debug_unreachable!("{e}"),
+    }
+}
 
 #[cfg(test)]
 #[allow(clippy::unreadable_literal)]
