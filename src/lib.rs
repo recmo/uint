@@ -347,7 +347,7 @@ impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
 #[inline]
 #[must_use]
 pub const fn nlimbs(bits: usize) -> usize {
-    (bits + 63) / 64
+    bits.div_ceil(64)
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.

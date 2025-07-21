@@ -10,7 +10,6 @@ use crate::{
 use bytes::{BufMut, BytesMut};
 use core::{
     error::Error,
-    iter,
     str::{from_utf8, FromStr},
 };
 use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
@@ -290,7 +289,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromSql<'a> for Uint<BITS, LIMBS
                 });
                 #[allow(clippy::cast_sign_loss)]
                 // Expression can not be negative due to checks above
-                let iter = iter.chain(iter::repeat(0).take((exponent + 1 - digits) as usize));
+                let iter = iter.chain(std::iter::repeat_n(0, (exponent + 1 - digits) as usize));
 
                 let value = Self::from_base_be(10000, iter)?;
                 if error {

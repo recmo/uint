@@ -133,7 +133,7 @@ fn parse_digits(value: &str) -> Result<Vec<u64>, String> {
 
 fn pad_limbs(bits: usize, mut limbs: Vec<u64>) -> Option<Vec<u64>> {
     // Get limb count and mask
-    let num_limbs = (bits + 63) / 64;
+    let num_limbs = bits.div_ceil(64);
     let mask = if bits == 0 {
         0
     } else {
@@ -196,7 +196,7 @@ impl Transformer {
             write!(&mut limbs_str, "0x{limb:016x}_u64, ").unwrap();
         }
         let limbs_str = limbs_str.trim_end_matches(", ");
-        let limbs = (bits + 63) / 64;
+        let limbs = bits.div_ceil(64);
         let source = format!("::{base_type}::<{bits}, {limbs}>::from_limbs([{limbs_str}])");
 
         let mut tokens = self.ruint_crate.clone();
