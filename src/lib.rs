@@ -1,26 +1,5 @@
 #![doc = include_str!("../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(
-    clippy::all,
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::missing_inline_in_public_items,
-    clippy::std_instead_of_alloc,
-    clippy::std_instead_of_core,
-    missing_docs,
-    unreachable_pub
-)]
-#![allow(
-    clippy::doc_markdown, // Unfortunately many false positives on Latex.
-    clippy::inline_always,
-    clippy::module_name_repetitions,
-    clippy::redundant_pub_crate,
-    clippy::unreadable_literal,
-    clippy::let_unit_value,
-    clippy::option_if_let_else,
-    clippy::cast_sign_loss,
-    clippy::cast_lossless,
-)]
 #![cfg_attr(test, allow(clippy::wildcard_imports, clippy::cognitive_complexity))]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
