@@ -181,7 +181,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use core::iter::repeat;
+    use core::iter::repeat_n;
     use proptest::proptest;
 
     #[test]
@@ -202,7 +202,7 @@ mod tests {
             type U = Uint<BITS, LIMBS>;
             proptest!(|(b in 2_u64..100, e in 0_usize..100)| {
                 let b = U::from(b);
-                let prod = repeat(b).take(e).product::<U>();
+                let prod = repeat_n(b, e).product::<U>();
                 assert_eq!(b.pow(U::from(e)), prod);
             });
         });

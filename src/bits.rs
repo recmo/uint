@@ -248,7 +248,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline]
     pub const fn byte_len(&self) -> usize {
-        (self.bit_len() + 7) / 8
+        self.bit_len().div_ceil(8)
     }
 
     /// Returns the most significant 64 bits of the number and the exponent.

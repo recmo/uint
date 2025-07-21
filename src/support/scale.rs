@@ -238,7 +238,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
                     let x = Uint::<BITS, LIMBS>::try_from_le_slice(&le_byte_slice)
                         .ok_or_else(|| Error::from("value is larger than fits the Uint"))?;
                     let bits = bytes as usize * 8;
-                    let limbs = (bits + 64 - 1) / 64;
+                    let limbs = bits.div_ceil(64);
 
                     let mut new_limbs = vec![u64::MAX; limbs];
                     if bits > 0 {

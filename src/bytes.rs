@@ -12,7 +12,7 @@ use alloc::{borrow::Cow, vec::Vec};
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.
-    pub const BYTES: usize = (BITS + 7) / 8;
+    pub const BYTES: usize = BITS.div_ceil(8);
 
     /// Access the underlying store as a little-endian slice of bytes.
     ///
@@ -463,7 +463,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 #[inline]
 #[must_use]
 pub const fn nbytes(bits: usize) -> usize {
-    (bits + 7) / 8
+    bits.div_ceil(8)
 }
 
 #[cfg(test)]
