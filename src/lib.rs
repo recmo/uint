@@ -92,14 +92,6 @@ pub mod nightly {
     pub type Bits<const BITS: usize> = crate::Bits<BITS, { crate::nlimbs(BITS) }>;
 }
 
-// FEATURE: (BLOCKED) Many functions could be made `const` if a number of
-// features land. This requires
-// #![feature(const_mut_refs)]
-// #![feature(const_float_classify)]
-// #![feature(const_fn_floating_point_arithmetic)]
-// #![feature(const_float_bits_conv)]
-// and more.
-
 /// Packed u128, for [`as_double_words`](Uint::as_double_words).
 #[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
@@ -204,7 +196,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// size if the bit-size is not limb-aligned.
     #[inline(always)]
     #[must_use]
-    pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
+    pub const unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
@@ -242,12 +234,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 "Value too large for this Uint"
             );
         }
+        let _ = Self::LIMBS; // Triggers the assertion.
         Self { limbs }
     }
 
     #[inline(always)]
     #[must_use]
     const fn from_limbs_unmasked(limbs: [u64; LIMBS]) -> Self {
+        let _ = Self::LIMBS; // Triggers the assertion.
         Self { limbs }.masked()
     }
 
@@ -320,7 +314,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[inline(always)]
-    fn apply_mask(&mut self) {
+    const fn apply_mask(&mut self) {
         if Self::SHOULD_MASK {
             self.limbs[LIMBS - 1] &= Self::MASK;
         }
@@ -328,9 +322,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline(always)]
     const fn masked(mut self) -> Self {
-        if Self::SHOULD_MASK {
-            self.limbs[LIMBS - 1] &= Self::MASK;
-        }
+        self.apply_mask();
         self
     }
 }
