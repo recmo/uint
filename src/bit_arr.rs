@@ -71,7 +71,7 @@ impl<const BITS: usize, const LIMBS: usize> Bits<BITS, LIMBS> {
     /// Returns a mutable reference to the inner [Uint].
     #[must_use]
     #[inline(always)]
-    pub fn as_uint_mut(&mut self) -> &mut Uint<BITS, LIMBS> {
+    pub const fn as_uint_mut(&mut self) -> &mut Uint<BITS, LIMBS> {
         &mut self.0
     }
 }
