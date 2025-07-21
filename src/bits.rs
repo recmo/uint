@@ -20,7 +20,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     /// Sets a specific bit to a value.
     #[inline]
-    pub fn set_bit(&mut self, index: usize, value: bool) {
+    pub const fn set_bit(&mut self, index: usize, value: bool) {
         if index >= BITS {
             return;
         }

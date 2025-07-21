@@ -43,8 +43,6 @@ impl<const BITS: usize, const LIMBS: usize> Decode for Uint<BITS, LIMBS> {
     }
 }
 
-// TODO: Use nightly generic const expressions to validate that BITS parameter
-// is less than 536
 pub struct CompactUint<const BITS: usize, const LIMBS: usize>(pub Uint<BITS, LIMBS>);
 
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for CompactUint<BITS, LIMBS> {
@@ -123,7 +121,7 @@ impl<const BITS: usize, const LIMBS: usize> Encode for CompactRefUint<'_, BITS, 
     }
 
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
-        assert_compact_supported::<BITS>();
+        const { assert_compact_supported(BITS) }
 
         match self.0.bit_len() {
             // 0..=0b0011_1111
@@ -177,7 +175,7 @@ const OUT_OF_RANGE: &str = "out of range Uint decoding";
 
 impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-        assert_compact_supported::<BITS>();
+        const { assert_compact_supported(BITS) }
 
         let prefix = input.read_byte()?;
         Ok(Self(match prefix % 4 {
@@ -261,9 +259,9 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
     }
 }
 
-fn assert_compact_supported<const BITS: usize>() {
+const fn assert_compact_supported(bits: usize) {
     assert!(
-        BITS < COMPACT_BITS_LIMIT,
+        bits < COMPACT_BITS_LIMIT,
         "compact encoding is supported only for 0-(2**536-1) values"
     );
 }
