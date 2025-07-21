@@ -23,11 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: ["stable", "beta", "nightly", "1.65"] # MSRV
+        rust: ["stable", "beta", "nightly", "1.85"] # MSRV
         flags: ["--no-default-features", "", "--all-features"]
         exclude:
           # Skip because some features have higher MSRV.
-          - rust: "1.65" # MSRV
+          - rust: "1.85" # MSRV
             flags: "--all-features"
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           cache-on-failure: true
       # Only run tests on latest stable and above
       - name: Check
-        if: ${{ matrix.rust == '1.65' }} # MSRV
+        if: ${{ matrix.rust == '1.85' }} # MSRV
         run: cargo check ${{ matrix.flags }}
 
       # Cargo doc test is not included in `--all-targets` so we call it separately.
@@ -52,12 +52,12 @@ jobs:
       # Cargo doc test also doesn't support `--no-run`, so we run it but
       # have it just print `--help`.
       - name: Build tests
-        if: ${{ matrix.rust != '1.65' }} # MSRV
+        if: ${{ matrix.rust != '1.85' }} # MSRV
         run: |
           cargo test --workspace ${{ matrix.flags }} --all-targets --no-run
           cargo test --workspace ${{ matrix.flags }} --doc -- --help
       - name: Run tests
-        if: ${{ matrix.rust != '1.65' }} # MSRV
+        if: ${{ matrix.rust != '1.85' }} # MSRV
         run: |
           cargo test --workspace ${{ matrix.flags }} --all-targets -- --nocapture
           cargo test --workspace ${{ matrix.flags }} --doc -- --nocapture
