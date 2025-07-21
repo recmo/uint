@@ -3,51 +3,49 @@
 #![cfg(feature = "serde")]
 #![cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 
-use crate::{nbytes, Bits, Uint};
-use core::{
-    fmt::{Formatter, Result as FmtResult, Write},
-    str,
-};
+use crate::{fmt::StackString, nbytes, Bits, Uint};
+use core::{fmt, str};
 use serde::{
     de::{Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
-
-#[allow(unused_imports)]
-use alloc::string::String;
 
 /// Canonical serialization for all human-readable instances of `Uint<0, 0>`,
 /// and minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
 const ZERO_STR: &str = "0x0";
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
-    fn serialize_human_full<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        if BITS == 0 {
-            return s.serialize_str(ZERO_STR);
+    fn serialize_human<const FULL: bool, S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        // Ideally `SIZE` is `2 + Self::BYTES * 2`.
+        if BITS <= 8 {
+            self.serialize_human_sized::<FULL, 8, _>(s)
+        } else {
+            self.serialize_human_sized::<FULL, BITS, _>(s)
         }
-
-        let mut result = String::with_capacity(2 + nbytes(BITS) * 2);
-        result.push_str("0x");
-
-        self.as_le_bytes()
-            .iter()
-            .rev()
-            .try_for_each(|byte| write!(result, "{byte:02x}"))
-            .unwrap();
-
-        s.serialize_str(&result)
     }
 
-    fn serialize_human_minimal<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        if self.is_zero() {
-            return s.serialize_str(ZERO_STR);
-        }
-
-        s.serialize_str(&format!("{self:#x}"))
+    fn serialize_human_sized<const FULL: bool, const SIZE: usize, S: Serializer>(
+        &self,
+        s: S,
+    ) -> Result<S::Ok, S::Error> {
+        let mut buffer = StackString::<SIZE>::new();
+        self.write_hex::<FULL>(&mut buffer);
+        s.serialize_str(buffer.as_str())
     }
 
     fn serialize_binary<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.serialize_bytes(&self.to_be_bytes_vec())
+    }
+
+    fn write_hex<const FULL: bool>(&self, s: &mut (impl fmt::Write + ?Sized)) {
+        if BITS == 0 {
+            s.write_str(ZERO_STR)
+        } else if FULL {
+            write!(s, "{:#0w$x}", *self, w = 2 + Self::BYTES * 2)
+        } else {
+            write!(s, "{:#x}", *self)
+        }
+        .unwrap();
     }
 }
 
@@ -58,7 +56,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Serialize for Uint<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            self.serialize_human_minimal(serializer)
+            self.serialize_human::<false, _>(serializer)
         } else {
             self.serialize_binary(serializer)
         }
@@ -82,7 +80,7 @@ impl<'de, const BITS: usize, const LIMBS: usize> Deserialize<'de> for Uint<BITS,
 impl<const BITS: usize, const LIMBS: usize> Serialize for Bits<BITS, LIMBS> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if serializer.is_human_readable() {
-            self.as_uint().serialize_human_full(serializer)
+            self.as_uint().serialize_human::<true, _>(serializer)
         } else {
             self.as_uint().serialize_binary(serializer)
         }
@@ -103,7 +101,7 @@ struct HrVisitor<const BITS: usize, const LIMBS: usize>;
 impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for HrVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
-    fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "a {} byte hex string", nbytes(BITS))
     }
 
@@ -139,7 +137,7 @@ struct ByteVisitor<const BITS: usize, const LIMBS: usize>;
 impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for ByteVisitor<BITS, LIMBS> {
     type Value = Uint<BITS, LIMBS>;
 
-    fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "{BITS} bits of binary data in big endian order")
     }
 
@@ -170,8 +168,9 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: Uint<BITS, LIMBS>)| {
-                let serialized = serde_json::to_string(&value).unwrap();
-                let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized).unwrap();
+                let s = format!("U{BITS} => {value}");
+                let serialized = serde_json::to_string(&value).expect(&s);
+                let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized).expect(&s);
                 assert_eq!(value, deserialized);
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
@@ -243,7 +242,7 @@ mod tests {
             serialized.push('0');
             serialized.push('"');
             let deserialized = serde_json::from_str::<Uint<BITS, LIMBS>>(&serialized);
-            assert!(deserialized.is_err(), "{BITS} {serialized}");
+            assert!(deserialized.is_err(), "U{BITS} {serialized} => {deserialized:?}");
         });
     }
 }
