@@ -2,7 +2,7 @@ use crate::{
     algorithms::{addmul_nx1, mul_nx1},
     Uint,
 };
-use core::fmt;
+use core::{fmt, iter::FusedIterator, mem::MaybeUninit};
 
 /// Error for [`from_base_le`][Uint::from_base_le] and
 /// [`from_base_be`][Uint::from_base_be].
@@ -49,6 +49,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     ///
     /// Panics if the base is less than 2.
     #[inline]
+    #[track_caller]
     pub fn to_base_le(&self, base: u64) -> impl Iterator<Item = u64> {
         SpigotLittle::new(self.limbs, base)
     }
@@ -60,10 +61,26 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// power of `10` that still fits `u64`. This way much fewer iterations
     /// are required to extract all the digits.
     ///
+    /// Use [`to_base_be_2`](Self::to_base_be_2) to extract the maximum number
+    /// of digits at once more efficiently.
+    ///
     /// # Panics
     ///
     /// Panics if the base is less than 2.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let n = ruint::aliases::U64::from(1234);
+    /// assert_eq!(n.to_base_be(10).collect::<Vec<_>>(), [1, 2, 3, 4]);
+    /// assert_eq!(n.to_base_be(1000000).collect::<Vec<_>>(), [1234]);
+    ///
+    /// // `to_base_be_2` always returns digits maximally packed into `u64`s.
+    /// assert_eq!(n.to_base_be_2(10).collect::<Vec<_>>(), [1234]);
+    /// assert_eq!(n.to_base_be_2(1000000).collect::<Vec<_>>(), [1234]);
+    /// ```
     #[inline]
+    #[track_caller]
     pub fn to_base_be(&self, base: u64) -> impl Iterator<Item = u64> {
         // Use `to_base_le` if we can heap-allocate it to reverse the order,
         // as it only performs one division per iteration instead of two.
@@ -78,6 +95,31 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         {
             SpigotBig::new(*self, base)
         }
+    }
+
+    /// Returns an iterator over the base `base` digits of the number in
+    /// big-endian order.
+    ///
+    /// Always returns digits maximally packed into `u64`s.
+    /// Unlike [`to_base_be`], this method:
+    /// - never heap-allocates memory, so it's always faster
+    /// - always returns digits maximally packed into `u64`s, so passing the
+    ///   constant base like `2`, `8`, instead of the highest power that fits in
+    ///   u64 is not needed
+    ///
+    /// # Panics
+    ///
+    /// Panics if the base is less than 2.
+    ///
+    /// # Examples
+    ///
+    /// See [`to_base_be`].
+    ///
+    /// [`to_base_be`]: Self::to_base_be
+    #[inline]
+    #[track_caller]
+    pub fn to_base_be_2(&self, base: u64) -> impl Iterator<Item = u64> {
+        SpigotBig2::new(self.limbs, base)
     }
 
     /// Constructs the [`Uint`] from digits in the base `base` in little-endian.
@@ -166,7 +208,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             }
             // Multiply by base.
             // OPT: keep track of non-zero limbs and mul the minimum.
-            let mut carry: u128 = u128::from(digit);
+            let mut carry = u128::from(digit);
             #[allow(clippy::cast_possible_truncation)]
             for limb in &mut result.limbs {
                 carry += u128::from(*limb) * u128::from(base);
@@ -200,7 +242,7 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     type Item = u64;
 
     #[inline]
-    #[allow(clippy::cast_possible_truncation)] // Doesn't truncate
+    #[allow(clippy::cast_possible_truncation)] // Doesn't truncate.
     fn next(&mut self) -> Option<Self::Item> {
         // Knuth Algorithm S.
         let mut zero: u64 = 0_u64;
@@ -219,6 +261,8 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
         }
     }
 }
+
+impl<const LIMBS: usize> FusedIterator for SpigotLittle<LIMBS> {}
 
 /// Implementation of `to_base_be` when `alloc` feature is disabled.
 ///
@@ -304,11 +348,84 @@ impl<const LIMBS: usize, const BITS: usize> Iterator for SpigotBig<LIMBS, BITS> 
 #[cfg(not(feature = "alloc"))]
 impl<const LIMBS: usize, const BITS: usize> core::iter::FusedIterator for SpigotBig<LIMBS, BITS> {}
 
+/// An iterator over the base `base` digits of the number in big-endian order.
+///
+/// See [`Uint::to_base_be_2`] for more details.
+struct SpigotBig2<const LIMBS: usize> {
+    buf: SpigotBuf<LIMBS>,
+}
+
+impl<const LIMBS: usize> SpigotBig2<LIMBS> {
+    #[inline]
+    #[track_caller]
+    fn new(limbs: [u64; LIMBS], base: u64) -> Self {
+        Self {
+            buf: SpigotBuf::new(limbs, base),
+        }
+    }
+}
+
+impl<const LIMBS: usize> Iterator for SpigotBig2<LIMBS> {
+    type Item = u64;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.buf.next_back()
+    }
+}
+
+impl<const LIMBS: usize> FusedIterator for SpigotBig2<LIMBS> {}
+
+/// Collects [`SpigotLittle`] into a stack-allocated buffer.
+///
+/// Base for [`SpigotBig2`].
+struct SpigotBuf<const LIMBS: usize> {
+    end: usize,
+    buf: [[MaybeUninit<u64>; 2]; LIMBS],
+}
+
+impl<const LIMBS: usize> SpigotBuf<LIMBS> {
+    #[inline]
+    #[track_caller]
+    fn new(limbs: [u64; LIMBS], mut base: u64) -> Self {
+        // We need to do this so we can guarantee that `buf` is big enough.
+        base = crate::utils::max_pow_u64(base);
+
+        let mut buf = [[MaybeUninit::uninit(); 2]; LIMBS];
+        // TODO(MSRV-1.80): let as_slice = buf.as_flattened_mut();
+        let as_slice = unsafe {
+            core::slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<MaybeUninit<u64>>(), LIMBS * 2)
+        };
+        let mut init = 0;
+        for (i, limb) in SpigotLittle::new(limbs, base).enumerate() {
+            debug_assert!(
+                i < as_slice.len(),
+                "base {base} too small for u64 digits of {LIMBS} limbs; this shouldn't happen \
+                 because of the `max_pow_u64` call above"
+            );
+            unsafe { as_slice.get_unchecked_mut(i).write(limb) };
+            init += 1;
+        }
+        Self { end: init, buf }
+    }
+
+    #[inline]
+    fn next_back(&mut self) -> Option<u64> {
+        if self.end == 0 {
+            None
+        } else {
+            self.end -= 1;
+            Some(unsafe { *self.buf.as_ptr().cast::<u64>().add(self.end) })
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unreadable_literal)]
 #[allow(clippy::zero_prefixed_literal)]
 mod tests {
     use super::*;
+    use crate::utils::max_pow_u64;
 
     // 90630363884335538722706632492458228784305343302099024356772372330524102404852
     const N: Uint<256, 4> = Uint::from_limbs([
@@ -378,6 +495,26 @@ mod tests {
     }
 
     #[test]
+    fn test_to_base_be_2() {
+        assert_eq!(
+            Uint::<64, 1>::from(123456789)
+                .to_base_be_2(10)
+                .collect::<Vec<_>>(),
+            vec![123456789]
+        );
+        assert_eq!(
+            N.to_base_be_2(10000000000000000000_u64).collect::<Vec<_>>(),
+            vec![
+                9,
+                0630363884335538722,
+                7066324924582287843,
+                0534330209902435677,
+                2372330524102404852
+            ]
+        );
+    }
+
+    #[test]
     fn test_from_base_be() {
         assert_eq!(
             Uint::<64, 1>::from_base_be(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]),
@@ -434,6 +571,10 @@ mod tests {
 
             let digits = n.to_base_be(base);
             let n2 = Uint::<BITS, LIMBS>::from_base_be(base, digits).unwrap();
+            assert_eq!(n, n2);
+
+            let digits = n.to_base_be_2(base).collect::<Vec<_>>();
+            let n2 = Uint::<BITS, LIMBS>::from_base_be(max_pow_u64(base), digits).unwrap();
             assert_eq!(n, n2);
         }
 
