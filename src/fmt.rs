@@ -55,6 +55,13 @@ macro_rules! impl_fmt {
     ($tr:path; $base:ty, $base_char:literal) => {
         impl<const BITS: usize, const LIMBS: usize> $tr for Uint<BITS, LIMBS> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if let Ok(small) = u64::try_from(self) {
+                    return <u64 as $tr>::fmt(&small, f);
+                }
+                if let Ok(small) = u128::try_from(self) {
+                    return <u128 as $tr>::fmt(&small, f);
+                }
+
                 // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
                 let mut s = StackString::<BITS>::new();
                 let mut first = true;
