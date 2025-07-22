@@ -126,6 +126,18 @@ impl<const SIZE: usize> fmt::Write for DisplayBuffer<SIZE> {
         self.len += s.len();
         Ok(())
     }
+
+    fn write_char(&mut self, c: char) -> fmt::Result {
+        let clen = c.len_utf8();
+        if self.len + clen > SIZE {
+            return Err(fmt::Error);
+        }
+        c.encode_utf8(unsafe {
+            core::slice::from_raw_parts_mut(self.buf.as_mut_ptr().add(self.len).cast(), clen)
+        });
+        self.len += clen;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
