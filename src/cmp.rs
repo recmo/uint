@@ -39,8 +39,8 @@ macro_rules! impl_for_primitives {
                 #[inline]
                 #[allow(unused_comparisons)] // Both signed and unsigned integers use this.
                 #[allow(clippy::cast_possible_truncation)] // Unreachable.
-                fn partial_cmp(&self, other: &$t) -> Option<Ordering> {
-                    if *other < 0 {
+                fn partial_cmp(&self, &other: &$t) -> Option<Ordering> {
+                    if other < 0 {
                         return Some(Ordering::Greater);
                     }
 
@@ -48,12 +48,12 @@ macro_rules! impl_for_primitives {
                         let Ok(self_t) = u64::try_from(self) else {
                             return Some(Ordering::Greater);
                         };
-                        self_t.partial_cmp(&(*other as u64))
+                        self_t.partial_cmp(&(other as u64))
                     } else {
                         let Ok(self_t) = u128::try_from(self) else {
                             return Some(Ordering::Greater);
                         };
-                        self_t.partial_cmp(&(*other as u128))
+                        self_t.partial_cmp(&(other as u128))
                     }
                 }
             }
