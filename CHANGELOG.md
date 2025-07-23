@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- MSRV bumped to 1.85 ([#503])
+
+[#503]: https://github.com/recmo/uint/pull/503
+
 ## [1.16.0] - 2025-08-04
 
 ### Added
