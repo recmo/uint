@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2025-08-04
+
 ### Added
 
 - Support [rkyv](https://github.com/rkyv/rkyv) ([#483])
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `to_base_be` and `core::fmt` trait implementations are available without the "alloc" feature ([#488])
+- Greatly improved performance across the board, mainly in: conversions, fmt, div/rem, mul, add_mod, leading_zeros
 
 ### Fixed
 
@@ -446,7 +449,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.15.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.16.0...HEAD
+[1.16.0]: https://github.com/recmo/uint/releases/tag/v1.16.0
 [1.15.0]: https://github.com/recmo/uint/releases/tag/v1.15.0
 [1.14.0]: https://github.com/recmo/uint/releases/tag/v1.14.0
 [1.13.1]: https://github.com/recmo/uint/releases/tag/v1.13.1
