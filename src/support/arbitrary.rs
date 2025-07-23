@@ -25,7 +25,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIM
     }
 
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
-        let bytes = (BITS + 7) / 8;
+        let bytes = BITS.div_ceil(8);
         (bytes, Some(bytes))
     }
 }
@@ -34,7 +34,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> Arbitrary<'a> for Uint<BITS, LIM
 mod tests {
     use super::*;
     use crate::{const_for, nlimbs};
-    use core::iter::repeat;
+    use core::iter::repeat_n;
 
     #[allow(unused_imports)]
     use alloc::vec::Vec;
@@ -44,7 +44,7 @@ mod tests {
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             let (num_bytes, _) = Uint::<BITS, LIMBS>::size_hint(0);
-            let bytes = repeat(0x55u8).take(num_bytes).collect::<Vec<_>>();
+            let bytes = repeat_n(0x55u8, num_bytes).collect::<Vec<_>>();
             let mut u = arbitrary::Unstructured::new(&bytes);
             Uint::<BITS, LIMBS>::arbitrary(&mut u).unwrap();
         });
