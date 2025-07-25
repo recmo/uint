@@ -249,7 +249,6 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
 
         let mut zero = 0_u64;
         let mut remainder = 0_u128;
-        // OPT: If we keep track of leading zero limbs we can half iterations.
         for limb in self.limbs.iter_mut().rev() {
             zero |= *limb;
             remainder = (remainder << 64) | u128::from(*limb);
