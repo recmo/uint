@@ -244,15 +244,17 @@ impl<const LIMBS: usize> Iterator for SpigotLittle<LIMBS> {
     #[inline]
     #[allow(clippy::cast_possible_truncation)] // Doesn't truncate.
     fn next(&mut self) -> Option<Self::Item> {
-        // Knuth Algorithm S.
-        let mut zero: u64 = 0_u64;
+        let base = self.base;
+        assume!(base > 1); // Checked in `new`.
+
+        let mut zero = 0_u64;
         let mut remainder = 0_u128;
         // OPT: If we keep track of leading zero limbs we can half iterations.
         for limb in self.limbs.iter_mut().rev() {
             zero |= *limb;
             remainder = (remainder << 64) | u128::from(*limb);
-            *limb = (remainder / u128::from(self.base)) as u64;
-            remainder %= u128::from(self.base);
+            *limb = (remainder / u128::from(base)) as u64;
+            remainder %= u128::from(base);
         }
         if zero == 0 {
             None
@@ -396,17 +398,17 @@ impl<const LIMBS: usize> SpigotBuf<LIMBS> {
         let as_slice = unsafe {
             core::slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<MaybeUninit<u64>>(), LIMBS * 2)
         };
-        let mut init = 0;
-        for (i, limb) in SpigotLittle::new(limbs, base).enumerate() {
+        let mut i = 0;
+        for limb in SpigotLittle::new(limbs, base) {
             debug_assert!(
                 i < as_slice.len(),
                 "base {base} too small for u64 digits of {LIMBS} limbs; this shouldn't happen \
                  because of the `max_pow_u64` call above"
             );
             unsafe { as_slice.get_unchecked_mut(i).write(limb) };
-            init += 1;
+            i += 1;
         }
-        Self { end: init, buf }
+        Self { end: i, buf }
     }
 
     #[inline]
