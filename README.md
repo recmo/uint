@@ -132,7 +132,6 @@ release.
 There is support for a number of crates. These are enabled by setting the identically
 named feature flag.
 
-* `unstable` Enable sem-ver unstable features.
 * [`rand`](https://docs.rs/rand/0.8): Implements sampling from the [`Standard`](https://docs.rs/rand/0.8/rand/distributions/struct.Standard.html) distribution, i.e. [`rng.gen()`](https://docs.rs/rand/0.8/rand/trait.Rng.html#method.gen), alongside some utility `random*` methods on `Uint` itself.
 * [`rand-09`](https://docs.rs/rand/0.9): Implements sampling from the [`StandardUniform`](https://docs.rs/rand/0.9/rand/distr/struct.StandardUniform.html) distribution, i.e. [`rng.random()`](https://docs.rs/rand/0.9/rand/trait.Rng.html#method.random), alongside some utility `random*` methods on `Uint` itself.
 * [`arbitrary`](https://docs.rs/arbitrary): Implements the [`Arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/trait.Arbitrary.html) trait, allowing [`Uint`]s to be generated for fuzz testing.
@@ -162,6 +161,7 @@ named feature flag.
 * [`rkyv`](https://docs.rs/rkyv/): Implements the [`Archive`](https://docs.rs/rkyv/latest/rkyv/trait.Archive.html), [`Serialize`](https://docs.rs/rkyv/latest/rkyv/trait.Serialize.html), [`Deserialize`](https://docs.rs/rkyv/latest/rkyv/trait.Deserialize.html) and [`Portable`](https://docs.rs/rkyv/latest/rkyv/trait.Portable.html) traits for `Uint` and `Bits`.
   Implements [`ArchivedUint`](https://docs.rs/ruint/latest/ruint/support/rkyv/struct.ArchivedUint.html) and [`ArchivedBits`](https://docs.rs/ruint/latest/ruint/support/rkyv/struct.ArchivedBits.html) types that can be used to access `Uint` and `Bits` values from an archive without needing to allocate new memory.
   This allows for zero-copy deserialization of `Uint` and `Bits` values.
+
 ## Building and testing
 
 Format, lint, build and test everything (I recommend creating a shell alias for this):

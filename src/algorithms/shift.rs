@@ -1,3 +1,5 @@
+/// ⚠️ Shift left small.
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn shift_left_small(limbs: &mut [u64], amount: usize) -> u64 {
     debug_assert!(amount < 64);
@@ -10,6 +12,8 @@ pub fn shift_left_small(limbs: &mut [u64], amount: usize) -> u64 {
     overflow
 }
 
+/// ⚠️ Shift right small.
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn shift_right_small(limbs: &mut [u64], amount: usize) -> u64 {
     debug_assert!(amount < 64);

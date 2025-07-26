@@ -3,8 +3,8 @@
 use super::{borrowing_sub, carrying_add, cmp};
 use core::{cmp::Ordering, iter::zip};
 
-/// Computes a * b * 2^(-BITS) mod modulus
-///
+/// ⚠️ Computes a * b * 2^(-BITS) mod modulus
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires that `inv` is the inverse of `-modulus[0]` modulo `2^64`.
 /// Requires that `a` and `b` are less than `modulus`.
 #[inline]
@@ -60,8 +60,8 @@ pub fn mul_redc<const N: usize>(a: [u64; N], b: [u64; N], modulus: [u64; N], inv
     reduce1_carry(result, modulus, carry)
 }
 
-/// Computes a^2 * 2^(-BITS) mod modulus
-///
+/// ⚠️ Computes a^2 * 2^(-BITS) mod modulus
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires that `inv` is the inverse of `-modulus[0]` modulo `2^64`.
 /// Requires that `a` is less than `modulus`.
 #[inline]

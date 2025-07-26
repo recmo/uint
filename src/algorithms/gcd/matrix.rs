@@ -3,9 +3,7 @@
 use crate::Uint;
 
 /// ⚠️ Lehmer update matrix
-///
-/// **Warning.** This struct is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Signs are implicit, the boolean `.4` encodes which of two sign
 /// patterns applies. The signs and layout of the matrix are:
 ///
@@ -20,7 +18,8 @@ pub struct Matrix(pub u64, pub u64, pub u64, pub u64, pub bool);
 impl Matrix {
     pub const IDENTITY: Self = Self(1, 0, 0, 1, true);
 
-    /// Returns the matrix product `self * other`.
+    /// ⚠️ Returns the matrix product `self * other`.
+    #[doc = crate::algorithms::unstable_warning!()]
     #[inline]
     #[allow(clippy::suspicious_operation_groupings)]
     #[must_use]
@@ -34,7 +33,8 @@ impl Matrix {
         )
     }
 
-    /// Applies the matrix to a `Uint`.
+    /// ⚠️ Applies the matrix to a `Uint`.
+    #[doc = crate::algorithms::unstable_warning!()]
     #[inline]
     pub fn apply<const BITS: usize, const LIMBS: usize>(
         &self,
@@ -61,7 +61,8 @@ impl Matrix {
         *b = d;
     }
 
-    /// Applies the matrix to a `u128`.
+    /// ⚠️ Applies the matrix to a `u128`.
+    #[doc = crate::algorithms::unstable_warning!()]
     #[inline]
     #[must_use]
     pub const fn apply_u128(&self, a: u128, b: u128) -> (u128, u128) {
@@ -88,8 +89,9 @@ impl Matrix {
         }
     }
 
-    /// Compute a Lehmer update matrix from two `Uint`s.
-    ///
+    #[allow(clippy::missing_panics_doc)] // False positive.
+    /// ⚠️ Compute a Lehmer update matrix from two `Uint`s.
+    #[doc = crate::algorithms::unstable_warning!()]
     /// # Panics
     ///
     /// Panics if `b > a`.
@@ -114,8 +116,8 @@ impl Matrix {
         }
     }
 
-    /// Compute the Lehmer update matrix for small values.
-    ///
+    /// ⚠️ Compute the Lehmer update matrix for small values.
+    #[doc = crate::algorithms::unstable_warning!()]
     /// This is essentially Euclids extended GCD algorithm for 64 bits.
     ///
     /// # Panics
@@ -153,8 +155,8 @@ impl Matrix {
         }
     }
 
-    /// Compute the largest valid Lehmer update matrix for a prefix.
-    ///
+    /// ⚠️ Compute the largest valid Lehmer update matrix for a prefix.
+    #[doc = crate::algorithms::unstable_warning!()]
     /// Compute the Lehmer update matrix for a0 and a1 such that the matrix is
     /// valid for any two large integers starting with the bits of a0 and
     /// a1.
@@ -288,8 +290,8 @@ impl Matrix {
         }
     }
 
-    /// Compute the Lehmer update matrix in full 64 bit precision.
-    ///
+    /// ⚠️ Compute the Lehmer update matrix in full 64 bit precision.
+    #[doc = crate::algorithms::unstable_warning!()]
     /// Jebelean solves this by starting in double-precission followed
     /// by single precision once values are small enough.
     /// Cohen instead runs a single precision round, refreshes the r0 and r1

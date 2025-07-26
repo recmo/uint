@@ -1,9 +1,19 @@
 //! ⚠️ Collection of bignum algorithms.
 //!
-//! **Warning.** Most functions in this module are currently not considered part
-//! of the stable API and may be changed or removed in future minor releases.
+//! <div class="warning">
+//! Functions in this module are currently not considered part of the stable API
+//! and may be changed or removed in future minor releases, without prior
+//! notice.
+//! </div>
 
 #![allow(missing_docs)] // TODO: document algorithms
+
+macro_rules! unstable_warning {
+    () => {
+        "\n\n<div class=\"warning\">⚠️ This function is not part of the stable API.</div>\n\n"
+    };
+}
+pub(crate) use unstable_warning;
 
 use core::cmp::Ordering;
 
@@ -84,8 +94,8 @@ impl DoubleWord<u64> for u128 {
     }
 }
 
-/// Compare two limb slices in reverse order.
-///
+/// ⚠️ Compare two limb slices in reverse order.
+#[doc = crate::algorithms::unstable_warning!()]
 /// Assumes that if the slices are of different length, the longer slice is
 /// always greater than the shorter slice.
 #[inline(always)]

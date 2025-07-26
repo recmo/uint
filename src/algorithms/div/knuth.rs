@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// ⚠️ In-place Knuth normalized long division with reciprocals.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// # Conditions of Use
 ///
 /// * The highest (most-significant) bit of the divisor MUST be set.
@@ -75,7 +75,7 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 }
 
 /// ⚠️ In-place Knuth long division with implicit normalization and reciprocals.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// # Conditions of use:
 ///
 /// * `divisor` MUST NOT be empty.
