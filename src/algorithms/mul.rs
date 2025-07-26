@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::algorithms::{ops::sbb, DoubleWord};
+use crate::algorithms::{borrowing_sub, DoubleWord};
 
 /// ⚠️ Computes `result += a * b` and checks for overflow.
 ///
@@ -167,16 +167,16 @@ pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     assume!(lhs.len() == a.len());
     let mut carry = 0;
-    let mut borrow = 0;
+    let mut borrow = false;
     for i in 0..a.len() {
         // Compute product limbs
         let limb;
         (limb, carry) = u128::muladd(a[i], b, carry).split();
 
         // Subtract
-        (lhs[i], borrow) = sbb(lhs[i], limb, borrow);
+        (lhs[i], borrow) = borrowing_sub(lhs[i], limb, borrow);
     }
-    borrow + carry
+    borrow as u64 + carry
 }
 
 #[cfg(test)]
