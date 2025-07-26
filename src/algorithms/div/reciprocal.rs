@@ -11,7 +11,7 @@ use core::num::Wrapping;
 pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
 
 /// ⚠️ Computes $\floor{\frac{2^{128} - 1}{\mathtt{d}}} - 2^{64}$.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires $\mathtt{d} ≥ 2^{127}$, i.e. the highest bit of $\mathtt{d}$ must
 /// be set.
 #[inline(always)]
@@ -25,7 +25,7 @@ pub fn reciprocal_ref(d: u64) -> u64 {
 }
 
 /// ⚠️ Computes $\floor{\frac{2^{128} - 1}{\mathsf{d}}} - 2^{64}$.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires $\mathsf{d} ∈ [2^{63}, 2^{64})$, i.e. the highest bit of
 /// $\mathsf{d}$ must be set.
 ///
@@ -94,7 +94,7 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
 }
 
 /// ⚠️ Computes $\floor{\frac{2^{192} - 1}{\mathsf{d}}} - 2^{64}$.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires $\mathsf{d} ∈ [2^{127}, 2^{128})$, i.e. the most significant bit
 /// of $\mathsf{d}$ must be set.
 ///

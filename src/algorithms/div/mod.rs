@@ -29,9 +29,7 @@ pub use self::{
 use crate::algorithms::DoubleWord;
 
 /// ⚠️ Division with remainder.
-///
-/// **Warning.** This function is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// The quotient is stored in the `numerator` and the remainder is stored
 /// in the `divisor`.
 ///

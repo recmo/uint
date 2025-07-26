@@ -1,5 +1,5 @@
-/// Add with carry.
-///
+/// ⚠️ Add with carry.
+#[doc = crate::algorithms::unstable_warning!()]
 /// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
 #[inline]
 #[must_use]
@@ -16,8 +16,8 @@ pub const fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
     }
 }
 
-/// Sub with borrow.
-///
+/// ⚠️ Sub with borrow.
+#[doc = crate::algorithms::unstable_warning!()]
 /// Helper while [Rust#85532](https://github.com/rust-lang/rust/issues/85532) stabilizes.
 #[inline]
 #[must_use]
@@ -34,7 +34,8 @@ pub const fn borrowing_sub(lhs: u64, rhs: u64, borrow: bool) -> (u64, bool) {
     }
 }
 
-/// `lhs += rhs + carry`
+/// ⚠️ `lhs += rhs + carry`
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn carrying_add_n(lhs: &mut [u64], rhs: &[u64], mut carry: bool) -> bool {
     debug_assert!(lhs.len() == rhs.len());
@@ -44,7 +45,8 @@ pub fn carrying_add_n(lhs: &mut [u64], rhs: &[u64], mut carry: bool) -> bool {
     carry
 }
 
-/// `lhs -= rhs - borrow`
+/// ⚠️ `lhs -= rhs - borrow`
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn borrowing_sub_n(lhs: &mut [u64], rhs: &[u64], mut borrow: bool) -> bool {
     debug_assert!(lhs.len() == rhs.len());

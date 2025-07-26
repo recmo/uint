@@ -10,9 +10,7 @@ use crate::Uint;
 use core::mem::swap;
 
 /// ⚠️ Lehmer's GCD algorithms.
-///
-/// **Warning.** This struct is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// See [`gcd_extended`] for documentation.
 #[inline]
 #[must_use]
@@ -40,9 +38,7 @@ pub fn gcd<const BITS: usize, const LIMBS: usize>(
 }
 
 /// ⚠️ Lehmer's extended GCD.
-///
-/// **Warning.** This struct is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Returns `(gcd, x, y, sign)` such that `gcd = a * x + b * y`.
 ///
 /// # Algorithm
@@ -124,7 +120,7 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
 }
 
 /// ⚠️ Modular inversion using extended GCD.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// It uses the Bezout identity
 ///
 /// ```text
