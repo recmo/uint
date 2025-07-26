@@ -2,7 +2,7 @@
 
 use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
 use crate::{
-    algorithms::{add::adc_n, mul::submul_nx1},
+    algorithms::{add::carrying_add_n, mul::submul_nx1},
     utils::{likely, unlikely},
 };
 
@@ -64,9 +64,9 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
         // We correct by decrementing the quotient and adding one divisor back.
         if unlikely(borrow) {
             q = q.wrapping_sub(1);
-            let carry = adc_n(&mut numerator[j..j + n], &divisor[..n], 0);
+            let carry = carrying_add_n(&mut numerator[j..j + n], &divisor[..n], false);
             // Expect carry because we flip sign back to positive.
-            debug_assert_eq!(carry, 1);
+            debug_assert!(carry);
         }
 
         // Store quotient in the unused bits of numerator
@@ -163,9 +163,9 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                 // We correct by decrementing the quotient and adding one divisor back.
                 if unlikely(borrow) {
                     q = q.wrapping_sub(1);
-                    let carry = adc_n(&mut numerator[j..j + n], &divisor[..n], 0);
+                    let carry = carrying_add_n(&mut numerator[j..j + n], &divisor[..n], false);
                     // Expect carry because we flip sign back to positive.
-                    debug_assert_eq!(carry, 1);
+                    debug_assert!(carry);
                 }
             }
             q
@@ -194,7 +194,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::{addmul, cmp, sbb_n};
+    use crate::algorithms::{addmul, borrowing_sub_n, cmp};
     use core::cmp::Ordering;
     use proptest::{
         collection, num, proptest,
@@ -318,8 +318,8 @@ mod tests {
             let remainder =
                 collection::vec(num::u64::ANY, divisor.len()).prop_map(move |mut vec| {
                     if cmp(&vec, &d) != Ordering::Less {
-                        let carry = sbb_n(&mut vec, &d, 0);
-                        assert_eq!(carry, 0);
+                        let borrow = borrowing_sub_n(&mut vec, &d, false);
+                        assert!(!borrow);
                     }
                     vec
                 });
