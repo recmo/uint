@@ -65,6 +65,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
 
     if super::cmp(numerator, divisor).is_lt() {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
+        assume!(numerator.len() <= divisor.len()); // `a < b` implies `a.len() <= b.len()`.
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
         padding.fill(0);
@@ -76,11 +77,12 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     // Compute quotient and remainder, branching out to different algorithms.
     if divisor.len() <= 2 {
         if let [divisor] = divisor {
-            assume!(*divisor != 0); // Elides division by 0 check.
+            let d = *divisor;
             if let [numerator] = numerator {
-                (*numerator, *divisor) = div_1x1(*numerator, *divisor);
+                assume!(d != 0); // Elides division by 0 check.
+                (*numerator, *divisor) = div_1x1(*numerator, d);
             } else {
-                *divisor = div_nx1(numerator, *divisor);
+                *divisor = div_nx1(numerator, d);
             }
         } else {
             let d = u128::join(divisor[1], divisor[0]);

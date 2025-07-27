@@ -6,6 +6,7 @@
 //! [new]: https://gmplib.org/list-archives/gmp-devel/2019-October/005590.html
 #![allow(dead_code, clippy::cast_possible_truncation, clippy::cast_lossless)]
 
+use crate::algorithms::DoubleWord;
 use core::num::Wrapping;
 
 pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
@@ -137,20 +138,13 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
 #[inline]
 #[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let r = a * b;
-    Wrapping((r >> 64) as u64)
+    Wrapping(u128::mul(a.0, b.0).high())
 }
 
 #[inline]
 #[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let c = u128::from(c.0);
-    let r = a * b + c;
-    Wrapping((r >> 64) as u64)
+    Wrapping(u128::muladd(a.0, b.0, c.0).high())
 }
 
 #[cfg(test)]
