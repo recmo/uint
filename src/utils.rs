@@ -2,6 +2,64 @@
 #[allow(unused_imports)]
 use alloc::vec::Vec;
 
+/// A wrapper around a slice that panics on out-of-bounds indexing only in debug
+/// mode.
+///
+/// This is a better default for this crate since it is critical for performance
+/// to remove these checks in optimized builds.
+#[repr(transparent)]
+pub(crate) struct UncheckedSlice<T>([T]);
+
+impl<T> UncheckedSlice<T> {
+    #[inline]
+    pub(crate) const fn wrap(slice: &[T]) -> &Self {
+        // SAFETY: `#[repr(transparent)]`.
+        unsafe { &*(slice as *const [T] as *const Self) }
+    }
+
+    #[inline]
+    pub(crate) fn wrap_mut(slice: &mut [T]) -> &mut Self {
+        // SAFETY: `#[repr(transparent)]`.
+        unsafe { &mut *(slice as *mut [T] as *mut Self) }
+    }
+}
+
+impl<T> core::ops::Deref for UncheckedSlice<T> {
+    type Target = [T];
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl<T> core::ops::DerefMut for UncheckedSlice<T> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<T, I: core::slice::SliceIndex<[T]>> core::ops::Index<I> for UncheckedSlice<T> {
+    type Output = <I as core::slice::SliceIndex<[T]>>::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        #[cfg(debug_assertions)]
+        return self.0.index(index);
+        #[cfg(not(debug_assertions))]
+        return unsafe { self.0.get_unchecked(index) };
+    }
+}
+impl<T, I: core::slice::SliceIndex<[T]>> core::ops::IndexMut<I> for UncheckedSlice<T> {
+    #[inline]
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        #[cfg(debug_assertions)]
+        return self.0.index_mut(index);
+        #[cfg(not(debug_assertions))]
+        return unsafe { self.0.get_unchecked_mut(index) };
+    }
+}
+
 /// Like `a % b` but returns `b` instead of `0`.
 #[allow(dead_code)] // This is used by some support features.
 #[must_use]

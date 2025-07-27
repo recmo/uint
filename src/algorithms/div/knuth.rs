@@ -3,7 +3,7 @@
 use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
 use crate::{
     algorithms::{add::carrying_add_n, mul::submul_nx1},
-    utils::{likely, unlikely},
+    utils::{likely, unlikely, UncheckedSlice},
 };
 
 /// ⚠️ In-place Knuth normalized long division with reciprocals.
@@ -23,6 +23,9 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() >= divisor.len());
     debug_assert!(*divisor.last().unwrap() >= (1 << 63));
+
+    let numerator = UncheckedSlice::wrap_mut(numerator);
+    let divisor = UncheckedSlice::wrap(divisor);
 
     let n = divisor.len();
     let m = numerator.len() - n - 1;
@@ -90,8 +93,11 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 #[allow(clippy::many_single_char_names)]
 pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(divisor.len() >= 3);
-    debug_assert!(numerator.len() >= divisor.len());
+    assume!(numerator.len() >= divisor.len()); // Elides the check in `copy_within`.
     debug_assert!(*divisor.last().unwrap() >= 1);
+
+    let numerator = UncheckedSlice::wrap_mut(numerator);
+    let divisor = UncheckedSlice::wrap_mut(divisor);
 
     let n = divisor.len();
     let m = numerator.len() - n;
@@ -115,7 +121,8 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
 
     // Compute the quotient one limb at a time.
     let mut q_high = 0;
-    for j in (0..=m).rev() {
+    #[allow(clippy::range_plus_one)] // Inclusive ranges optimize worse.
+    for j in (0..m + 1).rev() {
         // Fetch the first three limbs of the shifted numerator starting at `j + n`.
         let (n21, n0) = {
             let n2 = numerator.get(j + n).copied().unwrap_or_default();
