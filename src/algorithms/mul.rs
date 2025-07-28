@@ -1,11 +1,9 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::algorithms::{ops::sbb, DoubleWord};
+use crate::algorithms::{borrowing_sub, DoubleWord};
 
 /// ⚠️ Computes `result += a * b` and checks for overflow.
-///
-/// **Warning.** This function is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// Arrays are in little-endian order. All arrays can be arbitrary sized.
 ///
 /// # Algorithm
@@ -78,9 +76,7 @@ const ADDMUL_N_SMALL_LIMIT: usize = 8;
 
 /// ⚠️ Computes wrapping `result += a * b`, with a fast-path for when all inputs
 /// are the same length and small enough.
-///
-/// **Warning.** This function is not part of the stable API.
-///
+#[doc = crate::algorithms::unstable_warning!()]
 /// See [`addmul`] for more details.
 #[inline(always)]
 pub fn addmul_n(lhs: &mut [u64], a: &[u64], b: &[u64]) {
@@ -107,7 +103,8 @@ fn addmul_n_small(lhs: &mut [u64], a: &[u64], b: &[u64]) {
     }
 }
 
-/// Computes `lhs += a` and returns the carry.
+/// ⚠️ Computes `lhs += a` and returns the carry.
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
     if a == 0 {
@@ -122,7 +119,8 @@ pub fn add_nx1(lhs: &mut [u64], mut a: u64) -> u64 {
     a
 }
 
-/// Computes `lhs *= a` and returns the carry.
+/// ⚠️ Computes `lhs *= a` and returns the carry.
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     let mut carry = 0;
@@ -132,8 +130,8 @@ pub fn mul_nx1(lhs: &mut [u64], a: u64) -> u64 {
     carry
 }
 
-/// Computes `lhs += a * b` and returns the carry.
-///
+/// ⚠️ Computes `lhs += a * b` and returns the carry.
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires `lhs.len() == a.len()`.
 ///
 /// $$
@@ -152,8 +150,8 @@ pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     carry
 }
 
-/// Computes `lhs -= a * b` and returns the borrow.
-///
+/// ⚠️ Computes `lhs -= a * b` and returns the borrow.
+#[doc = crate::algorithms::unstable_warning!()]
 /// Requires `lhs.len() == a.len()`.
 ///
 /// $$
@@ -167,16 +165,16 @@ pub fn addmul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
 pub fn submul_nx1(lhs: &mut [u64], a: &[u64], b: u64) -> u64 {
     assume!(lhs.len() == a.len());
     let mut carry = 0;
-    let mut borrow = 0;
+    let mut borrow = false;
     for i in 0..a.len() {
         // Compute product limbs
         let limb;
         (limb, carry) = u128::muladd(a[i], b, carry).split();
 
         // Subtract
-        (lhs[i], borrow) = sbb(lhs[i], limb, borrow);
+        (lhs[i], borrow) = borrowing_sub(lhs[i], limb, borrow);
     }
-    borrow + carry
+    borrow as u64 + carry
 }
 
 #[cfg(test)]
