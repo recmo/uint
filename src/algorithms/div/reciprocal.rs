@@ -6,6 +6,7 @@
 //! [new]: https://gmplib.org/list-archives/gmp-devel/2019-October/005590.html
 #![allow(dead_code, clippy::cast_possible_truncation, clippy::cast_lossless)]
 
+use crate::algorithms::DoubleWord;
 use core::num::Wrapping;
 
 pub use self::{reciprocal_2_mg10 as reciprocal_2, reciprocal_mg10 as reciprocal};
@@ -105,13 +106,11 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
 #[must_use]
 pub fn reciprocal_2_mg10(d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
-    let d1 = (d >> 64) as u64;
-    let d0 = d as u64;
+    let (d0, d1) = d.split();
 
     let mut v = reciprocal(d1);
-    let mut p = d1.wrapping_mul(v).wrapping_add(d0);
-    // OPT: This is checking the carry flag
-    if p < d0 {
+    let (mut p, overflow) = d1.wrapping_mul(v).overflowing_add(d0);
+    if overflow {
         v = v.wrapping_sub(1);
         if p >= d1 {
             v = v.wrapping_sub(1);
@@ -119,15 +118,12 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
         }
         p = p.wrapping_sub(d1);
     }
-    let t = u128::from(v) * u128::from(d0);
-    let t1 = (t >> 64) as u64;
-    let t0 = t as u64;
+    let (t0, t1) = u128::mul(v, d0).split();
 
-    let p = p.wrapping_add(t1);
-    // OPT: This is checking the carry flag
-    if p < t1 {
+    let (p, overflow) = p.overflowing_add(t1);
+    if overflow {
         v = v.wrapping_sub(1);
-        if (u128::from(p) << 64) | u128::from(t0) >= d {
+        if u128::join(p, t0) >= d {
             v = v.wrapping_sub(1);
         }
     }
@@ -137,20 +133,13 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
 #[inline]
 #[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let r = a * b;
-    Wrapping((r >> 64) as u64)
+    Wrapping(u128::mul(a.0, b.0).high())
 }
 
 #[inline]
 #[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
-    let a = u128::from(a.0);
-    let b = u128::from(b.0);
-    let c = u128::from(c.0);
-    let r = a * b + c;
-    Wrapping((r >> 64) as u64)
+    Wrapping(u128::muladd(a.0, b.0, c.0).high())
 }
 
 #[cfg(test)]
