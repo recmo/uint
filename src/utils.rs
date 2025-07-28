@@ -116,9 +116,31 @@ const fn max_pow_u64_impl(n: u64) -> u64 {
 pub(crate) use core::intrinsics::{likely, unlikely};
 
 #[cfg(not(feature = "nightly"))]
-pub(crate) use core::convert::identity as likely;
+#[inline(always)]
+#[cold]
+const fn cold_path() {}
+
 #[cfg(not(feature = "nightly"))]
-pub(crate) use core::convert::identity as unlikely;
+#[inline(always)]
+pub(crate) fn likely(b: bool) -> bool {
+    if b {
+        true
+    } else {
+        cold_path();
+        false
+    }
+}
+
+#[cfg(not(feature = "nightly"))]
+#[inline(always)]
+pub(crate) fn unlikely(b: bool) -> bool {
+    if b {
+        cold_path();
+        true
+    } else {
+        false
+    }
+}
 
 #[cfg(test)]
 mod tests {
