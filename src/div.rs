@@ -46,7 +46,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// # Panics
     ///
     /// Panics if `rhs == 0`.
-    #[inline]
+    #[inline(always)]
     #[must_use]
     #[track_caller]
     pub fn div_rem(mut self, mut rhs: Self) -> (Self, Self) {
@@ -55,9 +55,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             let r = &mut rhs.limbs[0];
             (*q, *r) = algorithms::div::div_1x1(*q, *r);
         } else {
-            algorithms::div(&mut self.limbs, &mut rhs.limbs);
+            Self::div_rem_by_ref(&mut self, &mut rhs);
         }
         (self, rhs)
+    }
+
+    #[inline(never)]
+    pub(crate) fn div_rem_by_ref(numerator: &mut Self, rhs: &mut Self) {
+        algorithms::div::div_inlined(&mut numerator.limbs, &mut rhs.limbs);
     }
 
     /// Computes `self / rhs` rounding down.

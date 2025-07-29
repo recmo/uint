@@ -26,7 +26,7 @@ pub use self::{
         div_nx1_normalized, div_nx2, div_nx2_normalized,
     },
 };
-use crate::algorithms::DoubleWord;
+use crate::{algorithms::DoubleWord, utils::cold_path};
 
 /// ⚠️ Division with remainder.
 #[doc = crate::algorithms::unstable_warning!()]
@@ -45,6 +45,16 @@ use crate::algorithms::DoubleWord;
 #[inline]
 #[cfg_attr(debug_assertions, track_caller)]
 pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
+    div_inlined(numerator, divisor);
+}
+
+/// Separate definition of [`div`] to force inlining.
+///
+/// We want to inline this function where statically we know the size of the
+/// parameters to allow for more optimizations.
+#[inline(always)]
+#[cfg_attr(debug_assertions, track_caller)]
+pub(crate) fn div_inlined(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
     let divisor = super::trim_end_zeros_mut(divisor);
     if divisor.is_empty() {
@@ -58,6 +68,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
     let numerator = super::trim_end_zeros_mut(numerator);
     if numerator.is_empty() {
         // Empty numerator: (q, r) = (0, 0)
+        cold_path();
         divisor.fill(0);
         return;
     }
@@ -65,6 +76,7 @@ pub fn div(numerator: &mut [u64], divisor: &mut [u64]) {
 
     if super::cmp(numerator, divisor).is_lt() {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
+        cold_path();
         // `a < b` implies `a.len() <= b.len()`, after trimming most significant zeros.
         assume!(numerator.len() <= divisor.len());
         let (remainder, padding) = divisor.split_at_mut(numerator.len());

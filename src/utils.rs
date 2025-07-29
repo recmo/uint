@@ -113,12 +113,12 @@ const fn max_pow_u64_impl(n: u64) -> u64 {
 
 // Branch prediction hints.
 #[cfg(feature = "nightly")]
-pub(crate) use core::intrinsics::{likely, unlikely};
+pub(crate) use core::intrinsics::{cold_path, likely, unlikely};
 
 #[cfg(not(feature = "nightly"))]
 #[inline(always)]
 #[cold]
-const fn cold_path() {}
+pub(crate) const fn cold_path() {}
 
 #[cfg(not(feature = "nightly"))]
 #[inline(always)]
