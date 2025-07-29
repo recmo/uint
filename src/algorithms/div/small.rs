@@ -31,7 +31,7 @@ pub const fn div_1x1(numerator: u64, divisor: u64) -> (u64, u64) {
 /// The divisor must be normalized. See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline]
+#[inline(always)]
 pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 63));
@@ -58,7 +58,7 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 /// # Panics
 ///
 /// May panic if the above requirements are not met.
-#[inline]
+#[inline(always)]
 pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor != 0);
     debug_assert!(!limbs.is_empty());
@@ -104,7 +104,7 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
 #[doc = crate::algorithms::unstable_warning!()]
 /// Requires `divisor` to be in the range $[2^{127}, 2^{128})$ (i.e.
 /// normalized). Same as [`div_nx1`] but using [`div_3x2`] internally.
-#[inline]
+#[inline(always)]
 pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 127));
@@ -127,7 +127,7 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 /// # Panics
 ///
 /// May panic if the above requirements are not met.
-#[inline]
+#[inline(always)]
 pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     debug_assert!(divisor >= 1 << 64);
     debug_assert!(!limbs.is_empty());

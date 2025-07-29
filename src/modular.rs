@@ -56,7 +56,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             numerator[limb] |= 1 << bit;
 
             // TODO(dani): const block
-            // TODO(dani): inline(always) all of algorithms/div
             // Reuse `div_rem` if we don't need an extra limb.
             if crate::nlimbs(BITS + 1) == LIMBS {
                 let numerator = unsafe { &mut *numerator.as_mut_ptr().cast::<Self>() };
