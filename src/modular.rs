@@ -87,22 +87,22 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub fn mul_mod(self, rhs: Self, mut modulus: Self) -> Self {
-        if modulus.is_zero() {
-            return Self::ZERO;
-        }
         self.mul_mod_by_ref(&rhs, &mut modulus);
         modulus
     }
 
+    #[inline(never)]
     fn mul_mod_by_ref(&self, rhs: &Self, modulus: &mut Self) {
-        assume!(!modulus.is_zero());
+        if modulus.is_zero() {
+            return;
+        }
         let_double_bits!(product);
         let overflow = algorithms::addmul(product, self.as_limbs(), rhs.as_limbs());
         debug_assert!(!overflow);
         Self::div_rem_double_bits(product, modulus);
     }
 
-    #[inline(never)]
+    #[inline]
     fn div_rem_double_bits(numerator: &mut [u64], modulus: &mut Self) {
         assume!(numerator.len() == crate::nlimbs(BITS * 2));
         algorithms::div::div_inlined(numerator, &mut modulus.limbs);
