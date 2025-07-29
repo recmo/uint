@@ -190,7 +190,7 @@ pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
 /// Implements algorithm 4 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline]
+#[inline(always)]
 #[must_use]
 pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
@@ -270,7 +270,7 @@ pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
 /// Implements [MG10] algorithm 5.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline]
+#[inline(always)]
 #[must_use]
 pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
     debug_assert!(d >= (1 << 127));
