@@ -48,7 +48,7 @@ pub fn reciprocal_ref(d: u64) -> u64 {
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 /// [intx]: https://github.com/chfast/intx/blob/8b5f4748a7386a9530769893dae26b3273e0ffe2/include/intx/intx.hpp#L683
-#[inline]
+#[inline(always)]
 #[must_use]
 pub fn reciprocal_mg10(d: u64) -> u64 {
     const ZERO: Wrapping<u64> = Wrapping(0);
@@ -102,7 +102,7 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
 /// Implements [MG10] algorithm 6.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
-#[inline]
+#[inline(always)]
 #[must_use]
 pub fn reciprocal_2_mg10(d: u128) -> u64 {
     debug_assert!(d >= (1 << 127));
@@ -130,13 +130,13 @@ pub fn reciprocal_2_mg10(d: u128) -> u64 {
     v
 }
 
-#[inline]
+#[inline(always)]
 #[must_use]
 fn mul_hi(a: Wrapping<u64>, b: Wrapping<u64>) -> Wrapping<u64> {
     Wrapping(u128::mul(a.0, b.0).high())
 }
 
-#[inline]
+#[inline(always)]
 #[must_use]
 fn muladd_hi(a: Wrapping<u64>, b: Wrapping<u64>, c: Wrapping<u64>) -> Wrapping<u64> {
     Wrapping(u128::muladd(a.0, b.0, c.0).high())
