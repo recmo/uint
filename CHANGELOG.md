@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for [bincode 2](https://github.com/bincode-org/bincode) ([#516])
+
+[#516]: https://github.com/recmo/uint/pull/516
+
 ## [1.16.0] - 2025-08-04
 
 ### Added
