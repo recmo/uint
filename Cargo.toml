@@ -46,6 +46,7 @@ arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
 bigdecimal = { version = "0.4", optional = true, default-features = false }
+bincode-2 = { version = "2", package = "bincode", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
 fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = [
     "alloc",
@@ -161,6 +162,7 @@ arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
 bigdecimal = ["dep:bigdecimal", "num-bigint"]
+bincode-2 = ["dep:bincode-2"]
 bn-rs = ["dep:bn-rs", "std"]
 borsh = ["dep:borsh"]
 bytemuck = ["dep:bytemuck"]
