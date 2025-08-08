@@ -8,6 +8,7 @@ mod ark_ff;
 mod ark_ff_04;
 mod ark_ff_05;
 mod bigdecimal;
+mod bincode_2;
 mod bn_rs;
 mod borsh;
 mod bytemuck;
