@@ -52,13 +52,13 @@ impl<Context, const BITS: usize, const LIMBS: usize> Decode<Context> for Uint<BI
 
         decoder.claim_bytes_read(len)?;
         let mut buffer = [0u64; LIMBS]; // not possible to use Self::BYTES or nbytes(BITS) here.
-                                        // SAFETY: We ensure that the buffer is large enough to hold the bytes
         let slice = unsafe {
-            let ptr = buffer.as_mut_ptr() as *mut u8;
+            // SAFETY: We ensure that the buffer is large enough to hold the bytes
+            let ptr = buffer.as_mut_ptr().cast::<u8>();
             core::slice::from_raw_parts_mut(ptr, Self::BYTES)
         };
         decoder.reader().read(slice)?;
-        Ok(Uint::from_le_slice(&*slice))
+        Ok(Self::from_le_slice(&*slice))
     }
 }
 
@@ -78,7 +78,7 @@ impl<'de, Context, const BITS: usize, const LIMBS: usize> BorrowDecode<'de, Cont
                 found:    bytes.len(),
             });
         }
-        Ok(Uint::from_le_slice(&bytes))
+        Ok(Self::from_le_slice(bytes))
     }
 }
 
@@ -91,7 +91,7 @@ impl<const BITS: usize, const LIMBS: usize> Encode for Bits<BITS, LIMBS> {
 impl<Context, const BITS: usize, const LIMBS: usize> Decode<Context> for Bits<BITS, LIMBS> {
     fn decode<D: Decoder<Context = Context>>(decoder: &mut D) -> Result<Self, DecodeError> {
         let uint: Uint<BITS, LIMBS> = Decode::decode(decoder)?;
-        Ok(Bits::from(uint))
+        Ok(Self::from(uint))
     }
 }
 
@@ -102,7 +102,7 @@ impl<'de, Context, const BITS: usize, const LIMBS: usize> BorrowDecode<'de, Cont
         decoder: &mut D,
     ) -> Result<Self, DecodeError> {
         let uint: Uint<BITS, LIMBS> = BorrowDecode::borrow_decode(decoder)?;
-        Ok(Bits::from(uint))
+        Ok(Self::from(uint))
     }
 }
 
@@ -135,21 +135,21 @@ mod tests {
             const BUFFER_SIZE: usize = nbytes(BITS) + 8; // usize length takes at most 8 bytes
             proptest!(|(value: Uint<BITS, LIMBS>)| {
                 let mut buffer = [0u8; BUFFER_SIZE];
-                let bytes_written = encode_into_slice(&value, &mut buffer, config).unwrap();
-                let (deserialized, bytes_read) = decode_from_slice(&buffer, config).unwrap();
+                let bytes_written = encode_into_slice(value, &mut buffer, config).unwrap();
+                let (deserialized, bytes_read) = decode_from_slice::<Uint<BITS, LIMBS>, _>(&buffer, config).unwrap();
                 assert_eq!(bytes_read, bytes_written);
                 assert_eq!(value, deserialized);
-                let (deserialized, bytes_read) = borrow_decode_from_slice(&buffer, config).unwrap();
+                let (deserialized, bytes_read) = borrow_decode_from_slice::<Uint<BITS, LIMBS>, _>(&buffer, config).unwrap();
                 assert_eq!(bytes_read, bytes_written);
                 assert_eq!(value, deserialized);
             });
             proptest!(|(value: Bits<BITS, LIMBS>)| {
                 let mut buffer = [0u8; BUFFER_SIZE];
-                let bytes_written = encode_into_slice(&value, &mut buffer, config).unwrap();
-                let (deserialized, bytes_read) = decode_from_slice(&buffer, config).unwrap();
+                let bytes_written = encode_into_slice(value, &mut buffer, config).unwrap();
+                let (deserialized, bytes_read) = decode_from_slice::<Bits<BITS, LIMBS>, _>(&buffer, config).unwrap();
                 assert_eq!(bytes_read, bytes_written);
                 assert_eq!(value, deserialized);
-                let (deserialized, bytes_read) = borrow_decode_from_slice(&buffer, config).unwrap();
+                let (deserialized, bytes_read) = borrow_decode_from_slice::<Bits<BITS, LIMBS>, _>(&buffer, config).unwrap();
                 assert_eq!(bytes_read, bytes_written);
                 assert_eq!(value, deserialized);
             });
