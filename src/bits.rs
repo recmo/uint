@@ -327,10 +327,37 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// the shift is larger than `BITS` (which is IMHO not very useful).
     #[inline]
     #[must_use]
-    pub const fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
+    pub const fn overflowing_shl(mut self, rhs: usize) -> (Self, bool) {
+        if rhs == 0 {
+            // if there are no limbs and no bits, return self
+            return (self.masked(), false);
+        }
+
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
+        }
+
+        // if there are no leftover bits, shift over just the limbs
+        if bits == 0 {
+            // if the last limb is not zero, we would have overflowed
+            let overflowed = self.limbs[LIMBS - limbs] != 0;
+
+            let mut i = LIMBS - 1;
+            while i >= limbs {
+                self.limbs[i] = self.limbs[i - limbs];
+                i -= 1;
+            }
+
+            // zero out the rest of the limbs
+            while i > 0 {
+                self.limbs[i] = 0;
+                i -= 1;
+            }
+
+            self.limbs[0] = 0;
+
+            return (self.masked(), overflowed);
         }
 
         let word_bits = 64;
