@@ -392,6 +392,9 @@ pub mod __private {
     pub use ruint_macro;
 }
 
+#[cfg(feature = "uniffi")]
+uniffi::setup_scaffolding!();
+
 #[cfg(test)]
 mod test {
     use super::*;
