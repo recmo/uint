@@ -10,6 +10,7 @@ mod modular;
 mod mul;
 mod pow;
 mod root;
+mod string;
 
 pub(crate) mod prelude;
 
@@ -28,6 +29,7 @@ pub fn group(c: &mut criterion::Criterion) {
 
     base_convert::group(c);
     fmt::group(c);
+    string::group(c);
 
     algorithms::group(c);
 }
