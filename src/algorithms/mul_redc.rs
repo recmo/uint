@@ -129,6 +129,7 @@ fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool
     let (reduced, borrow) = sub(value, modulus);
     // TODO: Ideally this turns into a cmov, which makes the whole mul_redc constant
     // time.
+    // TODO(MSRV-1.88): Use `core::hint::select_unpredictable`.
     if carry | !borrow {
         reduced
     } else {

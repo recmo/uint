@@ -1,6 +1,3 @@
-// OPT: Use u64::from_{be/le}_bytes() to work 8 bytes at a time.
-// FEATURE: (BLOCKED) Make `const fn`s when `const_for` is stable.
-
 use crate::Uint;
 use core::slice;
 
@@ -12,7 +9,7 @@ use alloc::{borrow::Cow, vec::Vec};
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in bytes. Note that some bits may be
     /// forced zero if BITS is not cleanly divisible by eight.
-    pub const BYTES: usize = (BITS + 7) / 8;
+    pub const BYTES: usize = BITS.div_ceil(8);
 
     /// Access the underlying store as a little-endian slice of bytes.
     ///
@@ -39,7 +36,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[cfg(target_endian = "little")]
     #[must_use]
     #[inline(always)]
-    pub unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
+    pub const unsafe fn as_le_slice_mut(&mut self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.limbs.as_mut_ptr().cast(), Self::BYTES) }
     }
 
@@ -96,8 +93,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn to_le_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
-        // TODO: Use a `const {}` block for this assertion
-        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
+        const { Self::assert_bytes(BYTES) }
 
         // Specialized impl
         #[cfg(target_endian = "little")]
@@ -209,8 +205,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline]
     pub const fn from_be_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        // TODO: Use a `const {}` block for this assertion
-        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
+        const { Self::assert_bytes(BYTES) }
         Self::from_be_slice(&bytes)
     }
 
@@ -288,8 +283,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     #[inline]
     pub const fn from_le_bytes<const BYTES: usize>(bytes: [u8; BYTES]) -> Self {
-        // TODO: Use a `const {}` block for this assertion
-        assert!(BYTES == Self::BYTES, "BYTES must be equal to Self::BYTES");
+        const { Self::assert_bytes(BYTES) }
         Self::from_le_slice(&bytes)
     }
 
@@ -453,6 +447,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         Some(self.copy_be_bytes_to(buf))
     }
+
+    #[track_caller]
+    const fn assert_bytes(bytes: usize) {
+        assert!(bytes == Self::BYTES, "BYTES must be equal to Self::BYTES");
+    }
 }
 
 /// Number of bytes required to represent the given number of bits.
@@ -463,7 +462,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 #[inline]
 #[must_use]
 pub const fn nbytes(bits: usize) -> usize {
-    (bits + 7) / 8
+    bits.div_ceil(8)
 }
 
 #[cfg(test)]

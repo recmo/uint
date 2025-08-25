@@ -17,36 +17,31 @@ mod base {
         const MAX: u64 = crate::utils::max_pow_u64(Self::BASE);
         /// Number of characters written using `MAX` as the base in
         /// `to_base_be`.
-        // TODO(MSRV-1.67): = `Self::MAX.ilog(Self::BASE)`
-        const WIDTH: usize;
+        const WIDTH: usize = Self::MAX.ilog(Self::BASE) as _;
     }
 
     pub(super) struct Binary;
     impl Base for Binary {
         const BASE: u64 = 2;
         const PREFIX: &'static str = "0b";
-        const WIDTH: usize = 63;
     }
 
     pub(super) struct Octal;
     impl Base for Octal {
         const BASE: u64 = 8;
         const PREFIX: &'static str = "0o";
-        const WIDTH: usize = 21;
     }
 
     pub(super) struct Decimal;
     impl Base for Decimal {
         const BASE: u64 = 10;
         const PREFIX: &'static str = "";
-        const WIDTH: usize = 19;
     }
 
     pub(super) struct Hexadecimal;
     impl Base for Hexadecimal {
         const BASE: u64 = 16;
         const PREFIX: &'static str = "0x";
-        const WIDTH: usize = 15;
     }
 }
 use base::Base;

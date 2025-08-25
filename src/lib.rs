@@ -1,26 +1,5 @@
 #![doc = include_str!("../README.md")]
 #![doc(issue_tracker_base_url = "https://github.com/recmo/uint/issues/")]
-#![warn(
-    clippy::all,
-    clippy::pedantic,
-    clippy::nursery,
-    clippy::missing_inline_in_public_items,
-    clippy::std_instead_of_alloc,
-    clippy::std_instead_of_core,
-    missing_docs,
-    unreachable_pub
-)]
-#![allow(
-    clippy::doc_markdown, // Unfortunately many false positives on Latex.
-    clippy::inline_always,
-    clippy::module_name_repetitions,
-    clippy::redundant_pub_crate,
-    clippy::unreadable_literal,
-    clippy::let_unit_value,
-    clippy::option_if_let_else,
-    clippy::cast_sign_loss,
-    clippy::cast_lossless,
-)]
 #![cfg_attr(test, allow(clippy::wildcard_imports, clippy::cognitive_complexity))]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -112,14 +91,6 @@ pub mod nightly {
     /// See [`Uint`] for more information.
     pub type Bits<const BITS: usize> = crate::Bits<BITS, { crate::nlimbs(BITS) }>;
 }
-
-// FEATURE: (BLOCKED) Many functions could be made `const` if a number of
-// features land. This requires
-// #![feature(const_mut_refs)]
-// #![feature(const_float_classify)]
-// #![feature(const_fn_floating_point_arithmetic)]
-// #![feature(const_float_bits_conv)]
-// and more.
 
 /// Packed u128, for [`as_double_words`](Uint::as_double_words).
 #[derive(Clone, Copy)]
@@ -225,7 +196,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// size if the bit-size is not limb-aligned.
     #[inline(always)]
     #[must_use]
-    pub unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
+    pub const unsafe fn as_limbs_mut(&mut self) -> &mut [u64; LIMBS] {
         &mut self.limbs
     }
 
@@ -263,12 +234,14 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
                 "Value too large for this Uint"
             );
         }
+        let _ = Self::LIMBS; // Triggers the assertion.
         Self { limbs }
     }
 
     #[inline(always)]
     #[must_use]
     const fn from_limbs_unmasked(limbs: [u64; LIMBS]) -> Self {
+        let _ = Self::LIMBS; // Triggers the assertion.
         Self { limbs }.masked()
     }
 
@@ -341,7 +314,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     #[inline(always)]
-    fn apply_mask(&mut self) {
+    const fn apply_mask(&mut self) {
         if Self::SHOULD_MASK {
             self.limbs[LIMBS - 1] &= Self::MASK;
         }
@@ -349,9 +322,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
     #[inline(always)]
     const fn masked(mut self) -> Self {
-        if Self::SHOULD_MASK {
-            self.limbs[LIMBS - 1] &= Self::MASK;
-        }
+        self.apply_mask();
         self
     }
 }
@@ -368,7 +339,7 @@ impl<const BITS: usize, const LIMBS: usize> Default for Uint<BITS, LIMBS> {
 #[inline]
 #[must_use]
 pub const fn nlimbs(bits: usize) -> usize {
-    (bits + 63) / 64
+    bits.div_ceil(64)
 }
 
 /// Mask to apply to the highest limb to get the correct number of bits.

@@ -29,11 +29,42 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.85"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
 license = "MIT"
 homepage = "https://github.com/recmo/uint"
 repository = "https://github.com/recmo/uint"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+missing-inline-in-public-items = "warn"
+std-instead-of-alloc = "warn"
+std-instead-of-core = "warn"
+
+doc-markdown = "allow" # Unfortunately many false positives on Latex.
+inline-always = "allow"
+module-name-repetitions = "allow"
+redundant-pub-crate = "allow"
+unreadable-literal = "allow"
+let-unit-value = "allow"
+option-if-let-else = "allow"
+cast-sign-loss = "allow"
+cast-lossless = "allow"
+
+[workspace.lints.rust]
+missing-copy-implementations = "warn"
+missing-debug-implementations = "warn"
+missing-docs = "warn"
+rust-2018-idioms = "warn"
+unreachable-pub = "warn"
+unused-must-use = "warn"
+redundant-lifetimes = "warn"
+unnameable-types = "warn"
+
+[workspace.lints.rustdoc]
+all = "warn"
 
 [dependencies]
 ruint-macro = { version = "1.2.1", path = "ruint-macro" }
@@ -141,7 +172,6 @@ std = [
     "valuable?/std",
     "zeroize?/std",
 ]
-ssz = ["std", "dep:ethereum_ssz"]
 alloc = [
     "proptest?/alloc",
     "rand-08?/alloc",
@@ -183,6 +213,7 @@ rkyv = ["dep:rkyv", "alloc"]
 rlp = ["dep:rlp", "alloc"]
 serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
 sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
+ssz = ["dep:ethereum_ssz", "std"]
 subtle = ["dep:subtle"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]

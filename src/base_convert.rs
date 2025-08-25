@@ -393,10 +393,7 @@ impl<const LIMBS: usize> SpigotBuf<LIMBS> {
         base = crate::utils::max_pow_u64(base);
 
         let mut buf = [[MaybeUninit::uninit(); 2]; LIMBS];
-        // TODO(MSRV-1.80): let as_slice = buf.as_flattened_mut();
-        let as_slice = unsafe {
-            core::slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<MaybeUninit<u64>>(), LIMBS * 2)
-        };
+        let as_slice = buf.as_flattened_mut();
         let mut i = 0;
         for limb in SpigotLittle::new(limbs, base) {
             debug_assert!(

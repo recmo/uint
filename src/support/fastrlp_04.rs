@@ -21,7 +21,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
         if bits <= 7 {
             1
         } else {
-            let bytes = (bits + 7) / 8;
+            let bytes = bits.div_ceil(8);
             bytes + length_of_length(bytes)
         }
     }
@@ -56,7 +56,7 @@ impl<const BITS: usize, const LIMBS: usize> Encodable for Uint<BITS, LIMBS> {
                 #[cfg(target_endian = "big")]
                 let bytes = self.to_be_bytes_vec();
 
-                let leading_zero_bytes = Self::BYTES - (bits + 7) / 8;
+                let leading_zero_bytes = Self::BYTES - bits.div_ceil(8);
                 let trimmed = &bytes[leading_zero_bytes..];
                 if bits > MAX_BITS {
                     trimmed.encode(out);
