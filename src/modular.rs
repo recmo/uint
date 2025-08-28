@@ -55,9 +55,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             numerator[..LIMBS].copy_from_slice(result.as_limbs());
             numerator[limb] |= 1 << bit;
 
-            // TODO(dani): const block
             // Reuse `div_rem` if we don't need an extra limb.
-            if crate::nlimbs(BITS + 1) == LIMBS {
+            if const { crate::nlimbs(BITS + 1) == LIMBS } {
                 let numerator = unsafe { &mut *numerator.as_mut_ptr().cast::<Self>() };
                 Self::div_rem_by_ref(numerator, &mut modulus);
             } else {
