@@ -524,71 +524,80 @@ impl_from_signed_int!(isize, usize);
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;
 
-    // TODO: Correctly implement wrapping.
     #[inline]
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        if value.is_nan() {
-            return Err(ToUintError::NotANumber(BITS));
-        }
-        if value < 0.0 {
-            let wrapped = match Self::try_from(value.abs()) {
-                Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
-                _ => Self::ZERO,
-            }
-            .wrapping_neg();
-            return Err(ToUintError::ValueNegative(BITS, wrapped));
-        }
-        #[allow(clippy::cast_precision_loss)] // BITS is small-ish
-        let modulus = (Self::BITS as f64).exp2();
-        if value >= modulus {
-            let wrapped = match Self::try_from(value % modulus) {
-                Ok(n) | Err(ToUintError::ValueTooLarge(_, n)) => n,
-                _ => Self::ZERO,
-            };
-            return Err(ToUintError::ValueTooLarge(BITS, wrapped)); // Wrapping
-        }
+        // mimics Rust's own float to int conversion
+        // https://github.com/rust-lang/compiler-builtins/blob/f4c7940d3b13ec879c9fdc218812f71a65149123/src/float/conv.rs#L163
+
+        let f = value;
+        let fixint_min = Self::ZERO;
+        let fixint_max = Self::MAX;
+        let fixint_bits = Self::BITS;
+        let fixint_unsigned = fixint_min == Self::ZERO;
+
+        let sign_bit = 0x8000_0000_0000_0000u64;
+        let significand_bits = 52usize;
+        let exponent_bias = 1023usize;
+
         if value < 0.5 {
             return Ok(Self::ZERO);
         }
-        // All non-normal cases should have been handled above
-        assert!(value.is_normal());
 
-        // Add offset to round to nearest integer.
-        let value = value + 0.5;
+        // Break a into sign, exponent, significand
+        let a_rep = f.to_bits();
+        let a_abs = a_rep & !sign_bit;
 
-        // Parse IEEE-754 double
-        // Sign should be zero, exponent should be >= 0.
-        let bits = value.to_bits();
-        let sign = bits >> 63;
-        assert!(sign == 0);
-        let biased_exponent = (bits >> 52) & 0x7ff;
-        assert!(biased_exponent >= 1023);
-        let exponent = biased_exponent - 1023;
-        let fraction = bits & 0x000f_ffff_ffff_ffff;
-        let mantissa = 0x0010_0000_0000_0000 | fraction;
-
-        // Convert mantissa * 2^(exponent - 52) to Uint
-        #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
-        if exponent as usize > Self::BITS + 52 {
-            // Wrapped value is zero because the value is extended with zero bits.
-            return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO));
-        }
-        if exponent <= 52 {
-            // Truncate mantissa
-            Self::try_from(mantissa >> (52 - exponent))
+        // this is used to work around -1 not being available for unsigned
+        let sign = if (a_rep & sign_bit) == 0 {
+            Sign::Positive
         } else {
-            #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
-            let exponent = exponent as usize - 52;
-            let n = Self::try_from(mantissa)?;
-            let (n, overflow) = n.overflowing_shl(exponent);
-            if overflow {
-                Err(ToUintError::ValueTooLarge(BITS, n))
-            } else {
-                Ok(n)
-            }
+            Sign::Negative
+        };
+        let mut exponent = (a_abs >> significand_bits) as usize;
+        let significand = (a_abs & ((1u64 << significand_bits) - 1)) | (1u64 << significand_bits);
+
+        // if < 1 or unsigned & negative
+        if exponent < exponent_bias || fixint_unsigned && sign == Sign::Negative {
+            return Err(ToUintError::ValueNegative(BITS, fixint_min));
         }
+        exponent -= exponent_bias;
+
+        // If the value is infinity, saturate.
+        // If the value is too large for the integer type, 0.
+        if exponent >= fixint_bits {
+            return if sign == Sign::Positive {
+                Err(ToUintError::ValueTooLarge(BITS, fixint_max))
+            } else {
+                Err(ToUintError::ValueNegative(BITS, fixint_min))
+            };
+        }
+
+        // If 0 <= exponent < significand_bits, right shift to get the result.
+        // Otherwise, shift left.
+        let r = if exponent < significand_bits {
+            // Round to nearest, ties to even
+            let shift = significand_bits - exponent;
+            let mut r = significand >> shift;
+            let remainder = significand & ((1u64 << shift) - 1);
+            let halfway = 1u64 << (shift - 1);
+            if remainder > halfway || (remainder == halfway && (r & 1) == 1) {
+                r = r.wrapping_add(1);
+            }
+            Self::from(r)
+        } else {
+            (Self::from(significand)) << (exponent - significand_bits)
+        };
+
+        Ok(r)
     }
 }
+
+#[derive(PartialEq)]
+enum Sign {
+    Positive,
+    Negative,
+}
+
 
 #[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> TryFrom<f32> for Uint<BITS, LIMBS> {
