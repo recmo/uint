@@ -539,7 +539,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         let significand_bits = 52usize;
         let exponent_bias = 1023usize;
 
-        if value < 0.5 {
+        if value >= 0.0 && value < 0.5 {
             return Ok(Self::ZERO);
         }
 
@@ -822,6 +822,8 @@ mod test {
             const LIMBS: usize = nlimbs(BITS);
             assert_eq!(Uint::<BITS, LIMBS>::try_from(0.0_f64), Ok(Uint::ZERO));
             assert_eq!(Uint::<BITS, LIMBS>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(-1.0_f64), Err(ToUintError::ValueNegative(BITS, Uint::ZERO)));
+
         });
         assert_eq!(
             Uint::<7, 1>::try_from(123.499_f64),
