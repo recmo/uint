@@ -101,7 +101,7 @@ rand-08 = { version = "0.8", package = "rand", optional = true, default-features
 rand-09 = { version = "0.9", package = "rand", optional = true, default-features = false }
 rkyv = { version = "0.8", optional = true }
 rlp = { version = "0.5", optional = true, default-features = false }
-serde = { version = "1", optional = true, default-features = false }
+serde_core = { version = "1.0.211", optional = true, default-features = false }
 valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
@@ -168,7 +168,7 @@ std = [
     "rand-09?/std",
     "rand-09?/thread_rng",
     "rlp?/std",
-    "serde?/std",
+    "serde_core?/std",
     "valuable?/std",
     "zeroize?/std",
 ]
@@ -176,7 +176,7 @@ alloc = [
     "proptest?/alloc",
     "rand-08?/alloc",
     "rand-09?/alloc",
-    "serde?/alloc",
+    "serde_core?/alloc",
     "valuable?/alloc",
     "zeroize?/alloc",
 ]
@@ -211,7 +211,7 @@ rand = ["dep:rand-08"]
 rand-09 = ["dep:rand-09"]
 rkyv = ["dep:rkyv", "alloc"]
 rlp = ["dep:rlp", "alloc"]
-serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
+serde = ["dep:serde_core", "alloc"] # TODO: try to avoid alloc in serde impls
 sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
 ssz = ["dep:ethereum_ssz", "std"]
 subtle = ["dep:subtle"]
