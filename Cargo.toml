@@ -76,6 +76,7 @@ alloy-rlp = { version = "0.3", optional = true, default-features = false }
 arbitrary = { version = "1", optional = true, default-features = false }
 ark-ff-03 = { version = "0.3.0", package = "ark-ff", optional = true, default-features = false }
 ark-ff-04 = { version = "0.4.0", package = "ark-ff", optional = true, default-features = false }
+ark-ff-05 = { version = "0.5.0", package = "ark-ff", optional = true, default-features = false }
 bigdecimal = { version = "0.4", optional = true, default-features = false }
 bn-rs = { version = "0.2", optional = true, default-features = true }
 fastrlp-03 = { version = "0.3", package = "fastrlp", optional = true, default-features = false, features = [
@@ -101,7 +102,7 @@ rand-08 = { version = "0.8", package = "rand", optional = true, default-features
 rand-09 = { version = "0.9", package = "rand", optional = true, default-features = false }
 rkyv = { version = "0.8", optional = true }
 rlp = { version = "0.5", optional = true, default-features = false }
-serde = { version = "1", optional = true, default-features = false }
+serde_core = { version = "1.0.211", optional = true, default-features = false }
 valuable = { version = "0.1", optional = true, default-features = false }
 zeroize = { version = "1.6", optional = true, default-features = false }
 bytemuck = { version = "1.13.1", optional = true, default-features = false }
@@ -129,6 +130,7 @@ ruint = { path = ".", features = ["arbitrary", "proptest"] }
 
 ark-bn254-03 = { version = "0.3.0", package = "ark-bn254" }
 ark-bn254-04 = { version = "0.4.0", package = "ark-bn254" }
+ark-bn254-05 = { version = "0.5.0", package = "ark-bn254" }
 
 rand-09 = { version = "0.9", package = "rand" }
 
@@ -154,6 +156,7 @@ std = [
     "alloy-rlp?/std",
     "ark-ff-03?/std",
     "ark-ff-04?/std",
+    "ark-ff-05?/std",
     "bytes?/std",
     "fastrlp-03?/std",
     "fastrlp-04?/std",
@@ -168,7 +171,7 @@ std = [
     "rand-09?/std",
     "rand-09?/thread_rng",
     "rlp?/std",
-    "serde?/std",
+    "serde_core?/std",
     "valuable?/std",
     "zeroize?/std",
 ]
@@ -176,7 +179,7 @@ alloc = [
     "proptest?/alloc",
     "rand-08?/alloc",
     "rand-09?/alloc",
-    "serde?/alloc",
+    "serde_core?/alloc",
     "valuable?/alloc",
     "zeroize?/alloc",
 ]
@@ -190,6 +193,7 @@ alloy-rlp = ["dep:alloy-rlp", "alloc"]
 arbitrary = ["dep:arbitrary", "std"]
 ark-ff = ["dep:ark-ff-03"]
 ark-ff-04 = ["dep:ark-ff-04"]
+ark-ff-05 = ["dep:ark-ff-05"]
 bigdecimal = ["dep:bigdecimal", "num-bigint"]
 bn-rs = ["dep:bn-rs", "std"]
 borsh = ["dep:borsh"]
@@ -211,7 +215,7 @@ rand = ["dep:rand-08"]
 rand-09 = ["dep:rand-09"]
 rkyv = ["dep:rkyv", "alloc"]
 rlp = ["dep:rlp", "alloc"]
-serde = ["dep:serde", "alloc"] # TODO: try to avoid alloc in serde impls
+serde = ["dep:serde_core", "alloc"] # TODO: try to avoid alloc in serde impls
 sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
 ssz = ["dep:ethereum_ssz", "std"]
 subtle = ["dep:subtle"]
