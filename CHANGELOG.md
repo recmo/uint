@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Introduce `ark-ff-05` feature flag for conversion to `ark-ff@0.5` types ([#526])
+
 ### Changed
 
 - MSRV bumped to 1.85 ([#503])
 
 [#503]: https://github.com/recmo/uint/pull/503
+[#526]: https://github.com/recmo/uint/pull/526
 
 ## [1.16.0] - 2025-08-04
 
