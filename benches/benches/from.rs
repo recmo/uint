@@ -11,28 +11,14 @@ pub fn group(criterion: &mut Criterion) {
 
 fn bench_with_f64<const BITS: usize, const LIMBS: usize>(
     criterion: &mut Criterion,
-    mut f: impl FnMut(f64) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>>,
+    f: impl FnMut(f64) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>>,
 ) {
-    bench_arbitrary_with(
-        criterion,
-        &format!("from/f64/{BITS}"),
-        f64::arbitrary(),
-        |x| {
-            black_box(f(black_box(x)));
-        },
-    );
+    bench_arbitrary_with(criterion, &format!("from/f64/{BITS}"), f64::arbitrary(), f);
 }
 
 fn bench_with_f32<const BITS: usize, const LIMBS: usize>(
     criterion: &mut Criterion,
-    mut f: impl FnMut(f32) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>>,
+    f: impl FnMut(f32) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>>,
 ) {
-    bench_arbitrary_with(
-        criterion,
-        &format!("from/f32/{BITS}"),
-        f32::arbitrary(),
-        |x| {
-            black_box(f(black_box(x)));
-        },
-    );
+    bench_arbitrary_with(criterion, &format!("from/f32/{BITS}"), f32::arbitrary(), f);
 }
