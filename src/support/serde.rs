@@ -5,7 +5,7 @@
 
 use crate::{fmt::StackString, nbytes, Bits, Uint};
 use core::{fmt, str};
-use serde::{
+use serde_core::{
     de::{Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
