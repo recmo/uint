@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Introduce `ark-ff-05` feature flag for conversion to `ark-ff@0.5` types ([#526])
-- Add `scale-info` support
+- Add [scale-info](https://docs.rs/crate/scale-info) support ([#534])
 
 ### Changed
 
