@@ -30,7 +30,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Panics if the value overlfows.
     #[inline]
     #[must_use]
-    pub fn next_power_of_two(self) -> Self {
+    pub const fn next_power_of_two(self) -> Self {
         self.checked_next_power_of_two().unwrap()
     }
 
@@ -53,19 +53,21 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     #[inline]
     #[must_use]
-    pub fn checked_next_power_of_two(self) -> Option<Self> {
-        if self.is_power_of_two() {
-            return Some(self);
-        }
-        let exp = self.bit_len();
-        if exp >= BITS {
-            return None;
-        }
-        Some(Self::ONE << exp)
+    pub const fn checked_next_power_of_two(self) -> Option<Self> {
+        self.one_less_than_next_power_of_two()
+            .checked_add(Self::ONE)
     }
-}
 
-impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    const fn one_less_than_next_power_of_two(self) -> Self {
+        if self.const_is_zero() || self.const_eq(&Self::ONE) {
+            return Self::ZERO;
+        }
+
+        let p = self.wrapping_sub(Self::ONE);
+        let z = p.leading_zeros();
+        Self::MAX.wrapping_shr(z)
+    }
+
     /// Calculates the smallest value greater than or equal to self that is a
     /// multiple of rhs.
     ///
@@ -75,9 +77,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// overflow.
     #[inline]
     #[must_use]
+    #[track_caller]
     pub fn next_multiple_of(self, rhs: Self) -> Self {
-        self.checked_next_multiple_of(rhs).unwrap();
-        todo!()
+        let r = self % rhs;
+        if r.is_zero() {
+            self
+        } else {
+            // rhs - r cannot overflow because r is smaller than rhs
+            self.checked_add(rhs - r).unwrap()
+        }
     }
 
     /// Calculates the smallest value greater than or equal to `self` that is a
@@ -93,7 +101,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(23_U64.checked_next_multiple_of(8_U64), Some(24_U64));
     /// assert_eq!(1_U64.checked_next_multiple_of(0_U64), None);
     /// assert_eq!(U64::MAX.checked_next_multiple_of(2_U64), None);
-    /// }
+    /// # }
     /// ```
     ///
     /// ```
@@ -104,19 +112,17 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// assert_eq!(0_U1.checked_next_multiple_of(1_U1), Some(0_U1));
     /// assert_eq!(1_U1.checked_next_multiple_of(0_U1), None);
     /// assert_eq!(1_U1.checked_next_multiple_of(1_U1), Some(1_U1));
-    /// }
+    /// # }
     /// ```
     #[inline]
     #[must_use]
     pub fn checked_next_multiple_of(self, rhs: Self) -> Option<Self> {
-        if rhs.is_zero() {
-            return None;
-        }
-        let (q, r) = self.div_rem(rhs);
+        let r = self.checked_rem(rhs)?;
         if r.is_zero() {
-            return Some(self);
+            Some(self)
+        } else {
+            // rhs - r cannot overflow because r is smaller than rhs
+            self.checked_add(rhs - r)
         }
-        let q = q.checked_add(Self::ONE)?;
-        q.checked_mul(rhs)
     }
 }
