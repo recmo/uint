@@ -534,19 +534,21 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         let sign_bit = 0x8000_0000_0000_0000u64;
         let significand_bits = 52usize;
         let exponent_bias = 1023usize;
-
-        // Fast path for tiny non-negative values: rounds to 0.
-        if value >= 0.0 && value < 0.5 {
-            return Ok(Self::ZERO);
-        }
+        const HALF_BITS: u64 = 0.5f64.to_bits();
 
         // Break into sign, exponent, significand
         let a_rep = f.to_bits();
         let a_abs = a_rep & !sign_bit;
 
         let sign = if (a_rep & sign_bit) == 0 {
+            if a_rep < HALF_BITS {
+                return Ok(Self::ZERO);
+            }
             Sign::Positive
         } else {
+            if a_abs == 0 {
+                return Ok(Self::ZERO);
+            }
             Sign::Negative
         };
         let mut exponent = (a_abs >> significand_bits) as usize;
