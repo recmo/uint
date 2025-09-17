@@ -5,3 +5,10 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc b42869d324d20b76181b5df53e4344d3e89315237805eab8a652f909e5d0158f # shrinks to value = 0x00_U1
+cc 0b00e453ed32950401fe14a280d6bf465c9a2f3aaba6951a173867bc6b2bf618 # shrinks to value = -8.406662744669431e213
+cc 2f770739ce7e29d928256a91f27e9ec43f6bd303057bcdc9ee727fb76210c199 # shrinks to value = 1560139153.5499237
+cc 9cebfffcc4dfbbcbf6ccf0efdd90bc6f5da0fd3d20f836c25a96b1b90f57a32e # shrinks to value = -8.753225195187314e-140
+cc e2977b40291566ddf5a75f21108dc3ab2f5f10402ad52935109734e272645ce8 # shrinks to value = 0.5088193982809199
+cc 88506f3a30c577d606e6605beeb9fad9e0c3858c0be9bc299ef764d2c3ac34b4 # shrinks to value = -0.0
+cc 7e17b34900bc6f9a008fb57da16e7d23a008c9d4d99faa1fdd298318b437cdf9 # shrinks to value = -0.7940809232831779
+cc ba70ea1a2f408c5495676f759da13c84473f598d88848559b5268938a13d0196 # shrinks to value = 4778429012223521.0
