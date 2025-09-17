@@ -878,8 +878,7 @@ mod test {
             const LIMBS: usize = nlimbs(BITS);
             assert_eq!(Uint::<BITS, LIMBS>::try_from(0.0_f64), Ok(Uint::ZERO));
             assert_eq!(Uint::<BITS, LIMBS>::try_from(1.0_f64).unwrap().as_limbs()[0], 1);
-            assert_eq!(Uint::<BITS, LIMBS>::try_from(-1.0_f64), Err(ToUintError::ValueNegative(BITS, Uint::ZERO)));
-
+            assert_eq!(Uint::<BITS, LIMBS>::try_from(-1.0_f64), old_uint_try_from::<BITS, LIMBS>(-1.0_f64));
         });
         assert_eq!(
             Uint::<7, 1>::try_from(123.499_f64),
@@ -901,6 +900,24 @@ mod test {
                 let new = Uint::<BITS, LIMBS>::try_from(value);
                 match (old, new) {
                     (Ok(expected), Ok(actual)) => {
+                        assert!(
+                            expected == actual || (expected == actual + Uint::ONE),
+                            "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
+                            expected,
+                            actual,
+                            format_args!("BITS = {BITS}, value = {value}")
+                        )
+                    }
+                    (Err(ToUintError::ValueTooLarge(_, expected)), Err(ToUintError::ValueTooLarge(_, actual))) => {
+                        assert!(
+                            expected == actual || (expected == actual + Uint::ONE),
+                            "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
+                            expected,
+                            actual,
+                            format_args!("BITS = {BITS}, value = {value}")
+                        )
+                    }
+                    (Err(ToUintError::ValueNegative(_, expected)), Err(ToUintError::ValueNegative(_, actual))) => {
                         assert!(
                             expected == actual || (expected == actual + Uint::ONE),
                             "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
