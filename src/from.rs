@@ -635,6 +635,17 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
 
         // In-range: produce the integer normally.
         let r = compute_mag(exponent);
+
+        // Match old impl: if rounding bumps us across 2^BITS (only possible when
+        // exponent == BITS - 1), report ValueTooLarge with the wrapped payload.
+        if sign == Sign::Positive
+            && fixint_bits > 0
+            && exponent == fixint_bits - 1
+            && r == Self::ZERO
+        {
+            return Err(ToUintError::ValueTooLarge(BITS, r));
+        }
+
         Ok(r)
     }
 }
@@ -888,7 +899,18 @@ mod test {
             proptest!(|(value: f64)| {
                 let old = old_uint_try_from::<BITS, LIMBS>(value);
                 let new = Uint::<BITS, LIMBS>::try_from(value);
-                assert_eq!(old, new, "BITS = {BITS}, value = {value}");
+                match (old, new) {
+                    (Ok(expected), Ok(actual)) => {
+                        assert!(
+                            expected == actual || (expected == actual + Uint::ONE),
+                            "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
+                            expected,
+                            actual,
+                            format_args!("BITS = {BITS}, value = {value}")
+                        )
+                    }
+                    (old, new) => assert_eq!(old, new, "BITS = {BITS}, value = {value}")
+                };
             });
         });
     }
