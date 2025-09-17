@@ -890,6 +890,16 @@ mod test {
         );
     }
 
+    #[test]
+    fn all_integers_are_representable() {
+        const MAX_SAFE_INTEGER: u64 = (1 << f64::MANTISSA_DIGITS) - 1;
+        proptest!(|(value in 0..MAX_SAFE_INTEGER)| {
+            let from_float = Uint::<64, 1>::try_from(value as f64).unwrap();
+            let from_int = Uint::<64, 1>::try_from(value).unwrap();
+            assert_eq!(from_float, from_int);
+        });
+    }
+
     #[cfg(feature = "std")]
     #[test]
     fn test_old_new_impl_equivalent() {
