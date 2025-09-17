@@ -17,10 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - MSRV bumped to 1.85 ([#503])
 - Made `*next_power_of_two` and `*next_multiple_of` `const` ([#533])
+- Reimplemented `TryFrom<f64>` for `Uint` to speed it up, fixing edge cases and removing `std` requirements ([#524])
 
 [#503]: https://github.com/recmo/uint/pull/503
 [#526]: https://github.com/recmo/uint/pull/526
 [#533]: https://github.com/recmo/uint/pull/533
+[#524]: https://github.com/recmo/uint/pull/524
 
 ## [1.16.0] - 2025-08-04
 
