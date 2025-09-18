@@ -24,8 +24,6 @@ impl<const BITS: usize, const LIMBS: usize> TypeInfo for Uint<BITS, LIMBS> {
 
 #[test]
 fn typeinfo_works() {
-    use crate::aliases::U256;
-    use scale_info::TypeInfo;
-    let info = &<U256 as TypeInfo>::type_info();
+    let info = <crate::aliases::U256 as TypeInfo>::type_info();
     assert_eq!(info.path.segments.last().unwrap().to_string(), "Uint");
 }
