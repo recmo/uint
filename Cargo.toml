@@ -110,6 +110,7 @@ ethereum_ssz = { version = "0.5.3", optional = true, default-features = false }
 der = { version = "0.7", optional = true, default-features = false, features = [
     "alloc",
 ] }
+scale-info = { version = "2", optional = true, default-features = false }
 subtle = { version = "2.6.1", optional = true, default-features = false }
 
 # postgres
@@ -172,6 +173,7 @@ std = [
     "rand-09?/thread_rng",
     "rlp?/std",
     "serde_core?/std",
+    "scale-info?/std",
     "valuable?/std",
     "zeroize?/std",
 ]
@@ -217,6 +219,7 @@ rkyv = ["dep:rkyv", "alloc"]
 rlp = ["dep:rlp", "alloc"]
 serde = ["dep:serde_core", "alloc"] # TODO: try to avoid alloc in serde impls
 sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
+scale-info = ["dep:scale-info"]
 ssz = ["dep:ethereum_ssz", "std"]
 subtle = ["dep:subtle"]
 valuable = ["dep:valuable"]
