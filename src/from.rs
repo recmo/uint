@@ -552,15 +552,12 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             Sign::Negative
         };
         let mut exponent = (a_abs >> significand_bits) as usize;
-        let significand =
-            (a_abs & ((1u64 << significand_bits) - 1)) | (1u64 << significand_bits);
+        let significand = (a_abs & ((1u64 << significand_bits) - 1)) | (1u64 << significand_bits);
 
-        let from_lossy = |x| {
-            match Self::uint_try_from(x) {
-                Ok(n) => n,
-                Err(ToUintError::ValueTooLarge(_, n)) => n,
-                _ => unreachable!(),
-            }
+        let from_lossy = |x| match Self::uint_try_from(x) {
+            Ok(n) => n,
+            Err(ToUintError::ValueTooLarge(_, n)) => n,
+            _ => unreachable!(),
         };
 
         // Helper: produce integer magnitude for |f| given an unbiased exponent `e`,
@@ -583,8 +580,8 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         };
 
         // Negative values: return ValueNegative with wrapped two's-complement payload.
-        // Handle |value| < 1 without going through the saturating exponent path to preserve
-        // correct rounding: ties-to-even at 0.5, otherwise nearest.
+        // Handle |value| < 1 without going through the saturating exponent path to
+        // preserve correct rounding: ties-to-even at 0.5, otherwise nearest.
         if sign == Sign::Negative {
             if exponent < exponent_bias {
                 // |value| < 1
@@ -616,7 +613,8 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         exponent -= exponent_bias;
 
         // If the value is infinity, saturate.
-        // If the value is too large for the integer type, wrap (drop high bits) and return it in the error.
+        // If the value is too large for the integer type, wrap (drop high bits) and
+        // return it in the error.
         if exponent >= fixint_bits {
             if value.is_nan() {
                 return Err(ToUintError::NotANumber(BITS));
@@ -943,7 +941,9 @@ mod test {
     }
 
     #[cfg(feature = "std")]
-    fn old_uint_try_from<const BITS: usize, const LIMBS: usize>(value: f64) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>> {
+    fn old_uint_try_from<const BITS: usize, const LIMBS: usize>(
+        value: f64,
+    ) -> Result<Uint<BITS, LIMBS>, ToUintError<Uint<BITS, LIMBS>>> {
         if value.is_nan() {
             return Err(ToUintError::NotANumber(BITS));
         }
