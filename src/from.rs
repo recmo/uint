@@ -798,7 +798,6 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
     ///
     /// Returns `f64::INFINITY` if the value is too large to represent.
     #[inline]
-    #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
         Self::from_bits(value.to_f64_bits())
     }
