@@ -814,7 +814,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
         // Normalize: move the leading 1 into the top bit position of the fixed-width
         // integer.
-        let n = self.leading_zeros() as usize; // 0 <= n < BITS since value != 0
+        let n = self.leading_zeros(); // 0 <= n < BITS since value != 0
         let y = self << n;
 
         // Exponent field with the "minus one so mantissa can overflow into it" trick:
@@ -854,7 +854,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
             // guard = bit r-1 (top of the dropped region)
             let guard: u64 = if r > 0 {
-                ((tail >> (r - 1)).limbs[0] & 1) as u64
+                (tail >> (r - 1)).limbs[0] & 1
             } else {
                 0
             };
