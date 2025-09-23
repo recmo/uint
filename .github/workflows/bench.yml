@@ -25,7 +25,8 @@ jobs:
       - name: Build the benchmark target(s)
         run: cargo codspeed build --profile profiling -p ruint-bench bench
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v3
+        uses: CodSpeedHQ/action@v4
         with:
           run: cargo codspeed run -p ruint-bench bench
           token: ${{ secrets.CODSPEED_TOKEN }}
+          mode: instrumentation
