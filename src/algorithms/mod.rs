@@ -34,7 +34,7 @@ pub use self::{
 };
 
 pub(crate) trait DoubleWord<T: Default>: Sized + Copy {
-    /// `high << 64 | low`
+    /// `high << T::BITS | low`
     fn join(high: T, low: T) -> Self;
     /// `(low, high)`
     fn split(self) -> (T, T);
@@ -42,11 +42,6 @@ pub(crate) trait DoubleWord<T: Default>: Sized + Copy {
     /// `a * b + c + d`
     fn muladd2(a: T, b: T, c: T, d: T) -> Self;
 
-    /// `a + b`
-    #[inline(always)]
-    fn add(a: T, b: T) -> Self {
-        Self::muladd2(T::default(), T::default(), a, b)
-    }
     /// `a * b`
     #[inline(always)]
     fn mul(a: T, b: T) -> Self {
@@ -91,6 +86,64 @@ impl DoubleWord<u64> for u128 {
         {
             Self::from(a) * Self::from(b) + Self::from(c) + Self::from(d)
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct ConstDoubleWord<T>(T);
+
+impl ConstDoubleWord<u128> {
+    #[inline(always)]
+    const fn ext(a: u64) -> u128 {
+        a as u128
+    }
+
+    #[inline(always)]
+    #[allow(dead_code)]
+    const fn join(high: u64, low: u64) -> Self {
+        Self(Self::ext(high) << 64 | Self::ext(low))
+    }
+
+    #[inline(always)]
+    const fn split(self) -> (u64, u64) {
+        (self.low(), self.high())
+    }
+
+    /// `a + b`
+    #[inline(always)]
+    const fn add(a: u64, b: u64) -> Self {
+        Self(Self::ext(a) + Self::ext(b))
+    }
+
+    /// `a * b + c`
+    #[inline(always)]
+    const fn carrying_mul(a: u64, b: u64, c: u64) -> Self {
+        Self::carrying_mul_add(a, b, c, 0)
+    }
+
+    /// `a * b + c + d`
+    #[inline(always)]
+    const fn carrying_mul_add(a: u64, b: u64, c: u64, d: u64) -> Self {
+        #[cfg(feature = "nightly")]
+        {
+            let (low, high) = u64::carrying_mul_add(a, b, c, d);
+            Self::join(high, low)
+        }
+        #[cfg(not(feature = "nightly"))]
+        {
+            Self(Self::ext(a) * Self::ext(b) + Self::ext(c) + Self::ext(d))
+        }
+    }
+
+    #[inline(always)]
+    const fn high(self) -> u64 {
+        (self.0 >> 64) as u64
+    }
+
+    #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)]
+    const fn low(self) -> u64 {
+        self.0 as u64
     }
 }
 
