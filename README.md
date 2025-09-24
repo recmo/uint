@@ -99,7 +99,7 @@ source files:
 
 ```rust
 # use ruint::uint;
-uint!{
+uint! {
 
 let a = 42_U256;
 let b = 0xf00f_1337_c0d3_U256;

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2025-09-24
+
 ### Added
 
 - Support for [bincode 2](https://github.com/bincode-org/bincode) ([#516])
@@ -467,7 +469,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.16.0...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.17.0...HEAD
+[1.17.0]: https://github.com/recmo/uint/releases/tag/v1.17.0
 [1.16.0]: https://github.com/recmo/uint/releases/tag/v1.16.0
 [1.15.0]: https://github.com/recmo/uint/releases/tag/v1.15.0
 [1.14.0]: https://github.com/recmo/uint/releases/tag/v1.14.0
