@@ -5,7 +5,7 @@
 
 use crate::{Bits, Uint};
 use bincode_2::{
-    de::{read::Reader, BorrowDecode, BorrowDecoder, Decode, Decoder},
+    de::{BorrowDecode, BorrowDecoder, Decode, Decoder, read::Reader},
     enc::{Encode, Encoder},
     error::{DecodeError, EncodeError},
 };

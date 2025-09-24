@@ -431,7 +431,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<u64> for Uint<BITS, LIMBS> {
                 return Err(ToUintError::ValueTooLarge(
                     BITS,
                     Self::from_limbs([value & Self::MASK; LIMBS]),
-                ))
+                ));
             }
             0 => return Ok(Self::ZERO),
             _ => {}

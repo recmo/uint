@@ -9,8 +9,8 @@ use rand_08 as rand;
 
 use crate::Uint;
 use rand::{
-    distributions::{Distribution, Standard},
     Rng,
+    distributions::{Distribution, Standard},
 };
 
 impl<const BITS: usize, const LIMBS: usize> Distribution<Uint<BITS, LIMBS>> for Standard {

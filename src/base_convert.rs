@@ -1,6 +1,6 @@
 use crate::{
-    algorithms::{addmul_nx1, mul_nx1},
     Uint,
+    algorithms::{addmul_nx1, mul_nx1},
 };
 use core::{fmt, iter::FusedIterator, mem::MaybeUninit};
 

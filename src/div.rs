@@ -1,4 +1,4 @@
-use crate::{algorithms, Uint};
+use crate::{Uint, algorithms};
 use core::ops::{Div, DivAssign, Rem, RemAssign};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -34,11 +34,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub fn div_ceil(self, rhs: Self) -> Self {
         let (q, r) = self.div_rem(rhs);
-        if r.is_zero() {
-            q
-        } else {
-            q + Self::ONE
-        }
+        if r.is_zero() { q } else { q + Self::ONE }
     }
 
     /// Computes `self / rhs` and `self % rhs`.

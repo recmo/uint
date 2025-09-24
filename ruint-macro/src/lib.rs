@@ -138,11 +138,7 @@ fn pad_limbs(bits: usize, mut limbs: Vec<u64>) -> Option<Vec<u64>> {
         0
     } else {
         let bits = bits % 64;
-        if bits == 0 {
-            u64::MAX
-        } else {
-            (1 << bits) - 1
-        }
+        if bits == 0 { u64::MAX } else { (1 << bits) - 1 }
     };
 
     // Remove trailing zeros, pad with zeros

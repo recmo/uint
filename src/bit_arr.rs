@@ -266,11 +266,7 @@ impl<const BITS: usize, const LIMBS: usize> Index<usize> for Bits<BITS, LIMBS> {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        if self.0.bit(index) {
-            &true
-        } else {
-            &false
-        }
+        if self.0.bit(index) { &true } else { &false }
     }
 }
 

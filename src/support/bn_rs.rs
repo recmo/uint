@@ -3,8 +3,8 @@
 #![cfg(feature = "bn-rs")]
 #![cfg_attr(docsrs, doc(cfg(feature = "bn-rs")))]
 
-use crate::{from::ToUintError, BaseConvertError, Bits, ParseError, Uint};
-use bn_rs::{BigNumber, BN};
+use crate::{BaseConvertError, Bits, ParseError, Uint, from::ToUintError};
+use bn_rs::{BN, BigNumber};
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<&BN> for Uint<BITS, LIMBS> {
     type Error = ToUintError<Self>;

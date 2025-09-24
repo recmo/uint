@@ -6,10 +6,10 @@
 use crate::{Bits, Uint};
 use core::fmt;
 use rkyv::{
+    Archive, Archived, Deserialize, Place, Portable, Serialize,
     bytecheck::CheckBytes,
     rancor::{Fallible, Trace},
     rend::u64_le,
-    Archive, Archived, Deserialize, Place, Portable, Serialize,
 };
 
 /// An archived [`Uint`]
@@ -183,7 +183,7 @@ impl<const BITS: usize, const LIMBS: usize> fmt::UpperHex for ArchivedUint<BITS,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{const_for, nlimbs, Uint};
+    use crate::{Uint, const_for, nlimbs};
     use proptest::proptest;
     use rkyv::rancor;
 

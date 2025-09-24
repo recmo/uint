@@ -1,4 +1,4 @@
-use crate::{algorithms, Uint};
+use crate::{Uint, algorithms};
 
 // FEATURE: sub_mod, neg_mod, inv_mod, div_mod, root_mod
 // See <https://en.wikipedia.org/wiki/Cipolla's_algorithm>

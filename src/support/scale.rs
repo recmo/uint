@@ -269,7 +269,7 @@ const fn assert_compact_supported(bits: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U256, const_for, nlimbs, Uint};
+    use crate::{Uint, aliases::U256, const_for, nlimbs};
     use proptest::proptest;
 
     #[test]
