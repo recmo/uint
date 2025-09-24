@@ -4,7 +4,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "borsh")))]
 
 use crate::{Bits, Uint};
-use borsh::{io, BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSerialize, io};
 
 impl<const BITS: usize, const LIMBS: usize> BorshDeserialize for Uint<BITS, LIMBS> {
     #[inline]

@@ -1,4 +1,4 @@
-use crate::{algorithms, nlimbs, Uint};
+use crate::{Uint, algorithms, nlimbs};
 use core::{
     iter::Product,
     num::Wrapping,

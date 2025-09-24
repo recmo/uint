@@ -1,6 +1,6 @@
 use crate::{
-    algorithms::{borrowing_sub, carrying_add},
     Uint,
+    algorithms::{borrowing_sub, carrying_add},
 };
 use core::{
     iter::Sum,

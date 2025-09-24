@@ -5,8 +5,8 @@
 
 use crate::Uint;
 use alloy_rlp::{
-    length_of_length, BufMut, Decodable, Encodable, Error, Header, MaxEncodedLen,
-    MaxEncodedLenAssoc, EMPTY_STRING_CODE,
+    BufMut, Decodable, EMPTY_STRING_CODE, Encodable, Error, Header, MaxEncodedLen,
+    MaxEncodedLenAssoc, length_of_length,
 };
 
 const MAX_BITS: usize = 55 * 8;

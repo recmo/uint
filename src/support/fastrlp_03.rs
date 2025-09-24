@@ -5,8 +5,8 @@
 
 use crate::Uint;
 use fastrlp_03::{
-    length_of_length, BufMut, Decodable, DecodeError, Encodable, Header, MaxEncodedLen,
-    MaxEncodedLenAssoc, EMPTY_STRING_CODE,
+    BufMut, Decodable, DecodeError, EMPTY_STRING_CODE, Encodable, Header, MaxEncodedLen,
+    MaxEncodedLenAssoc, length_of_length,
 };
 
 const MAX_BITS: usize = 55 * 8;

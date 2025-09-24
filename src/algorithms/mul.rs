@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::algorithms::{borrowing_sub, DoubleWord};
+use crate::algorithms::{DoubleWord, borrowing_sub};
 
 /// ⚠️ Computes `result += a * b` and checks for overflow.
 #[doc = crate::algorithms::unstable_warning!()]
