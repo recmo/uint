@@ -1,9 +1,9 @@
 //! Knuth division
 
-use super::{reciprocal::reciprocal_2, small::div_3x2, DoubleWord};
+use super::{DoubleWord, reciprocal::reciprocal_2, small::div_3x2};
 use crate::{
     algorithms::{add::carrying_add_n, mul::submul_nx1},
-    utils::{likely, unlikely, UncheckedSlice},
+    utils::{UncheckedSlice, likely, unlikely},
 };
 
 /// ⚠️ In-place Knuth normalized long division with reciprocals.

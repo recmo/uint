@@ -1,6 +1,6 @@
 #![allow(clippy::missing_inline_in_public_items)] // allow format functions
 
-use crate::{base_convert::BaseConvertError, Uint};
+use crate::{Uint, base_convert::BaseConvertError};
 use core::{fmt, str::FromStr};
 
 /// Error for [`from_str_radix`](Uint::from_str_radix).

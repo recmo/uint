@@ -1,6 +1,6 @@
 // TODO: https://baincapitalcrypto.com/optimizing-montgomery-multiplication-in-webassembly/
 
-use super::{borrowing_sub, carrying_add, cmp, DoubleWord};
+use super::{DoubleWord, borrowing_sub, carrying_add, cmp};
 use crate::utils::select_unpredictable;
 use core::{cmp::Ordering, iter::zip};
 
@@ -180,7 +180,7 @@ mod test {
         super::{addmul, div},
         *,
     };
-    use crate::{aliases::U64, const_for, nlimbs, Uint};
+    use crate::{Uint, aliases::U64, const_for, nlimbs};
     use core::ops::Neg;
     use proptest::{prop_assert_eq, proptest};
 

@@ -1,4 +1,4 @@
-use crate::{algorithms, Uint};
+use crate::{Uint, algorithms};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Compute the greatest common divisor of two [`Uint`]s.

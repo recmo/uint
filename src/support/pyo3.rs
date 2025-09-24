@@ -25,10 +25,10 @@
 
 use crate::Uint;
 use pyo3::{
+    Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python,
     exceptions::PyOverflowError,
     ffi,
     types::{PyAnyMethods, PyInt},
-    Bound, FromPyObject, IntoPyObject, PyAny, PyErr, PyResult, Python,
 };
 
 // This implementation via &Self mirrors the implementations for biguint in
@@ -132,7 +132,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, 
 mod test {
     use super::*;
     use crate::{
-        aliases::{U0, U256, U512, U64, U8},
+        aliases::{U0, U8, U64, U256, U512},
         const_for, nlimbs,
     };
     use proptest::proptest;

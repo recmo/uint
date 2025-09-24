@@ -1,4 +1,4 @@
-use crate::{utils::select_unpredictable_u32, Uint};
+use crate::{Uint, utils::select_unpredictable_u32};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
     ShrAssign,

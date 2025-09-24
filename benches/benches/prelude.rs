@@ -10,7 +10,7 @@ pub use proptest::{
     strategy::{Strategy, ValueTree},
     test_runner::TestRunner,
 };
-pub use ruint::{const_for, nlimbs, uint, Bits, Uint, UintTryFrom, UintTryTo};
+pub use ruint::{Bits, Uint, UintTryFrom, UintTryTo, const_for, nlimbs, uint};
 pub use std::hint::black_box;
 
 pub fn bench_unop<const BITS: usize, const LIMBS: usize, U>(
@@ -132,11 +132,7 @@ fn manual_batch<T, U>(
 fn get_batch_size(name: &str) -> usize {
     let size = name.split('/').flat_map(str::parse::<usize>).max();
     if name.contains("pow") {
-        if size >= Some(4096) {
-            1
-        } else {
-            100
-        }
+        if size >= Some(4096) { 1 } else { 100 }
     } else if size >= Some(4096) {
         100
     } else {

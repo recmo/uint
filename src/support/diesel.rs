@@ -6,6 +6,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "diesel")))]
 
 use diesel::{
+    Queryable,
     backend::Backend,
     deserialize::{FromSql, Result as DeserResult},
     expression::AsExpression,
@@ -13,7 +14,6 @@ use diesel::{
     query_builder::bind_collector::RawBytesBindCollector,
     serialize::{IsNull, Output, Result as SerResult, ToSql},
     sql_types::{Binary, Nullable, SingleValue},
-    Queryable,
 };
 use std::io::Write;
 use thiserror::Error;

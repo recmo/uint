@@ -1,7 +1,7 @@
 #![cfg(feature = "std")]
 
 use crate::Uint;
-use core::cmp::{min, Ordering};
+use core::cmp::{Ordering, min};
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Computes the floor of the `degree`-th root of the number.

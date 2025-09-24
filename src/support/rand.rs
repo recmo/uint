@@ -9,8 +9,8 @@ use rand_08 as rand;
 
 use crate::Uint;
 use rand::{
-    distributions::{Distribution, Standard},
     Rng,
+    distributions::{Distribution, Standard},
 };
 
 impl<const BITS: usize, const LIMBS: usize> Distribution<Uint<BITS, LIMBS>> for Standard {
@@ -87,7 +87,7 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             for _ in 0..1000 {
-                let _: Uint<BITS, LIMBS> = rng.gen();
+                let _: Uint<BITS, LIMBS> = rng.r#gen();
             }
         });
     }

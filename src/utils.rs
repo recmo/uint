@@ -65,11 +65,7 @@ impl<T, I: core::slice::SliceIndex<[T]>> core::ops::IndexMut<I> for UncheckedSli
 #[must_use]
 pub(crate) const fn rem_up(a: usize, b: usize) -> usize {
     let rem = a % b;
-    if rem > 0 {
-        rem
-    } else {
-        b
-    }
+    if rem > 0 { rem } else { b }
 }
 
 #[allow(dead_code)] // This is used by some support features.
@@ -145,20 +141,12 @@ pub(crate) fn unlikely(b: bool) -> bool {
 #[cfg(not(feature = "nightly"))]
 #[inline(always)]
 pub(crate) fn select_unpredictable<T>(b: bool, true_val: T, false_val: T) -> T {
-    if b {
-        true_val
-    } else {
-        false_val
-    }
+    if b { true_val } else { false_val }
 }
 
 #[inline(always)]
 pub(crate) const fn select_unpredictable_u32(b: bool, true_val: u32, false_val: u32) -> u32 {
-    if b {
-        true_val
-    } else {
-        false_val
-    }
+    if b { true_val } else { false_val }
 }
 
 #[cfg(test)]

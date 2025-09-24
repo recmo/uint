@@ -4,9 +4,9 @@
 
 use crate::{ToFieldError, Uint};
 use ark_ff_04::{
+    PrimeField,
     biginteger::BigInt,
     fields::models::{Fp, FpConfig},
-    PrimeField,
 };
 
 // FEATURE: Implement the `BigInteger` trait.

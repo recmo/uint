@@ -3,7 +3,7 @@
 #![cfg(feature = "num-bigint")]
 #![cfg_attr(docsrs, doc(cfg(feature = "num-bigint")))]
 
-use crate::{from::ToUintError, Uint};
+use crate::{Uint, from::ToUintError};
 use num_bigint::{BigInt, BigUint, Sign};
 
 impl<const BITS: usize, const LIMBS: usize> TryFrom<BigUint> for Uint<BITS, LIMBS> {

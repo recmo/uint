@@ -4,15 +4,15 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "postgres")))]
 
 use crate::{
-    utils::{rem_up, trim_end_vec},
     Uint,
+    utils::{rem_up, trim_end_vec},
 };
 use bytes::{BufMut, BytesMut};
 use core::{
     error::Error,
-    str::{from_utf8, FromStr},
+    str::{FromStr, from_utf8},
 };
-use postgres_types::{to_sql_checked, FromSql, IsNull, ToSql, Type, WrongType};
+use postgres_types::{FromSql, IsNull, ToSql, Type, WrongType, to_sql_checked};
 use thiserror::Error;
 
 type BoxedError = Box<dyn Error + Sync + Send + 'static>;

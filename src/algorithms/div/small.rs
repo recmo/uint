@@ -10,7 +10,7 @@
 use super::reciprocal::{reciprocal, reciprocal_2};
 use crate::{
     algorithms::DoubleWord,
-    utils::{unlikely, UncheckedSlice},
+    utils::{UncheckedSlice, unlikely},
 };
 
 // The running time is 2.7 ns for [`div_2x1_mg10`] versus 18 ns for
@@ -299,7 +299,7 @@ mod tests {
     use crate::algorithms::addmul;
     use proptest::{
         collection,
-        num::{u128, u64},
+        num::{u64, u128},
         prop_assume, proptest,
         strategy::Strategy,
     };
