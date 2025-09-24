@@ -1,6 +1,7 @@
 // TODO: https://baincapitalcrypto.com/optimizing-montgomery-multiplication-in-webassembly/
 
 use super::{borrowing_sub, carrying_add, cmp, DoubleWord};
+use crate::utils::select_unpredictable;
 use core::{cmp::Ordering, iter::zip};
 
 /// ⚠️ Computes a * b * 2^(-BITS) mod modulus
@@ -127,14 +128,7 @@ pub fn square_redc<const N: usize>(a: [u64; N], modulus: [u64; N], inv: u64) -> 
 #[allow(clippy::needless_bitwise_bool)]
 fn reduce1_carry<const N: usize>(value: [u64; N], modulus: [u64; N], carry: bool) -> [u64; N] {
     let (reduced, borrow) = sub(value, modulus);
-    // TODO: Ideally this turns into a cmov, which makes the whole mul_redc constant
-    // time.
-    // TODO(MSRV-1.88): Use `core::hint::select_unpredictable`.
-    if carry | !borrow {
-        reduced
-    } else {
-        value
-    }
+    select_unpredictable(carry | !borrow, reduced, value)
 }
 
 #[inline]

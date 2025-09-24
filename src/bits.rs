@@ -1,4 +1,4 @@
-use crate::Uint;
+use crate::{utils::select_unpredictable_u32, Uint};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
     ShrAssign,
@@ -160,11 +160,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         as_primitives!(self, {
             u64(x) => return x.leading_zeros() as usize - fixed,
             u128(x) => return x.leading_zeros() as usize - fixed,
-            u256(lo, hi) => return (if hi != 0 {
-                hi.leading_zeros()
-            } else {
+            u256(lo, hi) => return (select_unpredictable_u32(hi != 0,
+                hi.leading_zeros(),
                 lo.leading_zeros() + 128
-            }) as usize - fixed,
+            )) as usize - fixed,
         });
 
         let s = self.count_significant_words();

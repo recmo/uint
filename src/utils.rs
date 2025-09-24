@@ -113,7 +113,7 @@ const fn max_pow_u64_impl(n: u64) -> u64 {
 
 // Branch prediction hints.
 #[cfg(feature = "nightly")]
-pub(crate) use core::intrinsics::{cold_path, likely, unlikely};
+pub(crate) use core::intrinsics::{cold_path, likely, select_unpredictable, unlikely};
 
 #[cfg(not(feature = "nightly"))]
 #[inline(always)]
@@ -139,6 +139,25 @@ pub(crate) fn unlikely(b: bool) -> bool {
         true
     } else {
         false
+    }
+}
+
+#[cfg(not(feature = "nightly"))]
+#[inline(always)]
+pub(crate) fn select_unpredictable<T>(b: bool, true_val: T, false_val: T) -> T {
+    if b {
+        true_val
+    } else {
+        false_val
+    }
+}
+
+#[inline(always)]
+pub(crate) const fn select_unpredictable_u32(b: bool, true_val: u32, false_val: u32) -> u32 {
+    if b {
+        true_val
+    } else {
+        false_val
     }
 }
 
