@@ -118,7 +118,7 @@ macro_rules! forward {
             forward_attributes!(
                 $fnname,
                 pub unsafe fn $fnname(&mut self) -> $res {
-                    Uint::$fnname(&mut self.0).into()
+                    unsafe { Uint::$fnname(&mut self.0) }.into()
                 }
             );
         )*

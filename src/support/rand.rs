@@ -87,7 +87,7 @@ mod tests {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             for _ in 0..1000 {
-                let _: Uint<BITS, LIMBS> = rng.gen();
+                let _: Uint<BITS, LIMBS> = rng.r#gen();
             }
         });
     }
