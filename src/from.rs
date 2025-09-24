@@ -768,7 +768,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for u128
 
 // Convert Uint to floating point
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
     #[inline]
     fn from(value: Uint<BITS, LIMBS>) -> Self {
@@ -776,7 +775,6 @@ impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f32 {
     }
 }
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     /// Approximate single precision float.
     ///
@@ -784,12 +782,10 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f32 {
     #[inline]
     #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
-        let (bits, exponent) = value.most_significant_bits();
-        (bits as Self) * (exponent as Self).exp2()
+        f64::from(value) as f32
     }
 }
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
     #[inline]
     fn from(value: Uint<BITS, LIMBS>) -> Self {
@@ -797,16 +793,78 @@ impl<const BITS: usize, const LIMBS: usize> From<Uint<BITS, LIMBS>> for f64 {
     }
 }
 
-#[cfg(feature = "std")]
 impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for f64 {
     /// Approximate double precision float.
     ///
     /// Returns `f64::INFINITY` if the value is too large to represent.
     #[inline]
-    #[allow(clippy::cast_precision_loss)] // Documented
     fn from(value: &Uint<BITS, LIMBS>) -> Self {
-        let (bits, exponent) = value.most_significant_bits();
-        (bits as Self) * (exponent as Self).exp2()
+        Self::from_bits(value.as_f64_bits())
+    }
+}
+
+impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
+    /// Convert to IEEE 754 double precision float bit representation.
+    #[inline]
+    fn as_f64_bits(&self) -> u64 {
+        as_primitives!(self, {
+            u64(x) => return f64::to_bits(x as f64),
+        });
+
+        const SIG: usize = f64::MANTISSA_DIGITS as usize; // includes the hidden bit
+
+        let sd = self.bit_len(); // 0 for zero
+        if sd == 0 {
+            return 0;
+        }
+
+        // Early +∞ if exponent field is already saturated before rounding.
+        // e_pre = 1021 + sd; saturation when e_pre >= 0x7ff <=> sd >= 1026
+        if sd >= 1026 {
+            return 0x7ff0_0000_0000_0000;
+        }
+
+        let e_pre = 1021u64 + sd as u64;
+
+        // Fits entirely in the 53-bit significand: normalize, no rounding.
+        if sd <= SIG {
+            // value < 2^53, so it lives in limb 0
+            let a = self.as_limbs().first().copied().unwrap_or(0) << (SIG - sd);
+            return (e_pre << 52) + a;
+        }
+
+        // sd > SIG: need guard/sticky. Extract a 54-bit window [MSB .. MSB-53].
+        let msb = sd - 1;
+        let li = msb >> 6;
+        let off = (msb & 63) as u32;
+
+        let limbs = self.as_limbs();
+        let hi = limbs[li];
+        let lo = if li > 0 { limbs[li - 1] } else { 0 };
+
+        // Concatenate [hi:64][lo:64] and drop the low bits so the 54-bit window is at
+        // LSB. Correct alignment: shift = 64 + off - SIG  (not SIG+1!)
+        let shift = 64 + off as usize - SIG; // range 11..=74
+        debug_assert!((11..=74).contains(&shift));
+
+        let w = ((hi as u128) << 64) | (lo as u128);
+        let win54 = (w >> shift) as u64; // low 54 bits are [MSB .. MSB-53]
+
+        let a = win54 >> 1; // 53-bit mantissa incl. hidden bit
+        let guard = (win54 & 1) != 0;
+
+        // Sticky = any bit strictly below guard.
+        // That’s equivalent to: trailing_zeros(value) < guard_pos
+        // where guard_pos = sd - SIG - 1 (# bits below guard).
+        let guard_pos = sd - SIG - 1;
+        let sticky = guard_pos != 0 && self.trailing_zeros() < guard_pos;
+
+        // Round to nearest, ties-to-even.
+        let round_up = guard && (sticky || ((a & 1) != 0));
+        let m = a + (round_up as u64);
+
+        // Combine with '+' so a carry out of m bumps the exponent.
+        (e_pre << 52) + m
     }
 }
 
@@ -891,7 +949,7 @@ mod test {
     #[test]
     fn all_integers_are_representable() {
         const MAX_SAFE_INTEGER: u64 = (1 << f64::MANTISSA_DIGITS) - 1;
-        proptest!(|(value in 0..MAX_SAFE_INTEGER)| {
+        proptest!(|(value in 0..=MAX_SAFE_INTEGER)| {
             let from_float = Uint::<64, 1>::try_from(value as f64).unwrap();
             let from_int = Uint::<64, 1>::try_from(value).unwrap();
             assert_eq!(from_float, from_int);
@@ -900,7 +958,7 @@ mod test {
 
     #[cfg(feature = "std")]
     #[test]
-    fn test_old_new_impl_equivalent() {
+    fn test_old_new_impl_from_f64_equivalent() {
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             proptest!(|(value: f64)| {
@@ -936,6 +994,106 @@ mod test {
                     }
                     (old, new) => assert_eq!(old, new, "BITS = {BITS}, value = {value}")
                 };
+            });
+        });
+    }
+
+    #[test]
+    fn all_floats_are_representable() {
+        const MAX_SAFE_INTEGER: u64 = (1 << f64::MANTISSA_DIGITS) - 1;
+        proptest!(|(value in 0..=MAX_SAFE_INTEGER)| {
+            let uint = Uint::<64, 1>::try_from(value).unwrap();
+
+            let old = value as f64;
+            let new = f64::from(&uint);
+            assert_eq!(old, new);
+        });
+    }
+
+    #[test]
+    fn small_uints_work_correctly() {
+        const_for!(BITS in [1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32, 48, 64] {
+            const LIMBS: usize = nlimbs(BITS);
+            proptest!(|(value in 0..(1u128 << BITS))| {
+                let uint = Uint::<BITS, LIMBS>::try_from(value).unwrap();
+
+                let old = value as f64;
+                let new = f64::from(&uint);
+                assert_eq!(old, new);
+
+                let old = value as f32;
+                let new = f32::from(&uint);
+                assert_eq!(old, new);
+            });
+        });
+    }
+
+    #[test]
+    fn number_too_large_is_infinity() {
+        const F64_BITS: usize = 1100;
+        const F_64LIMBS: usize = nlimbs(F64_BITS);
+
+        const F32_BITS: usize = F64_BITS / 2;
+        const F_32LIMBS: usize = nlimbs(F32_BITS);
+
+        assert!(f64::from(Uint::<F64_BITS, F_64LIMBS>::MAX).is_infinite());
+        assert!(f32::from(Uint::<F32_BITS, F_32LIMBS>::MAX).is_infinite());
+    }
+
+    #[cfg(feature = "std")]
+    fn old_uint_to_f64<const BITS: usize, const LIMBS: usize>(value: &Uint<BITS, LIMBS>) -> f64 {
+        let (bits, exponent) = value.most_significant_bits();
+        (bits as f64) * (exponent as f64).exp2()
+    }
+
+    #[cfg(feature = "std")]
+    fn old_uint_to_f32<const BITS: usize, const LIMBS: usize>(value: &Uint<BITS, LIMBS>) -> f32 {
+        let (bits, exponent) = value.most_significant_bits();
+        (bits as f32) * (exponent as f32).exp2()
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_old_new_impl_to_f64_equivalent() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                let expected = old_uint_to_f64::<BITS, LIMBS>(&value);
+                let actual = f64::from(&value);
+
+                let expected_bits = expected.to_bits();
+                let actual_bits = actual.to_bits();
+                assert!(
+                    expected_bits == actual_bits || (expected_bits == actual_bits + 1) || (expected_bits + 1 == actual_bits),
+                    "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
+                    expected,
+                    actual,
+                    format_args!("BITS = {BITS}, value = {value}")
+                )
+            });
+        });
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_old_new_impl_to_f32_equivalent() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            proptest!(|(value: U)| {
+                let expected = old_uint_to_f32::<BITS, LIMBS>(&value);
+                let actual = f32::from(&value);
+
+                let expected_bits = expected.to_bits();
+                let actual_bits = actual.to_bits();
+                assert!(
+                    expected_bits == actual_bits || (expected_bits == actual_bits + 1) || (expected_bits + 1 == actual_bits),
+                    "assertion failed: `(expected == actual)`\nexpected: {:?}\n  actual: {:?}\n{}",
+                    expected,
+                    actual,
+                    format_args!("BITS = {BITS}, value = {value}")
+                )
             });
         });
     }
