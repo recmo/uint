@@ -29,6 +29,7 @@ mod rand_09;
 pub mod rkyv;
 mod rlp;
 pub mod scale;
+mod scale_info;
 mod serde;
 pub mod sqlx;
 pub mod ssz;
