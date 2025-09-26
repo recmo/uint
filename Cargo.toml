@@ -126,6 +126,9 @@ sqlx-core = { version = "0.8.2", optional = true }
 # borsh
 borsh = { version = "1.5", optional = true, default-features = false }
 
+# uniffi (foreign bindings)
+uniffi = { version = "0.29", optional = true, default-features = false, features = [] }
+
 [dev-dependencies]
 ruint = { path = ".", features = ["arbitrary", "proptest"] }
 
@@ -221,6 +224,7 @@ serde = ["dep:serde_core", "alloc"] # TODO: try to avoid alloc in serde impls
 sqlx = ["dep:sqlx-core", "std", "dep:thiserror"]
 ssz = ["dep:ethereum_ssz", "std"]
 subtle = ["dep:subtle"]
+uniffi = ["dep:uniffi", "dep:thiserror", "serde", "std"]
 valuable = ["dep:valuable"]
 zeroize = ["dep:zeroize"]
 

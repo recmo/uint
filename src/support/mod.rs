@@ -33,6 +33,7 @@ mod serde;
 pub mod sqlx;
 pub mod ssz;
 mod subtle;
+pub mod uniffi;
 mod valuable;
 mod zeroize;
 
