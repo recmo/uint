@@ -269,20 +269,25 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             .iter()
             .rposition(|&limb| limb != 0)
             .unwrap_or(0);
+
         if first_set_limb == 0 {
-            (self.as_limbs().first().copied().unwrap_or(0), 0)
-        } else {
-            let hi = self.as_limbs()[first_set_limb];
-            let lo = self.as_limbs()[first_set_limb - 1];
-            let leading_zeros = hi.leading_zeros();
-            let bits = if leading_zeros > 0 {
-                (hi << leading_zeros) | (lo >> (64 - leading_zeros))
-            } else {
-                hi
-            };
-            let exponent = first_set_limb * 64 - leading_zeros as usize;
-            (bits, exponent)
+            let first = if LIMBS > 0 { self.limbs[0] } else { 0 };
+            return (first, 0);
         }
+
+        let hi = self.limbs[first_set_limb];
+        let lo = self.limbs[first_set_limb - 1];
+        let leading_zeros = hi.leading_zeros();
+
+        let min_leading_zeros = if leading_zeros < 63 {
+            leading_zeros
+        } else {
+            63
+        };
+        let bits = (hi << leading_zeros) | ((lo >> (63 - min_leading_zeros)) >> 1);
+        let exponent = first_set_limb * 64 - leading_zeros as usize;
+
+        (bits, exponent)
     }
 
     /// Checked left shift by `rhs` bits.
