@@ -1,6 +1,6 @@
 # Rust `uint` crate using const-generics
 
-[![crates.io](https://buildstats.info/crate/ruint)](https://crates.io/crates/ruint)
+[![Crates.io Version](https://img.shields.io/crates/v/ruint)](https://crates.io/crates/ruint)
 [![docs.rs](https://img.shields.io/docsrs/ruint)](https://docs.rs/ruint)
 [![MIT License](https://img.shields.io/github/license/recmo/uint)](https://github.com/recmo/uint/blob/main/LICENSE)
 [![dependency status](https://deps.rs/repo/github/recmo/uint/status.svg)](https://deps.rs/repo/github/recmo/uint)
