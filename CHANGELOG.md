@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for [bincode 2](https://github.com/bincode-org/bincode) ([#516])
 - Introduce `ark-ff-05` feature flag for conversion to `ark-ff@0.5` types ([#526])
+- Add [scale-info](https://docs.rs/crate/scale-info) support ([#534])
 
 ### Changed
 
