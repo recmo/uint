@@ -17,5 +17,8 @@ pub fn group(criterion: &mut Criterion) {
         bench_arbitrary_with(criterion, &name("wrapping_shr"), input(), |(a, b)| {
             a.wrapping_shr(b)
         });
+        bench_unop::<BITS, LIMBS, _>(criterion, &name("most_significant_bits"), |a| {
+            a.most_significant_bits()
+        });
     });
 }
