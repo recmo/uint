@@ -18,14 +18,21 @@ pub fn shift_left_small(limbs: &mut [u64], amount: usize) -> u64 {
 pub fn shift_right_small(limbs: &mut [u64], amount: usize) -> u64 {
     debug_assert!(amount < 64);
 
-    let mut overflow = 0;
-    for limb in limbs.iter_mut().rev() {
-        let value = (*limb >> amount) | overflow;
-        overflow = *limb << (64 - amount);
-        *limb = value;
+    if limbs.is_empty() {
+        return 0;
     }
-    overflow
+
+    let final_overflow = limbs[0] << (64 - amount);
+
+    for i in 0..limbs.len() - 1 {
+        limbs[i] = (limbs[i] >> amount) | (limbs[i + 1] << (64 - amount));
+    }
+
+    limbs[limbs.len() - 1] >>= amount;
+
+    final_overflow
 }
+
 
 #[cfg(test)]
 mod tests {
