@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Cache Python dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: issue_tracker-${{ hashFiles('.github/workflows/issue_tracker.yml') }}
