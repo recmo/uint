@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Added `unsafe` to many unstable API functions in `algorithms` module, and
+  documented their conditions of use (COU). ([#552])
+
+[#552]: https://github.com/recmo/uint/pull/552
+
 ## [1.17.0] - 2025-09-24
 
 ### Added
