@@ -46,7 +46,7 @@ fn bench_div_2x1_mg10(criterion: &mut Criterion) {
     bench_arbitrary_with(
         criterion,
         "algo/div/2x1/mg10",
-        input_2x1().prop_map(|(n, d)| (n, d, reciprocal(d))),
+        input_2x1().prop_map(|(n, d)| (n, d, unsafe { reciprocal(d) })),
         |(n, d, v)| div_2x1_mg10(n, d, v),
     );
 }
@@ -64,7 +64,7 @@ fn bench_div_3x2_mg10(criterion: &mut Criterion) {
     bench_arbitrary_with(
         criterion,
         "algo/div/3x2/mg10",
-        input_3x2().prop_map(|(n21, n0, d)| (n21, n0, d, reciprocal_2(d))),
-        |(n21, n0, d, v)| div_3x2_mg10(n21, n0, d, v),
+        input_3x2().prop_map(|(n21, n0, d)| (n21, n0, d, unsafe { reciprocal_2(d) })),
+        |(n21, n0, d, v)| unsafe { div_3x2_mg10(n21, n0, d, v) },
     );
 }

@@ -30,13 +30,18 @@ pub const fn div_1x1(numerator: u64, divisor: u64) -> (u64, u64) {
 #[doc = crate::algorithms::unstable_warning!()]
 /// The divisor must be normalized. See algorithm 7 from [MG10].
 ///
+/// # Safety
+///
+/// - The input `d` must be at least `2^63`, i.e., its highest bit must be set.
+///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
-pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
+pub unsafe fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 63));
 
-    let v = reciprocal(d);
+    // SAFETY: COU propagated to this function.
+    let v = unsafe { reciprocal(d) };
     let mut r: u64 = 0;
     for u in u.iter_mut().rev() {
         let n = u128::join(r, *u);
@@ -49,17 +54,21 @@ pub fn div_nx1_normalized(u: &mut [u64], d: u64) -> u64 {
 
 /// ⚠️ Compute single limb division.
 #[doc = crate::algorithms::unstable_warning!()]
-/// The highest limb of `numerator` and `divisor` must be nonzero.
-/// The divisor does not need normalization.
 /// See algorithm 7 from [MG10].
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 ///
-/// # Panics
+/// # Safety
 ///
-/// May panic if the above requirements are not met.
+/// The following conditions must hold:
+///
+/// - The highest limb of `numerator` must be nonzero.
+/// - The highest limb of `divisor` must be nonzero.
+///
+/// In debug, may panic if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
 #[inline(always)]
-pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
+pub unsafe fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     debug_assert!(divisor != 0);
     debug_assert!(!limbs.is_empty());
     debug_assert!(*limbs.last().unwrap() != 0);
@@ -69,10 +78,10 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
     // Normalize and compute reciprocal
     let shift = divisor.leading_zeros();
     if shift == 0 {
-        return div_nx1_normalized(limbs, divisor);
+        return unsafe { div_nx1_normalized(limbs, divisor) };
     }
     let divisor = divisor << shift;
-    let reciprocal = reciprocal(divisor);
+    let reciprocal = unsafe { reciprocal(divisor) };
 
     let last = limbs[limbs.len() - 1];
     let mut remainder = last >> (64 - shift);
@@ -102,17 +111,29 @@ pub fn div_nx1(limbs: &mut [u64], divisor: u64) -> u64 {
 
 /// ⚠️ Compute double limb normalized division.
 #[doc = crate::algorithms::unstable_warning!()]
-/// Requires `divisor` to be in the range $[2^{127}, 2^{128})$ (i.e.
-/// normalized). Same as [`div_nx1`] but using [`div_3x2`] internally.
+/// Same as [`div_nx1`] but using [`div_3x2`] internally.
+///
+/// # Safety
+///
+/// - The divisor must be normalized (highest bit is set).
+///
+/// In debug, may panic if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
 #[inline(always)]
-pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
+pub unsafe fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
     // OPT: Version with in-place shifting of `u`
     debug_assert!(d >= (1 << 127));
 
-    let v = reciprocal_2(d);
+    // SAFETY: d >= 2**127 - propagated to this function.
+    let v = unsafe { reciprocal_2(d) };
     let mut remainder: u128 = 0;
     for u in u.iter_mut().rev() {
-        let (q, r) = div_3x2(remainder, *u, d, v);
+        // SAFETY:
+        // div_3x2 COUs:
+        // - d >= 2**127 - propagated to this function.
+        // - remainder < d - initially 0, then follows from div_3x2 correctness.
+        // - v = reciprocal_2(d) - calculated above
+        let (q, r) = unsafe { div_3x2(remainder, *u, d, v) };
         *u = q;
         remainder = r;
     }
@@ -121,14 +142,18 @@ pub fn div_nx2_normalized(u: &mut [u64], d: u128) -> u128 {
 
 /// ⚠️ Compute double limb division.
 #[doc = crate::algorithms::unstable_warning!()]
-/// Requires `divisor` to be in the range $[2^{64}, 2^{128})$. Same as
-/// [`div_nx2_normalized`] but does the shifting of the numerator inline.
+/// Same as [`div_nx2_normalized`] but does the shifting of the numerator
+/// inline.
 ///
-/// # Panics
+/// # Safety
 ///
-/// May panic if the above requirements are not met.
+/// - The highest limb of `numerator` must be nonzero.
+/// - The divisor's high word is non-zero (i.e., divisor >= $2^{64}$).
+///
+/// In debug, may panic if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
 #[inline(always)]
-pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
+pub unsafe fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     debug_assert!(divisor >= 1 << 64);
     debug_assert!(!limbs.is_empty());
     debug_assert!(*limbs.last().unwrap() != 0);
@@ -138,10 +163,10 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     // Normalize and compute reciprocal
     let shift = divisor.high().leading_zeros();
     if shift == 0 {
-        return div_nx2_normalized(limbs, divisor);
+        return unsafe { div_nx2_normalized(limbs, divisor) };
     }
     let divisor = divisor << shift;
-    let reciprocal = reciprocal_2(divisor);
+    let reciprocal = unsafe { reciprocal_2(divisor) };
 
     let last = limbs[limbs.len() - 1];
     let mut remainder: u128 = u128::from(last >> (64 - shift));
@@ -152,7 +177,7 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
         let u = (upper << shift) | (lower >> (64 - shift));
 
         // Compute quotient
-        let (q, r) = div_3x2(remainder, u, divisor, reciprocal);
+        let (q, r) = unsafe { div_3x2(remainder, u, divisor, reciprocal) };
 
         // Store quotient
         limbs[i] = q;
@@ -160,7 +185,7 @@ pub fn div_nx2(limbs: &mut [u64], divisor: u128) -> u128 {
     }
     // Compute last quotient
     let first = limbs[0];
-    let (q, remainder) = div_3x2(remainder, first << shift, divisor, reciprocal);
+    let (q, remainder) = unsafe { div_3x2(remainder, first << shift, divisor, reciprocal) };
     limbs[0] = q;
 
     // Un-normalize remainder
@@ -182,12 +207,16 @@ pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
 
 /// ⚠️ Computes the quotient and remainder of a `u128` divided by a `u64`.
 #[doc = crate::algorithms::unstable_warning!()]
-/// Requires
-/// * `u < d * 2**64`,
-/// * `d >= 2**63`, and
-/// * `v = reciprocal(d)`.
-///
 /// Implements algorithm 4 from [MG10].
+///
+/// # Safety
+///
+/// - `u < d * 2**64`,
+/// - `d >= 2**63`, and
+/// - `v = reciprocal(d)`.
+///
+/// In debug, panics if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
 ///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
@@ -195,7 +224,7 @@ pub fn div_2x1_ref(u: u128, d: u64) -> (u64, u64) {
 pub fn div_2x1_mg10(u: u128, d: u64, v: u64) -> (u64, u64) {
     debug_assert!(d >= (1 << 63));
     debug_assert!((u >> 64) < u128::from(d));
-    debug_assert_eq!(v, reciprocal(d));
+    debug_assert_eq!(v, unsafe { reciprocal(d) });
 
     let q = u + (u >> 64) * u128::from(v);
     let q0 = q as u64;
@@ -269,13 +298,22 @@ pub fn div_3x2_ref(n21: u128, n0: u64, d: u128) -> u64 {
 #[doc = crate::algorithms::unstable_warning!()]
 /// Implements [MG10] algorithm 5.
 ///
+/// # Safety
+///
+/// - d >= 2**127,
+/// - u21 < d
+/// - v = reciprocal_2(d)
+///
+/// In debug, panics if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
+///
 /// [MG10]: https://gmplib.org/~tege/division-paper.pdf
 #[inline(always)]
 #[must_use]
-pub fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
+pub unsafe fn div_3x2_mg10(u21: u128, u0: u64, d: u128, v: u64) -> (u64, u128) {
     debug_assert!(d >= (1 << 127));
     debug_assert!(u21 < d);
-    debug_assert_eq!(v, reciprocal_2(d));
+    debug_assert_eq!(v, unsafe { reciprocal_2(d) });
 
     let q = u128::mul(u21.high(), v) + u21;
     let r1 = u21.low().wrapping_sub(q.high().wrapping_mul(d.high()));
@@ -310,7 +348,7 @@ mod tests {
             let d = d | (1 << 63);
             let r = r % d;
             let n = u128::from(q) * u128::from(d) + u128::from(r);
-            let v = reciprocal(d);
+            let v = unsafe { reciprocal(d) };
             assert_eq!(div_2x1_mg10(n, d, v), (q,r));
         });
     }
@@ -352,8 +390,8 @@ mod tests {
                 let n21 = (n10 >> 64) + u128::from(q) * u128::from(d1) + u128::from(r1);
                 (n21, n0)
             };
-            let v = reciprocal_2(d);
-            assert_eq!(div_3x2_mg10(n21, n0, d, v), (q, r));
+            let v = unsafe { reciprocal_2(d) };
+            assert_eq!(unsafe { div_3x2_mg10(n21, n0, d, v) }, (q, r));
         });
     }
 
@@ -369,7 +407,7 @@ mod tests {
             addmul(&mut numerator, &quotient, &[divisor]);
 
             // Test
-            let r = div_nx1_normalized(&mut numerator, divisor);
+            let r = unsafe { div_nx1_normalized(&mut numerator, divisor) };
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
@@ -392,7 +430,7 @@ mod tests {
             prop_assume!(!numerator.is_empty());
 
             // Test
-            let r = div_nx1(&mut numerator, divisor);
+            let r = unsafe { div_nx1(&mut numerator, divisor) };
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
@@ -410,7 +448,7 @@ mod tests {
             addmul(&mut numerator, &quotient, &[divisor.low(), divisor.high()]);
 
             // Test
-            let r = div_nx2_normalized(&mut numerator, divisor);
+            let r = unsafe { div_nx2_normalized(&mut numerator, divisor) };
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
@@ -434,7 +472,7 @@ mod tests {
             prop_assume!(!numerator.is_empty());
 
             // Test
-            let r = div_nx2(&mut numerator, divisor);
+            let r = unsafe { div_nx2(&mut numerator, divisor) };
             assert_eq!(&numerator[..quotient.len()], &quotient);
             assert_eq!(r, remainder);
         });
