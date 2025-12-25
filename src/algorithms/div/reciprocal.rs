@@ -76,7 +76,7 @@ pub fn reciprocal_mg10(d: u64) -> u64 {
         1024,
     ];
 
-    debug_assert!(d >= (1 << 63));
+    assert!(d >= (1 << 63));
     let d = Wrapping(d);
 
     let d0 = d & ONE;
