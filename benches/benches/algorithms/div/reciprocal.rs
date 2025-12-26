@@ -21,7 +21,7 @@ fn bench_reciprocal_mg10(criterion: &mut Criterion) {
         criterion,
         "algo/div/reciprocal/mg10",
         u64::arbitrary().prop_map(|a| a | (1 << 63)),
-        reciprocal_mg10,
+        |arg| unsafe { reciprocal_mg10(arg) },
     );
 }
 
@@ -30,6 +30,6 @@ fn bench_reciprocal_2_mg10(criterion: &mut Criterion) {
         criterion,
         "algo/div/reciprocal_2/mg10",
         u128::arbitrary().prop_map(|a| a | (1u128 << 127)),
-        reciprocal_2_mg10,
+        |arg| unsafe { reciprocal_2_mg10(arg) },
     );
 }

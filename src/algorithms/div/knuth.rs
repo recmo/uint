@@ -7,19 +7,20 @@ use crate::{
 };
 
 /// ⚠️ In-place Knuth normalized long division with reciprocals.
+/// # Safety
+///
+/// Following conditions of use MUST be met:
+///
+/// - The highest (most-significant) bit of the divisor MUST be set.
+/// - The `divisor` and `numerator` MUST each be at least two limbs.
+/// - `numerator` MUST contain at at least as many elements as `divisor`.
+///
+/// In debug mode, panics if any condition of use is violated. In release, may
+/// panic or trigger UB if any condition of use is violated.
 #[doc = crate::algorithms::unstable_warning!()]
-/// # Conditions of Use
-///
-/// * The highest (most-significant) bit of the divisor MUST be set.
-/// * The `divisor` and `numerator` MUST each be at least two limbs.
-/// * `numerator` MUST contain at at least as many elements as `divisor`.
-///
-/// # Panics
-///
-/// May panic if any condition of use is violated.
 #[inline(always)]
 #[allow(clippy::many_single_char_names)]
-pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
+pub unsafe fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
     debug_assert!(divisor.len() >= 2);
     debug_assert!(numerator.len() >= divisor.len());
     debug_assert!(*divisor.last().unwrap() >= (1 << 63));
@@ -32,7 +33,8 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 
     // Compute the divisor double limb and reciprocal
     let d = u128::join(divisor[n - 1], divisor[n - 2]);
-    let v = reciprocal_2(d);
+
+    let v = unsafe { reciprocal_2(d) };
 
     // Compute the quotient one limb at a time.
     for j in (0..=m).rev() {
@@ -53,7 +55,7 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
         // By using 3x2 limbs we get a quotient that is very likely correct
         // and at most one too large. In the process we also get the first
         // two remainder limbs.
-        let (mut q, r) = div_3x2(n21, n0, d, v);
+        let (mut q, r) = unsafe { div_3x2(n21, n0, d, v) };
 
         // Subtract the quotient times the divisor from the remainder.
         // We already have the highest two limbs, so we can reduce the
@@ -78,22 +80,24 @@ pub fn div_nxm_normalized(numerator: &mut [u64], divisor: &[u64]) {
 }
 
 /// ⚠️ In-place Knuth long division with implicit normalization and reciprocals.
-#[doc = crate::algorithms::unstable_warning!()]
-/// # Conditions of use:
+/// # Safety
 ///
-/// * `divisor` MUST NOT be empty.
-/// * The highest (most-significant) limb of `divisor` MUST be non-zero.
-/// * `divisor` and `numerator` MUST contain at least three limbs.
-/// * `numerator` MUST contain at at least as many elements as `divisor`.
+/// - `numerator` MUST contain at least three limbs.
+/// - `divisor` MUST contain at least three limbs.
+/// - The highest (most-significant) limb of `divisor` MUST be non-zero.
+/// - `numerator` MUST contain at at least as many elements as `divisor`.
 ///
 /// # Panics
 ///
-/// May panic if any condition of use is violated.
+/// In debug, panics if any condition of use is violated. In release,
+/// may panic or trigger UB if any condition of use is violated.
+#[doc = crate::algorithms::unstable_warning!()]
 #[inline(always)]
 #[allow(clippy::many_single_char_names)]
-pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
-    debug_assert!(divisor.len() >= 3);
+pub unsafe fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     assume!(numerator.len() >= divisor.len()); // Elides the check in `copy_within`.
+
+    debug_assert!(divisor.len() >= 3);
     debug_assert!(*divisor.last().unwrap() >= 1);
 
     let numerator = UncheckedSlice::wrap_mut(numerator);
@@ -117,7 +121,9 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
         )
     };
     debug_assert!(d >= 1 << 127);
-    let v = reciprocal_2(d);
+    // SAFETY: After normalization, high bit is set in `d`, to meet COU of
+    // `reciprocal_2`.
+    let v = unsafe { reciprocal_2(d) };
 
     // Compute the quotient one limb at a time.
     let mut q_high = 0;
@@ -145,7 +151,7 @@ pub fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
             // By using 3x2 limbs we get a quotient that is very likely correct
             // and at most one too large. In the process we also get the first
             // two remainder limbs.
-            let (mut q, r) = div_3x2(n21, n0, d, v);
+            let (mut q, r) = unsafe { div_3x2(n21, n0, d, v) };
 
             if q != 0 {
                 // Subtract the quotient times the divisor from the remainder.
@@ -242,7 +248,7 @@ mod tests {
             0x6dad759fcd6af14a,
             0x5fe38801c609f277,
         ];
-        div_nxm_normalized(&mut numerator, &divisor);
+        unsafe { div_nxm_normalized(&mut numerator, &divisor) };
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
@@ -260,7 +266,7 @@ mod tests {
         let divisor = [0x1415dfe9e8161414, 0x1656161616161682, 0x9600001682001616];
         let expected_quotient = [0xffffffffffffff];
         let expected_remainder = [0x166bf775fc2a3414, 0x1656161616161680, 0x9600001682001616];
-        div_nxm_normalized(&mut numerator, &divisor);
+        unsafe { div_nxm_normalized(&mut numerator, &divisor) };
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(remainder, expected_remainder);
         assert_eq!(quotient, expected_quotient);
@@ -294,7 +300,7 @@ mod tests {
             0x1000,
             0x2000000000000000,
         ];
-        div_nxm_normalized(&mut numerator, &divisor);
+        unsafe { div_nxm_normalized(&mut numerator, &divisor) };
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(quotient, expected_quotient);
         assert_eq!(remainder, expected_remainder);
@@ -306,7 +312,7 @@ mod tests {
         let divisor = [0x10002, 0x0, 0xfdffffff00000000];
         let expected_quotient = [0xffffffffffffffff];
         let expected_remainder = [0xb200000000010004, 0xfffffffffffeffff, 0xfdfffffeffffffff];
-        div_nxm_normalized(&mut numerator, &divisor);
+        unsafe { div_nxm_normalized(&mut numerator, &divisor) };
         let (remainder, quotient) = numerator.split_at(divisor.len());
         assert_eq!(quotient, expected_quotient);
         assert_eq!(remainder, expected_remainder);
@@ -337,7 +343,7 @@ mod tests {
             numerator[..remainder.len()].copy_from_slice(&remainder);
             addmul(&mut numerator, quotient.as_slice(), divisor.as_slice());
 
-            div_nxm_normalized(numerator.as_mut_slice(), divisor.as_slice());
+            unsafe { div_nxm_normalized(numerator.as_mut_slice(), divisor.as_slice()) };
             let (r, q) = numerator.split_at(divisor.len());
             assert_eq!(r, remainder);
             assert_eq!(q, quotient);
@@ -375,7 +381,7 @@ mod tests {
             0x6dad759fcd6af14a,
             0x5fe38801c609f277,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        unsafe { div_nxm(&mut numerator, &mut divisor) };
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
     }
@@ -411,7 +417,7 @@ mod tests {
             0x18f16cfde22dcefe,
             0x11296685,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        unsafe { div_nxm(&mut numerator, &mut divisor) };
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
     }
@@ -446,7 +452,7 @@ mod tests {
             0x5abe292d53acf085,
             0x699fc911,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        unsafe { div_nxm(&mut numerator, &mut divisor) };
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
     }
@@ -473,7 +479,7 @@ mod tests {
             0x2d3bfe1f7904dd64,
             0x28ec28356c5894a8,
         ];
-        div_nxm(&mut numerator, &mut divisor);
+        unsafe { div_nxm(&mut numerator, &mut divisor) };
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
     }
@@ -489,7 +495,7 @@ mod tests {
         let mut divisor = [0x8000000000000000, 0x8000000000000000, 0x8000000000000000];
         let quotient = [0x1, 0x1];
         let remainder = [0x0, 0x8000000000000000, 0x7fffffffffffffff];
-        div_nxm(&mut numerator, &mut divisor);
+        unsafe { div_nxm(&mut numerator, &mut divisor) };
         assert_eq!(&numerator[..quotient.len()], quotient);
         assert_eq!(divisor, remainder);
     }
@@ -513,7 +519,7 @@ mod tests {
             numerator[..remainder.len()].copy_from_slice(&remainder);
             addmul(&mut numerator, quotient.as_slice(), divisor.as_slice());
 
-            div_nxm(numerator.as_mut_slice(), divisor.as_mut_slice());
+            unsafe { div_nxm(numerator.as_mut_slice(), divisor.as_mut_slice()) };
             assert_eq!(&numerator[..quotient.len()], quotient);
             assert_eq!(divisor, remainder);
             assert!(numerator[quotient.len()..].iter().all(|&x| x == 0));

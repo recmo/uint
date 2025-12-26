@@ -20,7 +20,10 @@ mod small;
 
 pub use self::{
     knuth::{div_nxm, div_nxm_normalized},
-    reciprocal::{reciprocal, reciprocal_2, reciprocal_2_mg10, reciprocal_mg10, reciprocal_ref},
+    reciprocal::{
+        checked_reciprocal, checked_reciprocal_2, reciprocal, reciprocal_2, reciprocal_2_mg10,
+        reciprocal_mg10, reciprocal_ref,
+    },
     small::{
         div_1x1, div_2x1, div_2x1_mg10, div_2x1_ref, div_3x2, div_3x2_mg10, div_3x2_ref, div_nx1,
         div_nx1_normalized, div_nx2, div_nx2_normalized,
@@ -77,7 +80,8 @@ pub(crate) fn div_inlined(numerator: &mut [u64], divisor: &mut [u64]) {
     if super::cmp(numerator, divisor).is_lt() {
         // Numerator is smaller than the divisor: (q, r) = (0, numerator)
         cold_path();
-        // `a < b` implies `a.len() <= b.len()`, after trimming most significant zeros.
+        // `a < b` implies `a.len() <= b.len()`,
+        // after trimming most significant zeros.
         assume!(numerator.len() <= divisor.len());
         let (remainder, padding) = divisor.split_at_mut(numerator.len());
         remainder.copy_from_slice(numerator);
@@ -88,6 +92,30 @@ pub(crate) fn div_inlined(numerator: &mut [u64], divisor: &mut [u64]) {
     debug_assert!(numerator.len() >= divisor.len());
 
     // Compute quotient and remainder, branching out to different algorithms.
+    //
+    // SAFETY:
+    //
+    // All match arms ensure the COU of their respective called functions.
+    //
+    // `div_nx1`, `div_nx2` have identical COUs:
+    // 1. High limb of numerator is nonzero
+    //   - Ensured by trimming zeros above
+    // 2. High limb of divisor is nonzero
+    //   - Ensured by trimming zeros above
+    //
+    // `div_nx2` has the following additional COU:
+    // 3. Divisor is in the range $[2^{64}, 2^{128})$.
+    //  - Ensured by trimming zeros above and match guard below.
+    //
+    // `div_nxm` has the following COUs:
+    // 1. numerator is at least three limbs.
+    //   - Ensured by combination of COU2 and COU4.
+    // 2. divisor is at least three limbs.
+    //  - Ensured by match guard below.
+    // 3. highest limb of divisor is non-zero.
+    //   - Ensured by trimming zeros above.
+    // 4. numerator has at least as many limbs as divisor.
+    //   - Ensured by `if super::cmp` above.
     match divisor {
         [divisor] => {
             let d = *divisor;
@@ -95,14 +123,14 @@ pub(crate) fn div_inlined(numerator: &mut [u64], divisor: &mut [u64]) {
                 assume!(d != 0); // Elides division by 0 check.
                 (*numerator, *divisor) = div_1x1(*numerator, d);
             } else {
-                *divisor = div_nx1(numerator, d);
+                *divisor = unsafe { div_nx1(numerator, d) };
             }
         }
         [d0, d1] => {
             let d = u128::join(*d1, *d0);
-            (*d0, *d1) = div_nx2(numerator, d).split();
+            (*d0, *d1) = unsafe { div_nx2(numerator, d) }.split();
         }
-        _ => div_nxm(numerator, divisor),
+        _ => unsafe { div_nxm(numerator, divisor) },
     }
 }
 
