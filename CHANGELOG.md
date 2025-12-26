@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2025-12-263
+
 ### Changed
 
 - Added `unsafe` to many unstable API functions in `algorithms` module, and
