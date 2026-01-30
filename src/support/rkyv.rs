@@ -8,14 +8,14 @@ use core::fmt;
 use rkyv::{
     Archive, Archived, Deserialize, Place, Portable, Serialize,
     bytecheck::CheckBytes,
+    primitive::ArchivedU64,
     rancor::{Fallible, Trace},
-    rend::u64_le,
 };
 
 /// An archived [`Uint`]
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 #[repr(transparent)]
-pub struct ArchivedUint<const BITS: usize, const LIMBS: usize>([u64_le; LIMBS]);
+pub struct ArchivedUint<const BITS: usize, const LIMBS: usize>([ArchivedU64; LIMBS]);
 
 /// An archived [`Bits`]
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -32,7 +32,7 @@ where
         context: &mut C,
     ) -> Result<(), <C as Fallible>::Error> {
         unsafe {
-            <[u64_le; LIMBS]>::check_bytes(value.cast(), context)?;
+            <[ArchivedU64; LIMBS]>::check_bytes(value.cast(), context)?;
         }
         Ok(())
     }
@@ -66,7 +66,7 @@ impl<D: Fallible + ?Sized, const BITS: usize, const LIMBS: usize> Deserialize<Ui
         deserializer: &mut D,
     ) -> Result<Uint<BITS, LIMBS>, <D as Fallible>::Error> {
         Ok(Uint {
-            limbs: <[u64_le; LIMBS]>::deserialize(&self.0, deserializer)?,
+            limbs: <[ArchivedU64; LIMBS]>::deserialize(&self.0, deserializer)?,
         })
     }
 }
@@ -125,7 +125,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> From<&'a ArchivedUint<BITS, LIMB
 {
     fn from(archived: &'a ArchivedUint<BITS, LIMBS>) -> Self {
         Self {
-            limbs: archived.0.map(u64_le::to_native),
+            limbs: archived.0.map(ArchivedU64::to_native),
         }
     }
 }
