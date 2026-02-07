@@ -3,6 +3,7 @@ version = 2
 ignore = [
     { id = "RUSTSEC-2024-0388", reason = "this is an unmaintained transitive subdep of a dev dep" },
     { id = "RUSTSEC-2024-0436", reason = "this is an unmaintained transitive subdep of a dep" },
+    { id = "RUSTSEC-2025-0141", reason = "this is an unmaintained dep, but we support it as a feature" },
 ]
 
 [bans]

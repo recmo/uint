@@ -5,7 +5,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Unstable features
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![cfg_attr(feature = "nightly", feature(core_intrinsics, bigint_helper_methods))]
+#![cfg_attr(
+    feature = "nightly",
+    feature(core_intrinsics, const_unsigned_bigint_helpers)
+)]
 #![cfg_attr(
     feature = "nightly",
     allow(internal_features, clippy::incompatible_msrv)
