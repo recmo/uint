@@ -19,18 +19,6 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
                 .get()
                 .cmp(&rhs.as_double_words()[0].get());
         }
-        if LIMBS == 4 {
-            let &[lo_l, hi_l] = self.as_double_words() else {
-                unreachable!()
-            };
-            let &[lo_r, hi_r] = rhs.as_double_words() else {
-                unreachable!()
-            };
-            return hi_l
-                .get()
-                .cmp(&hi_r.get())
-                .then_with(|| lo_l.get().cmp(&lo_r.get()));
-        }
         crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }

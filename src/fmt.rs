@@ -116,7 +116,7 @@ macro_rules! impl_fmt_pow2 {
                     if bit_idx + $bits_per_digit > 64 && limb_idx + 1 < LIMBS {
                         digit |= (self.limbs[limb_idx + 1] << (64 - bit_idx)) & mask;
                     }
-                    s.write_char(alphabet[digit as usize] as char).unwrap();
+                    s.push_byte(alphabet[digit as usize]);
                 }
                 f.pad_integral(true, <$base>::PREFIX, s.as_str())
             }
@@ -155,6 +155,13 @@ impl<const SIZE: usize> StackString<SIZE> {
     #[inline]
     const fn as_bytes(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.buf.as_ptr().cast(), self.len) }
+    }
+
+    #[inline]
+    fn push_byte(&mut self, b: u8) {
+        debug_assert!(self.len < SIZE);
+        unsafe { self.buf.as_mut_ptr().add(self.len).cast::<u8>().write(b) };
+        self.len += 1;
     }
 }
 
