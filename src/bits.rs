@@ -327,6 +327,37 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
+        as_primitives!(self, {
+            u64(x) => {
+                let (limbs, bits) = (rhs / 64, rhs % 64);
+                if limbs >= 1 {
+                    return (Self::ZERO, x != 0);
+                }
+                let carry = (x >> (63 - bits)) >> 1;
+                let mut r = Self::ZERO;
+                r.limbs[0] = (x << bits) & Self::MASK;
+                return (r, carry != 0);
+            },
+            u128(x) => {
+                let (limbs, bits) = (rhs / 64, rhs % 64);
+                if limbs >= 2 {
+                    return (Self::ZERO, x != 0);
+                }
+                if limbs == 0 {
+                    let carry = (x >> (127 - bits)) >> 1;
+                    let shifted = x << bits;
+                    let mut r = Self::ZERO;
+                    r.limbs[0] = shifted as u64;
+                    r.limbs[1] = (shifted >> 64) as u64 & Self::MASK;
+                    return (r, carry != 0);
+                }
+                let lo = x as u64 as u128;
+                let carry = (lo >> (63 - bits)) >> 1;
+                let mut r = Self::ZERO;
+                r.limbs[1] = (lo << bits) as u64 & Self::MASK;
+                return (r, carry != 0);
+            },
+        });
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
@@ -410,6 +441,37 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_shr(self, rhs: usize) -> (Self, bool) {
+        as_primitives!(self, {
+            u64(x) => {
+                let (limbs, bits) = (rhs / 64, rhs % 64);
+                if limbs >= 1 {
+                    return (Self::ZERO, x != 0);
+                }
+                let carry = (x << (63 - bits)) << 1;
+                let mut r = Self::ZERO;
+                r.limbs[0] = x >> bits;
+                return (r, carry != 0);
+            },
+            u128(x) => {
+                let (limbs, bits) = (rhs / 64, rhs % 64);
+                if limbs >= 2 {
+                    return (Self::ZERO, x != 0);
+                }
+                if limbs == 0 {
+                    let carry = (x << (127 - bits)) << 1;
+                    let shifted = x >> bits;
+                    let mut r = Self::ZERO;
+                    r.limbs[0] = shifted as u64;
+                    r.limbs[1] = (shifted >> 64) as u64;
+                    return (r, carry != 0);
+                }
+                let hi = (x >> 64) as u64;
+                let carry = (hi << (63 - bits)) << 1;
+                let mut r = Self::ZERO;
+                r.limbs[0] = hi >> bits;
+                return (r, carry != 0);
+            },
+        });
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
