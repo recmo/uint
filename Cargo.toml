@@ -148,7 +148,7 @@ borsh = { version = "1.5", features = ["derive"] }
 
 # benches only; we still need to include these here to make rust-analyzer work
 arrayvec = "0.7"
-criterion = { version = "3", package = "codspeed-criterion-compat" }
+criterion = { version = "4.3", package = "codspeed-criterion-compat" }
 
 [features]
 default = ["std"]
