@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Optimize `from_str_radix` ([#557])
+
+[#557]: https://github.com/recmo/uint/pull/557
+
 ## [1.17.2] - 2025-12-28
 
 ### Fixed
