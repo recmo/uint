@@ -50,6 +50,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             let q = &mut self.limbs[0];
             let r = &mut rhs.limbs[0];
             (*q, *r) = algorithms::div::div_1x1(*q, *r);
+        } else if LIMBS <= 4 {
+            algorithms::div::div_inlined(&mut self.limbs, &mut rhs.limbs);
         } else {
             Self::div_rem_by_ref(&mut self, &mut rhs);
         }

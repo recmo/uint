@@ -58,7 +58,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // Reuse `div_rem` if we don't need an extra limb.
             if const { crate::nlimbs(BITS + 1) == LIMBS } {
                 let numerator = unsafe { &mut *numerator.as_mut_ptr().cast::<Self>() };
-                Self::div_rem_by_ref(numerator, &mut modulus);
+                if LIMBS <= 4 {
+                    algorithms::div::div_inlined(&mut numerator.limbs, &mut modulus.limbs);
+                } else {
+                    Self::div_rem_by_ref(numerator, &mut modulus);
+                }
             } else {
                 Self::div_rem_bits_plus_one(numerator.as_mut_ptr(), &mut modulus);
             }

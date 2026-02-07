@@ -327,6 +327,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_shl(self, rhs: usize) -> (Self, bool) {
+        if LIMBS == 1 {
+            let (limbs, bits) = (rhs / 64, rhs % 64);
+            if limbs >= 1 {
+                return (Self::ZERO, self.limbs[0] != 0);
+            }
+            let x = self.limbs[0];
+            let carry = (x >> (63 - bits)) >> 1;
+            let mut r = Self::ZERO;
+            r.limbs[0] = (x << bits) & Self::MASK;
+            return (r, carry != 0);
+        }
+        if LIMBS == 2 {
+            let (limbs, bits) = (rhs / 64, rhs % 64);
+            if limbs >= 2 {
+                return (Self::ZERO, !self.const_is_zero());
+            }
+            let val = self.as_double_words()[0].get();
+            let shifted = val << bits;
+            if limbs == 0 {
+                let carry = (val >> (127 - bits)) >> 1;
+                let mut r = Self::ZERO;
+                r.limbs[0] = shifted as u64;
+                r.limbs[1] = (shifted >> 64) as u64 & Self::MASK;
+                return (r, carry != 0);
+            }
+            let x = self.limbs[0] as u128;
+            let carry = (x >> (63 - bits)) >> 1;
+            let mut r = Self::ZERO;
+            r.limbs[1] = (x << bits) as u64 & Self::MASK;
+            return (r, carry != 0);
+        }
+
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
@@ -410,6 +442,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_shr(self, rhs: usize) -> (Self, bool) {
+        if LIMBS == 1 {
+            let (limbs, bits) = (rhs / 64, rhs % 64);
+            if limbs >= 1 {
+                return (Self::ZERO, self.limbs[0] != 0);
+            }
+            let x = self.limbs[0];
+            let carry = (x << (63 - bits)) << 1;
+            let mut r = Self::ZERO;
+            r.limbs[0] = x >> bits;
+            return (r, carry != 0);
+        }
+        if LIMBS == 2 {
+            let (limbs, bits) = (rhs / 64, rhs % 64);
+            if limbs >= 2 {
+                return (Self::ZERO, !self.const_is_zero());
+            }
+            let val = self.as_double_words()[0].get();
+            if limbs == 0 {
+                let carry = (val << (127 - bits)) << 1;
+                let shifted = val >> bits;
+                let mut r = Self::ZERO;
+                r.limbs[0] = shifted as u64;
+                r.limbs[1] = (shifted >> 64) as u64;
+                return (r, carry != 0);
+            }
+            let x = self.limbs[1];
+            let carry = (x << (63 - bits)) << 1;
+            let mut r = Self::ZERO;
+            r.limbs[0] = x >> bits;
+            return (r, carry != 0);
+        }
+
         let (limbs, bits) = (rhs / 64, rhs % 64);
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());

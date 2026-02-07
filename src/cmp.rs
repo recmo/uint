@@ -11,6 +11,26 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
+        if LIMBS == 1 {
+            return self.limbs[0].cmp(&rhs.limbs[0]);
+        }
+        if LIMBS == 2 {
+            return self.as_double_words()[0]
+                .get()
+                .cmp(&rhs.as_double_words()[0].get());
+        }
+        if LIMBS == 4 {
+            let &[lo_l, hi_l] = self.as_double_words() else {
+                unreachable!()
+            };
+            let &[lo_r, hi_r] = rhs.as_double_words() else {
+                unreachable!()
+            };
+            return hi_l
+                .get()
+                .cmp(&hi_r.get())
+                .then_with(|| lo_l.get().cmp(&lo_r.get()));
+        }
         crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }

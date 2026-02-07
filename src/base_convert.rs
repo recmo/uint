@@ -193,34 +193,63 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         base: u64,
         digits: I,
     ) -> Result<Self, BaseConvertError> {
-        // OPT: Special handling of bases that divide 2^64, and bases that are
-        // powers of 2.
-        // OPT: Same trick as with `to_base_le`, find the largest power of base
-        // that fits `u64` and accumulate there first.
         if base < 2 {
             return Err(BaseConvertError::InvalidBase(base));
         }
 
+        let chunk_base = crate::utils::max_pow_u64(base);
+        let mut chunk_power: usize = 1;
+        {
+            let mut p = base;
+            while p != chunk_base {
+                p *= base;
+                chunk_power += 1;
+            }
+        }
+
         let mut result = Self::ZERO;
+        let mut chunk_val: u64 = 0;
+        let mut chunk_digits: usize = 0;
         for digit in digits {
             if digit >= base {
                 return Err(BaseConvertError::InvalidDigit(digit, base));
             }
-            // Multiply by base.
-            // OPT: keep track of non-zero limbs and mul the minimum.
-            let mut carry = u128::from(digit);
-            #[allow(clippy::cast_possible_truncation)]
-            for limb in &mut result.limbs {
-                carry += u128::from(*limb) * u128::from(base);
-                *limb = carry as u64;
-                carry >>= 64;
+            chunk_val = chunk_val * base + digit;
+            chunk_digits += 1;
+            if chunk_digits == chunk_power {
+                Self::from_base_muladd(&mut result, chunk_base, chunk_val)?;
+                chunk_val = 0;
+                chunk_digits = 0;
             }
-            if carry > 0 || (LIMBS != 0 && result.limbs[LIMBS - 1] > Self::MASK) {
-                return Err(BaseConvertError::Overflow);
+        }
+        if chunk_digits > 0 {
+            let mut tail_base = base;
+            for _ in 1..chunk_digits {
+                tail_base *= base;
             }
+            Self::from_base_muladd(&mut result, tail_base, chunk_val)?;
         }
 
         Ok(result)
+    }
+
+    #[inline(always)]
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_base_muladd(
+        result: &mut Self,
+        factor: u64,
+        addend: u64,
+    ) -> Result<(), BaseConvertError> {
+        let mut carry = u128::from(addend);
+        for limb in &mut result.limbs {
+            carry += u128::from(*limb) * u128::from(factor);
+            *limb = carry as u64;
+            carry >>= 64;
+        }
+        if carry > 0 || (LIMBS != 0 && result.limbs[LIMBS - 1] > Self::MASK) {
+            return Err(BaseConvertError::Overflow);
+        }
+        Ok(())
     }
 }
 
