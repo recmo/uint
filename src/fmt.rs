@@ -83,10 +83,50 @@ impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
 }
 
 impl_fmt!(fmt::Display; base::Decimal, "");
-impl_fmt!(fmt::Binary; base::Binary, "b");
-impl_fmt!(fmt::Octal; base::Octal, "o");
-impl_fmt!(fmt::LowerHex; base::Hexadecimal, "x");
-impl_fmt!(fmt::UpperHex; base::Hexadecimal, "X");
+macro_rules! impl_fmt_pow2 {
+    ($tr:path; $base:ty, $bits_per_digit:literal, $upper:literal) => {
+        impl<const BITS: usize, const LIMBS: usize> $tr for Uint<BITS, LIMBS> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if let Ok(small) = u64::try_from(self) {
+                    return <u64 as $tr>::fmt(&small, f);
+                }
+                if let Ok(small) = u128::try_from(self) {
+                    return <u128 as $tr>::fmt(&small, f);
+                }
+
+                let alphabet: &[u8; 16] = if $upper {
+                    b"0123456789ABCDEF"
+                } else {
+                    b"0123456789abcdef"
+                };
+                let mask: u64 = (1 << $bits_per_digit) - 1;
+
+                let bit_len = self.bit_len();
+                let total_digits = bit_len.div_ceil($bits_per_digit);
+
+                let mut s = StackString::<BITS>::new();
+                let mut i = total_digits;
+                while i > 0 {
+                    i -= 1;
+                    let bit_offset = i * $bits_per_digit;
+                    let limb_idx = bit_offset / 64;
+                    let bit_idx = bit_offset % 64;
+                    let mut digit = (self.limbs[limb_idx] >> bit_idx) & mask;
+                    if bit_idx + $bits_per_digit > 64 && limb_idx + 1 < LIMBS {
+                        digit |= (self.limbs[limb_idx + 1] << (64 - bit_idx)) & mask;
+                    }
+                    s.push_byte(alphabet[digit as usize]);
+                }
+                f.pad_integral(true, <$base>::PREFIX, s.as_str())
+            }
+        }
+    };
+}
+
+impl_fmt_pow2!(fmt::Binary; base::Binary, 1, false);
+impl_fmt_pow2!(fmt::Octal; base::Octal, 3, false);
+impl_fmt_pow2!(fmt::LowerHex; base::Hexadecimal, 4, false);
+impl_fmt_pow2!(fmt::UpperHex; base::Hexadecimal, 4, true);
 
 /// A stack-allocated buffer that implements [`fmt::Write`].
 pub(crate) struct StackString<const SIZE: usize> {
@@ -114,6 +154,13 @@ impl<const SIZE: usize> StackString<SIZE> {
     #[inline]
     const fn as_bytes(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.buf.as_ptr().cast(), self.len) }
+    }
+
+    #[inline]
+    fn push_byte(&mut self, b: u8) {
+        debug_assert!(self.len < SIZE);
+        unsafe { self.buf.as_mut_ptr().add(self.len).cast::<u8>().write(b) };
+        self.len += 1;
     }
 }
 

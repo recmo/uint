@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use bit shifts for power-of-two formatting (binary, octal, hex) instead of division ([#565])
+
+[#565]: https://github.com/recmo/uint/pull/565
+
 ## [1.17.2] - 2025-12-28
 
 ### Fixed
