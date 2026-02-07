@@ -807,7 +807,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Convert to IEEE 754 double precision float bit representation.
     #[inline]
     fn as_f64_bits(&self) -> u64 {
-        as_primitives!(self, {
+        as_primitives!(self; {
             u64(x) => return f64::to_bits(x as f64),
         });
 
