@@ -11,6 +11,10 @@ impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
 impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
+        as_primitives!(self, rhs; {
+            u64(x, y) => return x.cmp(&y),
+            u128(x, y) => return x.cmp(&y),
+        });
         crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }
@@ -82,6 +86,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn const_is_zero(&self) -> bool {
+        as_primitives!(self; {
+            u64(x) => return x == 0,
+            u128(x) => return x == 0,
+        });
         self.const_eq(&Self::ZERO)
     }
 
@@ -92,6 +100,10 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn const_eq(&self, other: &Self) -> bool {
+        as_primitives!(self, other; {
+            u64(x, y) => return x == y,
+            u128(x, y) => return x == y,
+        });
         // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
         let a = self.as_limbs();
         let b = other.as_limbs();
