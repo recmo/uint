@@ -12,6 +12,8 @@ mod base {
         const BASE: u64;
         /// The prefix for the base.
         const PREFIX: &'static str;
+        /// Number of bits per digit. Only meaningful for power-of-2 bases.
+        const BITS_PER_DIGIT: usize = 0;
 
         /// Highest power of the base that fits in a `u64`.
         const MAX: u64 = crate::utils::max_pow_u64(Self::BASE);
@@ -24,12 +26,14 @@ mod base {
     impl Base for Binary {
         const BASE: u64 = 2;
         const PREFIX: &'static str = "0b";
+        const BITS_PER_DIGIT: usize = 1;
     }
 
     pub(super) struct Octal;
     impl Base for Octal {
         const BASE: u64 = 8;
         const PREFIX: &'static str = "0o";
+        const BITS_PER_DIGIT: usize = 3;
     }
 
     pub(super) struct Decimal;
@@ -42,6 +46,7 @@ mod base {
     impl Base for Hexadecimal {
         const BASE: u64 = 16;
         const PREFIX: &'static str = "0x";
+        const BITS_PER_DIGIT: usize = 4;
     }
 }
 use base::Base;
@@ -76,6 +81,47 @@ macro_rules! impl_fmt {
     };
 }
 
+macro_rules! impl_fmt_pow2 {
+    ($tr:path; $base:ty, $upper:literal) => {
+        impl<const BITS: usize, const LIMBS: usize> $tr for Uint<BITS, LIMBS> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if let Ok(small) = u64::try_from(self) {
+                    return <u64 as $tr>::fmt(&small, f);
+                }
+                if let Ok(small) = u128::try_from(self) {
+                    return <u128 as $tr>::fmt(&small, f);
+                }
+
+                const BITS_PER_DIGIT: usize = <$base>::BITS_PER_DIGIT;
+                let alphabet: &[u8; 16] = if $upper {
+                    b"0123456789ABCDEF"
+                } else {
+                    b"0123456789abcdef"
+                };
+                let mask: u64 = (1 << BITS_PER_DIGIT) - 1;
+
+                let bit_len = self.bit_len();
+                let total_digits = bit_len.div_ceil(BITS_PER_DIGIT);
+
+                let mut s = StackString::<BITS>::new();
+                let mut i = total_digits;
+                while i > 0 {
+                    i -= 1;
+                    let bit_offset = i * BITS_PER_DIGIT;
+                    let limb_idx = bit_offset / 64;
+                    let bit_idx = bit_offset % 64;
+                    let mut digit = (self.limbs[limb_idx] >> bit_idx) & mask;
+                    if bit_idx + BITS_PER_DIGIT > 64 && limb_idx + 1 < LIMBS {
+                        digit |= (self.limbs[limb_idx + 1] << (64 - bit_idx)) & mask;
+                    }
+                    s.push_byte(alphabet[digit as usize]);
+                }
+                f.pad_integral(true, <$base>::PREFIX, s.as_str())
+            }
+        }
+    };
+}
+
 impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
@@ -83,10 +129,11 @@ impl<const BITS: usize, const LIMBS: usize> fmt::Debug for Uint<BITS, LIMBS> {
 }
 
 impl_fmt!(fmt::Display; base::Decimal, "");
-impl_fmt!(fmt::Binary; base::Binary, "b");
-impl_fmt!(fmt::Octal; base::Octal, "o");
-impl_fmt!(fmt::LowerHex; base::Hexadecimal, "x");
-impl_fmt!(fmt::UpperHex; base::Hexadecimal, "X");
+
+impl_fmt_pow2!(fmt::Binary; base::Binary, false);
+impl_fmt_pow2!(fmt::Octal; base::Octal, false);
+impl_fmt_pow2!(fmt::LowerHex; base::Hexadecimal, false);
+impl_fmt_pow2!(fmt::UpperHex; base::Hexadecimal, true);
 
 /// A stack-allocated buffer that implements [`fmt::Write`].
 pub(crate) struct StackString<const SIZE: usize> {
@@ -114,6 +161,13 @@ impl<const SIZE: usize> StackString<SIZE> {
     #[inline]
     const fn as_bytes(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.buf.as_ptr().cast(), self.len) }
+    }
+
+    #[inline]
+    fn push_byte(&mut self, b: u8) {
+        debug_assert!(self.len < SIZE);
+        unsafe { self.buf.as_mut_ptr().add(self.len).cast::<u8>().write(b) };
+        self.len += 1;
     }
 }
 
