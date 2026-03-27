@@ -193,6 +193,7 @@ RUSTDOCFLAGS="-Z unstable-options --show-coverage"  cargo doc --workspace --all-
 * Compatible with std `u64`, etc types. See Rust's [integer methods](https://doc.rust-lang.org/stable/std/primitive.u64.html).
 * Adhere to [Rust API Guidelines](https://rust-lang.github.io/api-guidelines)
 * Montgomery REDC and other algo's for implementing prime fields.
+* **Community maintained**. Support for use in foreign bindings for Swift and Kotlin though [ruint-uniffi](https://github.com/paolodamico/ruint-uniffi) crate.
 
 ## To do
 
