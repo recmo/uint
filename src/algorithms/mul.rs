@@ -97,9 +97,16 @@ fn addmul_n_small(lhs: &mut [u64], a: &[u64], b: &[u64]) {
 
     for j in 0..n {
         let mut carry = 0;
-        for i in 0..(n - j) {
+        // Widening multiply-accumulate for all but the last position.
+        let i = n - j - 1;
+        for i in 0..i {
             (lhs[j + i], carry) = u128::muladd2(a[i], b[j], carry, lhs[j + i]).split();
         }
+        // Last position: the carry out is discarded (it would go beyond n
+        // limbs), so use truncated arithmetic to reduce register pressure.
+        lhs[j + i] = (a[i].wrapping_mul(b[j]))
+            .wrapping_add(lhs[j + i])
+            .wrapping_add(carry);
     }
 }
 
