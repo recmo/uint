@@ -9,16 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-04-22
+
 ### Changed
 
 - Optimize `from_str_radix` ([#557])
 - Specialize `Ord::cmp`, `const_eq`, `const_is_zero` for small sizes ([#561])
 - Use bit shifts for power-of-two formatting (binary, octal, hex) instead of division ([#565])
-- Optimize `to_be_bytes` for full-limb sizes via per-limb `swap_bytes`
+- Optimize `to_be_bytes` for full-limb sizes via per-limb `swap_bytes` ([#569])
+- Extract last iteration on mul loop to reduce register pressure ([#566])
 
+### Fixed
+
+- Use `rkyv::primitive::ArchivedU64` ([#556])
+
+[#556]: https://github.com/recmo/uint/pull/556
 [#557]: https://github.com/recmo/uint/pull/557
 [#561]: https://github.com/recmo/uint/pull/561
 [#565]: https://github.com/recmo/uint/pull/565
+[#566]: https://github.com/recmo/uint/pull/566
+[#569]: https://github.com/recmo/uint/pull/569
 
 ## [1.17.2] - 2025-12-28
 
@@ -497,7 +507,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/recmo/uint/compare/v1.17.2...HEAD
+[unreleased]: https://github.com/recmo/uint/compare/v1.18.0...HEAD
+[1.18.0]: https://github.com/recmo/uint/releases/tag/v1.18.0
 [1.17.2]: https://github.com/recmo/uint/releases/tag/v1.17.2
 [1.17.1]: https://github.com/recmo/uint/releases/tag/v1.17.1
 [1.17.0]: https://github.com/recmo/uint/releases/tag/v1.17.0
