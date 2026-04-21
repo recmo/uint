@@ -148,6 +148,22 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[must_use]
     #[inline]
     pub const fn to_be_bytes<const BYTES: usize>(&self) -> [u8; BYTES] {
+        const { Self::assert_bytes(BYTES) }
+
+        // Optimized implementation for full-limb types: one `bswap` per limb.
+        // The byte-by-byte reverse in the generic fallback is not recognized
+        // by LLVM and degrades to 32 individual byte loads/stores for U256.
+        if BYTES == LIMBS * 8 {
+            let mut limbs_be = [0u64; LIMBS];
+            let mut i = 0;
+            while i < LIMBS {
+                limbs_be[i] = self.limbs[LIMBS - 1 - i].swap_bytes();
+                i += 1;
+            }
+            // SAFETY: BYTES == size_of::<[u64; LIMBS]>().
+            return unsafe { *limbs_be.as_ptr().cast() };
+        }
+
         let mut bytes = self.to_le_bytes::<BYTES>();
 
         // bytes.reverse()
