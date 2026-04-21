@@ -107,13 +107,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
         let a = self.as_limbs();
         let b = other.as_limbs();
+        let mut equal_count = 0usize;
         let mut i = 0;
-        let mut r = true;
         while i < LIMBS {
-            r &= a[i] == b[i];
+            equal_count += (a[i] == b[i]) as usize;
             i += 1;
         }
-        r
+        equal_count == LIMBS
     }
 }
 

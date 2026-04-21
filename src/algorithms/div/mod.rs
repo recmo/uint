@@ -12,7 +12,7 @@
 //! [K97]: https://cs.stanford.edu/~knuth/taocp.html
 //! [MG10]: https://gmplib.org/~tege/division-paper.pdf
 
-#![allow(clippy::similar_names)] // TODO
+#![allow(clippy::similar_names)] // Variable names follow the referenced papers.
 
 mod knuth;
 mod reciprocal;
