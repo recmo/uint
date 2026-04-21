@@ -165,18 +165,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         let mut bytes = self.to_le_bytes::<BYTES>();
-
-        // bytes.reverse()
-        let len = bytes.len();
-        let half_len = len / 2;
-        let mut i = 0;
-        while i < half_len {
-            let tmp = bytes[i];
-            bytes[i] = bytes[len - 1 - i];
-            bytes[len - 1 - i] = tmp;
-            i += 1;
-        }
-
+        bytes.reverse();
         bytes
     }
 
