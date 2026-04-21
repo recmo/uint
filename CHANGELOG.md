@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize `from_str_radix` ([#557])
 - Specialize `Ord::cmp`, `const_eq`, `const_is_zero` for small sizes ([#561])
 - Use bit shifts for power-of-two formatting (binary, octal, hex) instead of division ([#565])
+- Optimize `to_be_bytes` for full-limb sizes via per-limb `swap_bytes`
 
 [#557]: https://github.com/recmo/uint/pull/557
 [#561]: https://github.com/recmo/uint/pull/561
