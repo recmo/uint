@@ -6,7 +6,7 @@
 //! notice.
 //! </div>
 
-#![allow(missing_docs)] // TODO: document algorithms
+#![allow(missing_docs)]
 
 macro_rules! unstable_warning {
     () => {

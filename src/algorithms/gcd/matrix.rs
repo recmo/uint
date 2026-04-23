@@ -122,7 +122,7 @@ impl Matrix {
     ///
     /// # Panics
     ///
-    /// Panics if `r0 < r1`.
+    /// Panics if `r1 > r0`.
     // OPT: Would this be faster using extended binary gcd?
     // See <https://en.algorithmica.org/hpc/algorithms/gcd>
     #[inline]
