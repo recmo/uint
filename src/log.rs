@@ -75,11 +75,11 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             break;
         }
         while let Some(trial) = result.checked_add(Self::ONE) {
-            if let Some(value) = base.checked_pow(trial) {
-                if value <= self {
-                    result = trial;
-                    continue;
-                }
+            if let Some(value) = base.checked_pow(trial)
+                && value <= self
+            {
+                result = trial;
+                continue;
             }
             break;
         }

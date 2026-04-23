@@ -115,13 +115,13 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, 
 
         // Check mask since we wrote raw.
         #[cfg(target_endian = "little")]
-        if let Some(last) = result.as_limbs().last() {
-            if *last > Self::MASK {
-                return Err(PyOverflowError::new_err(format!(
-                    "Number to large to fit Uint<{}>",
-                    Self::BITS
-                )));
-            }
+        if let Some(last) = result.as_limbs().last()
+            && *last > Self::MASK
+        {
+            return Err(PyOverflowError::new_err(format!(
+                "Number to large to fit Uint<{}>",
+                Self::BITS
+            )));
         }
 
         Ok(result)
