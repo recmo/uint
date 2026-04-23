@@ -331,15 +331,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
         }
-
-        let word_bits = 64;
         let mut r = Self::ZERO;
+        let bits = bits as u32;
+
         let mut carry = 0;
         let mut i = 0;
         while i < LIMBS - limbs {
             let x = self.limbs[i];
             r.limbs[i + limbs] = (x << bits) | carry;
-            carry = (x >> (word_bits - bits - 1)) >> 1;
+            carry = x.unbounded_shr(64 - bits);
             i += 1;
         }
         (r.masked(), carry != 0)
@@ -372,6 +372,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub const fn wrapping_shl(self, rhs: usize) -> Self {
+        as_primitives!(self; {
+            u64(x) => {
+                let mut r = Self::ZERO;
+                r.limbs[0] = x.unbounded_shl(rhs as u32);
+                return r.masked();
+            },
+            u128(x) => {
+                let r = x.unbounded_shl(rhs as u32);
+                let mut out = Self::ZERO;
+                out.limbs[0] = r as u64;
+                out.limbs[1] = (r >> 64) as u64;
+                return out.masked();
+            },
+            u256((lo, hi)) => {
+                let rhs = rhs as u32;
+                // Compute as if rhs < 128.
+                let new_lo = lo.unbounded_shl(rhs);
+                let new_hi = hi.unbounded_shl(rhs) | lo.unbounded_shr(128u32.wrapping_sub(rhs));
+                // If rhs >= 128, lo becomes 0 and hi becomes lo << (rhs - 128).
+                let cross = lo.unbounded_shl(rhs.wrapping_sub(128));
+                let mask = 0u128.wrapping_sub((rhs < 128) as u128);
+                let lo = new_lo & mask;
+                let hi = (new_hi & mask) | (cross & !mask);
+                let mut r = Self::ZERO;
+                r.limbs[0] = lo as u64;
+                r.limbs[1] = (lo >> 64) as u64;
+                r.limbs[2] = hi as u64;
+                r.limbs[3] = (hi >> 64) as u64;
+                return r.masked();
+            },
+        });
+
         self.overflowing_shl(rhs).0
     }
 
@@ -414,15 +446,15 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if limbs >= LIMBS {
             return (Self::ZERO, !self.const_is_zero());
         }
-
-        let word_bits = 64;
         let mut r = Self::ZERO;
+        let bits = bits as u32;
+
         let mut carry = 0;
         let mut i = 0;
         while i < LIMBS - limbs {
             let x = self.limbs[LIMBS - 1 - i];
             r.limbs[LIMBS - 1 - i - limbs] = (x >> bits) | carry;
-            carry = (x << (word_bits - bits - 1)) << 1;
+            carry = x.unbounded_shl(64 - bits);
             i += 1;
         }
         (r, carry != 0)
@@ -458,6 +490,38 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub const fn wrapping_shr(self, rhs: usize) -> Self {
+        as_primitives!(self; {
+            u64(x) => {
+                let mut r = Self::ZERO;
+                r.limbs[0] = x.unbounded_shr(rhs as u32);
+                return r;
+            },
+            u128(x) => {
+                let r = x.unbounded_shr(rhs as u32);
+                let mut out = Self::ZERO;
+                out.limbs[0] = r as u64;
+                out.limbs[1] = (r >> 64) as u64;
+                return out;
+            },
+            u256((lo, hi)) => {
+                let rhs = rhs as u32;
+                // Compute as if rhs < 128.
+                let new_hi = hi.unbounded_shr(rhs);
+                let new_lo = lo.unbounded_shr(rhs) | hi.unbounded_shl(128u32.wrapping_sub(rhs));
+                // If rhs >= 128, hi becomes 0 and lo becomes hi >> (rhs - 128).
+                let cross = hi.unbounded_shr(rhs.wrapping_sub(128));
+                let mask = 0u128.wrapping_sub((rhs < 128) as u128);
+                let hi = new_hi & mask;
+                let lo = (new_lo & mask) | (cross & !mask);
+                let mut r = Self::ZERO;
+                r.limbs[0] = lo as u64;
+                r.limbs[1] = (lo >> 64) as u64;
+                r.limbs[2] = hi as u64;
+                r.limbs[3] = (hi >> 64) as u64;
+                return r;
+            },
+        });
+
         self.overflowing_shr(rhs).0
     }
 
