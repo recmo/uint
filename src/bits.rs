@@ -114,7 +114,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         for limb in &mut self.limbs {
             *limb = limb.reverse_bits();
         }
-        if BITS % 64 != 0 {
+        if !BITS.is_multiple_of(64) {
             self >>= 64 - BITS % 64;
         }
         self
