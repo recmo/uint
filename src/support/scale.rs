@@ -240,7 +240,7 @@ impl<const BITS: usize, const LIMBS: usize> Decode for CompactUint<BITS, LIMBS> 
 
                     let mut new_limbs = vec![u64::MAX; limbs];
                     if bits > 0 {
-                        new_limbs[limbs - 1] &= if bits % 64 == 0 {
+                        new_limbs[limbs - 1] &= if bits.is_multiple_of(64) {
                             u64::MAX
                         } else {
                             (1 << (bits % 64)) - 1

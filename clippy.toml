@@ -1,2 +1,0 @@
-msrv = "1.85"
-doc-valid-idents = ["CPython", "PyPy", ".."]
