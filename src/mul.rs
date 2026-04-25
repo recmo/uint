@@ -72,7 +72,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn inv_ring(self) -> Option<Self> {
-        if BITS == 0 || self.limbs[0] & 1 == 0 {
+        if self.limbs[0] & 1 == 0 {
             return None;
         }
 
@@ -118,7 +118,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(0_U0.widening_mul(0_U0), 0_U0);
     /// assert_eq!(1_U1.widening_mul(1_U1), 1_U2);
     /// assert_eq!(3_U2.widening_mul(7_U3), 21_U5);
     /// # }
@@ -139,9 +138,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         assert_eq!(LIMBS_RES, nlimbs(BITS_RES));
         let mut result = Uint::<BITS_RES, LIMBS_RES>::ZERO;
         algorithms::addmul(&mut result.limbs, self.as_limbs(), rhs.as_limbs());
-        if LIMBS_RES > 0 {
-            debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
-        }
+        debug_assert!(result.limbs[LIMBS_RES - 1] <= Uint::<BITS_RES, LIMBS_RES>::MASK);
 
         result
     }
@@ -153,9 +150,6 @@ impl<const BITS: usize, const LIMBS: usize> Product<Self> for Uint<BITS, LIMBS> 
     where
         I: Iterator<Item = Self>,
     {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         iter.fold(Self::ONE, Self::wrapping_mul)
     }
 }
@@ -166,9 +160,6 @@ impl<'a, const BITS: usize, const LIMBS: usize> Product<&'a Self> for Uint<BITS,
     where
         I: Iterator<Item = &'a Self>,
     {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         iter.copied().fold(Self::ONE, Self::wrapping_mul)
     }
 }

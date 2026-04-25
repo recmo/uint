@@ -132,7 +132,7 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, 
 mod test {
     use super::*;
     use crate::{
-        aliases::{U0, U8, U64, U256, U512},
+        aliases::{U8, U64, U256, U512},
         const_for, nlimbs,
     };
     use proptest::proptest;
@@ -158,15 +158,12 @@ mod test {
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py: Python<'_>| {
             let obj = (-1_i64).into_pyobject(py).unwrap();
-            assert!(U0::extract_bound(&obj).is_err());
             assert!(U256::extract_bound(&obj).is_err());
 
             let obj = (1000_i64).into_pyobject(py).unwrap();
-            assert!(U0::extract_bound(&obj).is_err());
             assert!(U8::extract_bound(&obj).is_err());
 
             let obj = U512::MAX.into_pyobject(py).unwrap();
-            assert!(U0::extract_bound(&obj).is_err());
             assert!(U64::extract_bound(&obj).is_err());
             assert!(U256::extract_bound(&obj).is_err());
         });

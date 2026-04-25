@@ -30,7 +30,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn root(self, degree: usize) -> Self {
         assert!(degree > 0, "degree must be greater than zero");
 
-        // Handle zero case (including BITS == 0).
+        // Handle zero case.
         if self.is_zero() {
             return Self::ZERO;
         }

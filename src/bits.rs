@@ -124,9 +124,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn not(mut self) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let mut i = 0;
         while i < LIMBS {
             self.limbs[i] = !self.limbs[i];
@@ -350,9 +347,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// See [`overflowing_shl`](Self::overflowing_shl) for details.
     #[inline]
     pub(crate) fn overflowing_shl_big(self, rhs: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (Self::ZERO, false);
-        }
         let Ok(rhs) = u64::try_from(rhs) else {
             return (Self::ZERO, true);
         };
@@ -433,9 +427,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// See [`overflowing_shr`](Self::overflowing_shr) for details.
     #[inline]
     pub(crate) fn overflowing_shr_big(self, rhs: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (Self::ZERO, false);
-        }
         let Ok(rhs) = u64::try_from(rhs) else {
             return (Self::ZERO, true);
         };
@@ -465,9 +456,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn arithmetic_shr(self, rhs: usize) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let sign = self.bit(BITS - 1);
         let mut r = self.wrapping_shr(rhs);
         if sign {
@@ -482,9 +470,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn rotate_left(self, rhs: usize) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let rhs = rhs % BITS;
         // (self << rhs) | (self >> (BITS - rhs))
         self.wrapping_shl(rhs).bitor(self.wrapping_shr(BITS - rhs))
@@ -495,9 +480,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline(always)]
     #[must_use]
     pub const fn rotate_right(self, rhs: usize) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let rhs = rhs % BITS;
         self.rotate_left(BITS - rhs)
     }
@@ -764,7 +746,6 @@ mod tests {
 
     #[test]
     fn test_leading_zeros() {
-        assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
         assert_eq!(Uint::<1, 1>::ZERO.leading_zeros(), 1);
         assert_eq!(Uint::<1, 1>::ONE.leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
@@ -802,7 +783,6 @@ mod tests {
 
     #[test]
     fn test_leading_ones() {
-        assert_eq!(Uint::<0, 0>::ZERO.leading_ones(), 0);
         assert_eq!(Uint::<1, 1>::ZERO.leading_ones(), 0);
         assert_eq!(Uint::<1, 1>::ONE.leading_ones(), 1);
     }

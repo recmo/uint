@@ -505,7 +505,6 @@ mod tests {
         assert!(matches!(K.to_be_bytes::<{ KBE.len() }>(), KBE));
         assert!(matches!(K.to_le_bytes::<{ KLE.len() }>(), KLE));
 
-        assert!(matches!(Uint::<0, 0>::ZERO.to_be_bytes::<0>(), []));
         assert!(matches!(Uint::<1, 1>::ZERO.to_be_bytes::<1>(), [0]));
         assert!(matches!(
             Uint::<1, 1>::from_limbs([1]).to_be_bytes::<1>(),
@@ -516,8 +515,6 @@ mod tests {
             [0x12, 0x34]
         ));
 
-        assert!(matches!(Uint::<0, 0>::ZERO.to_be_bytes::<0>(), []));
-        assert!(matches!(Uint::<0, 0>::ZERO.to_le_bytes::<0>(), []));
         assert!(matches!(Uint::<1, 1>::ZERO.to_be_bytes::<1>(), [0]));
         assert!(matches!(Uint::<1, 1>::ZERO.to_le_bytes::<1>(), [0]));
         assert!(matches!(
@@ -549,8 +546,6 @@ mod tests {
 
     #[test]
     fn test_from_bytes() {
-        assert_eq!(Uint::<0, 0>::from_be_bytes([]), Uint::ZERO);
-        assert_eq!(Uint::<0, 0>::from_le_bytes([]), Uint::ZERO);
         assert_eq!(
             Uint::<12, 1>::from_be_bytes([0x01, 0x23]),
             Uint::from(0x0123)
@@ -597,8 +592,6 @@ mod tests {
 
     #[test]
     fn test_to_bytes() {
-        assert_eq!(Uint::<0, 0>::ZERO.to_le_bytes(), [0_u8; 0]);
-        assert_eq!(Uint::<0, 0>::ZERO.to_be_bytes(), [0_u8; 0]);
         assert_eq!(Uint::<12, 1>::from(0x0123_u64).to_le_bytes(), [0x23, 0x01]);
         assert_eq!(Uint::<12, 1>::from(0x0123_u64).to_be_bytes(), [0x01, 0x23]);
         assert_eq!(Uint::<16, 1>::from(0x1234_u64).to_le_bytes(), [0x34, 0x12]);

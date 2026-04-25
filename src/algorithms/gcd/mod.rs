@@ -68,9 +68,6 @@ pub fn gcd_extended<const BITS: usize, const LIMBS: usize>(
     Uint<BITS, LIMBS>,
     bool,
 ) {
-    if BITS == 0 {
-        return (Uint::ZERO, Uint::ZERO, Uint::ZERO, false);
-    }
     let swapped = a < b;
     if swapped {
         swap(&mut a, &mut b);
@@ -142,7 +139,7 @@ pub fn inv_mod<const BITS: usize, const LIMBS: usize>(
     num: Uint<BITS, LIMBS>,
     modulus: Uint<BITS, LIMBS>,
 ) -> Option<Uint<BITS, LIMBS>> {
-    if BITS == 0 || modulus.is_zero() {
+    if modulus.is_zero() {
         return None;
     }
     let mut a = modulus;

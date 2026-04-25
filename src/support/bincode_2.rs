@@ -12,10 +12,6 @@ use bincode_2::{
 
 impl<const BITS: usize, const LIMBS: usize> Encode for Uint<BITS, LIMBS> {
     fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), EncodeError> {
-        if BITS == 0 {
-            return Ok(());
-        }
-
         #[cfg(target_endian = "little")]
         return Encode::encode(self.as_le_slice(), encoder);
 
@@ -39,9 +35,6 @@ impl<const BITS: usize, const LIMBS: usize> Encode for Uint<BITS, LIMBS> {
 
 impl<Context, const BITS: usize, const LIMBS: usize> Decode<Context> for Uint<BITS, LIMBS> {
     fn decode<D: Decoder<Context = Context>>(decoder: &mut D) -> Result<Self, DecodeError> {
-        if BITS == 0 {
-            return Ok(Self::ZERO);
-        }
         let len = decode_slice_len(decoder)?;
         if len != Self::BYTES {
             return Err(DecodeError::ArrayLengthMismatch {
@@ -68,9 +61,6 @@ impl<'de, Context, const BITS: usize, const LIMBS: usize> BorrowDecode<'de, Cont
     fn borrow_decode<D: BorrowDecoder<'de, Context = Context>>(
         decoder: &mut D,
     ) -> Result<Self, DecodeError> {
-        if BITS == 0 {
-            return Ok(Self::ZERO);
-        }
         let bytes: &'de [u8] = BorrowDecode::borrow_decode(decoder)?;
         if bytes.len() != Self::BYTES {
             return Err(DecodeError::ArrayLengthMismatch {

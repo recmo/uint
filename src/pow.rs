@@ -39,7 +39,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(0_U0.overflowing_pow(0_U0), (0_U0, false));
     /// assert_eq!(0_U1.overflowing_pow(0_U1), (1_U1, false));
     /// assert_eq!(0_U1.overflowing_pow(1_U1), (0_U1, false));
     /// assert_eq!(1_U1.overflowing_pow(0_U1), (1_U1, false));
@@ -49,10 +48,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn overflowing_pow(mut self, mut exp: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (self, false);
-        }
-
         // Exponentiation by squaring
         let mut overflow = false;
         let mut base_overflow = false;
@@ -95,10 +90,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn wrapping_pow(mut self, mut exp: Self) -> Self {
-        if BITS == 0 {
-            return self;
-        }
-
         // Exponentiation by squaring
         let mut result = Self::ONE;
         while !exp.is_zero() {
