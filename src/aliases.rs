@@ -2,6 +2,7 @@
 use crate::{Bits, Uint};
 
 /// [`Uint`] for `0` bits. Always zero. Similar to `()`.
+#[deprecated = "do not use"]
 pub type U0 = Uint<0, 0>;
 
 /// [`Uint`] for `1` bit. Similar to [`bool`].
@@ -30,7 +31,6 @@ macro_rules! bit_alias {
 }
 
 bit_alias! {
-    B0(0, 0);
     B1(1, 1);
     B8(8, 1);
     B16(16, 1);
@@ -70,7 +70,6 @@ mod tests {
 
     #[test]
     const fn instantiate_consts() {
-        let _ = (U0::ZERO, U0::MAX, B0::ZERO);
         let _ = (U1::ZERO, U1::MAX, B1::ZERO);
         let _ = (U8::ZERO, U8::MAX, B8::ZERO);
         let _ = (U16::ZERO, U16::MAX, B16::ZERO);

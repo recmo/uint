@@ -113,7 +113,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn pow_mod(mut self, mut exp: Self, modulus: Self) -> Self {
-        if BITS == 0 || modulus <= Self::ONE {
+        if modulus <= Self::ONE {
             return Self::ZERO;
         }
 
@@ -184,9 +184,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn mul_redc(self, other: Self, modulus: Self, inv: u64) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let result = algorithms::mul_redc(self.limbs, other.limbs, modulus.limbs, inv);
         let result = Self::from_limbs(result);
         debug_assert!(result < modulus);
@@ -199,9 +196,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub fn square_redc(self, modulus: Self, inv: u64) -> Self {
-        if BITS == 0 {
-            return Self::ZERO;
-        }
         let result = algorithms::square_redc(self.limbs, modulus.limbs, inv);
         let result = Self::from_limbs(result);
         debug_assert!(result < modulus);

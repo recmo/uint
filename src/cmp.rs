@@ -123,7 +123,6 @@ mod tests {
 
     #[test]
     fn test_is_zero() {
-        assert!(Uint::<0, 0>::ZERO.is_zero());
         assert!(Uint::<1, 1>::ZERO.is_zero());
         assert!(Uint::<7, 1>::ZERO.is_zero());
         assert!(Uint::<64, 1>::ZERO.is_zero());

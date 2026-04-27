@@ -65,7 +65,7 @@ fn trim_leading_zeros(bytes: &[u8]) -> &[u8] {
 mod test {
     use super::*;
     use crate::{
-        aliases::{B160, U0, U256},
+        aliases::{B160, U256},
         const_for, nlimbs,
     };
     use hex_literal::hex;
@@ -74,7 +74,6 @@ mod test {
     #[test]
     fn test_uint_rlp() {
         // See <https://github.com/paritytech/parity-common/blob/436cb0827f0e3238ccb80d7d453f756d126c0615/rlp/tests/tests.rs#L214>
-        assert_eq!(U0::from(0).rlp_bytes()[..], hex!("80"));
         assert_eq!(U256::from(0).rlp_bytes()[..], hex!("80"));
         assert_eq!(U256::from(15).rlp_bytes()[..], hex!("0f"));
         assert_eq!(U256::from(1024).rlp_bytes()[..], hex!("820400"));

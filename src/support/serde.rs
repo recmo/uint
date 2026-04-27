@@ -10,8 +10,7 @@ use serde_core::{
     de::{Error, Unexpected, Visitor},
 };
 
-/// Canonical serialization for all human-readable instances of `Uint<0, 0>`,
-/// and minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
+/// Minimal human-readable `Uint<BITS, LIMBS>::ZERO` for any bit size.
 const ZERO_STR: &str = "0x0";
 
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
@@ -38,9 +37,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     }
 
     fn write_hex<const FULL: bool>(&self, s: &mut (impl fmt::Write + ?Sized)) {
-        if BITS == 0 {
-            s.write_str(ZERO_STR)
-        } else if FULL {
+        if FULL {
             write!(s, "{:#0w$x}", *self, w = 2 + Self::BYTES * 2)
         } else {
             write!(s, "{:#x}", *self)
@@ -118,11 +115,6 @@ impl<const BITS: usize, const LIMBS: usize> Visitor<'_> for HrVisitor<BITS, LIMB
         // Shortcut for common case
         if value == ZERO_STR {
             return Ok(Uint::<BITS, LIMBS>::ZERO);
-        }
-        // `ZERO_STR` is the only valid serialization of `Uint<0, 0>`, so if we
-        // have not shortcut, we are in an error case
-        if BITS == 0 {
-            return Err(Error::invalid_value(Unexpected::Str(value), &self));
         }
 
         value

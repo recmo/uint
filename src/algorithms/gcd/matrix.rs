@@ -41,9 +41,6 @@ impl Matrix {
         a: &mut Uint<BITS, LIMBS>,
         b: &mut Uint<BITS, LIMBS>,
     ) {
-        if BITS == 0 {
-            return;
-        }
         // OPT: We can avoid the temporary if we implement a dedicated matrix
         // multiplication.
         let (c, d) = if self.4 {

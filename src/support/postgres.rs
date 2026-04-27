@@ -100,32 +100,23 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
             Type::BIT | Type::VARBIT => {
                 // Bit in little-endian so the the first bit is the least significant.
-                // Length must be at least one bit.
-                if BITS == 0 {
-                    if *ty == Type::BIT {
-                        // `bit(0)` is not a valid type, but varbit can be empty.
-                        return Err(Box::new(WrongType::new::<Self>(ty.clone())));
-                    }
-                    out.put_i32(0);
-                } else {
-                    // Bits are output in big-endian order, but padded at the
-                    // least significant end.
-                    let padding = 8 - rem_up(BITS, 8);
-                    out.put_i32(Self::BITS.try_into()?);
-                    let bytes = self.as_le_bytes();
-                    let mut bytes = bytes.iter().rev();
-                    let mut shifted = bytes.next().unwrap() << padding;
-                    for byte in bytes {
-                        shifted |= if padding > 0 {
-                            byte >> (8 - padding)
-                        } else {
-                            0
-                        };
-                        out.put_u8(shifted);
-                        shifted = byte << padding;
-                    }
+                // Bits are output in big-endian order, but padded at the
+                // least significant end.
+                let padding = 8 - rem_up(BITS, 8);
+                out.put_i32(Self::BITS.try_into()?);
+                let bytes = self.as_le_bytes();
+                let mut bytes = bytes.iter().rev();
+                let mut shifted = bytes.next().unwrap() << padding;
+                for byte in bytes {
+                    shifted |= if padding > 0 {
+                        byte >> (8 - padding)
+                    } else {
+                        0
+                    };
                     out.put_u8(shifted);
+                    shifted = byte << padding;
                 }
+                out.put_u8(shifted);
             }
 
             // Hex strings
@@ -447,11 +438,7 @@ mod tests {
 
         // Fetch ground truth value from Postgres
         let expr = match *ty {
-            Type::BIT => format!(
-                "B'{value:b}'::bit({bits})",
-                value = value,
-                bits = if BITS == 0 { 1 } else { BITS },
-            ),
+            Type::BIT => format!("B'{value:b}'::bit({BITS})"),
             Type::VARBIT => format!("B'{value:b}'::varbit"),
             Type::BYTEA => format!("'\\x{value:x}'::bytea"),
             Type::CHAR => format!("'{value:#x}'::char({})", 2 + 2 * nbytes(BITS)),

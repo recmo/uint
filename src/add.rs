@@ -59,9 +59,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_add(mut self, rhs: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (Self::ZERO, false);
-        }
         let mut carry = false;
         let mut i = 0;
         while i < LIMBS {
@@ -92,9 +89,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn overflowing_sub(mut self, rhs: Self) -> (Self, bool) {
-        if BITS == 0 {
-            return (Self::ZERO, false);
-        }
         let mut borrow = false;
         let mut i = 0;
         while i < LIMBS {

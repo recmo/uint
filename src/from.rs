@@ -128,7 +128,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Saturates at the maximum value of the [`Uint`] if the value is too
     /// large.
     pub(crate) const fn const_from_u64(x: u64) -> Self {
-        if BITS == 0 || (BITS < 64 && x >= 1 << BITS) {
+        if BITS < 64 && x >= 1 << BITS {
             return Self::MAX;
         }
         let mut limbs = [0; LIMBS];
@@ -603,12 +603,8 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
 
         // Positive and exponent indicates |value| < 1
         if exponent < exponent_bias {
-            return if BITS == 0 {
-                Err(ToUintError::ValueTooLarge(BITS, Self::ZERO))
-            } else {
-                // We already handled value < 0.5 above; here 0.5 <= value < 1.0 → 1.
-                Ok(Self::ONE)
-            };
+            // We already handled value < 0.5 above; here 0.5 <= value < 1.0 → 1.
+            return Ok(Self::ONE);
         }
         exponent -= exponent_bias;
 
@@ -636,11 +632,7 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
 
         // Match old impl: if rounding bumps us across 2^BITS (only possible when
         // exponent == BITS - 1), report ValueTooLarge with the wrapped payload.
-        if sign == Sign::Positive
-            && fixint_bits > 0
-            && exponent == fixint_bits - 1
-            && r == Self::ZERO
-        {
+        if sign == Sign::Positive && exponent == fixint_bits - 1 && r == Self::ZERO {
             return Err(ToUintError::ValueTooLarge(BITS, r));
         }
 
@@ -687,9 +679,6 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&Uint<BITS, LIMBS>> for bool
 
     #[inline]
     fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-        if BITS == 0 {
-            return Ok(false);
-        }
         if value.gt_u64_max() || value.limbs[0] > 1 {
             return Err(Self::Error::Overflow(BITS, value.bit(0), true));
         }
@@ -707,9 +696,6 @@ macro_rules! to_int {
             #[inline]
             #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
             fn try_from(value: &Uint<BITS, LIMBS>) -> Result<Self, Self::Error> {
-                if BITS == 0 {
-                    return Ok(0);
-                }
                 if value.gt_u64_max() || value.limbs[0] > (Self::MAX as u64) {
                     return Err(Self::Error::Overflow(
                         BITS,
@@ -876,11 +862,6 @@ mod test {
 
     #[test]
     fn test_u64() {
-        assert_eq!(Uint::<0, 0>::try_from(0_u64), Ok(Uint::ZERO));
-        assert_eq!(
-            Uint::<0, 0>::try_from(1_u64),
-            Err(ToUintError::ValueTooLarge(0, Uint::ZERO))
-        );
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             assert_eq!(Uint::<BITS, LIMBS>::try_from(0_u64), Ok(Uint::ZERO));
@@ -929,7 +910,6 @@ mod test {
 
     #[test]
     fn test_f64() {
-        assert_eq!(Uint::<0, 0>::try_from(0.0_f64), Ok(Uint::ZERO));
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             assert_eq!(Uint::<BITS, LIMBS>::try_from(0.0_f64), Ok(Uint::ZERO));

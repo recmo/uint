@@ -154,6 +154,7 @@ pub struct Uint<const BITS: usize, const LIMBS: usize> {
 impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// The size of this integer type in 64-bit limbs.
     pub const LIMBS: usize = {
+        assert!(BITS > 0, "Can not construct Uint<0, 0>");
         let limbs = nlimbs(BITS);
         assert!(
             LIMBS == limbs,
@@ -165,7 +166,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// Bit mask for the last limb.
     pub const MASK: u64 = mask(BITS);
 
-    const SHOULD_MASK: bool = BITS > 0 && Self::MASK != u64::MAX;
+    const SHOULD_MASK: bool = Self::MASK != u64::MAX;
 
     /// The size of this integer type in bits.
     pub const BITS: usize = BITS;
@@ -175,8 +176,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub const ZERO: Self = Self::from_limbs([0; LIMBS]);
 
     /// The value one. This is useful to have as a constant for use in const fn.
-    ///
-    /// Zero if `BITS` is zero.
     pub const ONE: Self = Self::const_from_u64(1);
 
     /// The smallest value that can be represented by this integer type.
@@ -380,7 +379,6 @@ mod test {
 
     #[test]
     fn test_max() {
-        assert_eq!(Uint::<0, 0>::MAX, Uint::ZERO);
         assert_eq!(Uint::<1, 1>::MAX, Uint::from_limbs([1]));
         assert_eq!(Uint::<7, 1>::MAX, Uint::from_limbs([127]));
         assert_eq!(Uint::<64, 1>::MAX, Uint::from_limbs([u64::MAX]));

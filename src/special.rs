@@ -107,7 +107,6 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// ```
     /// # use ruint::{Uint, uint};
     /// # uint!{
-    /// assert_eq!(0_U0.checked_next_multiple_of(0_U0), None);
     /// assert_eq!(0_U1.checked_next_multiple_of(0_U1), None);
     /// assert_eq!(0_U1.checked_next_multiple_of(1_U1), Some(0_U1));
     /// assert_eq!(1_U1.checked_next_multiple_of(0_U1), None);

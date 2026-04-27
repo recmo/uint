@@ -123,10 +123,7 @@ unsafe impl<const BITS: usize, const LIMBS: usize> MaxEncodedLenAssoc for Uint<B
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        aliases::{U0, U256},
-        const_for, nlimbs,
-    };
+    use crate::{aliases::U256, const_for, nlimbs};
     use hex_literal::hex;
     use proptest::proptest;
 
@@ -139,7 +136,6 @@ mod test {
     #[test]
     fn test_rlp() {
         // See <https://github.com/paritytech/parity-common/blob/436cb0827f0e3238ccb80d7d453f756d126c0615/rlp/tests/tests.rs#L214>
-        assert_eq!(encode(U0::from(0))[..], hex!("80"));
         assert_eq!(encode(U256::from(0))[..], hex!("80"));
         assert_eq!(encode(U256::from(15))[..], hex!("0f"));
         assert_eq!(encode(U256::from(1024))[..], hex!("820400"));
