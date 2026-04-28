@@ -39,14 +39,7 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
             u64(x, y) => return x.cmp(&y),
             u128(x, y) => return x.cmp(&y),
         });
-        let (r, o) = self.overflowing_sub(*rhs);
-        if r.is_zero() {
-            Ordering::Equal
-        } else if o {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
+        algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }
 
