@@ -157,8 +157,24 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             let mut limbs_be = [0u64; LIMBS];
             let mut i = 0;
             while i < LIMBS {
-                limbs_be[i] = self.limbs[LIMBS - 1 - i].swap_bytes();
+                #[cfg(target_endian = "big")]
+                {
+                    limbs_be[i] = self.limbs[LIMBS - 1 - i];
+                }
+                #[cfg(target_endian = "little")]
+                {
+                    limbs_be[i] = self.limbs[LIMBS - 1 - i].swap_bytes();
+                }
                 i += 1;
+            }
+            const {
+                assert!(
+                    core::mem::size_of::<[u64; LIMBS]>() == core::mem::size_of::<[u8; BYTES]>()
+                );
+                assert!(
+                    core::mem::align_of::<[u64; LIMBS]>()
+                        .is_multiple_of(core::mem::align_of::<[u8; BYTES]>())
+                );
             }
             // SAFETY: BYTES == size_of::<[u64; LIMBS]>().
             return unsafe { *limbs_be.as_ptr().cast() };
