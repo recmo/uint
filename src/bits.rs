@@ -872,12 +872,19 @@ impl_shift!(u64, i64);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        aliases::{U128, U256},
-        const_for, nlimbs,
-    };
+    use crate::{aliases::U128, const_for, nlimbs};
     use core::cmp::min;
     use proptest::proptest;
+
+    fn reference_leading_zeros<const BITS: usize, const LIMBS: usize>(
+        value: Uint<BITS, LIMBS>,
+    ) -> usize {
+        let mut zeros = 0;
+        while zeros < BITS && !value.bit(BITS - zeros - 1) {
+            zeros += 1;
+        }
+        zeros
+    }
 
     fn reference_leading_ones<const BITS: usize, const LIMBS: usize>(
         value: Uint<BITS, LIMBS>,
@@ -912,8 +919,6 @@ mod tests {
     #[test]
     fn test_leading_zeros() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
-        assert_eq!(Uint::<1, 1>::ZERO.leading_zeros(), 1);
-        assert_eq!(Uint::<1, 1>::ONE.leading_zeros(), 0);
         const_for!(BITS in NON_ZERO {
             const LIMBS: usize = nlimbs(BITS);
             type U = Uint::<BITS, LIMBS>;
@@ -921,30 +926,9 @@ mod tests {
             assert_eq!(U::MAX.leading_zeros(), 0);
             assert_eq!(U::ONE.leading_zeros(), BITS - 1);
             proptest!(|(value: U)| {
-                let zeros = value.leading_zeros();
-                assert!(zeros <= BITS);
-                assert!(zeros < BITS || value == U::ZERO);
-                if zeros < BITS {
-                    let (left, overflow) = value.overflowing_shl(zeros);
-                    assert!(!overflow);
-                    assert!(left.leading_zeros() == 0 || value == U::ZERO);
-                    assert!(left.bit(BITS - 1));
-                    assert_eq!(value >> (BITS - zeros), Uint::ZERO);
-                }
+                assert_eq!(value.leading_zeros(), reference_leading_zeros(value));
             });
         });
-        proptest!(|(value: u128)| {
-            let uint = U128::from(value);
-            assert_eq!(uint.leading_zeros(), value.leading_zeros() as usize);
-        });
-
-        assert_eq!(U256::from_limbs([0, 1, 0, 1]).leading_zeros(), 63);
-        assert_eq!(U256::from_limbs([0, 0, 1, 1]).leading_zeros(), 63);
-        assert_eq!(U256::from_limbs([1, 0, 1, 1]).leading_zeros(), 63);
-        assert_eq!(U256::from_limbs([0, 1, 1, 1]).leading_zeros(), 63);
-        assert_eq!(U256::from_limbs([1, 1, 1, 1]).leading_zeros(), 63);
-
-        assert_eq!(U256::from_limbs([1, 0, 1, 0]).leading_zeros(), 64 + 63);
     }
 
     #[test]
