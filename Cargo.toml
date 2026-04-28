@@ -29,7 +29,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.91"
+rust-version = "1.90"
 authors = ["Remco Bloemen <remco@wicked.ventures>"]
 license = "MIT"
 homepage = "https://github.com/recmo/uint"

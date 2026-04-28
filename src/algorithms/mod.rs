@@ -148,9 +148,13 @@ fn sub(a: &[u64], b: &[u64]) -> (u64, bool) {
     let mut acc = 0;
     for i in 0..a.len() {
         let x;
-        (x, borrow) = a[i].borrowing_sub(b[i], borrow);
+        (x, borrow) = borrowing_sub(a[i], b[i], borrow);
         acc |= x;
     }
+    // HACK: This is a hack to avoid the compiler optimizing too much that the
+    // backend doesn't recognize the `borrowing_sub` chain: https://github.com/rust-lang/rust/issues/143517
+    // SAFETY: Writing to a local variable through a reference is safe.
+    unsafe { core::ptr::write_volatile(&mut acc, acc) };
     (acc, borrow)
 }
 
