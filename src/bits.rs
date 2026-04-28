@@ -181,6 +181,26 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[inline]
     #[must_use]
     pub const fn leading_ones(&self) -> usize {
+        let fixed = Self::MASK.leading_zeros() as usize;
+
+        as_primitives!(self; {
+            u64(x) => return (x | !Self::MASK).leading_ones() as usize - fixed,
+            u128(x) => {
+                let mask = (Self::MASK as u128) << 64 | u64::MAX as u128;
+                return (x | !mask).leading_ones() as usize - fixed;
+            },
+            u256((lo, hi)) => {
+                let hi_mask = (Self::MASK as u128) << 64 | u64::MAX as u128;
+                let hi = hi | !hi_mask;
+                let ones = if hi == u128::MAX {
+                    hi.leading_ones() + lo.leading_ones()
+                } else {
+                    hi.leading_ones()
+                };
+                return ones as usize - fixed;
+            },
+        });
+
         Self::not(*self).leading_zeros()
     }
 
@@ -188,26 +208,59 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     /// `self`.
     #[inline]
     #[must_use]
-    pub fn trailing_zeros(&self) -> usize {
-        self.as_limbs()
-            .iter()
-            .position(|&limb| limb != 0)
-            .map_or(BITS, |n| {
-                n * 64 + self.as_limbs()[n].trailing_zeros() as usize
-            })
+    pub const fn trailing_zeros(&self) -> usize {
+        as_primitives!(self; {
+            u64(x) => {
+                let zeros = x.trailing_zeros() as usize;
+                return if zeros > BITS { BITS } else { zeros };
+            },
+            u128(x) => {
+                let zeros = x.trailing_zeros() as usize;
+                return if zeros > BITS { BITS } else { zeros };
+            },
+            u256((lo, hi)) => {
+                let zeros = if lo == 0 {
+                    hi.trailing_zeros() + 128
+                } else {
+                    lo.trailing_zeros()
+                } as usize;
+                return if zeros > BITS { BITS } else { zeros };
+            },
+        });
+
+        let mut i = 0;
+        while i < LIMBS {
+            if self.limbs[i] != 0 {
+                return i * 64 + self.limbs[i].trailing_zeros() as usize;
+            }
+            i += 1;
+        }
+        BITS
     }
 
     /// Returns the number of trailing ones in the binary representation of
     /// `self`.
     #[inline]
     #[must_use]
-    pub fn trailing_ones(&self) -> usize {
-        self.as_limbs()
-            .iter()
-            .position(|&limb| limb != u64::MAX)
-            .map_or(BITS, |n| {
-                n * 64 + self.as_limbs()[n].trailing_ones() as usize
-            })
+    pub const fn trailing_ones(&self) -> usize {
+        as_primitives!(self; {
+            u64(x) => return x.trailing_ones() as usize,
+            u128(x) => return x.trailing_ones() as usize,
+            u256((lo, hi)) => return if lo == u128::MAX {
+                (hi.trailing_ones() + 128) as usize
+            } else {
+                lo.trailing_ones() as usize
+            },
+        });
+
+        let mut i = 0;
+        while i < LIMBS {
+            if self.limbs[i] != u64::MAX {
+                return i * 64 + self.limbs[i].trailing_ones() as usize;
+            }
+            i += 1;
+        }
+        BITS
     }
 
     /// Returns the number of ones in the binary representation of `self`.
@@ -826,6 +879,36 @@ mod tests {
     use core::cmp::min;
     use proptest::proptest;
 
+    fn reference_leading_ones<const BITS: usize, const LIMBS: usize>(
+        value: Uint<BITS, LIMBS>,
+    ) -> usize {
+        let mut ones = 0;
+        while ones < BITS && value.bit(BITS - ones - 1) {
+            ones += 1;
+        }
+        ones
+    }
+
+    fn reference_trailing_zeros<const BITS: usize, const LIMBS: usize>(
+        value: Uint<BITS, LIMBS>,
+    ) -> usize {
+        let mut zeros = 0;
+        while zeros < BITS && !value.bit(zeros) {
+            zeros += 1;
+        }
+        zeros
+    }
+
+    fn reference_trailing_ones<const BITS: usize, const LIMBS: usize>(
+        value: Uint<BITS, LIMBS>,
+    ) -> usize {
+        let mut ones = 0;
+        while ones < BITS && value.bit(ones) {
+            ones += 1;
+        }
+        ones
+    }
+
     #[test]
     fn test_leading_zeros() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_zeros(), 0);
@@ -867,8 +950,46 @@ mod tests {
     #[test]
     fn test_leading_ones() {
         assert_eq!(Uint::<0, 0>::ZERO.leading_ones(), 0);
-        assert_eq!(Uint::<1, 1>::ZERO.leading_ones(), 0);
-        assert_eq!(Uint::<1, 1>::ONE.leading_ones(), 1);
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            assert_eq!(U::ZERO.leading_ones(), 0);
+            assert_eq!(U::MAX.leading_ones(), BITS);
+            assert_eq!((U::MAX << 1_usize).leading_ones(), BITS - 1);
+            proptest!(|(value: U)| {
+                assert_eq!(value.leading_ones(), reference_leading_ones(value));
+            });
+        });
+    }
+
+    #[test]
+    fn test_trailing_zeros() {
+        assert_eq!(Uint::<0, 0>::ZERO.trailing_zeros(), 0);
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            assert_eq!(U::ZERO.trailing_zeros(), BITS);
+            assert_eq!(U::MAX.trailing_zeros(), 0);
+            assert_eq!((U::MAX << 1_usize).trailing_zeros(), 1);
+            proptest!(|(value: U)| {
+                assert_eq!(value.trailing_zeros(), reference_trailing_zeros(value));
+            });
+        });
+    }
+
+    #[test]
+    fn test_trailing_ones() {
+        assert_eq!(Uint::<0, 0>::ZERO.trailing_ones(), 0);
+        const_for!(BITS in NON_ZERO {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint::<BITS, LIMBS>;
+            assert_eq!(U::ZERO.trailing_ones(), 0);
+            assert_eq!(U::MAX.trailing_ones(), BITS);
+            assert_eq!((U::MAX << 1_usize).trailing_ones(), 0);
+            proptest!(|(value: U)| {
+                assert_eq!(value.trailing_ones(), reference_trailing_ones(value));
+            });
+        });
     }
 
     #[test]
