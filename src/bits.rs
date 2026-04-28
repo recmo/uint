@@ -872,7 +872,10 @@ impl_shift!(u64, i64);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{aliases::U128, const_for, nlimbs};
+    use crate::{
+        aliases::{U128, U256},
+        const_for, nlimbs,
+    };
     use core::cmp::min;
     use proptest::proptest;
 
@@ -929,6 +932,15 @@ mod tests {
                 assert_eq!(value.leading_zeros(), reference_leading_zeros(value));
             });
         });
+
+        assert_eq!(
+            U256::from_limbs([1, 0, 0, 0]).leading_zeros(),
+            reference_leading_zeros(U256::from_limbs([1, 0, 0, 0]))
+        );
+        assert_eq!(
+            U256::from_limbs([0, 0, 1, 0]).leading_zeros(),
+            reference_leading_zeros(U256::from_limbs([0, 0, 1, 0]))
+        );
     }
 
     #[test]
@@ -944,6 +956,20 @@ mod tests {
                 assert_eq!(value.leading_ones(), reference_leading_ones(value));
             });
         });
+
+        assert_eq!(
+            U256::from_limbs([u64::MAX, u64::MAX, u64::MAX, u64::MAX - 1]).leading_ones(),
+            reference_leading_ones(U256::from_limbs([
+                u64::MAX,
+                u64::MAX,
+                u64::MAX,
+                u64::MAX - 1,
+            ]))
+        );
+        assert_eq!(
+            U256::from_limbs([0, 0, u64::MAX, u64::MAX]).leading_ones(),
+            reference_leading_ones(U256::from_limbs([0, 0, u64::MAX, u64::MAX]))
+        );
     }
 
     #[test]
@@ -959,6 +985,11 @@ mod tests {
                 assert_eq!(value.trailing_zeros(), reference_trailing_zeros(value));
             });
         });
+
+        assert_eq!(
+            U256::from_limbs([0, 0, 1, 0]).trailing_zeros(),
+            reference_trailing_zeros(U256::from_limbs([0, 0, 1, 0]))
+        );
     }
 
     #[test]
@@ -974,6 +1005,11 @@ mod tests {
                 assert_eq!(value.trailing_ones(), reference_trailing_ones(value));
             });
         });
+
+        assert_eq!(
+            U256::from_limbs([u64::MAX, u64::MAX, 0, 0]).trailing_ones(),
+            reference_trailing_ones(U256::from_limbs([u64::MAX, u64::MAX, 0, 0]))
+        );
     }
 
     #[test]
