@@ -17,6 +17,9 @@ pub(crate) use unstable_warning;
 
 use core::cmp::Ordering;
 
+#[cfg(target_arch = "x86_64")]
+use core::arch::x86_64::_subborrow_u64;
+
 mod add;
 pub mod div;
 mod gcd;
@@ -144,6 +147,33 @@ cmp_fns! {
 #[inline]
 fn sub(a: &[u64], b: &[u64]) -> (u64, bool) {
     assume!(a.len() == b.len());
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        sub_x86_64(a, b)
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        sub_fallback(a, b)
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[inline]
+fn sub_x86_64(a: &[u64], b: &[u64]) -> (u64, bool) {
+    let mut borrow = 0;
+    let mut acc = 0;
+    for i in 0..a.len() {
+        let mut x = 0;
+        borrow = _subborrow_u64(borrow, a[i], b[i], &mut x);
+        acc |= x;
+    }
+    (acc, borrow != 0)
+}
+
+#[cfg(not(target_arch = "x86_64"))]
+#[inline]
+fn sub_fallback(a: &[u64], b: &[u64]) -> (u64, bool) {
     let mut borrow = false;
     let mut acc = 0;
     for i in 0..a.len() {
