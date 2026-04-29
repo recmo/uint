@@ -165,7 +165,11 @@ fn sub_x86_64(a: &[u64], b: &[u64]) -> (u64, bool) {
     let mut acc = 0;
     for i in 0..a.len() {
         let mut x = 0;
-        borrow = _subborrow_u64(borrow, a[i], b[i], &mut x);
+        // SAFETY: `_subborrow_u64` has no target features beyond x86-64.
+        #[allow(unused_unsafe)]
+        unsafe {
+            borrow = _subborrow_u64(borrow, a[i], b[i], &mut x);
+        }
         acc |= x;
     }
     (acc, borrow != 0)
