@@ -185,8 +185,9 @@ fn sub_fallback(a: &[u64], b: &[u64]) -> (u64, bool) {
         (x, borrow) = borrowing_sub(a[i], b[i], borrow);
         acc |= x;
     }
-    // HACK: This is a hack to avoid the compiler optimizing too much that the
-    // backend doesn't recognize the `borrowing_sub` chain: https://github.com/rust-lang/rust/issues/143517
+    // HACK: This only black-boxes `acc` so LLVM keeps the subtraction results
+    // alive long enough for the backend to recognize the `borrowing_sub` chain
+    // and generate better code: https://github.com/rust-lang/rust/issues/143517
     // SAFETY: Writing to a local variable through a reference is safe.
     unsafe { core::ptr::write_volatile(&mut acc, acc) };
     (acc, borrow)
