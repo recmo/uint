@@ -157,7 +157,7 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             let mut limbs_be = [0u64; LIMBS];
             let mut i = 0;
             while i < LIMBS {
-                limbs_be[i] = self.limbs[LIMBS - 1 - i].swap_bytes();
+                limbs_be[i] = self.limbs[LIMBS - 1 - i].to_be();
                 i += 1;
             }
             // SAFETY: BYTES == size_of::<[u64; LIMBS]>().
