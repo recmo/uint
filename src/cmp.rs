@@ -1,10 +1,34 @@
-use crate::Uint;
+use crate::{Uint, algorithms};
 use core::cmp::Ordering;
+
+macro_rules! cmp_fns {
+    ($($name:ident, $op:tt => |$a:ident, $b:ident| $impl:expr),* $(,)?) => {
+        $(
+            #[inline]
+            fn $name(&self, $b: &Self) -> bool {
+                let $a = self;
+                as_primitives!($a, $b; {
+                    u64(x, y) => return x $op y,
+                    u128(x, y) => return x $op y,
+                });
+
+                $impl
+            }
+        )*
+    };
+}
 
 impl<const BITS: usize, const LIMBS: usize> PartialOrd for Uint<BITS, LIMBS> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+
+    cmp_fns! {
+        lt, <  => |a, b| algorithms::lt(a.as_limbs(), b.as_limbs()),
+        gt, >  => |a, b| Self::lt(b, a),
+        ge, >= => |a, b| !Self::lt(a, b),
+        le, <= => |a, b| !Self::lt(b, a),
     }
 }
 
@@ -15,7 +39,7 @@ impl<const BITS: usize, const LIMBS: usize> Ord for Uint<BITS, LIMBS> {
             u64(x, y) => return x.cmp(&y),
             u128(x, y) => return x.cmp(&y),
         });
-        crate::algorithms::cmp(self.as_limbs(), rhs.as_limbs())
+        algorithms::cmp(self.as_limbs(), rhs.as_limbs())
     }
 }
 
@@ -119,7 +143,37 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
 
 #[cfg(test)]
 mod tests {
-    use crate::Uint;
+    use crate::{Uint, const_for, nlimbs};
+    use core::cmp::Ordering;
+    use proptest::{prop_assert_eq, proptest};
+
+    fn reference_cmp<const BITS: usize, const LIMBS: usize>(
+        a: &Uint<BITS, LIMBS>,
+        b: &Uint<BITS, LIMBS>,
+    ) -> Ordering {
+        let mut i = LIMBS;
+        while i > 0 {
+            i -= 1;
+            match a.as_limbs()[i].cmp(&b.as_limbs()[i]) {
+                Ordering::Equal => {}
+                non_eq => return non_eq,
+            }
+        }
+        Ordering::Equal
+    }
+
+    fn check_cmp<const BITS: usize, const LIMBS: usize>(
+        a: Uint<BITS, LIMBS>,
+        b: Uint<BITS, LIMBS>,
+    ) -> Result<(), proptest::prelude::TestCaseError> {
+        let cmp = reference_cmp(&a, &b);
+        prop_assert_eq!(a.cmp(&b), cmp);
+        prop_assert_eq!(a < b, cmp.is_lt());
+        prop_assert_eq!(a > b, cmp.is_gt());
+        prop_assert_eq!(a <= b, !cmp.is_gt());
+        prop_assert_eq!(a >= b, !cmp.is_lt());
+        Ok(())
+    }
 
     #[test]
     fn test_is_zero() {
@@ -131,5 +185,16 @@ mod tests {
         assert!(!Uint::<1, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<7, 1>::from_limbs([1]).is_zero());
         assert!(!Uint::<64, 1>::from_limbs([1]).is_zero());
+    }
+
+    #[test]
+    fn test_cmp() {
+        const_for!(BITS in SIZES {
+            const LIMBS: usize = nlimbs(BITS);
+            type U = Uint<BITS, LIMBS>;
+            proptest!(|(a: U, b: U)| {
+                check_cmp(a, b)?;
+            });
+        });
     }
 }
