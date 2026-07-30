@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-07-30
+
 ### Changed
 
+- Open-code `PartialEq` and `is_zero` on riscv to avoid `memcmp` libcalls ([#604])
 - Run the core test suite on `wasm32-wasip1` in CI to catch 32-bit pointer-width bugs ([#609])
 - Make `reverse_bits`, `most_significant_bits`, `inv_ring`, `checked_pow`, `strict_pow`, `overflowing_pow`, `pow`, `saturating_pow`, `wrapping_pow`, `from_limbs_slice`, `checked_from_limbs_slice`, `wrapping_from_limbs_slice`, `overflowing_from_limbs_slice`, `saturating_from_limbs_slice`, `from_uint`, and `checked_from_uint` `const` ([#614])
 
@@ -26,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mark `addmul_nx1`/`submul_nx1` `unsafe` and close soundness / safety-contract gaps in the unstable `algorithms` module ([#612])
 
 [#603]: https://github.com/alloy-rs/ruint/pull/603
+[#604]: https://github.com/alloy-rs/ruint/pull/604
 [#605]: https://github.com/alloy-rs/ruint/pull/605
 [#606]: https://github.com/alloy-rs/ruint/pull/606
 [#607]: https://github.com/alloy-rs/ruint/pull/607
@@ -562,7 +566,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/alloy-rs/ruint/compare/v1.18.0...HEAD
+[unreleased]: https://github.com/alloy-rs/ruint/compare/v1.20.0...HEAD
+[1.20.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.20.0
+[1.19.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.19.0
 [1.18.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.18.0
 [1.17.2]: https://github.com/alloy-rs/ruint/releases/tag/v1.17.2
 [1.17.1]: https://github.com/alloy-rs/ruint/releases/tag/v1.17.1
