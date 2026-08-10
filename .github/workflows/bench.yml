@@ -19,13 +19,13 @@ jobs:
         with:
           cache-on-failure: true
       - name: Install cargo-codspeed
-        uses: taiki-e/install-action@v2.85.5
+        uses: taiki-e/install-action@v2.85.10
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
         run: cargo codspeed build --profile profiling -p ruint-bench --bench bench
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v5.0.1
+        uses: CodSpeedHQ/action@v5.0.3
         with:
           run: cargo codspeed run -p ruint-bench bench
           token: ${{ secrets.CODSPEED_TOKEN }}
