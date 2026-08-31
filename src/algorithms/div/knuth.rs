@@ -136,7 +136,8 @@ pub unsafe fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
     let mut q_high = 0;
     #[allow(clippy::range_plus_one)] // Inclusive ranges optimize worse.
     for j in (0..m + 1).rev() {
-        // Fetch the first three limbs of the shifted numerator starting at `j + n`.
+        // Fetch the first three limbs of the shifted numerator starting at `j +
+        // n`.
         let (n21, n0) = {
             let n2 = numerator.get(j + n).copied().unwrap_or_default();
             let n21 = DW::join(n2, numerator[j + n - 1]);
@@ -163,7 +164,8 @@ pub unsafe fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
             if q != 0 {
                 // Subtract the quotient times the divisor from the remainder.
                 // We already have the highest 128 bit, so we can reduce the
-                // computation. We still need to carry propagate into these limbs.
+                // computation. We still need to carry propagate into these
+                // limbs.
                 let borrow = if shift == 0 {
                     // SAFETY: both slices have length `n - 2`.
                     let borrow =
@@ -173,8 +175,9 @@ pub unsafe fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                     numerator[j + n - 1] = DW::high(r);
                     borrow
                 } else {
-                    // OPT: Can we re-use `r` here somehow? The problem is we can not just
-                    // shift the `r` or `borrow` because we need to accurately reproduce
+                    // OPT: Can we re-use `r` here somehow? The problem is we
+                    // can not just shift the `r` or
+                    // `borrow` because we need to accurately reproduce
                     // the remainder and carry in the middle of a limb.
                     // SAFETY: both slices have length `n`.
                     let borrow = unsafe { submul_nx1(&mut numerator[j..j + n], divisor, q) };
@@ -183,7 +186,8 @@ pub unsafe fn div_nxm(numerator: &mut [u64], divisor: &mut [u64]) {
                 };
 
                 // If we have a carry then the quotient was one too large.
-                // We correct by decrementing the quotient and adding one divisor back.
+                // We correct by decrementing the quotient and adding one
+                // divisor back.
                 if unlikely(borrow) {
                     q = q.wrapping_sub(1);
                     let carry = carrying_add_n(&mut numerator[j..j + n], &divisor[..n], false);

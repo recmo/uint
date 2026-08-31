@@ -123,8 +123,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     pub fn is_zero(&self) -> bool {
         if cfg!(any(target_arch = "riscv32", target_arch = "riscv64")) {
             // On riscv, comparing against a materialized `Self::ZERO` becomes a
-            // `bcmp`/`memcmp` libcall; OR-accumulating the limbs avoids both the
-            // libcall and the zero temporary.
+            // `bcmp`/`memcmp` libcall; OR-accumulating the limbs avoids both
+            // the libcall and the zero temporary.
             let mut acc = 0;
             let mut i = 0;
             while i < LIMBS {
@@ -162,7 +162,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             u64(x, y) => return x == y,
             u128(x, y) => return x == y,
         });
-        // TODO: Replace with `self == other` and deprecate once `PartialEq` is const.
+        // TODO: Replace with `self == other` and deprecate once `PartialEq` is
+        // const.
         let a = self.as_limbs();
         let b = other.as_limbs();
         let mut equal_count = 0usize;
