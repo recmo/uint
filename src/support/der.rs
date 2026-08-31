@@ -139,8 +139,9 @@ impl<const BITS: usize, const LIMBS: usize> From<&Uint<BITS, LIMBS>> for DerUint
             Self::new(&[0]).unwrap()
         } else {
             // Panics:
-            // The only error is if the length is more than can be represented in u32.
-            // This is well outside of the inteded usecase for this library.
+            // The only error is if the length is more than can be represented
+            // in u32. This is well outside of the inteded usecase
+            // for this library.
             Self::new(&uint.to_be_bytes_trimmed_vec()).unwrap()
         }
     }

@@ -45,8 +45,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         if self.is_zero() {
             return None;
         }
-        // The base-2 logarithm is the index of the highest set bit. Computing it
-        // directly avoids materializing `2`, which does not fit when `BITS < 2`.
+        // The base-2 logarithm is the index of the highest set bit. Computing
+        // it directly avoids materializing `2`, which does not fit when
+        // `BITS < 2`.
         Some(self.bit_len() - 1)
     }
 
@@ -70,12 +71,13 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         // Find approximate result
         #[allow(clippy::cast_precision_loss)] // Casting base to `f64` is fine.
         let result = self.approx_log2() / base.approx_log2();
-        // We handled edge cases above, so the result should be normal and fit `Self`.
+        // We handled edge cases above, so the result should be normal and fit
+        // `Self`.
         assert!(result.is_normal());
         let mut result = result.try_into().unwrap();
 
-        // Adjust result to get the exact value. At most one of these should happen, but
-        // we loop regardless.
+        // Adjust result to get the exact value. At most one of these should
+        // happen, but we loop regardless.
         loop {
             if let Some(value) = base.checked_pow(result) {
                 if value > self {
@@ -186,16 +188,17 @@ mod tests {
 
     #[test]
     fn test_checked_log_tiny_bits() {
-        // The `checked_*` variants return an `Option` and must never panic, even
-        // when the base constant (2 or 10) is too large for the bit-width.
+        // The `checked_*` variants return an `Option` and must never panic,
+        // even when the base constant (2 or 10) is too large for the
+        // bit-width.
 
         // BITS < 2: the type cannot represent 2.
         assert_eq!(Uint::<0, 0>::ZERO.checked_log2(), None);
         assert_eq!(Uint::<1, 1>::ZERO.checked_log2(), None);
         assert_eq!(Uint::<1, 1>::from(1u64).checked_log2(), Some(0));
 
-        // `checked_log` with a base that is 0 or 1 (all bases fit in `Uint<1, 1>`)
-        // returns None rather than panicking on `Self::from(2)`.
+        // `checked_log` with a base that is 0 or 1 (all bases fit in `Uint<1,
+        // 1>`) returns None rather than panicking on `Self::from(2)`.
         let one = Uint::<1, 1>::from(1u64);
         assert_eq!(Uint::<1, 1>::ZERO.checked_log(one), None);
         assert_eq!(one.checked_log(one), None);

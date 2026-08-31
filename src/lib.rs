@@ -242,7 +242,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
     #[track_caller]
     pub const fn from_limbs(limbs: [u64; LIMBS]) -> Self {
         if Self::SHOULD_MASK {
-            // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works in const fn.
+            // FEATURE: (BLOCKED) Add `<{BITS}>` to the type when Display works
+            // in const fn.
             assert!(
                 limbs[LIMBS - 1] <= Self::MASK,
                 "Value too large for this Uint"

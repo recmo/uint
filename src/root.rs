@@ -46,7 +46,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         }
 
         // Create a first guess.
-        // Root should be less than the value, so approx_pow2 should always succeed.
+        // Root should be less than the value, so approx_pow2 should always
+        // succeed.
         #[allow(clippy::cast_precision_loss)] // Approximation is good enough.
         #[allow(clippy::cast_sign_loss)] // Result should be positive.
         let mut result = Self::approx_pow2(self.approx_log2() / degree as f64).unwrap();
@@ -61,8 +62,8 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
             // OPT: This could benefit from single-limb multiplication
             // and division.
             //
-            // OPT: The division can be turned into bit-shifts when the degree is a power of
-            // two.
+            // OPT: The division can be turned into bit-shifts when the degree
+            // is a power of two.
             let division = result
                 .checked_pow(deg_m1)
                 .map_or(Self::ZERO, |power| self / power);

@@ -137,7 +137,8 @@ impl Matrix {
         let mut q10 = 0_u64;
         let mut q11 = 1_u64;
         loop {
-            // Loop is unrolled once to avoid swapping variables and tracking parity.
+            // Loop is unrolled once to avoid swapping variables and tracking
+            // parity.
             let q = r0 / r1;
             r0 -= q * r1;
             q00 += q * q10;
@@ -253,8 +254,9 @@ impl Matrix {
         debug_assert!(a2 >= LIMIT);
         debug_assert!(a3 < LIMIT);
 
-        // Use Jebelean's exact condition to determine which outputs are correct.
-        // Statistically, i + 2 should be correct about two-thirds of the time.
+        // Use Jebelean's exact condition to determine which outputs are
+        // correct. Statistically, i + 2 should be correct about
+        // two-thirds of the time.
         if even {
             // Test i + 1 (even)
             debug_assert!(a2 >= v2);
@@ -314,7 +316,8 @@ impl Matrix {
         if q == Matrix::IDENTITY {
             return q;
         }
-        // We can return q here and have a perfectly valid single-word Lehmer GCD.
+        // We can return q here and have a perfectly valid single-word Lehmer
+        // GCD.
         q
         // OPT: Fix the below method to get double-word Lehmer GCD.
 

@@ -183,7 +183,8 @@ macro_rules! let_double_bits {
         let mut double = [[0u64; 2]; LIMBS];
         let double_len = crate::nlimbs(2 * BITS);
         debug_assert!(2 * LIMBS >= double_len);
-        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 * BITS)]`.
+        // SAFETY: `[[u64; 2]; LIMBS] == [u64; 2 * LIMBS] >= [u64; nlimbs(2 *
+        // BITS)]`.
         let $id = unsafe {
             core::slice::from_raw_parts_mut(double.as_mut_ptr().cast::<u64>(), double_len)
         };
