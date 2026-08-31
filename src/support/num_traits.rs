@@ -7,8 +7,7 @@
 use crate::Uint;
 use core::ops::{Shl, Shr};
 use num_traits::{
-    ConstZero, ConstOne,
-    CheckedEuclid, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
+    CheckedEuclid, ConstOne, ConstZero, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
     bounds::Bounded,
     cast::{FromPrimitive, ToPrimitive},
     identities::{One, Zero},
@@ -467,13 +466,11 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
     }
 }
 
-impl<const BITS:usize, const LIMBS:usize> ConstZero for Uint<BITS,LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> ConstZero for Uint<BITS, LIMBS> {
     const ZERO: Self = Self::ZERO;
-
 }
 
-
-impl<const BITS:usize, const LIMBS:usize> ConstOne for Uint<BITS,LIMBS> {
+impl<const BITS: usize, const LIMBS: usize> ConstOne for Uint<BITS, LIMBS> {
     const ONE: Self = Self::ONE;
 }
 
