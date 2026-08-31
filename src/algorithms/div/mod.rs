@@ -61,7 +61,8 @@ pub(crate) fn div_inlined(numerator: &mut [u64], divisor: &mut [u64]) {
     // Trim most significant zeros from divisor.
     let divisor = super::trim_end_zeros_mut(divisor);
     if divisor.is_empty() {
-        // Force a division by 0 panic, which is smaller in code size than an `assert!`.
+        // Force a division by 0 panic, which is smaller in code size than an
+        // `assert!`.
         #[allow(unconditional_panic, clippy::all)]
         let _ = 0 / 0;
     }

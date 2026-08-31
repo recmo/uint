@@ -225,8 +225,8 @@ mod tests {
 
     #[test]
     fn test_serde_invalid_size_error() {
-        // Test that if we add a character to a value that is already the max length for
-        // the given number of bits, we get an error.
+        // Test that if we add a character to a value that is already the max
+        // length for the given number of bits, we get an error.
         const_for!(BITS in SIZES {
             const LIMBS: usize = nlimbs(BITS);
             let value = Uint::<BITS, LIMBS>::MAX;

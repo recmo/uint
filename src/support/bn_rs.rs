@@ -18,8 +18,8 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<&BN> for Uint<BITS, LIMBS> {
             return Err(ToUintError::ValueTooLarge(BITS, Self::ZERO));
         }
         // Binding for `toArray`
-        // `a.toArray(endian, length)` - convert to byte array, and optionally zero pad
-        // to length, throwing if already exceeding. <https://github.com/indutny/bn.js/blob/5df40f81ea8afb835b909bb7c21e0833cdeb6a30/lib/bn.js#L573>
+        // `a.toArray(endian, length)` - convert to byte array, and optionally
+        // zero pad to length, throwing if already exceeding. <https://github.com/indutny/bn.js/blob/5df40f81ea8afb835b909bb7c21e0833cdeb6a30/lib/bn.js#L573>
         value.to_array("le".into(), 0).map_or_else(
             |_| Err(ToUintError::NotANumber(BITS)),
             |bytes| {

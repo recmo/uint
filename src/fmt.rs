@@ -62,7 +62,8 @@ macro_rules! impl_fmt {
                     return <u128 as $tr>::fmt(&small, f);
                 }
 
-                // Use `BITS` for all bases since `generic_const_exprs` is not yet stable.
+                // Use `BITS` for all bases since `generic_const_exprs` is not yet
+                // stable.
                 let mut s = StackString::<BITS>::new();
                 let mut first = true;
                 for spigot in self.to_base_be_2(<$base>::MAX) {

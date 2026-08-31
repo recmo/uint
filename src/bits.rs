@@ -1237,16 +1237,17 @@ mod tests {
             (Uint::<64, 1>::from(20), true)
         );
 
-        // Test: Two limbs right shift from 0x0010_0000_0000_0000 and 0 by 1 bit.
-        // Expects resulting limbs: [0x0080_0000_0000_000, 0] with no fractional part.
+        // Test: Two limbs right shift from 0x0010_0000_0000_0000 and 0 by 1
+        // bit. Expects resulting limbs: [0x0080_0000_0000_000, 0] with
+        // no fractional part.
         assert_eq!(
             Uint::<65, 2>::from_limbs([0x0010_0000_0000_0000, 0]).overflowing_shr(1),
             (Uint::<65, 2>::from_limbs([0x0008_0000_0000_0000, 0]), false)
         );
 
         // Test: Shift beyond single limb capacity with MAX value.
-        // Expects the highest possible value in 256-bit representation with a detected
-        // fractional part.
+        // Expects the highest possible value in 256-bit representation with a
+        // detected fractional part.
         assert_eq!(
             Uint::<256, 4>::MAX.overflowing_shr(65),
             (

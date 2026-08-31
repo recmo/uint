@@ -533,9 +533,9 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
 
         // Reject non-finite inputs up front, independent of BITS. The overflow
         // check below keys off the unbiased exponent (1024 for NaN/inf), which
-        // stops exceeding BITS once BITS >= 1025, so it cannot be relied upon to
-        // catch these. NaN is rejected before the sign split so that a
-        // negatively-signed NaN is `NotANumber`, not `ValueNegative`.
+        // stops exceeding BITS once BITS >= 1025, so it cannot be relied upon
+        // to catch these. NaN is rejected before the sign split so that
+        // a negatively-signed NaN is `NotANumber`, not `ValueNegative`.
         if f.is_nan() {
             return Err(ToUintError::NotANumber(BITS));
         }
@@ -576,8 +576,9 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             _ => unreachable!(),
         };
 
-        // Helper: produce integer magnitude for |f| given an unbiased exponent `e`,
-        // using round-to-nearest, ties-to-even, then interpreted modulo 2^BITS by Uint.
+        // Helper: produce integer magnitude for |f| given an unbiased exponent
+        // `e`, using round-to-nearest, ties-to-even, then interpreted
+        // modulo 2^BITS by Uint.
         let compute_mag = |e: usize| -> Self {
             if e < significand_bits {
                 // Right shift with round-to-nearest, ties-to-even
@@ -595,13 +596,15 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             }
         };
 
-        // Negative values: return ValueNegative with wrapped two's-complement payload.
-        // Handle |value| < 1 without going through the saturating exponent path to
-        // preserve correct rounding: ties-to-even at 0.5, otherwise nearest.
+        // Negative values: return ValueNegative with wrapped two's-complement
+        // payload. Handle |value| < 1 without going through the
+        // saturating exponent path to preserve correct rounding:
+        // ties-to-even at 0.5, otherwise nearest.
         if sign == Sign::Negative {
             if exponent < exponent_bias {
                 // |value| < 1
-                // Rounds to 0 for −0.5 ≤ value < 0.0, and to 1 for −1.0 < value < −0.5.
+                // Rounds to 0 for −0.5 ≤ value < 0.0, and to 1 for −1.0 < value
+                // < −0.5.
                 if value >= -0.5 {
                     return Err(ToUintError::ValueNegative(BITS, Self::ZERO));
                 } else {
@@ -622,15 +625,16 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
             return if BITS == 0 {
                 Err(ToUintError::ValueTooLarge(BITS, Self::ZERO))
             } else {
-                // We already handled value < 0.5 above; here 0.5 <= value < 1.0 → 1.
+                // We already handled value < 0.5 above; here 0.5 <= value < 1.0
+                // → 1.
                 Ok(Self::ONE)
             };
         }
         exponent -= exponent_bias;
 
         // If the value is infinity, saturate.
-        // If the value is too large for the integer type, wrap (drop high bits) and
-        // return it in the error.
+        // If the value is too large for the integer type, wrap (drop high bits)
+        // and return it in the error.
         if exponent >= fixint_bits {
             // NaN and infinity were already handled above, so `value` is finite
             // here and this branch only covers genuinely too-large magnitudes.
@@ -648,8 +652,9 @@ impl<const BITS: usize, const LIMBS: usize> TryFrom<f64> for Uint<BITS, LIMBS> {
         // In-range: produce the integer normally.
         let r = compute_mag(exponent);
 
-        // Match old impl: if rounding bumps us across 2^BITS (only possible when
-        // exponent == BITS - 1), report ValueTooLarge with the wrapped payload.
+        // Match old impl: if rounding bumps us across 2^BITS (only possible
+        // when exponent == BITS - 1), report ValueTooLarge with the
+        // wrapped payload.
         if sign == Sign::Positive
             && fixint_bits > 0
             && exponent == fixint_bits - 1
@@ -858,8 +863,9 @@ impl<const BITS: usize, const LIMBS: usize> Uint<BITS, LIMBS> {
         let hi = limbs[li];
         let lo = if li > 0 { limbs[li - 1] } else { 0 };
 
-        // Concatenate [hi:64][lo:64] and drop the low bits so the 54-bit window is at
-        // LSB. Correct alignment: shift = 64 + off - SIG  (not SIG+1!)
+        // Concatenate [hi:64][lo:64] and drop the low bits so the 54-bit window
+        // is at LSB. Correct alignment: shift = 64 + off - SIG  (not
+        // SIG+1!)
         let shift = 64 + off as usize - SIG; // range 11..=74
         debug_assert!((11..=74).contains(&shift));
 
@@ -1056,9 +1062,9 @@ mod test {
         assert!(f32::from(Uint::<F32_BITS, F_32LIMBS>::MAX).is_infinite());
     }
 
-    // Non-finite f64 inputs must be rejected regardless of BITS. For BITS >= 1025
-    // the unbiased exponent of NaN/inf (1024) no longer exceeds BITS, so the
-    // overflow check alone does not fire.
+    // Non-finite f64 inputs must be rejected regardless of BITS. For BITS >=
+    // 1025 the unbiased exponent of NaN/inf (1024) no longer exceeds BITS,
+    // so the overflow check alone does not fire.
     #[test]
     fn correctness_8_7_2026_try_from_nonfinite_large_bits() {
         type U2048 = Uint<2048, 32>;
@@ -1226,7 +1232,8 @@ mod test {
         // Convert mantissa * 2^(exponent - 52) to Uint
         #[allow(clippy::cast_possible_truncation)] // exponent is small-ish
         if exponent as usize > BITS + 52 {
-            // Wrapped value is zero because the value is extended with zero bits.
+            // Wrapped value is zero because the value is extended with zero
+            // bits.
             return Err(ToUintError::ValueTooLarge(BITS, Uint::ZERO));
         }
         if exponent <= 52 {

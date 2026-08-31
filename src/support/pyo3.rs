@@ -108,8 +108,8 @@ impl<'a, const BITS: usize, const LIMBS: usize> FromPyObject<'a> for Uint<BITS, 
 
         // Handle error from `_PyLong_AsByteArray`.
         if py_result != 0 {
-            // A TypeError is set if the value is negative and an Overflow error if the
-            // value does not fit `raw.len()` bytes.
+            // A TypeError is set if the value is negative and an Overflow error
+            // if the value does not fit `raw.len()` bytes.
             return Err(PyErr::fetch(ob.py()));
         }
 

@@ -208,7 +208,8 @@ impl Transformer {
         };
 
         // Parse `value` into limbs.
-        // At this point we are confident the literal was for us, so we throw errors.
+        // At this point we are confident the literal was for us, so we throw
+        // errors.
         let limbs = parse_digits(value)?;
 
         // Pad limbs to the correct length.

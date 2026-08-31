@@ -587,7 +587,8 @@ mod tests {
     fn test_from_slice_too_large_returns_none() {
         // Regression: `BITS % 64` in 57..=63 gives `BYTES = 8 * LIMBS`, so the
         // full-limb fast path was taken even though the top limb is masked.
-        // An all-ones input overflows the mask and must return `None`, not panic.
+        // An all-ones input overflows the mask and must return `None`, not
+        // panic.
         assert_eq!(Uint::<60, 1>::try_from_be_slice(&[0xff; 8]), None);
         assert_eq!(Uint::<60, 1>::try_from_le_slice(&[0xff; 8]), None);
         assert_eq!(Uint::<121, 2>::try_from_be_slice(&[0xff; 16]), None);

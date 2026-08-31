@@ -53,7 +53,8 @@ impl<Context, const BITS: usize, const LIMBS: usize> Decode<Context> for Uint<BI
         decoder.claim_bytes_read(len)?;
         let mut buffer = [0u64; LIMBS]; // not possible to use Self::BYTES or nbytes(BITS) here.
         let slice = unsafe {
-            // SAFETY: We ensure that the buffer is large enough to hold the bytes
+            // SAFETY: We ensure that the buffer is large enough to hold the
+            // bytes
             let ptr = buffer.as_mut_ptr().cast::<u8>();
             core::slice::from_raw_parts_mut(ptr, Self::BYTES)
         };

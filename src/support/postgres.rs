@@ -99,11 +99,12 @@ impl<const BITS: usize, const LIMBS: usize> ToSql for Uint<BITS, LIMBS> {
             // Binary strings
             Type::BYTEA => out.put_slice(&self.to_be_bytes_vec()),
             Type::BIT | Type::VARBIT => {
-                // Bit in little-endian so the the first bit is the least significant.
-                // Length must be at least one bit.
+                // Bit in little-endian so the the first bit is the least
+                // significant. Length must be at least one bit.
                 if BITS == 0 {
                     if *ty == Type::BIT {
-                        // `bit(0)` is not a valid type, but varbit can be empty.
+                        // `bit(0)` is not a valid type, but varbit can be
+                        // empty.
                         return Err(Box::new(WrongType::new::<Self>(ty.clone())));
                     }
                     out.put_i32(0);
@@ -482,7 +483,8 @@ mod tests {
     // This test requires a live postgresql server.
     // To start a server, run:
     //
-    //     docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+    //     docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432
+    // postgres
     //
     // Then run the test using:
     //
@@ -492,7 +494,8 @@ mod tests {
     #[test]
     #[ignore = "requires a live postgresql server"]
     fn test_postgres() {
-        // docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+        // docker run -it --rm -e POSTGRES_PASSWORD=postgres -p 5432:5432
+        // postgres
         let client = Client::connect("postgresql://postgres:postgres@localhost", NoTls).unwrap();
         let client = Mutex::new(client);
 
