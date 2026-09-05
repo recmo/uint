@@ -7,7 +7,7 @@
 use crate::Uint;
 use core::ops::{Shl, Shr};
 use num_traits::{
-    CheckedEuclid, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
+    CheckedEuclid, ConstOne, ConstZero, Euclid, Inv, MulAdd, MulAddAssign, Num, NumCast,
     bounds::Bounded,
     cast::{FromPrimitive, ToPrimitive},
     identities::{One, Zero},
@@ -464,6 +464,14 @@ impl<const BITS: usize, const LIMBS: usize> PrimInt for Uint<BITS, LIMBS> {
     fn pow(self, exp: u32) -> Self {
         self.pow(Self::from(exp))
     }
+}
+
+impl<const BITS: usize, const LIMBS: usize> ConstZero for Uint<BITS, LIMBS> {
+    const ZERO: Self = Self::ZERO;
+}
+
+impl<const BITS: usize, const LIMBS: usize> ConstOne for Uint<BITS, LIMBS> {
+    const ONE: Self = Self::ONE;
 }
 
 #[cfg(test)]
