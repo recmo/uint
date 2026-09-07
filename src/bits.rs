@@ -855,9 +855,9 @@ macro_rules! impl_shift {
             type Output = Self;
 
             #[inline(always)]
-            #[allow(clippy::cast_possible_truncation)]
             fn shl(self, rhs: $u) -> Self::Output {
-                self.wrapping_shl(rhs as usize)
+                // Amounts that do not fit in usize shift out the entire value.
+                self.wrapping_shl(usize::try_from(rhs).unwrap_or(usize::MAX))
             }
         }
 
@@ -865,9 +865,8 @@ macro_rules! impl_shift {
             type Output = Self;
 
             #[inline(always)]
-            #[allow(clippy::cast_possible_truncation)]
             fn shr(self, rhs: $u) -> Self::Output {
-                self.wrapping_shr(rhs as usize)
+                self.wrapping_shr(usize::try_from(rhs).unwrap_or(usize::MAX))
             }
         }
     };
@@ -921,11 +920,9 @@ macro_rules! impl_shift {
     };
 }
 
-impl_shift!(usize, u8, u16, u32, isize, i8, i16, i32);
-
-// Only when losslessy castable to usize.
-#[cfg(target_pointer_width = "64")]
-impl_shift!(u64, i64);
+impl_shift!(
+    usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128
+);
 
 #[cfg(test)]
 mod tests {
@@ -1175,6 +1172,74 @@ mod tests {
                 let right = value.reverse_bits() >> shift;
                 assert_eq!(left, right);
             });
+        });
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)] // Exercise the reference RHS implementations.
+    fn test_primitive_shifts() {
+        macro_rules! check {
+            ($value:expr, $rhs:expr, $left:expr, $right:expr) => {{
+                let value = $value;
+                let rhs = $rhs;
+                assert_eq!(value << rhs, $left);
+                assert_eq!(value << &rhs, $left);
+                assert_eq!(value >> rhs, $right);
+                assert_eq!(value >> &rhs, $right);
+                let mut assigned = value;
+                assigned <<= rhs;
+                assert_eq!(assigned, $left);
+                assigned = value;
+                assigned <<= &rhs;
+                assert_eq!(assigned, $left);
+                assigned = value;
+                assigned >>= rhs;
+                assert_eq!(assigned, $right);
+                assigned = value;
+                assigned >>= &rhs;
+                assert_eq!(assigned, $right);
+            }};
+        }
+
+        const_for!(BITS in [0, 1, 7, 64, 65, 128, 192, 256, 257] {
+            type U = Uint<BITS, { nlimbs(BITS) }>;
+
+            macro_rules! check_types {
+                ($($t:ty),*) => {$({
+                    for shift in [0usize, 1, 7, 63, 64, 65, 127, 128, 255, 256, 257] {
+                        let rhs = match <$t>::try_from(shift) {
+                            Ok(rhs) => rhs,
+                            Err(_) => continue,
+                        };
+                        check!(U::MAX, rhs, U::MAX.wrapping_shl(shift), U::MAX.wrapping_shr(shift));
+                    }
+                })*};
+            }
+            check_types!(usize, u8, u16, u32, u64, u128, isize, i8, i16, i32, i64, i128);
+
+            // These amounts must not truncate to small shifts on 32- or 64-bit targets.
+            for rhs in [1u64 << 32, (1u64 << 32) + 1, (1u64 << 32) + 130, u64::MAX] {
+                check!(U::MAX, rhs, U::ZERO, U::ZERO);
+            }
+            for rhs in [1i64 << 32, (1i64 << 32) + 1, i64::MAX, -(1i64 << 32)] {
+                check!(U::MAX, rhs, U::ZERO, U::ZERO);
+            }
+            for rhs in [1u128 << 64, (1u128 << 64) + 1, (1u128 << 64) + 130, u128::MAX] {
+                check!(U::MAX, rhs, U::ZERO, U::ZERO);
+            }
+            for rhs in [1i128 << 64, (1i128 << 64) + 1, i128::MAX, -(1i128 << 64)] {
+                check!(U::MAX, rhs, U::ZERO, U::ZERO);
+            }
+
+            macro_rules! check_negative {
+                ($($t:ty),*) => {$({
+                    let amounts: [$t; 2] = [-1, <$t>::MIN];
+                    for rhs in amounts {
+                        check!(U::MAX, rhs, U::ZERO, U::ZERO);
+                    }
+                })*};
+            }
+            check_negative!(isize, i8, i16, i32, i64, i128);
         });
     }
 
