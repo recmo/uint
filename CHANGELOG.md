@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.1] - 2026-09-07
+
 ### Added
 
 - Implement shifts and shift assignments for all primitive integer types on every target, including `u64`/`i64` on 32-bit targets and `u128`/`i128`, without truncating oversized shift amounts ([#634])
@@ -572,7 +574,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- links to version -->
 
-[unreleased]: https://github.com/alloy-rs/ruint/compare/v1.20.0...HEAD
+[unreleased]: https://github.com/alloy-rs/ruint/compare/v1.20.1...HEAD
+[1.20.1]: https://github.com/alloy-rs/ruint/releases/tag/v1.20.1
 [1.20.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.20.0
 [1.19.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.19.0
 [1.18.0]: https://github.com/alloy-rs/ruint/releases/tag/v1.18.0
